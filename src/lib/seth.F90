@@ -9,6 +9,7 @@ use seth_descaling
 use seth_weno_js
 use seth_weno_js_tables
 use seth_wenoz
+use seth_teno
 implicit none
 private
 public :: I4P, I8P, R4P, R8P
@@ -20,5 +21,6 @@ public :: seth_weno5_js, seth_weno5_js_wr, seth_weno5_js_interp, seth_weno5_js_i
 public :: seth_weno7_js, seth_weno7_js_wr, seth_weno7_js_interp, seth_weno7_js_interp_wr
 public :: seth_weno9_js, seth_weno9_js_wr, seth_weno9_js_interp, seth_weno9_js_interp_wr
 public :: seth_wenoz3, seth_wenoz5, seth_wenoz7
+public :: seth_teno5, seth_teno6, seth_teno6_opt, SETH_TENO_EPS, SETH_TENO6_OPT_CT
 public :: WENO1_JS_D_SCALE, WENO3_JS_D_SCALE, WENO5_JS_D_SCALE, WENO7_JS_D_SCALE, WENO9_JS_D_SCALE
 endmodule seth
