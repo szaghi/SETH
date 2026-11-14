@@ -35,9 +35,9 @@ contains
    integer(I4P), parameter :: CLO(0:NC-1) = TENO5_CLO, CW(0:NC-1) = TENO5_CW
    integer(I4P), parameter :: GLO = TENO5_GLO, GW = TENO5_GW
    real(R8P),    parameter :: CP(0:MAXW-1,0:NC-1) = TENO5_P
-   real(R8P),    parameter :: CU(0:MAXW-1,0:MAXW-1,0:NC-1) = TENO5_U
+   real(R8P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = TENO5_L, CDQ(0:MAXW-1,0:NC-1) = TENO5_DQ
    real(R8P),    parameter :: D(0:NC-1) = TENO5_D, TC(0:NC-1) = TENO5_TC, TG = TENO5_TG
-   real(R8P),    parameter :: CUG(0:GW-1,0:GW-1) = TENO5_UG
+   real(R8P),    parameter :: CLG(0:GW-1,0:GW-1) = TENO5_LG, CDG(0:GW-1) = TENO5_DG
 #define SETH_TENO
 #include "seth_z_teno_body.INC"
 #undef SETH_TENO
@@ -49,9 +49,9 @@ contains
    integer(I4P), parameter :: CLO(0:NC-1) = TENO6_CLO, CW(0:NC-1) = TENO6_CW
    integer(I4P), parameter :: GLO = TENO6_GLO, GW = TENO6_GW
    real(R8P),    parameter :: CP(0:MAXW-1,0:NC-1) = TENO6_P
-   real(R8P),    parameter :: CU(0:MAXW-1,0:MAXW-1,0:NC-1) = TENO6_U
+   real(R8P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = TENO6_L, CDQ(0:MAXW-1,0:NC-1) = TENO6_DQ
    real(R8P),    parameter :: D(0:NC-1) = TENO6_D, TC(0:NC-1) = TENO6_TC, TG = TENO6_TG
-   real(R8P),    parameter :: CUG(0:GW-1,0:GW-1) = TENO6_UG
+   real(R8P),    parameter :: CLG(0:GW-1,0:GW-1) = TENO6_LG, CDG(0:GW-1) = TENO6_DG
 #define SETH_TENO
 #include "seth_z_teno_body.INC"
 #undef SETH_TENO
@@ -63,9 +63,9 @@ contains
    integer(I4P), parameter :: CLO(0:NC-1) = TENO6_OPT_CLO, CW(0:NC-1) = TENO6_OPT_CW
    integer(I4P), parameter :: GLO = TENO6_OPT_GLO, GW = TENO6_OPT_GW
    real(R8P),    parameter :: CP(0:MAXW-1,0:NC-1) = TENO6_OPT_P
-   real(R8P),    parameter :: CU(0:MAXW-1,0:MAXW-1,0:NC-1) = TENO6_OPT_U
+   real(R8P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = TENO6_OPT_L, CDQ(0:MAXW-1,0:NC-1) = TENO6_OPT_DQ
    real(R8P),    parameter :: D(0:NC-1) = TENO6_OPT_D, TC(0:NC-1) = TENO6_OPT_TC, TG = TENO6_OPT_TG
-   real(R8P),    parameter :: CUG(0:GW-1,0:GW-1) = TENO6_OPT_UG
+   real(R8P),    parameter :: CLG(0:GW-1,0:GW-1) = TENO6_OPT_LG, CDG(0:GW-1) = TENO6_OPT_DG
 #define SETH_TENO
 #include "seth_z_teno_body.INC"
 #undef SETH_TENO
@@ -77,9 +77,9 @@ contains
    integer(I4P), parameter :: CLO(0:NC-1) = TENO6_NENO6_CLO, CW(0:NC-1) = TENO6_NENO6_CW
    integer(I4P), parameter :: GLO = TENO6_NENO6_GLO, GW = TENO6_NENO6_GW
    real(R8P),    parameter :: CP(0:MAXW-1,0:NC-1) = TENO6_NENO6_P
-   real(R8P),    parameter :: CU(0:MAXW-1,0:MAXW-1,0:NC-1) = TENO6_NENO6_U
+   real(R8P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = TENO6_NENO6_L, CDQ(0:MAXW-1,0:NC-1) = TENO6_NENO6_DQ
    real(R8P),    parameter :: D(0:NC-1) = TENO6_NENO6_D, TC(0:NC-1) = TENO6_NENO6_TC, TG = TENO6_NENO6_TG
-   real(R8P),    parameter :: CUG(0:GW-1,0:GW-1) = TENO6_NENO6_UG
+   real(R8P),    parameter :: CLG(0:GW-1,0:GW-1) = TENO6_NENO6_LG, CDG(0:GW-1) = TENO6_NENO6_DG
 #define SETH_TENO
 #include "seth_z_teno_body.INC"
 #undef SETH_TENO

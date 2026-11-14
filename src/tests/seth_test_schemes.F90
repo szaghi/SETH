@@ -61,7 +61,7 @@ contains
 
    e = SCHEMES(id)%eps ; if (present(eps)) e = eps
    q = SCHEMES(id)%par ; if (present(par)) q = par
-   p = nint(q)
+   p = 0 ; if (SCHEMES(id)%family == FAM_Z) p = nint(q) ! only WENO-Z reads an integer parameter
    wr = present(wrp) .and. present(wrm)
    select case(trim(SCHEMES(id)%name))
    case('weno1_js')

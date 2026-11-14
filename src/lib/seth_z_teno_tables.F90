@@ -16,12 +16,14 @@ public :: WENOZ3_TG
 public :: WENOZ3_CLO
 public :: WENOZ3_CW
 public :: WENOZ3_P
-public :: WENOZ3_U
+public :: WENOZ3_L
+public :: WENOZ3_DQ
 public :: WENOZ3_D
 public :: WENOZ3_TC
 public :: WENOZ3_GLO
 public :: WENOZ3_GW
-public :: WENOZ3_UG
+public :: WENOZ3_LG
+public :: WENOZ3_DG
 public :: WENOZ5_NC
 public :: WENOZ5_LO
 public :: WENOZ5_UMAX
@@ -30,12 +32,14 @@ public :: WENOZ5_TG
 public :: WENOZ5_CLO
 public :: WENOZ5_CW
 public :: WENOZ5_P
-public :: WENOZ5_U
+public :: WENOZ5_L
+public :: WENOZ5_DQ
 public :: WENOZ5_D
 public :: WENOZ5_TC
 public :: WENOZ5_GLO
 public :: WENOZ5_GW
-public :: WENOZ5_UG
+public :: WENOZ5_LG
+public :: WENOZ5_DG
 public :: WENOZ7_NC
 public :: WENOZ7_LO
 public :: WENOZ7_UMAX
@@ -44,12 +48,14 @@ public :: WENOZ7_TG
 public :: WENOZ7_CLO
 public :: WENOZ7_CW
 public :: WENOZ7_P
-public :: WENOZ7_U
+public :: WENOZ7_L
+public :: WENOZ7_DQ
 public :: WENOZ7_D
 public :: WENOZ7_TC
 public :: WENOZ7_GLO
 public :: WENOZ7_GW
-public :: WENOZ7_UG
+public :: WENOZ7_LG
+public :: WENOZ7_DG
 public :: WENOZ9_NC
 public :: WENOZ9_LO
 public :: WENOZ9_UMAX
@@ -58,12 +64,14 @@ public :: WENOZ9_TG
 public :: WENOZ9_CLO
 public :: WENOZ9_CW
 public :: WENOZ9_P
-public :: WENOZ9_U
+public :: WENOZ9_L
+public :: WENOZ9_DQ
 public :: WENOZ9_D
 public :: WENOZ9_TC
 public :: WENOZ9_GLO
 public :: WENOZ9_GW
-public :: WENOZ9_UG
+public :: WENOZ9_LG
+public :: WENOZ9_DG
 public :: TENO5_NC
 public :: TENO5_LO
 public :: TENO5_UMAX
@@ -72,12 +80,14 @@ public :: TENO5_TG
 public :: TENO5_CLO
 public :: TENO5_CW
 public :: TENO5_P
-public :: TENO5_U
+public :: TENO5_L
+public :: TENO5_DQ
 public :: TENO5_D
 public :: TENO5_TC
 public :: TENO5_GLO
 public :: TENO5_GW
-public :: TENO5_UG
+public :: TENO5_LG
+public :: TENO5_DG
 public :: TENO6_NC
 public :: TENO6_LO
 public :: TENO6_UMAX
@@ -86,12 +96,14 @@ public :: TENO6_TG
 public :: TENO6_CLO
 public :: TENO6_CW
 public :: TENO6_P
-public :: TENO6_U
+public :: TENO6_L
+public :: TENO6_DQ
 public :: TENO6_D
 public :: TENO6_TC
 public :: TENO6_GLO
 public :: TENO6_GW
-public :: TENO6_UG
+public :: TENO6_LG
+public :: TENO6_DG
 public :: TENO6_OPT_NC
 public :: TENO6_OPT_LO
 public :: TENO6_OPT_UMAX
@@ -100,12 +112,14 @@ public :: TENO6_OPT_TG
 public :: TENO6_OPT_CLO
 public :: TENO6_OPT_CW
 public :: TENO6_OPT_P
-public :: TENO6_OPT_U
+public :: TENO6_OPT_L
+public :: TENO6_OPT_DQ
 public :: TENO6_OPT_D
 public :: TENO6_OPT_TC
 public :: TENO6_OPT_GLO
 public :: TENO6_OPT_GW
-public :: TENO6_OPT_UG
+public :: TENO6_OPT_LG
+public :: TENO6_OPT_DG
 public :: TENO6_NENO6_NC
 public :: TENO6_NENO6_LO
 public :: TENO6_NENO6_UMAX
@@ -114,12 +128,14 @@ public :: TENO6_NENO6_TG
 public :: TENO6_NENO6_CLO
 public :: TENO6_NENO6_CW
 public :: TENO6_NENO6_P
-public :: TENO6_NENO6_U
+public :: TENO6_NENO6_L
+public :: TENO6_NENO6_DQ
 public :: TENO6_NENO6_D
 public :: TENO6_NENO6_TC
 public :: TENO6_NENO6_GLO
 public :: TENO6_NENO6_GW
-public :: TENO6_NENO6_UG
+public :: TENO6_NENO6_LG
+public :: TENO6_NENO6_DG
 
 ! WENO-Z3: tau_3 = |beta_0 - beta_1|
 integer(I4P), parameter :: WENOZ3_NC = 2_I4P !< candidate stencils
@@ -129,19 +145,22 @@ integer(I4P), parameter :: WENOZ3_MAXW = 2_I4P !< widest candidate
 real(R8P), parameter :: WENOZ3_TG = 0._R8P !< coefficient of the global indicator in tau (0: none)
 integer(I4P), parameter :: WENOZ3_CLO(0:1) = [-1_I4P, 0_I4P] !< first cell of each candidate
 integer(I4P), parameter :: WENOZ3_CW(0:1) = [2_I4P, 2_I4P] !< width of each candidate
-real(R8P), parameter :: WENOZ3_P(0:1,0:1) = reshape([ & !< face coefficients P(j,k) of cell CLO(k)+j
-                  -1._R8P/2._R8P,              3._R8P/2._R8P,              1._R8P/2._R8P,              1._R8P/2._R8P], [2,2])
-real(R8P), parameter :: WENOZ3_U(0:1,0:1,0:1) = reshape([ & !< indicators, upper-triangular U(a,b,k) on cells CLO(k)+a, CLO(k)+b
-                          1._R8P,                     0._R8P,                    -2._R8P,                     1._R8P, &
-                          1._R8P,                     0._R8P,                    -2._R8P,                     1._R8P], [2,2,2])
+real(R8P), parameter :: WENOZ3_P(0:1,0:1) = reshape([ & !< face coefficient of cell CLO(k)+j
+      -1._R8P/2._R8P, 3._R8P/2._R8P, 1._R8P/2._R8P, 1._R8P/2._R8P], [2,2])
+real(R8P), parameter :: WENOZ3_L(0:1,0:1,0:1) = reshape([ & !< indicator factors: beta_k = sum_i DQ(i,k) (sum_a L(a,i,k) u_a)^2
+      1._R8P, -1._R8P, 0._R8P, 1._R8P, 1._R8P, -1._R8P, 0._R8P, 1._R8P], [2,2,2])
+real(R8P), parameter :: WENOZ3_DQ(0:1,0:1) = reshape([ & !< indicator pivots DQ(i,k) >= 0
+      1._R8P, 0._R8P, 1._R8P, 0._R8P], [2,2])
 real(R8P), parameter :: WENOZ3_D(0:1) = reshape([ & !< linear weights
-                   1._R8P/3._R8P,              2._R8P/3._R8P], [2])
+      1._R8P/3._R8P, 2._R8P/3._R8P], [2])
 real(R8P), parameter :: WENOZ3_TC(0:1) = reshape([ & !< tau coefficients on the beta_k
-                          1._R8P,                    -1._R8P], [2])
+      1._R8P, -1._R8P], [2])
 integer(I4P), parameter :: WENOZ3_GLO = -1_I4P !< first cell of the global stencil
 integer(I4P), parameter :: WENOZ3_GW = 1_I4P !< width of the global stencil
-real(R8P), parameter :: WENOZ3_UG(0:0,0:0) = reshape([ & !< global indicator, upper-triangular
-                          0._R8P], [1,1])
+real(R8P), parameter :: WENOZ3_LG(0:0,0:0) = reshape([ & !< global indicator, sum of squares: L
+      0._R8P], [1,1])
+real(R8P), parameter :: WENOZ3_DG(0:0) = reshape([ & !< global indicator pivots
+      0._R8P], [1])
 
 ! WENO-Z5: tau_5 = |beta_0 - beta_2|
 integer(I4P), parameter :: WENOZ5_NC = 3_I4P !< candidate stencils
@@ -151,26 +170,26 @@ integer(I4P), parameter :: WENOZ5_MAXW = 3_I4P !< widest candidate
 real(R8P), parameter :: WENOZ5_TG = 0._R8P !< coefficient of the global indicator in tau (0: none)
 integer(I4P), parameter :: WENOZ5_CLO(0:2) = [-2_I4P, -1_I4P, 0_I4P] !< first cell of each candidate
 integer(I4P), parameter :: WENOZ5_CW(0:2) = [3_I4P, 3_I4P, 3_I4P] !< width of each candidate
-real(R8P), parameter :: WENOZ5_P(0:2,0:2) = reshape([ & !< face coefficients P(j,k) of cell CLO(k)+j
-                   1._R8P/3._R8P,             -7._R8P/6._R8P,             11._R8P/6._R8P,             -1._R8P/6._R8P, &
-                   5._R8P/6._R8P,              1._R8P/3._R8P,              1._R8P/3._R8P,              5._R8P/6._R8P, &
-                  -1._R8P/6._R8P], [3,3])
-real(R8P), parameter :: WENOZ5_U(0:2,0:2,0:2) = reshape([ & !< indicators, upper-triangular U(a,b,k) on cells CLO(k)+a, CLO(k)+b
-                   4._R8P/3._R8P,                     0._R8P,                     0._R8P,            -19._R8P/3._R8P, &
-                  25._R8P/3._R8P,                     0._R8P,             11._R8P/3._R8P,            -31._R8P/3._R8P, &
-                  10._R8P/3._R8P,              4._R8P/3._R8P,                     0._R8P,                     0._R8P, &
-                 -13._R8P/3._R8P,             13._R8P/3._R8P,                     0._R8P,              5._R8P/3._R8P, &
-                 -13._R8P/3._R8P,              4._R8P/3._R8P,             10._R8P/3._R8P,                     0._R8P, &
-                          0._R8P,            -31._R8P/3._R8P,             25._R8P/3._R8P,                     0._R8P, &
-                  11._R8P/3._R8P,            -19._R8P/3._R8P,              4._R8P/3._R8P], [3,3,3])
+real(R8P), parameter :: WENOZ5_P(0:2,0:2) = reshape([ & !< face coefficient of cell CLO(k)+j
+      1._R8P/3._R8P, -7._R8P/6._R8P, 11._R8P/6._R8P, -1._R8P/6._R8P, 5._R8P/6._R8P, 1._R8P/3._R8P, 1._R8P/3._R8P, &
+      5._R8P/6._R8P, -1._R8P/6._R8P], [3,3])
+real(R8P), parameter :: WENOZ5_L(0:2,0:2,0:2) = reshape([ & !< indicator factors: beta_k = sum_i DQ(i,k) (sum_a L(a,i,k) u_a)^2
+      1._R8P, -19._R8P/8._R8P, 11._R8P/8._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 1._R8P, 1._R8P, &
+      -13._R8P/8._R8P, 5._R8P/8._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 1._R8P, 1._R8P, -31._R8P/20._R8P, &
+      11._R8P/20._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 1._R8P], [3,3,3])
+real(R8P), parameter :: WENOZ5_DQ(0:2,0:2) = reshape([ & !< indicator pivots DQ(i,k) >= 0
+      4._R8P/3._R8P, 13._R8P/16._R8P, 0._R8P, 4._R8P/3._R8P, 13._R8P/16._R8P, 0._R8P, 10._R8P/3._R8P, 13._R8P/40._R8P, &
+      0._R8P], [3,3])
 real(R8P), parameter :: WENOZ5_D(0:2) = reshape([ & !< linear weights
-                  1._R8P/10._R8P,              3._R8P/5._R8P,             3._R8P/10._R8P], [3])
+      1._R8P/10._R8P, 3._R8P/5._R8P, 3._R8P/10._R8P], [3])
 real(R8P), parameter :: WENOZ5_TC(0:2) = reshape([ & !< tau coefficients on the beta_k
-                          1._R8P,                     0._R8P,                    -1._R8P], [3])
+      1._R8P, 0._R8P, -1._R8P], [3])
 integer(I4P), parameter :: WENOZ5_GLO = -2_I4P !< first cell of the global stencil
 integer(I4P), parameter :: WENOZ5_GW = 1_I4P !< width of the global stencil
-real(R8P), parameter :: WENOZ5_UG(0:0,0:0) = reshape([ & !< global indicator, upper-triangular
-                          0._R8P], [1,1])
+real(R8P), parameter :: WENOZ5_LG(0:0,0:0) = reshape([ & !< global indicator, sum of squares: L
+      0._R8P], [1,1])
+real(R8P), parameter :: WENOZ5_DG(0:0) = reshape([ & !< global indicator pivots
+      0._R8P], [1])
 
 ! WENO-Z7: tau_7 = |beta_0 + 3 beta_1 - 3 beta_2 - beta_3| (Don & Borges)
 integer(I4P), parameter :: WENOZ7_NC = 4_I4P !< candidate stencils
@@ -180,36 +199,33 @@ integer(I4P), parameter :: WENOZ7_MAXW = 4_I4P !< widest candidate
 real(R8P), parameter :: WENOZ7_TG = 0._R8P !< coefficient of the global indicator in tau (0: none)
 integer(I4P), parameter :: WENOZ7_CLO(0:3) = [-3_I4P, -2_I4P, -1_I4P, 0_I4P] !< first cell of each candidate
 integer(I4P), parameter :: WENOZ7_CW(0:3) = [4_I4P, 4_I4P, 4_I4P, 4_I4P] !< width of each candidate
-real(R8P), parameter :: WENOZ7_P(0:3,0:3) = reshape([ & !< face coefficients P(j,k) of cell CLO(k)+j
-                  -1._R8P/4._R8P,            13._R8P/12._R8P,           -23._R8P/12._R8P,            25._R8P/12._R8P, &
-                  1._R8P/12._R8P,            -5._R8P/12._R8P,            13._R8P/12._R8P,              1._R8P/4._R8P, &
-                 -1._R8P/12._R8P,             7._R8P/12._R8P,             7._R8P/12._R8P,            -1._R8P/12._R8P, &
-                   1._R8P/4._R8P,            13._R8P/12._R8P,            -5._R8P/12._R8P,             1._R8P/12._R8P], [4,4])
-real(R8P), parameter :: WENOZ7_U(0:3,0:3,0:3) = reshape([ & !< indicators, upper-triangular U(a,b,k) on cells CLO(k)+a, CLO(k)+b
-               547._R8P/240._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-               -647._R8P/40._R8P,         7043._R8P/240._R8P,                     0._R8P,                     0._R8P, &
-              2321._R8P/120._R8P,        -8623._R8P/120._R8P,        11003._R8P/240._R8P,                     0._R8P, &
-               -309._R8P/40._R8P,         3521._R8P/120._R8P,         -1567._R8P/40._R8P,         2107._R8P/240._R8P, &
-                 89._R8P/80._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-              -821._R8P/120._R8P,         2843._R8P/240._R8P,                     0._R8P,                     0._R8P, &
-                267._R8P/40._R8P,        -2983._R8P/120._R8P,         3443._R8P/240._R8P,                     0._R8P, &
-              -247._R8P/120._R8P,          961._R8P/120._R8P,        -1261._R8P/120._R8P,          547._R8P/240._R8P, &
-               547._R8P/240._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-             -1261._R8P/120._R8P,         3443._R8P/240._R8P,                     0._R8P,                     0._R8P, &
-               961._R8P/120._R8P,        -2983._R8P/120._R8P,         2843._R8P/240._R8P,                     0._R8P, &
-              -247._R8P/120._R8P,           267._R8P/40._R8P,         -821._R8P/120._R8P,            89._R8P/80._R8P, &
-              2107._R8P/240._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-              -1567._R8P/40._R8P,        11003._R8P/240._R8P,                     0._R8P,                     0._R8P, &
-              3521._R8P/120._R8P,        -8623._R8P/120._R8P,         7043._R8P/240._R8P,                     0._R8P, &
-               -309._R8P/40._R8P,         2321._R8P/120._R8P,          -647._R8P/40._R8P,          547._R8P/240._R8P], [4,4,4])
+real(R8P), parameter :: WENOZ7_P(0:3,0:3) = reshape([ & !< face coefficient of cell CLO(k)+j
+      -1._R8P/4._R8P, 13._R8P/12._R8P, -23._R8P/12._R8P, 25._R8P/12._R8P, 1._R8P/12._R8P, -5._R8P/12._R8P, &
+      13._R8P/12._R8P, 1._R8P/4._R8P, -1._R8P/12._R8P, 7._R8P/12._R8P, 7._R8P/12._R8P, -1._R8P/12._R8P, 1._R8P/4._R8P, &
+      13._R8P/12._R8P, -5._R8P/12._R8P, 1._R8P/12._R8P], [4,4])
+real(R8P), parameter :: WENOZ7_L(0:3,0:3,0:3) = reshape([ & !< indicator factors: beta_k = sum_i DQ(i,k) (sum_a L(a,i,k) u_a)^2
+      1._R8P, -1941._R8P/547._R8P, 2321._R8P/547._R8P, -927._R8P/547._R8P, 0._R8P, 1._R8P, -5293._R8P/2126._R8P, &
+      3167._R8P/2126._R8P, 0._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, 1._R8P, &
+      -821._R8P/267._R8P, 3._R8P, -247._R8P/267._R8P, 0._R8P, 1._R8P, -3471._R8P/2126._R8P, 1345._R8P/2126._R8P, &
+      0._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, 1._R8P, -1261._R8P/547._R8P, 961._R8P/547._R8P, &
+      -247._R8P/547._R8P, 0._R8P, 1._R8P, -10497._R8P/7330._R8P, 3167._R8P/7330._R8P, 0._R8P, 0._R8P, 1._R8P, -1._R8P, &
+      0._R8P, 0._R8P, 0._R8P, 1._R8P, 1._R8P, -4701._R8P/2107._R8P, 503._R8P/301._R8P, -927._R8P/2107._R8P, 0._R8P, &
+      1._R8P, -40411._R8P/27098._R8P, 13313._R8P/27098._R8P, 0._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 0._R8P, &
+      1._R8P], [4,4,4])
+real(R8P), parameter :: WENOZ7_DQ(0:3,0:3) = reshape([ & !< indicator pivots DQ(i,k) >= 0
+      547._R8P/240._R8P, 1063._R8P/1641._R8P, 10153._R8P/12756._R8P, 0._R8P, 89._R8P/80._R8P, 1063._R8P/801._R8P, &
+      10153._R8P/12756._R8P, 0._R8P, 547._R8P/240._R8P, 3665._R8P/1641._R8P, 10153._R8P/43980._R8P, 0._R8P, &
+      2107._R8P/240._R8P, 13549._R8P/6321._R8P, 10153._R8P/162588._R8P, 0._R8P], [4,4])
 real(R8P), parameter :: WENOZ7_D(0:3) = reshape([ & !< linear weights
-                  1._R8P/35._R8P,            12._R8P/35._R8P,            18._R8P/35._R8P,             4._R8P/35._R8P], [4])
+      1._R8P/35._R8P, 12._R8P/35._R8P, 18._R8P/35._R8P, 4._R8P/35._R8P], [4])
 real(R8P), parameter :: WENOZ7_TC(0:3) = reshape([ & !< tau coefficients on the beta_k
-                          1._R8P,                     3._R8P,                    -3._R8P,                    -1._R8P], [4])
+      1._R8P, 3._R8P, -3._R8P, -1._R8P], [4])
 integer(I4P), parameter :: WENOZ7_GLO = -3_I4P !< first cell of the global stencil
 integer(I4P), parameter :: WENOZ7_GW = 1_I4P !< width of the global stencil
-real(R8P), parameter :: WENOZ7_UG(0:0,0:0) = reshape([ & !< global indicator, upper-triangular
-                          0._R8P], [1,1])
+real(R8P), parameter :: WENOZ7_LG(0:0,0:0) = reshape([ & !< global indicator, sum of squares: L
+      0._R8P], [1,1])
+real(R8P), parameter :: WENOZ7_DG(0:0) = reshape([ & !< global indicator pivots
+      0._R8P], [1])
 
 ! WENO-Z9: tau_9 = |beta_0 - beta_4|
 integer(I4P), parameter :: WENOZ9_NC = 5_I4P !< candidate stencils
@@ -219,57 +235,50 @@ integer(I4P), parameter :: WENOZ9_MAXW = 5_I4P !< widest candidate
 real(R8P), parameter :: WENOZ9_TG = 0._R8P !< coefficient of the global indicator in tau (0: none)
 integer(I4P), parameter :: WENOZ9_CLO(0:4) = [-4_I4P, -3_I4P, -2_I4P, -1_I4P, 0_I4P] !< first cell of each candidate
 integer(I4P), parameter :: WENOZ9_CW(0:4) = [5_I4P, 5_I4P, 5_I4P, 5_I4P, 5_I4P] !< width of each candidate
-real(R8P), parameter :: WENOZ9_P(0:4,0:4) = reshape([ & !< face coefficients P(j,k) of cell CLO(k)+j
-                   1._R8P/5._R8P,           -21._R8P/20._R8P,           137._R8P/60._R8P,          -163._R8P/60._R8P, &
-                137._R8P/60._R8P,            -1._R8P/20._R8P,            17._R8P/60._R8P,           -43._R8P/60._R8P, &
-                 77._R8P/60._R8P,              1._R8P/5._R8P,             1._R8P/30._R8P,           -13._R8P/60._R8P, &
-                 47._R8P/60._R8P,             9._R8P/20._R8P,            -1._R8P/20._R8P,            -1._R8P/20._R8P, &
-                  9._R8P/20._R8P,            47._R8P/60._R8P,           -13._R8P/60._R8P,             1._R8P/30._R8P, &
-                   1._R8P/5._R8P,            77._R8P/60._R8P,           -43._R8P/60._R8P,            17._R8P/60._R8P, &
-                 -1._R8P/20._R8P], [5,5])
-real(R8P), parameter :: WENOZ9_U(0:4,0:4,0:4) = reshape([ & !< indicators, upper-triangular U(a,b,k) on cells CLO(k)+a, CLO(k)+b
-            11329._R8P/2520._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                          0._R8P,     -208501._R8P/5040._R8P,      482963._R8P/5040._R8P,                     0._R8P, &
-                          0._R8P,                     0._R8P,      121621._R8P/1680._R8P,      -142033._R8P/420._R8P, &
-           507131._R8P/1680._R8P,                     0._R8P,                     0._R8P,     -288007._R8P/5040._R8P, &
-           679229._R8P/2520._R8P,       -68391._R8P/140._R8P,     1020563._R8P/5040._R8P,                     0._R8P, &
-            86329._R8P/5040._R8P,     -411487._R8P/5040._R8P,      252941._R8P/1680._R8P,     -649501._R8P/5040._R8P, &
-            53959._R8P/2520._R8P,        1727._R8P/1260._R8P,                     0._R8P,                     0._R8P, &
-                          0._R8P,                     0._R8P,      -60871._R8P/5040._R8P,      138563._R8P/5040._R8P, &
-                          0._R8P,                     0._R8P,                     0._R8P,       33071._R8P/1680._R8P, &
-              -3229._R8P/35._R8P,      135431._R8P/1680._R8P,                     0._R8P,                     0._R8P, &
-           -70237._R8P/5040._R8P,      168509._R8P/2520._R8P,       -25499._R8P/210._R8P,      242723._R8P/5040._R8P, &
-                          0._R8P,       18079._R8P/5040._R8P,      -88297._R8P/5040._R8P,       55051._R8P/1680._R8P, &
-          -140251._R8P/5040._R8P,       11329._R8P/2520._R8P,        1727._R8P/1260._R8P,                     0._R8P, &
-                          0._R8P,                     0._R8P,                     0._R8P,      -51001._R8P/5040._R8P, &
-           104963._R8P/5040._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-              7547._R8P/560._R8P,       -24923._R8P/420._R8P,       77051._R8P/1680._R8P,                     0._R8P, &
-                          0._R8P,      -38947._R8P/5040._R8P,       89549._R8P/2520._R8P,       -24923._R8P/420._R8P, &
-           104963._R8P/5040._R8P,                     0._R8P,        8209._R8P/5040._R8P,      -38947._R8P/5040._R8P, &
-              7547._R8P/560._R8P,      -51001._R8P/5040._R8P,        1727._R8P/1260._R8P,       11329._R8P/2520._R8P, &
-                          0._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-          -140251._R8P/5040._R8P,      242723._R8P/5040._R8P,                     0._R8P,                     0._R8P, &
-                          0._R8P,       55051._R8P/1680._R8P,       -25499._R8P/210._R8P,      135431._R8P/1680._R8P, &
-                          0._R8P,                     0._R8P,      -88297._R8P/5040._R8P,      168509._R8P/2520._R8P, &
-              -3229._R8P/35._R8P,      138563._R8P/5040._R8P,                     0._R8P,       18079._R8P/5040._R8P, &
-           -70237._R8P/5040._R8P,       33071._R8P/1680._R8P,      -60871._R8P/5040._R8P,        1727._R8P/1260._R8P, &
-            53959._R8P/2520._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                          0._R8P,     -649501._R8P/5040._R8P,     1020563._R8P/5040._R8P,                     0._R8P, &
-                          0._R8P,                     0._R8P,      252941._R8P/1680._R8P,       -68391._R8P/140._R8P, &
-           507131._R8P/1680._R8P,                     0._R8P,                     0._R8P,     -411487._R8P/5040._R8P, &
-           679229._R8P/2520._R8P,      -142033._R8P/420._R8P,      482963._R8P/5040._R8P,                     0._R8P, &
-            86329._R8P/5040._R8P,     -288007._R8P/5040._R8P,      121621._R8P/1680._R8P,     -208501._R8P/5040._R8P, &
-            11329._R8P/2520._R8P], [5,5,5])
+real(R8P), parameter :: WENOZ9_P(0:4,0:4) = reshape([ & !< face coefficient of cell CLO(k)+j
+      1._R8P/5._R8P, -21._R8P/20._R8P, 137._R8P/60._R8P, -163._R8P/60._R8P, 137._R8P/60._R8P, -1._R8P/20._R8P, &
+      17._R8P/60._R8P, -43._R8P/60._R8P, 77._R8P/60._R8P, 1._R8P/5._R8P, 1._R8P/30._R8P, -13._R8P/60._R8P, &
+      47._R8P/60._R8P, 9._R8P/20._R8P, -1._R8P/20._R8P, -1._R8P/20._R8P, 9._R8P/20._R8P, 47._R8P/60._R8P, &
+      -13._R8P/60._R8P, 1._R8P/30._R8P, 1._R8P/5._R8P, 77._R8P/60._R8P, -43._R8P/60._R8P, 17._R8P/60._R8P, &
+      -1._R8P/20._R8P], [5,5])
+real(R8P), parameter :: WENOZ9_L(0:4,0:4,0:4) = reshape([ & !< indicator factors: beta_k = sum_i DQ(i,k) (sum_a L(a,i,k) u_a)^2
+      1._R8P, -208501._R8P/45316._R8P, 364863._R8P/45316._R8P, -288007._R8P/45316._R8P, 86329._R8P/45316._R8P, 0._R8P, &
+      1._R8P, -55338513._R8P/14249315._R8P, 71911201._R8P/14249315._R8P, -1813059._R8P/838195._R8P, 0._R8P, 0._R8P, &
+      1._R8P, -583582777._R8P/232768856._R8P, 350813921._R8P/232768856._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, -1._R8P, &
+      0._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, 1._R8P, -60871._R8P/13816._R8P, 99213._R8P/13816._R8P, &
+      -70237._R8P/13816._R8P, 18079._R8P/13816._R8P, 0._R8P, 1._R8P, -18329233._R8P/5880675._R8P, &
+      67923._R8P/22025._R8P, -5686883._R8P/5880675._R8P, 0._R8P, 0._R8P, 1._R8P, -379530087._R8P/232768856._R8P, &
+      146761231._R8P/232768856._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, &
+      1._R8P, -51001._R8P/13816._R8P, 67923._R8P/13816._R8P, -38947._R8P/13816._R8P, 8209._R8P/13816._R8P, 0._R8P, &
+      1._R8P, -1870849._R8P/838195._R8P, 23242001._R8P/14249315._R8P, -5686883._R8P/14249315._R8P, 0._R8P, 0._R8P, &
+      1._R8P, -71725821._R8P/51089708._R8P, 20636113._R8P/51089708._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, -1._R8P, &
+      0._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, 1._R8P, -140251._R8P/45316._R8P, 165153._R8P/45316._R8P, &
+      -88297._R8P/45316._R8P, 18079._R8P/45316._R8P, 0._R8P, 1._R8P, -217591953._R8P/110863235._R8P, &
+      19650103._R8P/15837605._R8P, -30822003._R8P/110863235._R8P, 0._R8P, 0._R8P, 1._R8P, &
+      -5962732027._R8P/4217089556._R8P, 1745642471._R8P/4217089556._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, -1._R8P, &
+      0._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, 1._R8P, -649501._R8P/215836._R8P, 758823._R8P/215836._R8P, &
+      -411487._R8P/215836._R8P, 86329._R8P/215836._R8P, 0._R8P, 1._R8P, -1835635153._R8P/890329635._R8P, &
+      411792427._R8P/296776545._R8P, -290071763._R8P/890329635._R8P, 0._R8P, 0._R8P, 1._R8P, &
+      -26228937057._R8P/17843974736._R8P, 8384962321._R8P/17843974736._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, -1._R8P, &
+      0._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P], [5,5,5])
+real(R8P), parameter :: WENOZ9_DQ(0:4,0:4) = reshape([ & !< indicator pivots DQ(i,k) >= 0
+      11329._R8P/2520._R8P, 2849863._R8P/4350336._R8P, 116384428._R8P/213739725._R8P, 1110161041._R8P/1396613136._R8P, &
+      0._R8P, 1727._R8P/1260._R8P, 392045._R8P/442112._R8P, 116384428._R8P/88210125._R8P, &
+      1110161041._R8P/1396613136._R8P, 0._R8P, 1727._R8P/1260._R8P, 2849863._R8P/1326336._R8P, &
+      25544854._R8P/12572925._R8P, 1110161041._R8P/5211150216._R8P, 0._R8P, 11329._R8P/2520._R8P, &
+      22172647._R8P/4350336._R8P, 2108544778._R8P/1662948525._R8P, 1110161041._R8P/25302537336._R8P, 0._R8P, &
+      53959._R8P/2520._R8P, 59355309._R8P/6906752._R8P, 8921987368._R8P/13354944525._R8P, &
+      1110161041._R8P/107063848416._R8P, 0._R8P], [5,5])
 real(R8P), parameter :: WENOZ9_D(0:4) = reshape([ & !< linear weights
-                 1._R8P/126._R8P,            10._R8P/63._R8P,            10._R8P/21._R8P,            20._R8P/63._R8P, &
-                 5._R8P/126._R8P], [5])
+      1._R8P/126._R8P, 10._R8P/63._R8P, 10._R8P/21._R8P, 20._R8P/63._R8P, 5._R8P/126._R8P], [5])
 real(R8P), parameter :: WENOZ9_TC(0:4) = reshape([ & !< tau coefficients on the beta_k
-                          1._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                         -1._R8P], [5])
+      1._R8P, 0._R8P, 0._R8P, 0._R8P, -1._R8P], [5])
 integer(I4P), parameter :: WENOZ9_GLO = -4_I4P !< first cell of the global stencil
 integer(I4P), parameter :: WENOZ9_GW = 1_I4P !< width of the global stencil
-real(R8P), parameter :: WENOZ9_UG(0:0,0:0) = reshape([ & !< global indicator, upper-triangular
-                          0._R8P], [1,1])
+real(R8P), parameter :: WENOZ9_LG(0:0,0:0) = reshape([ & !< global indicator, sum of squares: L
+      0._R8P], [1,1])
+real(R8P), parameter :: WENOZ9_DG(0:0) = reshape([ & !< global indicator pivots
+      0._R8P], [1])
 
 ! TENO5: tau_5 = |beta_1 - beta_2|
 integer(I4P), parameter :: TENO5_NC = 3_I4P !< candidate stencils
@@ -279,26 +288,26 @@ integer(I4P), parameter :: TENO5_MAXW = 3_I4P !< widest candidate
 real(R8P), parameter :: TENO5_TG = 0._R8P !< coefficient of the global indicator in tau (0: none)
 integer(I4P), parameter :: TENO5_CLO(0:2) = [-1_I4P, 0_I4P, -2_I4P] !< first cell of each candidate
 integer(I4P), parameter :: TENO5_CW(0:2) = [3_I4P, 3_I4P, 3_I4P] !< width of each candidate
-real(R8P), parameter :: TENO5_P(0:2,0:2) = reshape([ & !< face coefficients P(j,k) of cell CLO(k)+j
-                  -1._R8P/6._R8P,              5._R8P/6._R8P,              1._R8P/3._R8P,              1._R8P/3._R8P, &
-                   5._R8P/6._R8P,             -1._R8P/6._R8P,              1._R8P/3._R8P,             -7._R8P/6._R8P, &
-                  11._R8P/6._R8P], [3,3])
-real(R8P), parameter :: TENO5_U(0:2,0:2,0:2) = reshape([ & !< indicators, upper-triangular U(a,b,k) on cells CLO(k)+a, CLO(k)+b
-                   4._R8P/3._R8P,                     0._R8P,                     0._R8P,            -13._R8P/3._R8P, &
-                  13._R8P/3._R8P,                     0._R8P,              5._R8P/3._R8P,            -13._R8P/3._R8P, &
-                   4._R8P/3._R8P,             10._R8P/3._R8P,                     0._R8P,                     0._R8P, &
-                 -31._R8P/3._R8P,             25._R8P/3._R8P,                     0._R8P,             11._R8P/3._R8P, &
-                 -19._R8P/3._R8P,              4._R8P/3._R8P,              4._R8P/3._R8P,                     0._R8P, &
-                          0._R8P,            -19._R8P/3._R8P,             25._R8P/3._R8P,                     0._R8P, &
-                  11._R8P/3._R8P,            -31._R8P/3._R8P,             10._R8P/3._R8P], [3,3,3])
+real(R8P), parameter :: TENO5_P(0:2,0:2) = reshape([ & !< face coefficient of cell CLO(k)+j
+      -1._R8P/6._R8P, 5._R8P/6._R8P, 1._R8P/3._R8P, 1._R8P/3._R8P, 5._R8P/6._R8P, -1._R8P/6._R8P, 1._R8P/3._R8P, &
+      -7._R8P/6._R8P, 11._R8P/6._R8P], [3,3])
+real(R8P), parameter :: TENO5_L(0:2,0:2,0:2) = reshape([ & !< indicator factors: beta_k = sum_i DQ(i,k) (sum_a L(a,i,k) u_a)^2
+      1._R8P, -13._R8P/8._R8P, 5._R8P/8._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 1._R8P, 1._R8P, &
+      -31._R8P/20._R8P, 11._R8P/20._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 1._R8P, 1._R8P, -19._R8P/8._R8P, &
+      11._R8P/8._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 1._R8P], [3,3,3])
+real(R8P), parameter :: TENO5_DQ(0:2,0:2) = reshape([ & !< indicator pivots DQ(i,k) >= 0
+      4._R8P/3._R8P, 13._R8P/16._R8P, 0._R8P, 10._R8P/3._R8P, 13._R8P/40._R8P, 0._R8P, 4._R8P/3._R8P, 13._R8P/16._R8P, &
+      0._R8P], [3,3])
 real(R8P), parameter :: TENO5_D(0:2) = reshape([ & !< linear weights
-                   3._R8P/5._R8P,             3._R8P/10._R8P,             1._R8P/10._R8P], [3])
+      3._R8P/5._R8P, 3._R8P/10._R8P, 1._R8P/10._R8P], [3])
 real(R8P), parameter :: TENO5_TC(0:2) = reshape([ & !< tau coefficients on the beta_k
-                          0._R8P,                     1._R8P,                    -1._R8P], [3])
+      0._R8P, 1._R8P, -1._R8P], [3])
 integer(I4P), parameter :: TENO5_GLO = -2_I4P !< first cell of the global stencil
 integer(I4P), parameter :: TENO5_GW = 1_I4P !< width of the global stencil
-real(R8P), parameter :: TENO5_UG(0:0,0:0) = reshape([ & !< global indicator, upper-triangular
-                          0._R8P], [1,1])
+real(R8P), parameter :: TENO5_LG(0:0,0:0) = reshape([ & !< global indicator, sum of squares: L
+      0._R8P], [1,1])
+real(R8P), parameter :: TENO5_DG(0:0) = reshape([ & !< global indicator pivots
+      0._R8P], [1])
 
 ! TENO6: tau_6 = beta_6 - (beta_1 + beta_2 + 4 beta_0)/6, max-order linear weights
 integer(I4P), parameter :: TENO6_NC = 4_I4P !< candidate stencils
@@ -308,44 +317,37 @@ integer(I4P), parameter :: TENO6_MAXW = 4_I4P !< widest candidate
 real(R8P), parameter :: TENO6_TG = 1._R8P !< coefficient of the global indicator in tau (0: none)
 integer(I4P), parameter :: TENO6_CLO(0:3) = [-1_I4P, 0_I4P, -2_I4P, 0_I4P] !< first cell of each candidate
 integer(I4P), parameter :: TENO6_CW(0:3) = [3_I4P, 3_I4P, 3_I4P, 4_I4P] !< width of each candidate
-real(R8P), parameter :: TENO6_P(0:3,0:3) = reshape([ & !< face coefficients P(j,k) of cell CLO(k)+j
-                  -1._R8P/6._R8P,              5._R8P/6._R8P,              1._R8P/3._R8P,                     0._R8P, &
-                   1._R8P/3._R8P,              5._R8P/6._R8P,             -1._R8P/6._R8P,                     0._R8P, &
-                   1._R8P/3._R8P,             -7._R8P/6._R8P,             11._R8P/6._R8P,                     0._R8P, &
-                   1._R8P/4._R8P,            13._R8P/12._R8P,            -5._R8P/12._R8P,             1._R8P/12._R8P], [4,4])
-real(R8P), parameter :: TENO6_U(0:3,0:3,0:3) = reshape([ & !< indicators, upper-triangular U(a,b,k) on cells CLO(k)+a, CLO(k)+b
-                   4._R8P/3._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                 -13._R8P/3._R8P,             13._R8P/3._R8P,                     0._R8P,                     0._R8P, &
-                   5._R8P/3._R8P,            -13._R8P/3._R8P,              4._R8P/3._R8P,                     0._R8P, &
-                          0._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                  10._R8P/3._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                 -31._R8P/3._R8P,             25._R8P/3._R8P,                     0._R8P,                     0._R8P, &
-                  11._R8P/3._R8P,            -19._R8P/3._R8P,              4._R8P/3._R8P,                     0._R8P, &
-                          0._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                   4._R8P/3._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                 -19._R8P/3._R8P,             25._R8P/3._R8P,                     0._R8P,                     0._R8P, &
-                  11._R8P/3._R8P,            -31._R8P/3._R8P,             10._R8P/3._R8P,                     0._R8P, &
-                          0._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-              2107._R8P/240._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-              -1567._R8P/40._R8P,        11003._R8P/240._R8P,                     0._R8P,                     0._R8P, &
-              3521._R8P/120._R8P,        -8623._R8P/120._R8P,         7043._R8P/240._R8P,                     0._R8P, &
-               -309._R8P/40._R8P,         2321._R8P/120._R8P,          -647._R8P/40._R8P,          547._R8P/240._R8P], [4,4,4])
+real(R8P), parameter :: TENO6_P(0:3,0:3) = reshape([ & !< face coefficient of cell CLO(k)+j
+      -1._R8P/6._R8P, 5._R8P/6._R8P, 1._R8P/3._R8P, 0._R8P, 1._R8P/3._R8P, 5._R8P/6._R8P, -1._R8P/6._R8P, 0._R8P, &
+      1._R8P/3._R8P, -7._R8P/6._R8P, 11._R8P/6._R8P, 0._R8P, 1._R8P/4._R8P, 13._R8P/12._R8P, -5._R8P/12._R8P, &
+      1._R8P/12._R8P], [4,4])
+real(R8P), parameter :: TENO6_L(0:3,0:3,0:3) = reshape([ & !< indicator factors: beta_k = sum_i DQ(i,k) (sum_a L(a,i,k) u_a)^2
+      1._R8P, -13._R8P/8._R8P, 5._R8P/8._R8P, 0._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, 0._R8P, &
+      0._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, -31._R8P/20._R8P, 11._R8P/20._R8P, 0._R8P, 0._R8P, 1._R8P, -1._R8P, &
+      0._R8P, 0._R8P, 0._R8P, 1._R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, -19._R8P/8._R8P, 11._R8P/8._R8P, &
+      0._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, &
+      -4701._R8P/2107._R8P, 503._R8P/301._R8P, -927._R8P/2107._R8P, 0._R8P, 1._R8P, -40411._R8P/27098._R8P, &
+      13313._R8P/27098._R8P, 0._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P], [4,4,4])
+real(R8P), parameter :: TENO6_DQ(0:3,0:3) = reshape([ & !< indicator pivots DQ(i,k) >= 0
+      4._R8P/3._R8P, 13._R8P/16._R8P, 0._R8P, 0._R8P, 10._R8P/3._R8P, 13._R8P/40._R8P, 0._R8P, 0._R8P, 4._R8P/3._R8P, &
+      13._R8P/16._R8P, 0._R8P, 0._R8P, 2107._R8P/240._R8P, 13549._R8P/6321._R8P, 10153._R8P/162588._R8P, 0._R8P], [4,4])
 real(R8P), parameter :: TENO6_D(0:3) = reshape([ & !< linear weights
-                  9._R8P/20._R8P,             3._R8P/10._R8P,             1._R8P/20._R8P,              1._R8P/5._R8P], [4])
+      9._R8P/20._R8P, 3._R8P/10._R8P, 1._R8P/20._R8P, 1._R8P/5._R8P], [4])
 real(R8P), parameter :: TENO6_TC(0:3) = reshape([ & !< tau coefficients on the beta_k
-                  -2._R8P/3._R8P,             -1._R8P/6._R8P,             -1._R8P/6._R8P,                     0._R8P], [4])
+      -2._R8P/3._R8P, -1._R8P/6._R8P, -1._R8P/6._R8P, 0._R8P], [4])
 integer(I4P), parameter :: TENO6_GLO = -2_I4P !< first cell of the global stencil
 integer(I4P), parameter :: TENO6_GW = 6_I4P !< width of the global stencil
-real(R8P), parameter :: TENO6_UG(0:5,0:5) = reshape([ & !< global indicator, upper-triangular
-           90593._R8P/40320._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                          0._R8P,                     0._R8P,         -1240._R8P/63._R8P,    1884439._R8P/40320._R8P, &
-                          0._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-           255397._R8P/7560._R8P,   -5106971._R8P/30240._R8P,    4877743._R8P/30240._R8P,                     0._R8P, &
-                          0._R8P,                     0._R8P,    -288521._R8P/10080._R8P,      248681._R8P/1680._R8P, &
-          -559651._R8P/1890._R8P,      159219._R8P/1120._R8P,                     0._R8P,                     0._R8P, &
-          243127._R8P/20160._R8P,    -643999._R8P/10080._R8P,    1991239._R8P/15120._R8P,   -1323367._R8P/10080._R8P, &
-           141661._R8P/4480._R8P,                     0._R8P,      -12281._R8P/6048._R8P,     662503._R8P/60480._R8P, &
-          -139633._R8P/6048._R8P,      178999._R8P/7560._R8P,    -178747._R8P/15120._R8P,    139633._R8P/120960._R8P], [6,6])
+real(R8P), parameter :: TENO6_LG(0:5,0:5) = reshape([ & !< global indicator, sum of squares: L
+      1._R8P, -396800._R8P/90593._R8P, 2043176._R8P/271779._R8P, -577042._R8P/90593._R8P, 243127._R8P/90593._R8P, &
+      -122810._R8P/271779._R8P, 0._R8P, 1._R8P, -114579410806._R8P/39800226981._R8P, &
+      41374828396._R8P/13266742327._R8P, -20210809214._R8P/13266742327._R8P, 11287126279._R8P/39800226981._R8P, &
+      0._R8P, 0._R8P, 1._R8P, -4727138212436079._R8P/2535830006332177._R8P, &
+      2760395250167211._R8P/2535830006332177._R8P, -569087044063309._R8P/2535830006332177._R8P, 0._R8P, 0._R8P, &
+      0._R8P, 1._R8P, -1.3841978250666034e+00_R8P, 3.8419782506660333e-01_R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, &
+      -1._R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P], [6,6])
+real(R8P), parameter :: TENO6_DG(0:5) = reshape([ & !< global indicator pivots
+      90593._R8P/40320._R8P, 13266742327._R8P/3652709760._R8P, 2535830006332177._R8P/601779431952720._R8P, &
+      1.0316113515772065e+00_R8P, 3.8978122273068759e-02_R8P, 0._R8P], [6])
 
 ! TENO6-opt: TENO6 with the optimised linear weights of Fu, Hu & Adams 2016 (5th order)
 integer(I4P), parameter :: TENO6_OPT_NC = 4_I4P !< candidate stencils
@@ -355,44 +357,37 @@ integer(I4P), parameter :: TENO6_OPT_MAXW = 4_I4P !< widest candidate
 real(R8P), parameter :: TENO6_OPT_TG = 1._R8P !< coefficient of the global indicator in tau (0: none)
 integer(I4P), parameter :: TENO6_OPT_CLO(0:3) = [-1_I4P, 0_I4P, -2_I4P, 0_I4P] !< first cell of each candidate
 integer(I4P), parameter :: TENO6_OPT_CW(0:3) = [3_I4P, 3_I4P, 3_I4P, 4_I4P] !< width of each candidate
-real(R8P), parameter :: TENO6_OPT_P(0:3,0:3) = reshape([ & !< face coefficients P(j,k) of cell CLO(k)+j
-                  -1._R8P/6._R8P,              5._R8P/6._R8P,              1._R8P/3._R8P,                     0._R8P, &
-                   1._R8P/3._R8P,              5._R8P/6._R8P,             -1._R8P/6._R8P,                     0._R8P, &
-                   1._R8P/3._R8P,             -7._R8P/6._R8P,             11._R8P/6._R8P,                     0._R8P, &
-                   1._R8P/4._R8P,            13._R8P/12._R8P,            -5._R8P/12._R8P,             1._R8P/12._R8P], [4,4])
-real(R8P), parameter :: TENO6_OPT_U(0:3,0:3,0:3) = reshape([ & !< indicators, upper-triangular U(a,b,k) on cells CLO(k)+a, CLO(k)+b
-                   4._R8P/3._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                 -13._R8P/3._R8P,             13._R8P/3._R8P,                     0._R8P,                     0._R8P, &
-                   5._R8P/3._R8P,            -13._R8P/3._R8P,              4._R8P/3._R8P,                     0._R8P, &
-                          0._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                  10._R8P/3._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                 -31._R8P/3._R8P,             25._R8P/3._R8P,                     0._R8P,                     0._R8P, &
-                  11._R8P/3._R8P,            -19._R8P/3._R8P,              4._R8P/3._R8P,                     0._R8P, &
-                          0._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                   4._R8P/3._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                 -19._R8P/3._R8P,             25._R8P/3._R8P,                     0._R8P,                     0._R8P, &
-                  11._R8P/3._R8P,            -31._R8P/3._R8P,             10._R8P/3._R8P,                     0._R8P, &
-                          0._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-              2107._R8P/240._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-              -1567._R8P/40._R8P,        11003._R8P/240._R8P,                     0._R8P,                     0._R8P, &
-              3521._R8P/120._R8P,        -8623._R8P/120._R8P,         7043._R8P/240._R8P,                     0._R8P, &
-               -309._R8P/40._R8P,         2321._R8P/120._R8P,          -647._R8P/40._R8P,          547._R8P/240._R8P], [4,4,4])
+real(R8P), parameter :: TENO6_OPT_P(0:3,0:3) = reshape([ & !< face coefficient of cell CLO(k)+j
+      -1._R8P/6._R8P, 5._R8P/6._R8P, 1._R8P/3._R8P, 0._R8P, 1._R8P/3._R8P, 5._R8P/6._R8P, -1._R8P/6._R8P, 0._R8P, &
+      1._R8P/3._R8P, -7._R8P/6._R8P, 11._R8P/6._R8P, 0._R8P, 1._R8P/4._R8P, 13._R8P/12._R8P, -5._R8P/12._R8P, &
+      1._R8P/12._R8P], [4,4])
+real(R8P), parameter :: TENO6_OPT_L(0:3,0:3,0:3) = reshape([ & !< indicator factors: beta_k = sum_i DQ(i,k) (sum_a L(a,i,k) u_a)^2
+      1._R8P, -13._R8P/8._R8P, 5._R8P/8._R8P, 0._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, 0._R8P, &
+      0._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, -31._R8P/20._R8P, 11._R8P/20._R8P, 0._R8P, 0._R8P, 1._R8P, -1._R8P, &
+      0._R8P, 0._R8P, 0._R8P, 1._R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, -19._R8P/8._R8P, 11._R8P/8._R8P, &
+      0._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, &
+      -4701._R8P/2107._R8P, 503._R8P/301._R8P, -927._R8P/2107._R8P, 0._R8P, 1._R8P, -40411._R8P/27098._R8P, &
+      13313._R8P/27098._R8P, 0._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P], [4,4,4])
+real(R8P), parameter :: TENO6_OPT_DQ(0:3,0:3) = reshape([ & !< indicator pivots DQ(i,k) >= 0
+      4._R8P/3._R8P, 13._R8P/16._R8P, 0._R8P, 0._R8P, 10._R8P/3._R8P, 13._R8P/40._R8P, 0._R8P, 0._R8P, 4._R8P/3._R8P, &
+      13._R8P/16._R8P, 0._R8P, 0._R8P, 2107._R8P/240._R8P, 13549._R8P/6321._R8P, 10153._R8P/162588._R8P, 0._R8P], [4,4])
 real(R8P), parameter :: TENO6_OPT_D(0:3) = reshape([ & !< linear weights
-                       0.462_R8P,                    0.3_R8P,                  0.054_R8P,                  0.184_R8P], [4])
+      0.462_R8P, 0.3_R8P, 0.054_R8P, 0.184_R8P], [4])
 real(R8P), parameter :: TENO6_OPT_TC(0:3) = reshape([ & !< tau coefficients on the beta_k
-                  -2._R8P/3._R8P,             -1._R8P/6._R8P,             -1._R8P/6._R8P,                     0._R8P], [4])
+      -2._R8P/3._R8P, -1._R8P/6._R8P, -1._R8P/6._R8P, 0._R8P], [4])
 integer(I4P), parameter :: TENO6_OPT_GLO = -2_I4P !< first cell of the global stencil
 integer(I4P), parameter :: TENO6_OPT_GW = 6_I4P !< width of the global stencil
-real(R8P), parameter :: TENO6_OPT_UG(0:5,0:5) = reshape([ & !< global indicator, upper-triangular
-           90593._R8P/40320._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                          0._R8P,                     0._R8P,         -1240._R8P/63._R8P,    1884439._R8P/40320._R8P, &
-                          0._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-           255397._R8P/7560._R8P,   -5106971._R8P/30240._R8P,    4877743._R8P/30240._R8P,                     0._R8P, &
-                          0._R8P,                     0._R8P,    -288521._R8P/10080._R8P,      248681._R8P/1680._R8P, &
-          -559651._R8P/1890._R8P,      159219._R8P/1120._R8P,                     0._R8P,                     0._R8P, &
-          243127._R8P/20160._R8P,    -643999._R8P/10080._R8P,    1991239._R8P/15120._R8P,   -1323367._R8P/10080._R8P, &
-           141661._R8P/4480._R8P,                     0._R8P,      -12281._R8P/6048._R8P,     662503._R8P/60480._R8P, &
-          -139633._R8P/6048._R8P,      178999._R8P/7560._R8P,    -178747._R8P/15120._R8P,    139633._R8P/120960._R8P], [6,6])
+real(R8P), parameter :: TENO6_OPT_LG(0:5,0:5) = reshape([ & !< global indicator, sum of squares: L
+      1._R8P, -396800._R8P/90593._R8P, 2043176._R8P/271779._R8P, -577042._R8P/90593._R8P, 243127._R8P/90593._R8P, &
+      -122810._R8P/271779._R8P, 0._R8P, 1._R8P, -114579410806._R8P/39800226981._R8P, &
+      41374828396._R8P/13266742327._R8P, -20210809214._R8P/13266742327._R8P, 11287126279._R8P/39800226981._R8P, &
+      0._R8P, 0._R8P, 1._R8P, -4727138212436079._R8P/2535830006332177._R8P, &
+      2760395250167211._R8P/2535830006332177._R8P, -569087044063309._R8P/2535830006332177._R8P, 0._R8P, 0._R8P, &
+      0._R8P, 1._R8P, -1.3841978250666034e+00_R8P, 3.8419782506660333e-01_R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, &
+      -1._R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P], [6,6])
+real(R8P), parameter :: TENO6_OPT_DG(0:5) = reshape([ & !< global indicator pivots
+      90593._R8P/40320._R8P, 13266742327._R8P/3652709760._R8P, 2535830006332177._R8P/601779431952720._R8P, &
+      1.0316113515772065e+00_R8P, 3.8978122273068759e-02_R8P, 0._R8P], [6])
 
 ! TENO6 with the optimised linear weights of the NENO6 paper (4th order)
 integer(I4P), parameter :: TENO6_NENO6_NC = 4_I4P !< candidate stencils
@@ -402,42 +397,35 @@ integer(I4P), parameter :: TENO6_NENO6_MAXW = 4_I4P !< widest candidate
 real(R8P), parameter :: TENO6_NENO6_TG = 1._R8P !< coefficient of the global indicator in tau (0: none)
 integer(I4P), parameter :: TENO6_NENO6_CLO(0:3) = [-1_I4P, 0_I4P, -2_I4P, 0_I4P] !< first cell of each candidate
 integer(I4P), parameter :: TENO6_NENO6_CW(0:3) = [3_I4P, 3_I4P, 3_I4P, 4_I4P] !< width of each candidate
-real(R8P), parameter :: TENO6_NENO6_P(0:3,0:3) = reshape([ & !< face coefficients P(j,k) of cell CLO(k)+j
-                  -1._R8P/6._R8P,              5._R8P/6._R8P,              1._R8P/3._R8P,                     0._R8P, &
-                   1._R8P/3._R8P,              5._R8P/6._R8P,             -1._R8P/6._R8P,                     0._R8P, &
-                   1._R8P/3._R8P,             -7._R8P/6._R8P,             11._R8P/6._R8P,                     0._R8P, &
-                   1._R8P/4._R8P,            13._R8P/12._R8P,            -5._R8P/12._R8P,             1._R8P/12._R8P], [4,4])
-real(R8P), parameter :: TENO6_NENO6_U(0:3,0:3,0:3) = reshape([ & !< indicators, upper-triangular U(a,b,k) on cells CLO(k)+a, CLO(k)+b
-                   4._R8P/3._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                 -13._R8P/3._R8P,             13._R8P/3._R8P,                     0._R8P,                     0._R8P, &
-                   5._R8P/3._R8P,            -13._R8P/3._R8P,              4._R8P/3._R8P,                     0._R8P, &
-                          0._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                  10._R8P/3._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                 -31._R8P/3._R8P,             25._R8P/3._R8P,                     0._R8P,                     0._R8P, &
-                  11._R8P/3._R8P,            -19._R8P/3._R8P,              4._R8P/3._R8P,                     0._R8P, &
-                          0._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                   4._R8P/3._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                 -19._R8P/3._R8P,             25._R8P/3._R8P,                     0._R8P,                     0._R8P, &
-                  11._R8P/3._R8P,            -31._R8P/3._R8P,             10._R8P/3._R8P,                     0._R8P, &
-                          0._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-              2107._R8P/240._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-              -1567._R8P/40._R8P,        11003._R8P/240._R8P,                     0._R8P,                     0._R8P, &
-              3521._R8P/120._R8P,        -8623._R8P/120._R8P,         7043._R8P/240._R8P,                     0._R8P, &
-               -309._R8P/40._R8P,         2321._R8P/120._R8P,          -647._R8P/40._R8P,          547._R8P/240._R8P], [4,4,4])
+real(R8P), parameter :: TENO6_NENO6_P(0:3,0:3) = reshape([ & !< face coefficient of cell CLO(k)+j
+      -1._R8P/6._R8P, 5._R8P/6._R8P, 1._R8P/3._R8P, 0._R8P, 1._R8P/3._R8P, 5._R8P/6._R8P, -1._R8P/6._R8P, 0._R8P, &
+      1._R8P/3._R8P, -7._R8P/6._R8P, 11._R8P/6._R8P, 0._R8P, 1._R8P/4._R8P, 13._R8P/12._R8P, -5._R8P/12._R8P, &
+      1._R8P/12._R8P], [4,4])
+real(R8P), parameter :: TENO6_NENO6_L(0:3,0:3,0:3) = reshape([ & !< indicator factors: beta_k = sum_i DQ(i,k) (sum_a L(a,i,k) u_a)^2
+      1._R8P, -13._R8P/8._R8P, 5._R8P/8._R8P, 0._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, 0._R8P, &
+      0._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, -31._R8P/20._R8P, 11._R8P/20._R8P, 0._R8P, 0._R8P, 1._R8P, -1._R8P, &
+      0._R8P, 0._R8P, 0._R8P, 1._R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, -19._R8P/8._R8P, 11._R8P/8._R8P, &
+      0._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, &
+      -4701._R8P/2107._R8P, 503._R8P/301._R8P, -927._R8P/2107._R8P, 0._R8P, 1._R8P, -40411._R8P/27098._R8P, &
+      13313._R8P/27098._R8P, 0._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P], [4,4,4])
+real(R8P), parameter :: TENO6_NENO6_DQ(0:3,0:3) = reshape([ & !< indicator pivots DQ(i,k) >= 0
+      4._R8P/3._R8P, 13._R8P/16._R8P, 0._R8P, 0._R8P, 10._R8P/3._R8P, 13._R8P/40._R8P, 0._R8P, 0._R8P, 4._R8P/3._R8P, &
+      13._R8P/16._R8P, 0._R8P, 0._R8P, 2107._R8P/240._R8P, 13549._R8P/6321._R8P, 10153._R8P/162588._R8P, 0._R8P], [4,4])
 real(R8P), parameter :: TENO6_NENO6_D(0:3) = reshape([ & !< linear weights
-          0.4294317718960898_R8P,     0.1727270875843552_R8P,     0.0855682281039113_R8P,      0.312272912415645_R8P], [4])
+      0.4294317718960898_R8P, 0.1727270875843552_R8P, 0.0855682281039113_R8P, 0.312272912415645_R8P], [4])
 real(R8P), parameter :: TENO6_NENO6_TC(0:3) = reshape([ & !< tau coefficients on the beta_k
-                  -2._R8P/3._R8P,             -1._R8P/6._R8P,             -1._R8P/6._R8P,                     0._R8P], [4])
+      -2._R8P/3._R8P, -1._R8P/6._R8P, -1._R8P/6._R8P, 0._R8P], [4])
 integer(I4P), parameter :: TENO6_NENO6_GLO = -2_I4P !< first cell of the global stencil
 integer(I4P), parameter :: TENO6_NENO6_GW = 6_I4P !< width of the global stencil
-real(R8P), parameter :: TENO6_NENO6_UG(0:5,0:5) = reshape([ & !< global indicator, upper-triangular
-           90593._R8P/40320._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-                          0._R8P,                     0._R8P,         -1240._R8P/63._R8P,    1884439._R8P/40320._R8P, &
-                          0._R8P,                     0._R8P,                     0._R8P,                     0._R8P, &
-           255397._R8P/7560._R8P,   -5106971._R8P/30240._R8P,    4877743._R8P/30240._R8P,                     0._R8P, &
-                          0._R8P,                     0._R8P,    -288521._R8P/10080._R8P,      248681._R8P/1680._R8P, &
-          -559651._R8P/1890._R8P,      159219._R8P/1120._R8P,                     0._R8P,                     0._R8P, &
-          243127._R8P/20160._R8P,    -643999._R8P/10080._R8P,    1991239._R8P/15120._R8P,   -1323367._R8P/10080._R8P, &
-           141661._R8P/4480._R8P,                     0._R8P,      -12281._R8P/6048._R8P,     662503._R8P/60480._R8P, &
-          -139633._R8P/6048._R8P,      178999._R8P/7560._R8P,    -178747._R8P/15120._R8P,    139633._R8P/120960._R8P], [6,6])
+real(R8P), parameter :: TENO6_NENO6_LG(0:5,0:5) = reshape([ & !< global indicator, sum of squares: L
+      1._R8P, -396800._R8P/90593._R8P, 2043176._R8P/271779._R8P, -577042._R8P/90593._R8P, 243127._R8P/90593._R8P, &
+      -122810._R8P/271779._R8P, 0._R8P, 1._R8P, -114579410806._R8P/39800226981._R8P, &
+      41374828396._R8P/13266742327._R8P, -20210809214._R8P/13266742327._R8P, 11287126279._R8P/39800226981._R8P, &
+      0._R8P, 0._R8P, 1._R8P, -4727138212436079._R8P/2535830006332177._R8P, &
+      2760395250167211._R8P/2535830006332177._R8P, -569087044063309._R8P/2535830006332177._R8P, 0._R8P, 0._R8P, &
+      0._R8P, 1._R8P, -1.3841978250666034e+00_R8P, 3.8419782506660333e-01_R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P, &
+      -1._R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 0._R8P, 1._R8P], [6,6])
+real(R8P), parameter :: TENO6_NENO6_DG(0:5) = reshape([ & !< global indicator pivots
+      90593._R8P/40320._R8P, 13266742327._R8P/3652709760._R8P, 2535830006332177._R8P/601779431952720._R8P, &
+      1.0316113515772065e+00_R8P, 3.8978122273068759e-02_R8P, 0._R8P], [6])
 endmodule seth_z_teno_tables

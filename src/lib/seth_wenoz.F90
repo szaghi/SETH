@@ -26,9 +26,9 @@ contains
    integer(I4P), parameter :: CLO(0:NC-1) = WENOZ3_CLO, CW(0:NC-1) = WENOZ3_CW
    integer(I4P), parameter :: GLO = WENOZ3_GLO, GW = WENOZ3_GW
    real(R8P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ3_P
-   real(R8P),    parameter :: CU(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ3_U
+   real(R8P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ3_L, CDQ(0:MAXW-1,0:NC-1) = WENOZ3_DQ
    real(R8P),    parameter :: D(0:NC-1) = WENOZ3_D, TC(0:NC-1) = WENOZ3_TC, TG = WENOZ3_TG
-   real(R8P),    parameter :: CUG(0:GW-1,0:GW-1) = WENOZ3_UG
+   real(R8P),    parameter :: CLG(0:GW-1,0:GW-1) = WENOZ3_LG, CDG(0:GW-1) = WENOZ3_DG
 #include "seth_z_teno_body.INC"
    endsubroutine seth_wenoz3
 
@@ -38,9 +38,9 @@ contains
    integer(I4P), parameter :: CLO(0:NC-1) = WENOZ5_CLO, CW(0:NC-1) = WENOZ5_CW
    integer(I4P), parameter :: GLO = WENOZ5_GLO, GW = WENOZ5_GW
    real(R8P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ5_P
-   real(R8P),    parameter :: CU(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ5_U
+   real(R8P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ5_L, CDQ(0:MAXW-1,0:NC-1) = WENOZ5_DQ
    real(R8P),    parameter :: D(0:NC-1) = WENOZ5_D, TC(0:NC-1) = WENOZ5_TC, TG = WENOZ5_TG
-   real(R8P),    parameter :: CUG(0:GW-1,0:GW-1) = WENOZ5_UG
+   real(R8P),    parameter :: CLG(0:GW-1,0:GW-1) = WENOZ5_LG, CDG(0:GW-1) = WENOZ5_DG
 #include "seth_z_teno_body.INC"
    endsubroutine seth_wenoz5
 
@@ -50,9 +50,9 @@ contains
    integer(I4P), parameter :: CLO(0:NC-1) = WENOZ7_CLO, CW(0:NC-1) = WENOZ7_CW
    integer(I4P), parameter :: GLO = WENOZ7_GLO, GW = WENOZ7_GW
    real(R8P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ7_P
-   real(R8P),    parameter :: CU(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ7_U
+   real(R8P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ7_L, CDQ(0:MAXW-1,0:NC-1) = WENOZ7_DQ
    real(R8P),    parameter :: D(0:NC-1) = WENOZ7_D, TC(0:NC-1) = WENOZ7_TC, TG = WENOZ7_TG
-   real(R8P),    parameter :: CUG(0:GW-1,0:GW-1) = WENOZ7_UG
+   real(R8P),    parameter :: CLG(0:GW-1,0:GW-1) = WENOZ7_LG, CDG(0:GW-1) = WENOZ7_DG
 #include "seth_z_teno_body.INC"
    endsubroutine seth_wenoz7
 
@@ -62,9 +62,9 @@ contains
    integer(I4P), parameter :: CLO(0:NC-1) = WENOZ9_CLO, CW(0:NC-1) = WENOZ9_CW
    integer(I4P), parameter :: GLO = WENOZ9_GLO, GW = WENOZ9_GW
    real(R8P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ9_P
-   real(R8P),    parameter :: CU(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ9_U
+   real(R8P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ9_L, CDQ(0:MAXW-1,0:NC-1) = WENOZ9_DQ
    real(R8P),    parameter :: D(0:NC-1) = WENOZ9_D, TC(0:NC-1) = WENOZ9_TC, TG = WENOZ9_TG
-   real(R8P),    parameter :: CUG(0:GW-1,0:GW-1) = WENOZ9_UG
+   real(R8P),    parameter :: CLG(0:GW-1,0:GW-1) = WENOZ9_LG, CDG(0:GW-1) = WENOZ9_DG
 #include "seth_z_teno_body.INC"
    endsubroutine seth_wenoz9
 

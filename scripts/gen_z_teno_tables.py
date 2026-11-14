@@ -131,6 +131,37 @@ def indicator(cells: list[int]) -> list[list[Fr]]:
     return mat
 
 
+def ldl(mat: list[list[Fr]]) -> tuple[list[list[Fr]], list[Fr]]:
+    """Exact LDL^T of a symmetric positive semi-definite matrix: mat = L diag(D) L^T, L unit lower-triangular, D >= 0.
+
+    The smoothness indicators are written as sum_i D_i (sum_a L[a][i] u_a)^2: a sum of non-negative terms, so beta >= 0
+    in floating point by construction (the upper-triangular form cancels and can round to small negative values,
+    which with eps = 1e-40 sends tau/(beta + eps) to -inf: NaN on constant data). A zero pivot (the indicators vanish
+    on constants, so one pivot is zero) leaves its column of L zero.
+    """
+    w = len(mat)
+    lo = [[Fr(0)] * w for _ in range(w)]
+    d = [Fr(0)] * w
+    for i in range(w):
+        lo[i][i] = Fr(1)
+        d[i] = mat[i][i] - sum(lo[i][j] ** 2 * d[j] for j in range(i))
+        if d[i] < 0:
+            sys.exit('LDL: negative pivot, the indicator is not positive semi-definite')
+        for k in range(i + 1, w):
+            num = mat[k][i] - sum(lo[k][j] * lo[i][j] * d[j] for j in range(i))
+            if d[i] == 0:
+                if num != 0:
+                    sys.exit('LDL: zero pivot with a non-zero column')
+                lo[k][i] = Fr(0)
+            else:
+                lo[k][i] = num / d[i]
+    for a in range(w):  # exact check: L D L^T == mat
+        for c in range(w):
+            if sum(lo[a][i] * d[i] * lo[c][i] for i in range(w)) != mat[a][c]:
+                sys.exit('LDL: reconstruction differs from the indicator matrix')
+    return lo, d
+
+
 def quad(mat: list[list[Fr]], u: list[Fr]) -> Fr:
     return sum(mat[a][c] * u[a] * u[c] for a in range(len(u)) for c in range(len(u)))
 
@@ -291,12 +322,20 @@ def fstr(x) -> str:
         return x
     x = Fr(x)
     if abs(x.numerator) >= 2 ** 53 or x.denominator >= 2 ** 53:
-        check_fail(f'{x} is not a ratio of exactly representable integers')
+        # not a ratio of exactly representable integers (the LDL factors of the 6-point indicator): the correctly
+        # rounded double, 17 significant digits (round-trips exactly)
+        return f'{float(x):.16e}_R8P'
     return f'{x.numerator}._R8P' if x.denominator == 1 else f'{x.numerator}._R8P/{x.denominator}._R8P'
 
 
 def farray(name: str, bounds: str, extents: str, values: list[str], doc: str, kind: str = 'real(R8P)') -> str:
-    rows = [', '.join(f'{v:>26}' for v in values[i:i + 4]) for i in range(0, len(values), 4)]
+    rows, row = [], []
+    for v in values:  # pack the values by length: free-form lines stay within 132 columns
+        if row and len('      ' + ', '.join(row + [v]) + ', &') > 120:
+            rows.append(', '.join(row))
+            row = []
+        row.append(v)
+    rows.append(', '.join(row))
     body = ', &\n      '.join(rows)
     return f'{kind}, parameter :: {name}({bounds}) = reshape([ & !< {doc}\n      {body}], [{extents}])\n'
 
@@ -332,30 +371,35 @@ def emit(name: str) -> tuple[str, list[str]]:
                ' !< width of each candidate\n')
     names += [f'{name}_CLO', f'{name}_CW']
     pvals = []
-    uvals = []
+    lvals = []
+    dvals = []
     for k in range(nc):  # Fortran order: first index fastest
         coefs = face_coefficients(cands[k]) + [Fr(0)] * (maxw - len(cands[k]))
         pvals += [fstr(x) for x in coefs]
     for k in range(nc):
-        u = upper(indicator(cands[k]))
+        lt, dd = ldl(indicator(cands[k]))
         w = len(cands[k])
-        full = [[u[a][c] if a < w and c < w else Fr(0) for c in range(maxw)] for a in range(maxw)]
-        uvals += [fstr(full[a][c]) for c in range(maxw) for a in range(maxw)]
+        full = [[lt[a][i] if a < w and i < w else Fr(0) for i in range(maxw)] for a in range(maxw)]
+        lvals += [fstr(full[a][i]) for i in range(maxw) for a in range(maxw)]
+        dvals += [fstr(dd[i]) if i < w else fstr(0) for i in range(maxw)]
     out.append(farray(f'{name}_P', f'0:{maxw - 1},0:{nc - 1}', f'{maxw},{nc}', pvals,
-                      'face coefficients P(j,k) of cell CLO(k)+j'))
-    out.append(farray(f'{name}_U', f'0:{maxw - 1},0:{maxw - 1},0:{nc - 1}', f'{maxw},{maxw},{nc}', uvals,
-                      'indicators, upper-triangular U(a,b,k) on cells CLO(k)+a, CLO(k)+b'))
+                      'face coefficient of cell CLO(k)+j'))
+    out.append(farray(f'{name}_L', f'0:{maxw - 1},0:{maxw - 1},0:{nc - 1}', f'{maxw},{maxw},{nc}', lvals,
+                      'indicator factors: beta_k = sum_i DQ(i,k) (sum_a L(a,i,k) u_a)^2'))
+    out.append(farray(f'{name}_DQ', f'0:{maxw - 1},0:{nc - 1}', f'{maxw},{nc}', dvals,
+                      'indicator pivots DQ(i,k) >= 0'))
     out.append(farray(f'{name}_D', f'0:{nc - 1}', f'{nc}', [fstr(x) for x in d], 'linear weights'))
     out.append(farray(f'{name}_TC', f'0:{nc - 1}', f'{nc}', [fstr(x) for x in tc], 'tau coefficients on the beta_k'))
-    names += [f'{name}_P', f'{name}_U', f'{name}_D', f'{name}_TC']
+    names += [f'{name}_P', f'{name}_L', f'{name}_DQ', f'{name}_D', f'{name}_TC']
     g = glob if glob else [lo]
-    gm = upper(indicator(glob)) if glob else [[Fr(0)]]
+    gl, gd = ldl(indicator(glob)) if glob else ([[Fr(0)]], [Fr(0)])
     gw = len(g)
     scalar('GLO', 'integer(I4P)', f'{g[0]}_I4P', 'first cell of the global stencil')
     scalar('GW', 'integer(I4P)', f'{gw}_I4P', 'width of the global stencil')
-    out.append(farray(f'{name}_UG', f'0:{gw - 1},0:{gw - 1}', f'{gw},{gw}',
-                      [fstr(gm[a][c]) for c in range(gw) for a in range(gw)], 'global indicator, upper-triangular'))
-    names.append(f'{name}_UG')
+    out.append(farray(f'{name}_LG', f'0:{gw - 1},0:{gw - 1}', f'{gw},{gw}',
+                      [fstr(gl[a][i]) for i in range(gw) for a in range(gw)], 'global indicator, sum of squares: L'))
+    out.append(farray(f'{name}_DG', f'0:{gw - 1}', f'{gw}', [fstr(x) for x in gd], 'global indicator pivots'))
+    names += [f'{name}_LG', f'{name}_DG']
     return ''.join(out), names
 
 

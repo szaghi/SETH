@@ -1,6 +1,12 @@
    ! Body of a WENO-Z or TENO kernel of SETH, included after the routine declares its scheme's named constants
    ! (seth_z_teno_tables): NC, LO, UMAX, CLO(0:NC-1), CW(0:NC-1), CP(0:MAXW-1,0:NC-1) (face coefficients),
-   ! CU(0:MAXW-1,0:MAXW-1,0:NC-1) (indicators), D(0:NC-1), TC(0:NC-1), TG, GLO, GW, CUG(0:GW-1,0:GW-1).
+   ! CL(0:MAXW-1,0:MAXW-1,0:NC-1), CDQ(0:MAXW-1,0:NC-1) (indicators as sums of squares), D(0:NC-1), TC(0:NC-1), TG,
+   ! GLO, GW, CLG(0:GW-1,0:GW-1), CDG(0:GW-1) (the global indicator, the same form).
+   !
+   ! The indicators are evaluated as beta = sum_i CDQ(i) (sum_{a>=i} CL(a,i) u_a)**2 with CDQ >= 0 (an exact LDL^T of
+   ! their quadratic forms): non-negative in floating point by construction. The expanded quadratic form cancels and
+   ! can round to -1e-14 on constant data, which with eps = 1e-40 turned tau/(beta + eps) into -inf and the state into
+   ! NaN (found by seth_test_properties).
    ! SETH_TENO selects the TENO weights (cutoff), otherwise the WENO-Z ones.
    !
    ! Cells by offset from the face i+1/2 (cell 0 left of it). The left state is the left-biased reconstruction of vp;
@@ -23,11 +29,12 @@
    real(R8P)                 :: tau         !< Global smoothness measure.
    real(R8P)                 :: betag       !< Global indicator (TENO6).
    real(R8P)                 :: x, wsum     !< Work.
+   real(R8P)                 :: lsum        !< One term of an indicator, before squaring.
 #ifdef SETH_TENO
    real(R8P)                 :: g(0:NC-1)   !< C + tau/(beta + eps), then its normalised q-th power.
    real(R8P)                 :: gmax        !< Largest g.
 #endif
-   integer(I4P)              :: side, k, a, b, m
+   integer(I4P)              :: side, k, a, i, m
    !$acc routine seq
    !$omp declare target
 
@@ -44,12 +51,16 @@
       ! candidates
       do k=0, NC-1
          q(k) = 0._R8P
-         beta(k) = 0._R8P
          do a=0, CW(k)-1
             q(k) = q(k) + CP(a,k)*st(CLO(k)+a)
-            do b=a, CW(k)-1
-               beta(k) = beta(k) + CU(a,b,k)*st(CLO(k)+a)*st(CLO(k)+b)
+         enddo
+         beta(k) = 0._R8P
+         do i=0, CW(k)-1
+            lsum = 0._R8P
+            do a=i, CW(k)-1
+               lsum = lsum + CL(a,i,k)*st(CLO(k)+a)
             enddo
+            beta(k) = beta(k) + CDQ(i,k)*(lsum*lsum)
          enddo
       enddo
       ! global smoothness measure
@@ -59,10 +70,12 @@
       enddo
       if (TG /= 0._R8P) then ! a constant: folds
          betag = 0._R8P
-         do a=0, GW-1
-            do b=a, GW-1
-               betag = betag + CUG(a,b)*st(GLO+a)*st(GLO+b)
+         do i=0, GW-1
+            lsum = 0._R8P
+            do a=i, GW-1
+               lsum = lsum + CLG(a,i)*st(GLO+a)
             enddo
+            betag = betag + CDG(i)*(lsum*lsum)
          enddo
          tau = tau + TG*betag
       endif
