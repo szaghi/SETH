@@ -18,10 +18,6 @@ auto-executables = false
 auto-tests = false
 auto-examples = false
 
-[[test]]
-name = "seth_test_kinds"
-source-dir = "src/tests"
-main = "seth_test_kinds.F90"
 
 [fortran]
 implicit-typing = false
@@ -30,3 +26,23 @@ source-form = "free"
 
 [install]
 library = true
+
+[[test]]
+name = "seth_test_kinds"
+source-dir = "src/tests"
+main = "seth_test_kinds.F90"
+
+[[test]]
+name = "seth_test_weno_js_adam"
+source-dir = "src/tests"
+main = "seth_test_weno_js_adam.F90"
+
+[[test]]
+name = "seth_test_weno_js_order"
+source-dir = "src/tests"
+main = "seth_test_weno_js_order.F90"
+
+[[test]]
+name = "seth_test_weno_js_eno"
+source-dir = "src/tests"
+main = "seth_test_weno_js_eno.F90"

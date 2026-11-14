@@ -1,15 +1,37 @@
 # Quick Start
 
 ```fortran
-use seth, only : I4P, R8P   ! the working kinds, re-exported from PENF
+use seth
+real(R8P) :: vp(-2:3), vm(-2:3), rp, rm
+
+! the values around the face i+1/2, cells by offset from it (cell 0 left, cell 1 right):
+! vp reconstructed with a left bias (e.g. f+), vm with a right bias (e.g. f-); the same array for both to get the
+! two states of one field
+call seth_weno5_js(vp, vm, SETH_WENO_JS_EPS, 1._R8P, rp, rm)   ! rp: left state, rm: right state
 ```
 
-The reconstruction and interpolation API is being extracted from ADAM; this page follows it.
+Every kernel has the same dummies, `(vp, vm, eps, rmu, rp, rm)`, with bounds `1-S:S` for WENO-(2S-1):
+
+| Kernels | Scheme |
+|---|---|
+| `seth_weno1_js`, `seth_weno3_js`, `seth_weno5_js`, `seth_weno7_js`, `seth_weno9_js` | WENO-JS reconstruction from cell averages |
+| `..._interp` | WENO interpolation from point values (Jiang, Shu & Zhang 2013) |
+| `..._wr`, `..._interp_wr` | the same, also returning the weights ratios `wrp`, `wrm` (1 on smooth data, toward 0 near a discontinuity) |
+
+- **No tables, no setup:** the coefficients are compile-time constants, so a kernel needs nothing on the device.
+  Every kernel is `pure`, `!$acc routine seq` and `!$omp declare target`: call it from inside your own loops.
+- **`rmu`** is the inverse descaler of the smoothness indicators: `1` for the Jiang-Shu weights, or
+  `seth_weno_descaling(S, 1._R8P, vp, vm)` for scale-invariant weights (Don et al. 2022), or a magnitude of your own.
+- **`eps`**: `SETH_WENO_JS_EPS` is ADAM's value. WENO-7 and WENO-9 keep Balsara & Shu's integer smoothness
+  indicators (`WENO7_JS_D_SCALE = 240`, `WENO9_JS_D_SCALE = 5040`), so the same `eps` is relatively smaller there.
 
 ## Tests
 
 ```bash
 fobis fetch
 fobis build --mode tests-gnu && bash scripts/run_tests.sh
-fobis rule --ex makecoverage-analysis   # what CI runs: coverage into docs/public/coverage.json
+fobis rule --ex makecoverage-analysis   # coverage into docs/public/coverage.json
 ```
+
+The tests check the kernels against ADAM's original code (bitwise without fused multiply-add), their design order on
+smooth data, and their boundedness across a jump.
