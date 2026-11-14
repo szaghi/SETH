@@ -1,0 +1,26 @@
+GNU Fortran (GCC) 16.2.0
+Model name:                              13th Gen Intel(R) Core(TM) i9-13900KF
+faces: 16777216, timed passes: 10 per variant
+SETH  weno5_js                 : device vs host SETH, max scaled difference  0.00E+00
+ADAM  generic S=3              : vs SETH weno5_js, max scaled difference  0.00E+00
+ADAM  width s3                 : vs SETH weno5_js, max scaled difference  0.00E+00
+SETH  weno7_js                 : device vs host SETH, max scaled difference  0.00E+00
+ADAM  generic S=4              : vs SETH weno7_js, max scaled difference  0.00E+00
+ADAM  width s4                 : vs SETH weno7_js, max scaled difference  0.00E+00
+SETH  wenoz5 (p=1)             : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno6 (C_T=1e-7)         : device vs host SETH, max scaled difference  0.00E+00
+ADAM  host S=3 (FLUME CPU)     : vs SETH weno5_js, max scaled difference  0.00E+00
+ADAM  host S=4 (FLUME CPU)     : vs SETH weno7_js, max scaled difference  0.00E+00
+
+                        variant    median ms       min ms      ns/face vs ADAM gen.
+SETH  weno5_js                       386.727      383.472       23.051         2.16
+ADAM  generic S=3                    835.443      826.442       49.796         1.00
+ADAM  width s3                       356.706      348.271       21.261         2.34
+SETH  weno7_js                       580.799      574.643       34.618         2.26
+ADAM  generic S=4                   1313.094     1292.195       78.266         1.00
+ADAM  width s4                       640.943      628.879       38.203         2.05
+SETH  wenoz5 (p=1)                   808.511      801.573       48.191         1.03
+SETH  teno6 (C_T=1e-7)              1262.018     1257.034       75.222         1.04
+ADAM  host S=3 (FLUME CPU)           790.034      770.074       47.090         1.06
+ADAM  host S=4 (FLUME CPU)          1198.987     1161.990       71.465         1.10
+seth_bench_weno: checks ok

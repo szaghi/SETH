@@ -1,0 +1,4 @@
+index, name, driver_version, clocks.max.sm [MHz], utilization.gpu [%], memory.used [MiB]
+0, NVIDIA GeForce RTX 4070, 610.88, 3105 MHz, 5 %, 1914 MiB
+1, NVIDIA GeForce RTX 4070, 610.88, 3105 MHz, 0 %, 0 MiB
+nvfortran 26.9-0 64-bit target on x86-64 Linux -tp alderlake 
