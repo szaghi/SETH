@@ -5,5 +5,6 @@
 # script runs locally, in `docker run <image>` and in CI.
 set -euo pipefail
 echo "toolchain: $TOOLCHAIN ($TOOLCHAIN_OS, $TOOLCHAIN_FAMILY), FC=$FC"
+fobis fetch
 fobis build --mode "tests-$TOOLCHAIN_FAMILY"
 bash scripts/run_tests.sh
