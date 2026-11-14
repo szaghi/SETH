@@ -144,7 +144,10 @@ def weno_cells(S: int) -> list[list[int]]:
 TENO_CELLS = [[-1, 0, 1], [0, 1, 2], [-2, -1, 0], [0, 1, 2, 3]]  # Li, Fu & Adams 2020, Table 1 (i -> 0)
 TABLE1 = [[Fr(-1, 6), Fr(5, 6), Fr(2, 6)], [Fr(2, 6), Fr(5, 6), Fr(-1, 6)], [Fr(2, 6), Fr(-7, 6), Fr(11, 6)],
           [Fr(3, 12), Fr(13, 12), Fr(-5, 12), Fr(1, 12)]]
-TENO6_OPT_D = ['0.4294317718960898_R8P', '0.1727270875843552_R8P', '0.0855682281039113_R8P', '0.312272912415645_R8P']
+# TENO6-opt of Fu, Hu & Adams 2016, Table 5 (llm-wiki weno-teno targeted-eno.md, high-order-capturing teno.md)
+TENO6_OPT_D = ['0.462_R8P', '0.3_R8P', '0.054_R8P', '0.184_R8P']
+# the optimised weights of the NENO6 paper (arXiv:2207.08500, section 2.2), a later and different optimisation
+TENO6_NENO6_D = ['0.4294317718960898_R8P', '0.1727270875843552_R8P', '0.0855682281039113_R8P', '0.312272912415645_R8P']
 
 SCHEMES = {
     # name: (candidate cells, tau coefficients on the candidates, global stencil or None, global coefficient,
@@ -154,11 +157,15 @@ SCHEMES = {
     # tau_7 orders measured exactly: Don & Borges 7, Castro et al. 6 (Rathan & Naga Raju state 8 and 7)
     'WENOZ7': (weno_cells(4), [1, 3, -3, -1], None, 0, 'max', 'z', 7,
                'WENO-Z7: tau_7 = |beta_0 + 3 beta_1 - 3 beta_2 - beta_3| (Don & Borges)'),
+    # Castro et al.'s rule tau = |beta_0 - beta_{r-1}| for odd r (Li et al. 2022b, eq. 15), here r = 5: O(dx^7)
+    'WENOZ9': (weno_cells(5), [1, 0, 0, 0, -1], None, 0, 'max', 'z', 7, 'WENO-Z9: tau_9 = |beta_0 - beta_4|'),
     'TENO5': (TENO_CELLS[:3], [0, 1, -1], None, 0, 'max', 'teno', 5, 'TENO5: tau_5 = |beta_1 - beta_2|'),
     'TENO6': (TENO_CELLS, [Fr(-4, 6), Fr(-1, 6), Fr(-1, 6), 0], list(range(-2, 4)), 1, 'max', 'teno', 6,
               'TENO6: tau_6 = beta_6 - (beta_1 + beta_2 + 4 beta_0)/6, max-order linear weights'),
     'TENO6_OPT': (TENO_CELLS, [Fr(-4, 6), Fr(-1, 6), Fr(-1, 6), 0], list(range(-2, 4)), 1, TENO6_OPT_D, 'teno', 6,
-                  'TENO6-opt: TENO6 with the spectrally optimised linear weights of the NENO6 paper'),
+                  'TENO6-opt: TENO6 with the optimised linear weights of Fu, Hu & Adams 2016 (5th order)'),
+    'TENO6_NENO6': (TENO_CELLS, [Fr(-4, 6), Fr(-1, 6), Fr(-1, 6), 0], list(range(-2, 4)), 1, TENO6_NENO6_D, 'teno', 6,
+                    'TENO6 with the optimised linear weights of the NENO6 paper (4th order)'),
 }
 
 
@@ -238,8 +245,28 @@ def run_checks(adam_source: str) -> None:
     if d != [Fr(6, 10), Fr(3, 10), Fr(1, 10)] or order != 5:
         check_fail(f'TENO5 linear weights {d} order {order}')
     d, order = max_order_weights(TENO_CELLS, 'TENO6')
-    if order != 6:
-        check_fail(f'TENO6 linear weights reach order {order}, not 6')
+    if d != [Fr(9, 20), Fr(3, 10), Fr(1, 20), Fr(1, 5)] or order != 6:  # = Fu et al. 2016 Table 5: 0.45, 0.3, 0.05, 0.2
+        check_fail(f'TENO6 linear weights {d} reach order {order}, not Fu et al.\'s 6th-order ones')
+    # the derived WENO linear weights equal ADAM's (row 2: the left-biased state at i+1/2, candidate k = cells k-S+1..k)
+    for S in range(2, 6):
+        a = _js.parse(_js.routine(adam_source, f'initialize_upwind_S{S}'))['a']
+        d, order = max_order_weights(weno_cells(S), f'WENO S={S}')
+        if d != [_js.rational(a[2, k]) for k in range(S)] or order != 2 * S - 1:
+            check_fail(f'WENO S={S}: derived linear weights {d} differ from ADAM\'s')
+    # the order of the quoted optimised TENO6 weights: Fu's lose one order, NENO6's two
+    for label, wq, want in (('TENO6-opt', TENO6_OPT_D, 5), ('TENO6-NENO6', TENO6_NENO6_D, 4)):
+        dq = [Fr(w.replace('_R8P', '')) for w in wq]
+        coefs = [face_coefficients(c) for c in TENO_CELLS]
+        got = 0
+        for n in range(8):
+            r = sum(dq[k] * sum(coefs[k][j] * cell_avg_monomial(m, n) for j, m in enumerate(TENO_CELLS[k]))
+                    for k in range(4)) - (1 if n == 0 else 0)
+            if abs(float(r)) > 1e-12:
+                break
+            got += 1
+        print(f'  {label}: linear-scheme order {got} (expected {want})')
+        if got != want:
+            check_fail(f'{label}: linear-scheme order {got}, expected {want}')
     # 5: tau orders
     for name, (cands, tc, glob, tg, _w, _f, need, _doc) in SCHEMES.items():
         mats = [indicator(c) for c in cands]

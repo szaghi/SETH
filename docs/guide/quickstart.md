@@ -18,8 +18,8 @@ replace `rmu` by their own parameter:
 | `seth_weno1_js`, `seth_weno3_js`, `seth_weno5_js`, `seth_weno7_js`, `seth_weno9_js` | WENO-JS reconstruction from cell averages |
 | `..._interp` | WENO interpolation from point values (Jiang, Shu & Zhang 2013) |
 | `..._wr`, `..._interp_wr` | the same, also returning the weights ratios `wrp`, `wrm` (1 on smooth data, toward 0 near a discontinuity) |
-| `seth_wenoz3`, `seth_wenoz5`, `seth_wenoz7` | WENO-Z (Borges et al. weights; Don & Borges' tau for WENO-Z7): `(vp, vm, eps, p, rp, rm)`, `p` = 1 or 2 |
-| `seth_teno5`, `seth_teno6`, `seth_teno6_opt` | TENO (Fu, Hu & Adams): `(vp, vm, eps, ct, rp, rm)`, bounds `-2:3`, `eps = SETH_TENO_EPS`, `ct` the cutoff (`SETH_TENO6_OPT_CT` for TENO6-opt) |
+| `seth_wenoz3`, `seth_wenoz5`, `seth_wenoz7`, `seth_wenoz9` | WENO-Z (Borges et al. weights; Don & Borges' tau_7, Castro's tau_9): `(vp, vm, eps, p, rp, rm)`, `p` = 1 or 2 |
+| `seth_teno5`, `seth_teno6`, `seth_teno6_opt`, `seth_teno6_neno6` | TENO (Fu, Hu & Adams): `(vp, vm, eps, ct, rp, rm)`, bounds `-2:3`, `eps = SETH_TENO_EPS`, `ct = SETH_TENO5_CT`, `SETH_TENO6_CT`, `SETH_TENO6_OPT_CT`, `SETH_TENO6_NENO6_CT` |
 
 - **No tables, no setup:** the coefficients are compile-time constants, so a kernel needs nothing on the device.
   Every kernel is `pure`, `!$acc routine seq` and `!$omp declare target`: call it from inside your own loops.

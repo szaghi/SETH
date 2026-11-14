@@ -1,11 +1,11 @@
-!< SETH test: TENO5, TENO6 and TENO6-opt: order, the linear scheme restored on smooth data, cutoff across a jump,
+!< SETH test: TENO5, TENO6, TENO6-opt and TENO6-NENO6: order, the linear scheme restored on smooth data, cutoff across a jump,
 !< no overflow on a large jump, exact mirroring.
 program seth_test_teno
-!< SETH test: TENO5, TENO6 and TENO6-opt: order, the linear scheme restored on smooth data, cutoff across a jump,
+!< SETH test: TENO5, TENO6, TENO6-opt and TENO6-NENO6: order, the linear scheme restored on smooth data, cutoff across a jump,
 !< no overflow on a large jump, exact mirroring.
 !<
-!< 1. Order on u = exp(x) (cell averages, face at 0.3): TENO5 5, TENO6 6 (>= design - 0.5); TENO6-opt's order is
-!<    reported and must be at least 3 (its linear weights trade order for resolution).
+!< 1. Order on u = exp(x) (cell averages, face at 0.3), >= order - 0.5: TENO5 5, TENO6 6, TENO6-opt 5 (Fu et al.'s
+!<    optimised weights lose one order), TENO6-NENO6 4 (the NENO6 paper's weights lose two). C_T: the sourced values.
 !< 2. Smooth data keeps every candidate (delta = 1): the state equals the linear scheme sum d_k q_k / sum d to 4 eps of
 !<    the data magnitude.
 !< 3. A unit step at every cell boundary, both orientations: the states lie in [0, 1] to 1e-12 (the candidates
@@ -21,13 +21,14 @@ integer(I4P), parameter :: NH = 6_I4P
 real(R8P)               :: vp(-2:3), vm(-2:3), rp, rm, h, err(2,NH), order, floor_, worst, x, lin, ct, big
 integer(I4P)            :: sc, j, m, side, jump, n_
 logical                 :: passed
-character(9), parameter :: NAMES(3) = ['TENO5    ', 'TENO6    ', 'TENO6-opt']
-real(R8P),    parameter :: DESIGN(3) = [5._R8P, 6._R8P, 3._R8P]
+character(11), parameter :: NAMES(4) = ['TENO5      ', 'TENO6      ', 'TENO6-opt  ', 'TENO6-NENO6']
+real(R8P),    parameter :: DESIGN(4) = [5._R8P, 6._R8P, 5._R8P, 4._R8P]
+real(R8P),    parameter :: CTS(4) = [SETH_TENO5_CT, SETH_TENO6_CT, SETH_TENO6_OPT_CT, SETH_TENO6_NENO6_CT]
 
 passed = .true.
 floor_ = 1.e3_R8P * epsilon(1._R8P) * exp(XF)
-do sc=1, 3
-   ct = merge(SETH_TENO6_OPT_CT, 1.e-5_R8P, sc == 3)
+do sc=1, 4
+   ct = CTS(sc)
    ! 1. order
    do j=1, NH
       h = 0.4_R8P / 2._R8P**(j-1)
@@ -111,6 +112,7 @@ contains
    case(1) ; call seth_teno5(vp, vm, SETH_TENO_EPS, ct, rp, rm)
    case(2) ; call seth_teno6(vp, vm, SETH_TENO_EPS, ct, rp, rm)
    case(3) ; call seth_teno6_opt(vp, vm, SETH_TENO_EPS, ct, rp, rm)
+   case(4) ; call seth_teno6_neno6(vp, vm, SETH_TENO_EPS, ct, rp, rm)
    endselect
    endsubroutine kernel
 
@@ -123,6 +125,8 @@ contains
    case(1) ; r = lin_of(TENO5_NC, TENO5_MAXW, TENO5_CLO, TENO5_CW, TENO5_P, TENO5_D, v)
    case(2) ; r = lin_of(TENO6_NC, TENO6_MAXW, TENO6_CLO, TENO6_CW, TENO6_P, TENO6_D, v)
    case(3) ; r = lin_of(TENO6_OPT_NC, TENO6_OPT_MAXW, TENO6_OPT_CLO, TENO6_OPT_CW, TENO6_OPT_P, TENO6_OPT_D, v)
+   case(4) ; r = lin_of(TENO6_NENO6_NC, TENO6_NENO6_MAXW, TENO6_NENO6_CLO, TENO6_NENO6_CW, TENO6_NENO6_P, &
+                        TENO6_NENO6_D, v)
    endselect
    endfunction linear
 

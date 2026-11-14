@@ -20,12 +20,12 @@ type :: scheme_t
    character(16) :: name   = ''      !< Kernel name without the seth_ prefix.
    integer(I4P)  :: family = 0       !< FAM_*.
    integer(I4P)  :: s      = 0       !< Stencil bounds 1-s:s.
-   real(R8P)     :: order  = 0._R8P  !< Order on smooth data (design order; TENO6-opt: 4, its optimised weights).
+   real(R8P)     :: order  = 0._R8P  !< Order on smooth data (design order; the optimised TENO6 weights: 5 and 4).
    real(R8P)     :: eps    = 0._R8P  !< Default regulariser.
    real(R8P)     :: par    = 0._R8P  !< Default rmu (JS), p (Z), C_T (TENO).
 endtype scheme_t
 
-integer(I4P), parameter :: NSCHEMES = 16_I4P
+integer(I4P), parameter :: NSCHEMES = 18_I4P
 type(scheme_t), parameter :: SCHEMES(NSCHEMES) = [ &
    scheme_t('weno1_js',        FAM_JS,        1, 1._R8P, 1.e-6_R8P,  1._R8P), &
    scheme_t('weno3_js',        FAM_JS,        2, 3._R8P, 1.e-6_R8P,  1._R8P), &
@@ -40,9 +40,11 @@ type(scheme_t), parameter :: SCHEMES(NSCHEMES) = [ &
    scheme_t('wenoz3',          FAM_Z,         2, 3._R8P, 1.e-40_R8P, 1._R8P), &
    scheme_t('wenoz5',          FAM_Z,         3, 5._R8P, 1.e-40_R8P, 1._R8P), &
    scheme_t('wenoz7',          FAM_Z,         4, 7._R8P, 1.e-40_R8P, 1._R8P), &
-   scheme_t('teno5',           FAM_TENO,      3, 5._R8P, 1.e-40_R8P, 1.e-5_R8P), &
-   scheme_t('teno6',           FAM_TENO,      3, 6._R8P, 1.e-40_R8P, 1.e-7_R8P), &
-   scheme_t('teno6_opt',       FAM_TENO,      3, 4._R8P, 1.e-40_R8P, 1.e-6_R8P)]
+   scheme_t('wenoz9',          FAM_Z,         5, 9._R8P, 1.e-40_R8P, 1._R8P), &
+   scheme_t('teno5',           FAM_TENO,      3, 5._R8P, 1.e-40_R8P, SETH_TENO5_CT), &
+   scheme_t('teno6',           FAM_TENO,      3, 6._R8P, 1.e-40_R8P, SETH_TENO6_CT), &
+   scheme_t('teno6_opt',       FAM_TENO,      3, 5._R8P, 1.e-40_R8P, SETH_TENO6_OPT_CT), &
+   scheme_t('teno6_neno6',     FAM_TENO,      3, 4._R8P, 1.e-40_R8P, SETH_TENO6_NENO6_CT)]
 
 contains
    subroutine reconstruct(id, vp, vm, rp, rm, wrp, wrm, eps, par)
@@ -98,12 +100,16 @@ contains
       call seth_wenoz5(vp(-2:3), vm(-2:3), e, p, rp, rm)
    case('wenoz7')
       call seth_wenoz7(vp(-3:4), vm(-3:4), e, p, rp, rm)
+   case('wenoz9')
+      call seth_wenoz9(vp(-4:5), vm(-4:5), e, p, rp, rm)
    case('teno5')
       call seth_teno5(vp(-2:3), vm(-2:3), e, q, rp, rm)
    case('teno6')
       call seth_teno6(vp(-2:3), vm(-2:3), e, q, rp, rm)
    case('teno6_opt')
       call seth_teno6_opt(vp(-2:3), vm(-2:3), e, q, rp, rm)
+   case('teno6_neno6')
+      call seth_teno6_neno6(vp(-2:3), vm(-2:3), e, q, rp, rm)
    case default
       error stop 'reconstruct: unknown scheme'
    endselect

@@ -1,6 +1,6 @@
-!< SETH, WENO-Z kernels: WENO-Z3/5/7 reconstruction at one face.
+!< SETH, WENO-Z kernels: WENO-Z3/5/7/9 reconstruction at one face.
 module seth_wenoz
-!< SETH, WENO-Z kernels: WENO-Z3/5/7 reconstruction at one face.
+!< SETH, WENO-Z kernels: WENO-Z3/5/7/9 reconstruction at one face.
 !<
 !< One kernel per scheme, its coefficients compile-time constants (seth_z_teno_tables), the body shared with the other
 !< family (seth_z_teno_body.INC). Every kernel is pure, `acc routine seq` and `omp declare target`:
@@ -17,6 +17,7 @@ private
 public :: seth_wenoz3
 public :: seth_wenoz5
 public :: seth_wenoz7
+public :: seth_wenoz9
 
 contains
    pure subroutine seth_wenoz3(vp, vm, eps, p, rp, rm)
@@ -54,5 +55,17 @@ contains
    real(R8P),    parameter :: CUG(0:GW-1,0:GW-1) = WENOZ7_UG
 #include "seth_z_teno_body.INC"
    endsubroutine seth_wenoz7
+
+   pure subroutine seth_wenoz9(vp, vm, eps, p, rp, rm)
+   !< WENO-Z9, tau_9 = |beta_0 - beta_4| (Castro et al.'s rule for odd r, as restated by Li et al. 2022b).
+   integer(I4P), parameter :: NC = WENOZ9_NC, LO = WENOZ9_LO, UMAX = WENOZ9_UMAX, MAXW = WENOZ9_MAXW
+   integer(I4P), parameter :: CLO(0:NC-1) = WENOZ9_CLO, CW(0:NC-1) = WENOZ9_CW
+   integer(I4P), parameter :: GLO = WENOZ9_GLO, GW = WENOZ9_GW
+   real(R8P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ9_P
+   real(R8P),    parameter :: CU(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ9_U
+   real(R8P),    parameter :: D(0:NC-1) = WENOZ9_D, TC(0:NC-1) = WENOZ9_TC, TG = WENOZ9_TG
+   real(R8P),    parameter :: CUG(0:GW-1,0:GW-1) = WENOZ9_UG
+#include "seth_z_teno_body.INC"
+   endsubroutine seth_wenoz9
 
 endmodule seth_wenoz

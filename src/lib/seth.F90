@@ -20,7 +20,8 @@ public :: seth_weno3_js, seth_weno3_js_wr, seth_weno3_js_interp, seth_weno3_js_i
 public :: seth_weno5_js, seth_weno5_js_wr, seth_weno5_js_interp, seth_weno5_js_interp_wr
 public :: seth_weno7_js, seth_weno7_js_wr, seth_weno7_js_interp, seth_weno7_js_interp_wr
 public :: seth_weno9_js, seth_weno9_js_wr, seth_weno9_js_interp, seth_weno9_js_interp_wr
-public :: seth_wenoz3, seth_wenoz5, seth_wenoz7
-public :: seth_teno5, seth_teno6, seth_teno6_opt, SETH_TENO_EPS, SETH_TENO6_OPT_CT
+public :: seth_wenoz3, seth_wenoz5, seth_wenoz7, seth_wenoz9
+public :: seth_teno5, seth_teno6, seth_teno6_opt, seth_teno6_neno6
+public :: SETH_TENO_EPS, SETH_TENO5_CT, SETH_TENO6_CT, SETH_TENO6_OPT_CT, SETH_TENO6_NENO6_CT
 public :: WENO1_JS_D_SCALE, WENO3_JS_D_SCALE, WENO5_JS_D_SCALE, WENO7_JS_D_SCALE, WENO9_JS_D_SCALE
 endmodule seth
