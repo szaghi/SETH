@@ -38,6 +38,10 @@ ns per face, median of 20 passes; three runs of the whole program (run 1 / 2 / 3
 
 Run-to-run spread below 0.5 %, except SETH weno5_js in run 1 (6 %, the first kernel the program launches).
 
+Run 4 (`bench-gpu1-run4-sumsquares.txt`), after the WENO-Z/TENO indicators became sums of squares (night step 10):
+WENO-JS and ADAM unchanged (0.967, 1.269, 1.762, 2.215 ns), SETH wenoz5 0.961 ns (was 1.018), teno6 2.330 ns (was
+2.366).
+
 ## CPU: one core of an i9-13900KF, ns per face, median of 10 passes
 
 | Variant | gfortran 16.2 -O3 | nvfortran 26.9 -O4 -fast |

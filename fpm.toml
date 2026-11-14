@@ -56,3 +56,28 @@ main = "seth_test_wenoz.F90"
 name = "seth_test_teno"
 source-dir = "src/tests"
 main = "seth_test_teno.F90"
+
+[[test]]
+name = "seth_test_registry"
+source-dir = "src/tests"
+main = "seth_test_registry.F90"
+
+[[test]]
+name = "seth_test_properties"
+source-dir = "src/tests"
+main = "seth_test_properties.F90"
+
+[[test]]
+name = "seth_test_critical_points"
+source-dir = "src/tests"
+main = "seth_test_critical_points.F90"
+
+[[test]]
+name = "seth_test_advection"
+source-dir = "src/tests"
+main = "seth_test_advection.F90"
+
+[[test]]
+name = "seth_test_spectral"
+source-dir = "src/tests"
+main = "seth_test_spectral.F90"

@@ -9,5 +9,6 @@ WenOOF is Abel.
 
 ## Status
 
-The repository is being seeded: the build, the tests and the CI are in place, and the reconstruction machinery is
-being moved in from ADAM.
+WENO-JS 1/3/5/7/9 (reconstruction and interpolation, extracted from ADAM and bitwise equal to it), WENO-Z3/5/7/9 and
+TENO5/6 with the optimised TENO6 variants: one kernel per scheme, coefficients as compile-time constants, `pure` and
+callable on the device. See [Schemes](./schemes), [API](./api), and how it is checked in [Verification](./verification).
