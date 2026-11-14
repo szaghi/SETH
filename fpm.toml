@@ -1,0 +1,32 @@
+name = "SETH"
+version = "0.0.0"
+license = "GPL-3.0"
+author = "Stefano Zaghi"
+maintainer = "stefano.zaghi@gmail.com"
+copyright = "Copyright 2026 Stefano Zaghi"
+homepage = "https://github.com/szaghi/SETH"
+description = "Smoothness-weighted ENO, TENO and Hybrids: high-order non-oscillatory reconstruction and interpolation for HPC"
+
+[dependencies]
+PENF = { git="https://github.com/szaghi/PENF.git", branch="master" }
+
+[library]
+source-dir = "src/lib"
+
+[build]
+auto-executables = false
+auto-tests = false
+auto-examples = false
+
+[[test]]
+name = "seth_test_kinds"
+source-dir = "src/tests"
+main = "seth_test_kinds.F90"
+
+[fortran]
+implicit-typing = false
+implicit-external = false
+source-form = "free"
+
+[install]
+library = true

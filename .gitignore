@@ -1,0 +1,19 @@
+# fobis: build products, fetched dependencies, run directories and caches
+/build/
+/.fobis_deps/
+/.fobis/
+/compile_commands.json
+# build products of the fobos modes
+/exe/
+/lib/
+/obj/
+/mod/
+*.gcda
+*.gcno
+*.gcov
+# documentation
+/docs/node_modules/
+/docs/api/
+/docs/.vitepress/dist/
+/docs/.vitepress/cache/
+/docs/public/coverage.json

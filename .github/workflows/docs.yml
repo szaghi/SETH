@@ -1,0 +1,31 @@
+name: Docs
+
+# After a successful CI run on the default branch: the VitePress site (formal for the API, through docs/package.json's
+# predocs:build) built in the project's toolchain image, with the coverage badge from CI's coverage-docs artifact, and
+# deployed to GitHub Pages, by the reusable workflow of fortran-toolchains
+# (https://github.com/szaghi/fortran-toolchains). A manual dispatch runs the coverage itself. Managed by fobis
+# scaffold.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+  workflow_dispatch:
+
+# all four, even when nothing deploys: GitHub checks what the called workflow's jobs request at startup
+permissions:
+  contents: read
+  actions: read     # the coverage-docs artifact of the CI run
+  pages: write
+  id-token: write
+
+# one docs run at a time, none cancelled half-way
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  docs:
+    uses: szaghi/fortran-toolchains/.github/workflows/docs.yml@v1
+    with:
+      toolchain: 'linux-gnu'
+      apt-packages: ''

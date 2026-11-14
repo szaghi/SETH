@@ -1,0 +1,192 @@
+[project]
+name       = SETH
+version    = VERSION
+summary    = Smoothness-weighted ENO, TENO and Hybrids: high-order non-oscillatory reconstruction and interpolation for HPC
+repository = https://github.com/szaghi/SETH
+website    = https://szaghi.github.io/SETH
+email      = stefano.zaghi@gmail.com
+year       = 2026
+authors    = Stefano Zaghi
+
+# fobis scaffold: the CI runs in the fortran-toolchains images; the matrix builds tests-$TOOLCHAIN_FAMILY
+# (gnu, nvf, intel) on every Linux vendor and runs scripts/run_tests.sh
+[scaffold]
+toolchain = linux-gnu
+matrix    = linux-gnu linux-nvhpc linux-oneapi
+fpm       = true
+
+# fobis ecosystem check: what proves this project still works against a dependency's working copy
+[ecosystem]
+check = fobis fetch
+        fobis build --mode tests-gnu
+        bash scripts/run_tests.sh
+
+# PENF is compiled from its sources by the compiler of the mode (no per-compiler PENF build to keep in step)
+[dependencies]
+deps_dir = src/third_party
+PENF     = https://github.com/szaghi/PENF :: branch=master
+
+[modes]
+# the first mode is the default (fobis build, scripts/install.sh): the library any gfortran can build
+modes = static-gnu shared-gnu
+        static-nvf shared-nvf
+        static-intel shared-intel
+        tests-gnu tests-gnu-debug tests-gnu-coverage
+        tests-nvf tests-nvf-debug tests-nvf-oac
+        tests-intel tests-intel-debug
+
+[common-variables]
+$EXDIRS = PENF/src/tests/ PENF/src/third_party/ PENF/scripts/ PENF/docs/
+$STD_GNU = -std=f2018
+$STD_INT = -standard-semantics -std18
+# NVIDIA compute capability of the OpenACC modes; override with --varset (e.g. --varset cc90)
+$GPU_CC = cc89
+
+[varset:cc80]
+$GPU_CC = cc80
+
+[varset:cc89]
+$GPU_CC = cc89
+
+[varset:cc90]
+$GPU_CC = cc90
+
+# ── library modes ────────────────────────────────────────────────────────────
+[static-gnu]
+help      = Static library, gfortran, optimised
+template  = template-lib-static template-gnu template-release
+build_dir = lib/gnu/static/
+
+[shared-gnu]
+help      = Shared library, gfortran, optimised
+template  = template-lib-shared template-gnu template-release
+cflags    = -c -fPIC $STD_GNU
+build_dir = lib/gnu/shared/
+
+[static-nvf]
+help      = Static library, nvfortran, optimised
+template  = template-lib-static template-nvf template-release
+build_dir = lib/nvf/static/
+
+[shared-nvf]
+help      = Shared library, nvfortran, optimised
+template  = template-lib-shared template-nvf template-release
+cflags    = -c -fPIC
+build_dir = lib/nvf/shared/
+
+[static-intel]
+help      = Static library, ifx, optimised
+template  = template-lib-static template-intel-release template-intel
+build_dir = lib/intel/static/
+
+[shared-intel]
+help      = Shared library, ifx, optimised
+template  = template-lib-shared template-intel
+cflags    = -c -fPIC -O3 $STD_INT
+build_dir = lib/intel/shared/
+
+# ── test modes: every program of src/tests into exe/, run by scripts/run_tests.sh ──
+[tests-gnu]
+help      = Tests, gfortran, optimised (fortran-toolchains matrix: family gnu)
+template  = template-tests template-gnu template-release
+
+[tests-gnu-debug]
+help      = Tests, gfortran, all checks on
+template  = template-tests template-gnu template-debug
+
+[tests-gnu-coverage]
+help      = Tests, gfortran, coverage instrumentation (rule makecoverage)
+template  = template-tests template-gnu
+build_profile = coverage
+
+[tests-nvf]
+help      = Tests, nvfortran, optimised, CPU (fortran-toolchains matrix: family nvf)
+template  = template-tests template-nvf template-release
+
+[tests-nvf-debug]
+help      = Tests, nvfortran, all checks on
+template  = template-tests template-nvf template-debug
+
+[tests-nvf-oac]
+help      = Tests, nvfortran, OpenACC on the GPU of compute capability $GPU_CC
+template  = template-tests template-nvf template-release
+cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel
+lflags    = -acc -gpu=$GPU_CC
+
+[tests-intel]
+help      = Tests, ifx, optimised (fortran-toolchains matrix: family intel)
+template  = template-tests template-intel-release template-intel
+
+[tests-intel-debug]
+help      = Tests, ifx, all checks on
+template  = template-tests template-intel template-debug
+
+# ── templates: left wins when a mode lists several, so the role template (lib, tests) comes first ──
+[template-base]
+src             = src/lib/
+exclude_dirs    = $EXDIRS
+obj_dir         = obj/
+mod_dir         = mod/
+cflags_heritage = True
+colors          = True
+jobs            = 8
+
+[template-gnu]
+template = template-base
+compiler = gnu
+cflags   = -c $STD_GNU
+
+[template-nvf]
+template = template-base
+compiler = nvfortran
+cflags   = -c
+
+[template-intel]
+template = template-base
+compiler = intel_nextgen
+cflags   = -c $STD_INT
+
+[template-release]
+build_profile = release
+
+# ifx without the release profile: its -ipo writes IR objects that the link (FoBiS passes no -ipo to it) and a plain
+# ar archive cannot read
+[template-intel-release]
+cflags = -c -O3 $STD_INT
+
+[template-debug]
+build_profile = debug
+
+[template-lib-static]
+target    = src/lib/seth.F90
+mklib     = static
+output    = libseth.a
+
+[template-lib-shared]
+target    = src/lib/seth.F90
+mklib     = shared
+output    = libseth.so
+
+[template-tests]
+src       = src/lib/ src/tests/
+build_dir = exe/
+
+# ── rules ────────────────────────────────────────────────────────────────────
+[rule-makecoverage]
+help   = Build the tests with coverage instrumentation and run them
+rule_1 = fobis clean --mode tests-gnu-coverage
+rule_2 = fobis build --mode tests-gnu-coverage
+rule_3 = bash scripts/run_tests.sh
+
+[rule-makecoverage-analysis]
+help   = Coverage analysis: the badge JSON in docs/public/coverage.json (what CI runs)
+rule_1 = fobis rule --ex makecoverage
+rule_2 = bash scripts/compute-coverage.sh
+
+[rule-makedoc]
+help   = Build the documentation: formal API + VitePress
+rule_1 = cd docs && npm install --no-audit --no-fund && npm run docs:build
+
+[rule-clean]
+help = Remove build products and documentation artefacts
+rule = rm -rf exe/ lib/ obj/ mod/ docs/api/ docs/.vitepress/dist/ docs/.vitepress/cache/ docs/public/coverage.json
