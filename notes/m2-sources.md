@@ -60,4 +60,10 @@ SETH uses the Don & Borges tau_7 (the better-converging one) and makes p an argu
    (checked to all digits in M1), divided by 1, 240 and 5040.
 4. The max-order linear weights are exact to degree K-1 (K = 5, 6) and reproduce the WENO-5 weights for K = 5.
 5. The order in dx of every tau on smooth data, measured in exact arithmetic on a Taylor polynomial of exp: tau_3
-   >= 3, tau_5 >= 5, tau_6 >= 6, tau_7 (Don & Borges) >= 8.
+   >= 3, tau_5 >= 5, tau_6 >= 6, tau_7 (Don & Borges) >= 7.
+
+**Finding (step 02):** measured exactly (cell averages of the degree-20 Taylor polynomial of exp, h = 2^-4..2^-8),
+the two tau_7 of [RN16] are one order lower than that paper states: Castro et al.'s |beta_0 - beta_1 - beta_2 +
+beta_3| is O(dx^6) (stated 7), Don & Borges' |beta_0 + 3 beta_1 - 3 beta_2 - beta_3| is O(dx^7) (stated 8). The
+ranking holds (Don & Borges' is one order better), and O(dx^7) suffices for the 7th order of WENO-Z7 with p = 1
+(tau/beta_k = O(dx^5)); the Fortran order test checks it. tau_3 and tau_5 measure 3 and 5, as stated.
