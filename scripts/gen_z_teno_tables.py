@@ -29,6 +29,7 @@ import sys
 from fractions import Fraction as Fr
 from pathlib import Path
 
+sys.dont_write_bytecode = True  # importing the sibling generator must not leave scripts/__pycache__ behind
 HERE = Path(__file__).resolve().parent
 _spec = importlib.util.spec_from_file_location('gen_weno_js_tables', HERE / 'gen_weno_js_tables.py')
 _js = importlib.util.module_from_spec(_spec)

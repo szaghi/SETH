@@ -159,3 +159,18 @@ keep ADAM's run-time-table kernels during the migration.
 - `seth_test_weno_js_order`: design order 2S-1 on exp(x), every scheme, both states, reconstruction and interpolation.
 - `seth_test_weno_js_eno`: worst overshoot across a unit jump 2.5e-13.
 - The OpenACC build (`tests-nvf-oac`) compiles every kernel as `acc routine seq`; not run (GPU reserved for ADAM).
+
+## 10. M2 as implemented (night 2026-11-14)
+
+- `scripts/gen_z_teno_tables.py` derives the WENO-Z3/5/7, TENO5, TENO6 and TENO6-opt descriptors (candidate cells and
+  face coefficients, Jiang-Shu indicators incl. the 6-point global one, linear weights, tau coefficients) in exact
+  arithmetic and cross-checks them (TENO Table 1, ADAM's indicators, exactness, tau orders): `seth_z_teno_tables`.
+- The section-5 descriptor became the actual layout: `NC`, `LO`, `UMAX`, `CLO`, `CW`, `CP`, `CU` (indicators as
+  upper-triangular forms), `D`, `TC` (tau as a linear combination of the beta_k), `TG`/`CUG` (the global indicator
+  of TENO6). One body, `seth_z_teno_body.INC`, serves both families; the right state is the left-biased
+  reconstruction of the mirrored data.
+- Signatures: WENO-Z `(vp, vm, eps, p, rp, rm)`; TENO `(vp, vm, eps, ct, rp, rm)`. No `rmu`: both weight families
+  depend on tau/beta, already scale-invariant up to eps.
+- Measured: orders Z3 2.9-3.0, Z5 5.0, Z7 7.0, TENO5 5.0, TENO6 6.0, TENO6-opt 4.0; TENO returns its linear scheme on
+  smooth data to round-off; no overshoot across a jump; a 1e30 jump stays finite (normalised chi).
+- Not done, left to the owner: WENO-Z9 (tau_9 unsourced), C_T defaults for TENO5/TENO6, TENO8 (M4).

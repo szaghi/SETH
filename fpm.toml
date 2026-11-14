@@ -46,3 +46,13 @@ main = "seth_test_weno_js_order.F90"
 name = "seth_test_weno_js_eno"
 source-dir = "src/tests"
 main = "seth_test_weno_js_eno.F90"
+
+[[test]]
+name = "seth_test_wenoz"
+source-dir = "src/tests"
+main = "seth_test_wenoz.F90"
+
+[[test]]
+name = "seth_test_teno"
+source-dir = "src/tests"
+main = "seth_test_teno.F90"
