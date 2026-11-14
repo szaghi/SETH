@@ -5,6 +5,7 @@
 /compile_commands.json
 # build products of the fobos modes
 /exe/
+/exe-bench/
 /lib/
 /obj/
 /mod/

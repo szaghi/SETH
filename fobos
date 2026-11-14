@@ -34,6 +34,7 @@ modes = static-gnu shared-gnu
         tests-gnu tests-gnu-debug tests-gnu-coverage
         tests-nvf tests-nvf-debug tests-nvf-oac
         tests-intel tests-intel-debug
+        bench-nvf-oac bench-nvf bench-gnu
 
 [common-variables]
 $EXDIRS = PENF/src/tests/ PENF/src/third_party/ PENF/scripts/ PENF/docs/
@@ -121,6 +122,21 @@ template  = template-tests template-intel-release template-intel
 help      = Tests, ifx, all checks on
 template  = template-tests template-intel template-debug
 
+# ── benchmark modes: src/bench/seth_bench_weno.F90 into exe-bench/ (not a test: scripts/run_tests.sh ignores it) ──
+[bench-nvf-oac]
+help      = Benchmark, nvfortran, OpenACC on the GPU of compute capability $GPU_CC (run with CUDA_VISIBLE_DEVICES set)
+template  = template-bench template-nvf template-release
+cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel
+lflags    = -acc -gpu=$GPU_CC
+
+[bench-nvf]
+help      = Benchmark, nvfortran, one CPU core
+template  = template-bench template-nvf template-release
+
+[bench-gnu]
+help      = Benchmark, gfortran, one CPU core
+template  = template-bench template-gnu template-release
+
 # ── templates: left wins when a mode lists several, so the role template (lib, tests) comes first ──
 [template-base]
 src             = src/lib/
@@ -166,6 +182,12 @@ output    = libseth.a
 target    = src/lib/seth.F90
 mklib     = shared
 output    = libseth.so
+
+[template-bench]
+src       = src/lib/ src/bench/ src/tests/
+build_dir = exe-bench/
+target    = src/bench/seth_bench_weno.F90
+output    = seth_bench_weno
 
 [template-tests]
 src       = src/lib/ src/tests/
