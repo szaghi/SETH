@@ -1,0 +1,27 @@
+baseline green in /tmp/claude-1000/-home-stefano-fortran/6aa6f120-d1a8-47b7-bce0-c840ae189caa/scratchpad/mut-final2
+js5-face-coefficient         killed by seth_test_advection, seth_test_convergence, seth_test_golden, seth_test_properties, seth_test_tables, seth_test_weno_js_order
+js5-linear-weight            killed by seth_test_golden, seth_test_properties, seth_test_tables
+js7-indicator                killed by seth_test_advection, seth_test_convergence, seth_test_critical_points, seth_test_golden, seth_test_interpolation, seth_test_properties, seth_test_tables, seth_test_weno_js_order
+js3-interp-weight            killed by seth_test_golden, seth_test_properties, seth_test_tables
+js-exponent-s3               killed by seth_test_golden, seth_test_weno_js_adam, seth_vv_blast
+js-mirror                    killed by seth_test_advection, seth_test_critical_points, seth_test_golden, seth_test_interpolation, seth_test_properties, seth_test_weno_js_adam, seth_test_weno_js_order, seth_vv_blast, seth_vv_burgers, seth_vv_euler_order, seth_vv_lax, seth_vv_shu_osher, seth_vv_sod, seth_vv_test123
+js-eps-ignored               killed by seth_test_critical_points
+js-weights-ratio             killed by seth_test_golden, seth_test_registry, seth_test_weno_js_adam
+descaling                    killed by seth_test_weno_js_adam
+teno6-linear-weight          killed by seth_test_advection, seth_test_convergence, seth_test_critical_points, seth_test_golden, seth_test_spectral, seth_test_tables, seth_test_teno, seth_vv_blast, seth_vv_burgers, seth_vv_euler_order
+teno6-tau                    killed by seth_test_tables
+teno6-indicator-pivot        killed by seth_test_tables
+wenoz5-tau                   killed by seth_test_golden, seth_test_tables, seth_test_wenoz, seth_vv_blast, seth_vv_lax, seth_vv_shu_osher
+z-exponent-p2                killed by seth_test_golden
+z-teno-mirror                killed by seth_test_advection, seth_test_critical_points, seth_test_golden, seth_test_interpolation, seth_test_properties, seth_test_teno, seth_test_wenoz, seth_vv_blast, seth_vv_burgers, seth_vv_euler_order, seth_vv_lax, seth_vv_shu_osher, seth_vv_sod, seth_vv_test123
+teno-cutoff-10x              killed by seth_test_golden, seth_vv_blast, seth_vv_sod
+teno-power-4                 killed by seth_test_golden, seth_vv_blast, seth_vv_burgers, seth_vv_lax, seth_vv_shu_osher, seth_vv_sod, seth_vv_test123
+teno-global-indicator-off    killed by seth_test_golden, seth_vv_blast, seth_vv_burgers, seth_vv_lax, seth_vv_shu_osher, seth_vv_test123
+teno6-interp-weight          killed by seth_test_golden, seth_test_interpolation, seth_test_tables, seth_test_teno, seth_vv_euler_order
+wenoz5-interp-coefficient    killed by seth_test_golden, seth_test_interpolation, seth_test_properties, seth_test_tables, seth_test_wenoz, seth_vv_euler_order
+teno5-interp-uses-recon-p    killed by seth_test_golden, seth_test_interpolation, seth_test_properties, seth_test_teno, seth_vv_blast, seth_vv_euler_order, seth_vv_lax, seth_vv_shu_osher, seth_vv_sod, seth_vv_test123
+positivity-pressure-quadratic killed by seth_test_positivity, seth_vv_test123
+positivity-density-bound     killed by seth_test_positivity
+positivity-pressure-floor    killed by seth_test_device, seth_test_positivity
+positivity-right-state       killed by seth_test_positivity
+25 of 25 mutants killed
