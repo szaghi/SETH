@@ -1,0 +1,22 @@
+Warning: ieee_inexact is signaling
+ERROR STOP a benchmark check failed
+faces: 4194304 (limiter: 1048576), timed passes: 10 per variant
+   nv=3: limited faces 360568 ( 34.4 %)
+   FAILED: positivity nv=3 automatic arrays (ea4959b) differs from the library by  9.31E-10
+   nv=5: limited faces 472094 ( 45.0 %)
+
+                                       variant   median ms      min ms     ns/face    vs first
+weno5_js  library (const arrays, const loops)      120.779     118.100      28.796        1.00
+weno5_js  S_MAX arrays, run-time loops             188.262     185.152      44.885        1.56
+weno5_js  automatic arrays, const loops            210.046     203.203      50.079        1.74
+weno5_js  automatic arrays, run-time loops         305.944     283.309      72.943        2.53
+weno5_js + descaling(S dummy)                      165.354     161.760      39.423        1.00
+weno5_js + descaling(S const)                      163.916     161.186      39.081        0.99
+positivity nv=3 library (NV_MAX, loops to nv)       42.084      40.391      40.134        1.00
+positivity nv=3 automatic arrays (ea4959b)          98.675      91.525      94.104        2.34
+positivity nv=3 bench NV_MAX, loops to nv           41.479      40.545      39.558        0.99
+positivity nv=3 const arrays, const loops           38.719      37.604      36.925        0.92
+positivity nv=5 library (NV_MAX, loops to nv)       63.722      62.861      60.770        1.00
+positivity nv=5 automatic arrays (ea4959b)         121.042     113.903     115.435        1.90
+positivity nv=5 bench NV_MAX, loops to nv           64.091      63.059      61.122        1.01
+positivity nv=5 const arrays, const loops           46.020      45.394      43.888        0.72

@@ -1,0 +1,20 @@
+faces: 16777216 (limiter: 4194304), timed passes: 20 per variant
+   nv=3: limited faces 1442267 ( 34.4 %)
+   nv=5: limited faces 1888307 ( 45.0 %)
+
+                                       variant   median ms      min ms     ns/face    vs first
+weno5_js  library (const arrays, const loops)       16.224      16.095       0.967        1.00
+weno5_js  S_MAX arrays, run-time loops              17.368      17.257       1.035        1.07
+weno5_js  automatic arrays, const loops           9322.070    9217.565     555.639      574.59
+weno5_js  automatic arrays, run-time loops        8857.599    8791.076     527.954      545.96
+weno5_js + descaling(S dummy)                       18.232      18.187       1.087        1.00
+weno5_js + descaling(S const)                       18.087      18.047       1.078        0.99
+positivity nv=3 library (NV_MAX, loops to nv)       11.380      11.311       2.713        1.00
+positivity nv=3 automatic arrays (ea4959b)        3770.375    3737.590     898.927      331.31
+positivity nv=3 bench NV_MAX, loops to nv           12.110      12.053       2.887        1.06
+positivity nv=3 const arrays, const loops           11.262      11.220       2.685        0.99
+positivity nv=5 library (NV_MAX, loops to nv)       14.808      14.748       3.531        1.00
+positivity nv=5 automatic arrays (ea4959b)        4112.226    4066.285     980.431      277.70
+positivity nv=5 bench NV_MAX, loops to nv           15.491      15.429       3.693        1.05
+positivity nv=5 const arrays, const loops           14.876      14.815       3.547        1.00
+seth_bench_device_arrays: checks ok

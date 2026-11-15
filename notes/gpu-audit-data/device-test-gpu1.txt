@@ -1,0 +1,39 @@
+OpenACC build: kernels on the device
+seth_weno1_js             : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_weno1_js_wr          : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_weno1_js_interp      : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_weno1_js_interp_wr   : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_weno3_js             : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_weno3_js_wr          : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_weno3_js_interp      : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_weno3_js_interp_wr   : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_weno5_js             : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_weno5_js_wr          : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_weno5_js_interp      : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_weno5_js_interp_wr   : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_weno7_js             : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_weno7_js_wr          : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_weno7_js_interp      : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_weno7_js_interp_wr   : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_weno9_js             : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_weno9_js_wr          : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_weno9_js_interp      : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_weno9_js_interp_wr   : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_weno5_js+descaling   : bitwise  3782/ 4096, worst state  4.47E-16, worst wr  0.00E+00
+seth_wenoz3               : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_wenoz5               : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_wenoz7               : bitwise  1094/ 4096, worst state  8.71E-16, worst wr  0.00E+00
+seth_wenoz9               : bitwise   671/ 4096, worst state  7.44E-16, worst wr  0.00E+00
+seth_teno5                : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_teno6                : bitwise  2536/ 4096, worst state  2.36E-16, worst wr  0.00E+00
+seth_teno6_opt            : bitwise  2650/ 4096, worst state  2.36E-16, worst wr  0.00E+00
+seth_teno6_neno6          : bitwise  2561/ 4096, worst state  2.41E-16, worst wr  0.00E+00
+seth_wenoz3_interp        : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_wenoz5_interp        : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_wenoz7_interp        : bitwise  1855/ 4096, worst state  7.89E-16, worst wr  0.00E+00
+seth_wenoz9_interp        : bitwise  1444/ 4096, worst state  6.61E-16, worst wr  0.00E+00
+seth_teno5_interp         : bitwise  4096/ 4096, worst state  0.00E+00, worst wr  0.00E+00
+seth_teno6_interp         : bitwise  3557/ 4096, worst state  2.10E-16, worst wr  0.00E+00
+seth_positivity_euler nv=3: limited  2838, bitwise  2228/ 4096, worst  4.05E-14
+seth_positivity_euler nv=5: limited  3176, bitwise  1866/ 4096, worst  2.80E-14
+seth_test_device: ok

@@ -35,6 +35,7 @@ modes = static-gnu shared-gnu
         tests-nvf tests-nvf-debug tests-nvf-oac
         tests-intel tests-intel-debug
         bench-nvf-oac bench-nvf bench-gnu
+        bench-arrays-nvf-oac bench-arrays-nvf bench-arrays-gnu
 
 [common-variables]
 $EXDIRS = PENF/src/tests/ PENF/src/third_party/ PENF/scripts/ PENF/docs/
@@ -136,6 +137,27 @@ template  = template-bench template-nvf template-release
 [bench-gnu]
 help      = Benchmark, gfortran, one CPU core
 template  = template-bench template-gnu template-release
+
+# src/bench/seth_bench_device_arrays.F90: automatic arrays and run-time loop extents in device kernels
+[bench-arrays-nvf-oac]
+help      = Benchmark of device-kernel arrays and loop extents, nvfortran, OpenACC on the GPU ($GPU_CC)
+template  = template-bench template-nvf template-release
+target    = src/bench/seth_bench_device_arrays.F90
+output    = seth_bench_device_arrays
+cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel
+lflags    = -acc -gpu=$GPU_CC
+
+[bench-arrays-nvf]
+help      = Benchmark of device-kernel arrays and loop extents, nvfortran, one CPU core
+template  = template-bench template-nvf template-release
+target    = src/bench/seth_bench_device_arrays.F90
+output    = seth_bench_device_arrays
+
+[bench-arrays-gnu]
+help      = Benchmark of device-kernel arrays and loop extents, gfortran, one CPU core
+template  = template-bench template-gnu template-release
+target    = src/bench/seth_bench_device_arrays.F90
+output    = seth_bench_device_arrays
 
 # ── templates: left wins when a mode lists several, so the role template (lib, tests) comes first ──
 [template-base]

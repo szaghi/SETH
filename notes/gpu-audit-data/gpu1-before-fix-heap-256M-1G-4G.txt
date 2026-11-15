@@ -1,0 +1,63 @@
+      enddo
+   case(3)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm) private(vp, vm)
+      do i=1, n
+== HEAPSIZE 268435456
+faces: 16777216 (limiter: 4194304), timed passes: 20 per variant
+   nv=3: limited faces 1442267 ( 34.4 %)
+   nv=5: limited faces 1888307 ( 45.0 %)
+
+                                     variant   median ms      min ms     ns/face    vs first
+weno5_js  library (const arrays, const loops      16.314      16.250       0.972        1.00
+weno5_js  S_MAX arrays, run-time loops            17.420      17.380       1.038        1.07
+weno5_js  automatic arrays, const loops         9278.815    9199.533     553.060      568.76
+weno5_js  automatic arrays, run-time loops      8852.473    8807.307     527.649      542.63
+weno5_js + descaling(S dummy)                     18.260      18.236       1.088        1.00
+weno5_js + descaling(S const)                     18.101      18.088       1.079        0.99
+positivity nv=3 library (automatic, nv)         3770.240    3726.797     898.895        1.00
+positivity nv=3 NV_MAX arrays, loops to nv        12.119      12.088       2.889        0.00
+positivity nv=3 const arrays, const loops         11.284      11.240       2.690        0.00
+positivity nv=5 library (automatic, nv)         4106.793    4074.850     979.136        1.00
+positivity nv=5 NV_MAX arrays, loops to nv        15.506      15.477       3.697        0.00
+positivity nv=5 const arrays, const loops         14.856      14.814       3.542        0.00
+seth_bench_device_arrays: checks ok
+== HEAPSIZE 1073741824
+faces: 16777216 (limiter: 4194304), timed passes: 20 per variant
+   nv=3: limited faces 1442267 ( 34.4 %)
+   nv=5: limited faces 1888307 ( 45.0 %)
+
+                                     variant   median ms      min ms     ns/face    vs first
+weno5_js  library (const arrays, const loops      16.341      16.300       0.974        1.00
+weno5_js  S_MAX arrays, run-time loops            17.466      17.403       1.041        1.07
+weno5_js  automatic arrays, const loops         9318.928    9209.018     555.451      570.28
+weno5_js  automatic arrays, run-time loops      8858.988    8784.296     528.037      542.14
+weno5_js + descaling(S dummy)                     18.254      18.205       1.088        1.00
+weno5_js + descaling(S const)                     18.108      18.057       1.079        0.99
+positivity nv=3 library (automatic, nv)         3773.720    3726.339     899.725        1.00
+positivity nv=3 NV_MAX arrays, loops to nv        12.123      12.071       2.890        0.00
+positivity nv=3 const arrays, const loops         11.289      11.207       2.692        0.00
+positivity nv=5 library (automatic, nv)         4116.159    4071.803     981.369        1.00
+positivity nv=5 NV_MAX arrays, loops to nv        15.492      15.426       3.694        0.00
+positivity nv=5 const arrays, const loops         14.836      14.766       3.537        0.00
+seth_bench_device_arrays: checks ok
+== HEAPSIZE 4294967296
+faces: 16777216 (limiter: 4194304), timed passes: 20 per variant
+   nv=3: limited faces 1442267 ( 34.4 %)
+   nv=5: limited faces 1888307 ( 45.0 %)
+
+                                     variant   median ms      min ms     ns/face    vs first
+weno5_js  library (const arrays, const loops      16.374      16.313       0.976        1.00
+weno5_js  S_MAX arrays, run-time loops            17.472      17.428       1.041        1.07
+weno5_js  automatic arrays, const loops         9319.317    9221.621     555.475      569.15
+weno5_js  automatic arrays, run-time loops      8862.945    8793.388     528.273      541.28
+weno5_js + descaling(S dummy)                     18.234      18.178       1.087        1.00
+weno5_js + descaling(S const)                     18.087      18.045       1.078        0.99
+positivity nv=3 library (automatic, nv)         3770.360    3736.172     898.924        1.00
+positivity nv=3 NV_MAX arrays, loops to nv        12.143      12.103       2.895        0.00
+positivity nv=3 const arrays, const loops         11.293      11.225       2.692        0.00
+positivity nv=5 library (automatic, nv)         4104.694    4053.922     978.635        1.00
+positivity nv=5 NV_MAX arrays, loops to nv        15.505      15.426       3.697        0.00
+positivity nv=5 const arrays, const loops         14.824      14.754       3.534        0.00
+seth_bench_device_arrays: checks ok
+
+[exited with code 0]
