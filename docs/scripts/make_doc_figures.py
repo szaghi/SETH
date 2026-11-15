@@ -35,14 +35,11 @@ import matplotlib.pyplot as plt  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from figure_theme import THEMES, theme, themes  # noqa: E402
+from seth_palette import SCHEME_STYLE, SCHEME_STYLE_DARK  # noqa: E402
 
 DPI = 110
-# one colour and marker per scheme family, the same on every figure
-STYLE = {
-    'weno1_js': ('#7f7f7f', '.'), 'weno3_js': ('#8c6d31', 'v'), 'weno5_js': ('#1f77b4', 'o'), 'weno7_js': ('#4c9ed9', 'o'), 'weno9_js': ('#9ecae1', 'o'),
-    'wenoz3': ('#b07aa1', 'v'), 'wenoz5': ('#2ca02c', 's'), 'wenoz7': ('#5fbf5f', 's'), 'wenoz9': ('#a1d99b', 's'),
-    'teno5': ('#d62728', '^'), 'teno6': ('#ff7f0e', 'D'), 'teno6_opt': ('#e7969c', 'D'), 'teno6_neno6': ('#9467bd', 'D'),
-}
+# one colour and marker per scheme family, the same on every figure (seth_palette: the Neon Moegi identity)
+STYLE = dict(SCHEME_STYLE)  # swapped for SCHEME_STYLE_DARK while the dark twins are drawn (main)
 LABEL = {'weno1_js': 'WENO1-JS', 'weno3_js': 'WENO3-JS', 'weno5_js': 'WENO5-JS', 'weno7_js': 'WENO7-JS', 'weno9_js': 'WENO9-JS',
          'wenoz3': 'WENO-Z3', 'wenoz5': 'WENO-Z5', 'wenoz7': 'WENO-Z7', 'wenoz9': 'WENO-Z9', 'teno5': 'TENO5',
          'teno6': 'TENO6', 'teno6_opt': 'TENO6-opt', 'teno6_neno6': 'TENO6-NENO6'}
@@ -519,6 +516,8 @@ def main() -> int:
     }
     for th in themes(args.theme):
         f.dark = th == 'dark'
+        STYLE.clear()
+        STYLE.update(SCHEME_STYLE_DARK if f.dark else SCHEME_STYLE)
         with theme(th):
             for name, job in jobs.items():
                 if args.only and name not in args.only:

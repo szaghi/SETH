@@ -2,7 +2,7 @@
 """Render the animations of SETH's verification documentation from the frames of the verification programs.
 
 Modelled on ADAM's docs/scripts/make_gallery.py (the landing-page animations of the ADAM and FLUME docs): each
-animation is drawn twice, on the two grounds of the ADAM docs identity, washi (light) and silver ink (dark), with no
+animation is drawn twice, on the two grounds of the docs identity, washi (light) and silver ink (dark), with no
 title in the frame, a small time label under the panel, and no margin of another colour. SETH's cases are 1-D, so a
 frame is a set of curves (the exact or reference solution and two or more schemes) on fixed axes. Per animation and
 theme it writes, into --out:
@@ -38,10 +38,13 @@ import numpy as np
 mpl.use('Agg')
 import matplotlib.pyplot as plt  # noqa: E402
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import seth_palette as P  # noqa: E402
+
 
 @dataclass(frozen=True)
 class Theme:
-    """The colours of one ground of the ADAM docs identity (ADAM docs/BRAND.md), and two line colours."""
+    """The colours of one ground of the docs identity, and the line colours (seth_palette)."""
 
     name: str
     bg: str
@@ -51,11 +54,13 @@ class Theme:
     lines: tuple[str, ...]  # exact/reference first, then the schemes
 
 
-THEMES = (
-    Theme('light', '#f3ede1', '#ebe3d3', '#1d1b18', '#6f6a62', ('#1d1b18', '#2f6690', '#b23417', '#4a7c3a', '#8f5aa0')),
-    Theme('dark', '#0e1116', '#0a0d11', '#e8ecf0', '#8b949e', ('#e8ecf0', '#7fb8e0', '#ffb020', '#8fd07a', '#d7a6ea')),
+THEMES = (  # the Neon Moegi identity (seth_palette): exact/reference in ink, then blue, moegi, plum, umber
+    Theme('light', P.WASHI, P.WASHI_ALT, P.INK_LIGHT, P.MESH_LIGHT, (P.INK_LIGHT, *P.LINES_LIGHT)),
+    Theme('dark', P.SILVER, P.SILVER_ALT, P.INK_DARK, P.MESH_DARK, (P.INK_DARK, *P.LINES_DARK)),
 )
 LABEL = {'weno5_js': 'WENO5-JS', 'wenoz5': 'WENO-Z5', 'teno5': 'TENO5', 'teno6': 'TENO6'}
+# the colour follows the scheme, as on the figures (index into Theme.lines after the exact solution)
+SLOT = {'WENO5-JS': 0, 'WENO-Z5': 1, 'TENO5': 2, 'TENO6': 3}
 
 
 def read_frames(path: Path, euler: bool) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray | None]:
@@ -87,8 +92,8 @@ def render(name: str, x: np.ndarray, t: np.ndarray, curves: list[tuple[str, np.n
                     ax = fig.add_axes([0.08, 0.2, 0.9, 0.76])
                     if exact is not None:
                         ax.plot(x, exact[f], '-', color=th.lines[0], lw=1.0, label='exact')
-                    for k, (lab, field) in enumerate(curves):
-                        ax.plot(x, field[f], '-', color=th.lines[1 + k], lw=1.1, label=lab)
+                    for lab, field in curves:
+                        ax.plot(x, field[f], '-', color=th.lines[1 + SLOT[lab]], lw=1.1, label=lab)
                     ax.set_xlim(*xlim)
                     ax.set_ylim(*ylim)
                     ax.set_ylabel(ylabel)

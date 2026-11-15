@@ -44,14 +44,16 @@ from matplotlib.patches import FancyArrowPatch, Rectangle  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from figure_theme import THEMES, theme, themes  # noqa: E402
+from matplotlib.colors import to_rgba  # noqa: E402
+import seth_palette as P  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 DPI = 130
 # neutral greys ('k', '0.42'), which figure_theme maps onto the silver-ink ladder in the dark twin; translucent fills,
-# which read on either ground
+# which read on either ground; the two data colours from seth_palette
 INK, GREY = 'k', '0.42'
-LEFT, RIGHT = '#2f6690', '#b23417'  # vp / left state, vm / right state (the casts' line colours)
-LEFT_SOFT, RIGHT_SOFT = (0.184, 0.4, 0.565, 0.22), (0.698, 0.204, 0.09, 0.22)
+LEFT, RIGHT = P.LEFT, P.RIGHT  # vp / left state blue, vm / right state moegi (seth_palette)
+LEFT_SOFT, RIGHT_SOFT = to_rgba(LEFT, 0.2), to_rgba(RIGHT, 0.2)
 
 # ------------------------------------------------------------------------------------------------- SETH's data
 # WENO5-JS (src/lib/seth_weno_js_tables.F90, row 2 = the left-biased reconstruction): candidate k reads cells k-2..k
@@ -262,11 +264,11 @@ def fig_adam_rows(out: Path) -> None:
 
 
 # ---------------------------------------------------------------------------------------------------- animation
-CAST_THEMES = (
-    ('light', {'bg': '#f3ede1', 'bg_alt': '#ebe3d3', 'text': '#1d1b18', 'mesh': '#6f6a62', 'left': '#2f6690',
-               'right': '#b23417', 'left_soft': '#c9d8e6', 'right_soft': '#ecc9bd', 'avg': '#6f6a62'}),
-    ('dark', {'bg': '#0e1116', 'bg_alt': '#0a0d11', 'text': '#e8ecf0', 'mesh': '#8b949e', 'left': '#7fb8e0',
-              'right': '#ffb020', 'left_soft': '#1d3346', 'right_soft': '#4a3612', 'avg': '#a9b1bb'}),
+CAST_THEMES = (  # seth_palette: blue for vp and the left state, moegi for vm and the right state
+    ('light', {'bg': P.WASHI, 'bg_alt': P.WASHI_ALT, 'text': P.INK_LIGHT, 'mesh': P.MESH_LIGHT, 'left': P.LEFT,
+               'right': P.RIGHT, 'left_soft': '#c7d6e8', 'right_soft': '#d3dfbf', 'avg': P.MESH_LIGHT}),
+    ('dark', {'bg': P.SILVER, 'bg_alt': P.SILVER_ALT, 'text': P.INK_DARK, 'mesh': P.MESH_DARK, 'left': P.LEFT_D,
+              'right': P.RIGHT_D, 'left_soft': '#17304a', 'right_soft': '#22340d', 'avg': '#a9b1bb'}),
 )
 NCELL = 32
 
@@ -392,7 +394,11 @@ def main() -> int:
     ap.add_argument('--width', type=int, default=720)
     args = ap.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
+    global LEFT, RIGHT, LEFT_SOFT, RIGHT_SOFT  # noqa: PLW0603 - the drawing functions read the module colours
     for th in themes(args.theme):
+        dark = th == 'dark'
+        LEFT, RIGHT = (P.LEFT_D, P.RIGHT_D) if dark else (P.LEFT, P.RIGHT)
+        LEFT_SOFT, RIGHT_SOFT = to_rgba(LEFT, 0.22), to_rgba(RIGHT, 0.22)
         with theme(th):
             fig_face(args.out)
             fig_schemes(args.out)

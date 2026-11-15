@@ -42,13 +42,16 @@ import matplotlib.pyplot as plt  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from figure_theme import THEMES, theme, themes  # noqa: E402
+import seth_palette as P  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 M3 = ROOT / 'notes/m3-bench-data'
 AUDIT = ROOT / 'notes/gpu-audit-data'
 DPI = 130
-SETH, WIDTH, GENERIC, HOST = '#2f6690', '0.45', '0.72', '0.88'
-SLOW, MILD, GOOD = '#b23417', '#7fa7c9', '#2f6690'
+# seth_palette: SETH in the identity's blue, ADAM in neutral greys; follows the rules blue, half-follows light blue,
+# automatic arrays umber
+SETH, WIDTH, GENERIC, HOST = P.BLUE, '0.45', '0.72', '0.88'
+SLOW, MILD, GOOD = P.UMBER, '#8db6e0', P.BLUE
 ROW = re.compile(r'^(?P<name>\S.*?)\s+(?P<med>[\d.]+)\s+(?P<min>[\d.]+)\s+(?P<ns>[\d.]+)\s+(?P<ratio>[\d.]+)\s*$')
 
 
@@ -173,7 +176,12 @@ def main() -> int:
     ap.add_argument('--theme', choices=THEMES, default='both')
     args = ap.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
+    global SETH, SLOW, MILD, GOOD  # noqa: PLW0603 - the drawing functions read the module colours
     for th in themes(args.theme):
+        dark = th == 'dark'
+        SETH = GOOD = P.BLUE_D if dark else P.BLUE
+        SLOW = P.UMBER_D if dark else P.UMBER
+        MILD = '#9cc6f0' if dark else '#8db6e0'
         with theme(th):
             fig_kernels(args.out)
             fig_device_rules(args.out)
