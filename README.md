@@ -1,6 +1,10 @@
 <div align="center">
 
-<h1>SETH</h1>
+<picture>
+  <source media="(prefers-color-scheme: dark)"  srcset="docs/public/logo-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/public/logo.svg">
+  <img src="docs/public/logo.svg" alt="SETH, the Riemann fan opened like a folding fan on a crackle-glazed tile" width="320">
+</picture>
 
 #### *the WENO and TENO kernels of ADAM, one pure function each, on every CPU and GPU*
 

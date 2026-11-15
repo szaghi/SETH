@@ -5,6 +5,10 @@ hero:
   name: SETH
   text: Smoothness-weighted ENO, TENO and Hybrids
   tagline: The WENO and TENO kernels of ADAM, one pure function each, on every CPU and GPU. High-order non-oscillatory reconstruction and interpolation for HPC, in modern Fortran.
+  image:
+    light: /logo.svg
+    dark: /logo-dark.svg
+    alt: SETH, the Riemann fan opened like a folding fan on a crackle-glazed tile
   actions:
     - theme: brand
       text: Quick start
@@ -23,32 +27,56 @@ hero:
       link: https://github.com/szaghi/SETH
 
 features:
-  - icon: 🧮
+  - icon:
+      light: /icons/schemes.svg
+      dark: /icons/schemes-dark.svg
+      width: 44
+      height: 44
     title: Every scheme, one kernel each
     details: WENO-JS 1/3/5/7/9, WENO-Z 3/5/7/9, TENO5, TENO6, TENO6-opt and NENO6, for reconstruction from cell averages and interpolation from point values, optionally returning the weights ratios.
     link: /guide/schemes
     linkText: Schemes
-  - icon: ⚡
+  - icon:
+      light: /icons/hpc.svg
+      dark: /icons/hpc-dark.svg
+      width: 44
+      height: 44
     title: Called from inside your loops
     details: Every kernel is pure, acc routine seq and omp declare target; the coefficients are compile-time constants, so nothing is set up or copied to the device. On an RTX 4070 the WENO-5/7 kernels run 1.26–1.31× faster than ADAM's.
     link: /guide/performance
     linkText: Performance
-  - icon: 🎯
+  - icon:
+      light: /icons/weights.svg
+      dark: /icons/weights-dark.svg
+      width: 44
+      height: 44
     title: Bitwise ADAM, exact coefficients
     details: WENO-JS is bitwise equal to ADAM's kernels. The WENO-Z and TENO coefficients are derived in exact rational arithmetic, cross-checked against the papers and re-verified as compiled.
     link: /verification/contracts/adam-equivalence
     linkText: Equivalence with ADAM
-  - icon: 🛡️
+  - icon:
+      light: /icons/smoothness.svg
+      dark: /icons/smoothness-dark.svg
+      width: 44
+      height: 44
     title: Positivity near vacuum
     details: seth_positivity_euler, the flux limiter of Hu, Adams & Shu (2013) for the Euler equations in 1-D to 3-D. The blending factor in closed form, the largest that keeps density and pressure above their floors, on the host and on the GPU.
     link: /guide/api#positivity-limiter
     linkText: Positivity limiter
-  - icon: 🔬
+  - icon:
+      light: /icons/verification.svg
+      dark: /icons/verification-dark.svg
+      width: 44
+      height: 44
     title: Verification you can read
     details: Twenty-six programs, also the test suite. Orders at a point, at critical points and over whole domains, invariances, golden values, Sod, Lax, 123, Shu–Osher and the blast wave, Burgers against its exact solution, spectral properties; figures and animations on every case page.
     link: /verification/
     linkText: Verification
-  - icon: 🧰
+  - icon:
+      light: /icons/cpu-gpu.svg
+      dark: /icons/cpu-gpu-dark.svg
+      width: 44
+      height: 44
     title: Three compilers, CPU and GPU
     details: gfortran, nvfortran and ifx, debug and optimised, plus the OpenACC build on the GPU; built with FoBiS or fpm. A mutation run catches 25 of 25 planted defects.
     link: /guide/installation

@@ -6,8 +6,16 @@ export default withMermaid({
   base: '/SETH/',
   srcExclude: ['ford.md', '**/_tables/**'],
 
-  // the theme-aware videos of the verification pages: <video class="light-only"> / <video class="dark-only">
+  // the identity (Ogi in Neon Moegi): favicons by colour scheme, touch icon, theme colour
   head: [
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/SETH/favicon.svg', media: '(prefers-color-scheme: light)' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/SETH/favicon-dark.svg', media: '(prefers-color-scheme: dark)' }],
+    ['link', { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/SETH/favicon-32.png' }],
+    ['link', { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/SETH/favicon-16.png' }],
+    ['link', { rel: 'apple-touch-icon', sizes: '180x180', href: '/SETH/apple-touch-icon.png' }],
+    ['meta', { name: 'theme-color', content: '#f3ede1', media: '(prefers-color-scheme: light)' }],
+    ['meta', { name: 'theme-color', content: '#0e1116', media: '(prefers-color-scheme: dark)' }],
+    // the theme-aware videos of the verification pages: <video class="light-only"> / <video class="dark-only">
     ['style', {}, '.dark-only{display:none}.dark .dark-only{display:block}.dark .light-only{display:none}'],
   ],
 
@@ -23,6 +31,8 @@ export default withMermaid({
   },
 
   themeConfig: {
+    logo: { light: '/logo-nav.svg', dark: '/logo-nav-dark.svg', alt: 'SETH' },
+    siteTitle: 'SETH',
     nav: [
       { text: 'Home',   link: '/' },
       { text: 'Guide',  link: '/guide/' },
