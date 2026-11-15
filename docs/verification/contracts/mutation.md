@@ -28,9 +28,10 @@ python3 scripts/mutation_test.py --mode tests-gnu
 
 ## Results
 
-2026-11-15: **21 of 21 mutants killed** (`notes/mutation-run-2026-11-15-v2.txt`). Each line of the record names the
-tests that caught the mutant. The interpolation mutants are caught by the golden, interpolation, tables, TENO,
-WENO-Z and properties tests.
+2026-11-15, the final run with all 25 programs: **21 of 21 mutants killed** (`notes/mutation-run-2026-11-15-final.txt`).
+Each line of the record names the tests that caught the mutant. The interpolation mutants are caught by the golden,
+interpolation, tables, TENO, WENO-Z and properties tests, and now also by the nonlinear cases (Sod, Lax, 123,
+Shu–Osher, blast, Euler order): a kernel wired to the wrong tables changes every downstream result.
 
 ## Findings
 

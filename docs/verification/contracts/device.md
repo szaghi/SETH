@@ -23,4 +23,4 @@ comparison is trivial; built with `tests-nvf-oac` it is the device test.
 
 On the WSL RTX 4070 (GPU 1), nvfortran 26.9, 2026-11-15: 35 of 35 within tolerance, 26 bitwise on all 4096 stencils,
 worst state difference $7.9\cdot10^{-16}$ of the data (`notes/device-gpu1-2026-11-15.txt`). The whole suite also
-passes in that build (24 of 24).
+passes in that build (25 of 25).

@@ -21,10 +21,14 @@ bound, passes them. The golden test pins the values themselves.
 
 ## Results
 
-| Build | Bitwise equal | Worst state difference | Worst weights-ratio difference |
+Measured on 2026-11-15 (the final gate of the night):
+
+| Build | Bitwise equal | Worst state difference (of the data) | Worst weights-ratio difference |
 |---|---|---|---|
-| gfortran debug (the writer) | 8192 / 8192 | 0 | 0 |
-| gfortran -O3, ifx, nvfortran | most | $\le 1.1\cdot10^{-15}$ of the data | $\le 3.5\cdot10^{-10}$ |
+| gfortran debug (the writer), gfortran optimised | 8192 / 8192 | 0 | 0 |
+| ifx debug | 8192 / 8192 | 0 | 0 |
+| ifx optimised | 7359 / 8192 | $4.4\cdot10^{-16}$ | $2.2\cdot10^{-16}$ |
+| nvfortran debug / optimised | 6862 / 6853 of 8192 | $1.1\cdot10^{-15}$ | $3.5\cdot10^{-10}$ |
 
 ## Findings
 
