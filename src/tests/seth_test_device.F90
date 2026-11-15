@@ -8,7 +8,8 @@ program seth_test_device
 !< multiply-adds differently; the tolerances are those of seth_test_golden, for the same reasons). One case calls
 !< seth_weno_descaling on the device. Built without OpenACC the directives are ignored and both loops run on the host
 !< (the comparison is then trivial); built with tests-nvf-oac it is the device test. Run it on an idle GPU
-!< (CUDA_VISIBLE_DEVICES). Generated case by case: one block per kernel, the same body.
+!< (CUDA_VISIBLE_DEVICES). Generated case by case: one block per kernel, the same body. The positivity limiter
+!< (seth_positivity_euler, nv = 3 and 5) is checked after them on random cell pairs (limiter_case).
 use seth
 implicit none
 integer(I4P), parameter :: N = 4096_I4P
@@ -639,10 +640,103 @@ do k=1, NK
          ', worst wr ', worst_w
    if (nfail > 0) passed = .false.
 enddo
+call limiter_case(3_I4P)
+call limiter_case(5_I4P)
 if (.not.passed) error stop 'device results differ from the host beyond round-off'
 print '(A)', 'seth_test_device: ok'
 
 contains
+   subroutine limiter_case(nv)
+   !< seth_positivity_euler on the device against the host: NL deterministic cell pairs (an integer LCG: rho and p
+   !< log-uniform in [1e-8, 1], velocities in [-10, 10]), Lax-Friedrichs low-order flux at CFL 1/2, a perturbed
+   !< high-order flux. theta within 1e-10 and the flux within 1e-10 of its magnitude (the closed form's square root and
+   !< the multiply-adds may round differently), and every device flux admissible (checked on the host).
+   integer(I4P), intent(in) :: nv
+   integer(I4P), parameter  :: NL = 4096_I4P
+   real(R8P),    parameter  :: GM = 1.4_R8P, EP = SETH_POSITIVITY_EPS
+   real(R8P)                :: ql(nv,NL), qr(nv,NL), fh(nv,NL), fl(nv,NL), lam(NL), fd(nv,NL), td(NL)
+   real(R8P)                :: fc(nv,NL), tc(NL)
+   real(R8P)                :: a, b, worst, mag
+   integer(I8P)             :: st
+   integer(I4P)             :: i, k, nbit, nlim, nfail
+   st = 20261115_I8P
+   do i=1, NL
+      call lim_state(nv, st, ql(:,i)) ; call lim_state(nv, st, qr(:,i))
+      a = max(lim_speed(nv, ql(:,i)), lim_speed(nv, qr(:,i))) ; lam(i) = 1._R8P/a
+      fl(:,i) = 0.5_R8P*(lim_flux(nv, ql(:,i)) + lim_flux(nv, qr(:,i))) - 0.5_R8P*a*(qr(:,i) - ql(:,i))
+      do k=1, nv
+         b = lim_rnd(st)
+         fh(k,i) = fl(k,i) + (2._R8P*b - 1._R8P)*(abs(fl(k,i)) + abs(ql(k,i)) + abs(qr(k,i))) &
+                   *10._R8P**(3._R8P*lim_rnd(st) - 2._R8P)
+      enddo
+   enddo
+   !$acc parallel loop gang vector copyin(ql, qr, fh, fl, lam) copyout(fd, td)
+   do i=1, NL
+      call seth_positivity_euler(nv, GM, lam(i), EP, EP, ql(:,i), qr(:,i), fh(:,i), fl(:,i), fd(:,i), td(i))
+   enddo
+   do i=1, NL
+      call seth_positivity_euler(nv, GM, lam(i), EP, EP, ql(:,i), qr(:,i), fh(:,i), fl(:,i), fc(:,i), tc(i))
+   enddo
+   nbit = 0 ; nlim = 0 ; nfail = 0 ; worst = 0._R8P
+   do i=1, NL
+      if (tc(i) < 1._R8P) nlim = nlim + 1
+      if (td(i) == tc(i) .and. all(fd(:,i) == fc(:,i))) nbit = nbit + 1
+      mag = max(maxval(abs(fh(:,i))), maxval(abs(fl(:,i))), tiny(1._R8P))
+      worst = max(worst, abs(td(i) - tc(i)), maxval(abs(fd(:,i) - fc(:,i)))/mag)
+      if (.not.(abs(td(i) - tc(i)) <= 1.e-10_R8P .and. maxval(abs(fd(:,i) - fc(:,i))) <= 1.e-10_R8P*mag)) &
+         nfail = nfail + 1
+      if (.not.(seth_euler_admissible(nv, GM, ql(:,i) - lam(i)*fd(:,i), EP, EP) .and. &
+                seth_euler_admissible(nv, GM, qr(:,i) + lam(i)*fd(:,i), EP, EP))) then
+         if (seth_euler_admissible(nv, GM, ql(:,i) - lam(i)*fl(:,i), EP, EP) .and. &
+             seth_euler_admissible(nv, GM, qr(:,i) + lam(i)*fl(:,i), EP, EP)) nfail = nfail + 1
+      endif
+   enddo
+   print '(A,I1,A,I5,A,I5,A,I5,A,ES9.2)', 'seth_positivity_euler nv=', nv, ': limited ', nlim, ', bitwise ', nbit, &
+         '/', &
+         NL, ', worst ', worst
+   if (nfail > 0) passed = .false.
+   endsubroutine limiter_case
+
+   function lim_rnd(st) result(r)
+   !< The next number of the integer LCG (Park-Miller), in (0, 1).
+   integer(I8P), intent(inout) :: st
+   real(R8P)                   :: r
+   st = mod(16807_I8P*st, 2147483647_I8P) ; r = real(st, R8P)/2147483647._R8P
+   endfunction lim_rnd
+
+   subroutine lim_state(nv, st, q)
+   !< rho and p log-uniform in [1e-8, 1], velocities in [-10, 10] (gamma = 1.4).
+   integer(I4P), intent(in)    :: nv
+   integer(I8P), intent(inout) :: st
+   real(R8P),    intent(out)   :: q(nv)
+   real(R8P)                   :: rho, p
+   integer(I4P)                :: kk
+   rho = 10._R8P**(-8._R8P*lim_rnd(st)) ; p = 10._R8P**(-8._R8P*lim_rnd(st))
+   q(1) = rho
+   do kk=2, nv-1
+      q(kk) = rho*(20._R8P*lim_rnd(st) - 10._R8P)
+   enddo
+   q(nv) = p/0.4_R8P + 0.5_R8P*dot_product(q(2:nv-1), q(2:nv-1))/rho
+   endsubroutine lim_state
+
+   pure function lim_flux(nv, q) result(fx)
+   !< The Euler flux normal to direction 1 (gamma = 1.4).
+   integer(I4P), intent(in) :: nv
+   real(R8P),    intent(in) :: q(nv)
+   real(R8P)                :: fx(nv), u, p
+   u = q(2)/q(1) ; p = 0.4_R8P*(q(nv) - 0.5_R8P*dot_product(q(2:nv-1), q(2:nv-1))/q(1))
+   fx = u*q ; fx(2) = fx(2) + p ; fx(nv) = fx(nv) + p*u
+   endfunction lim_flux
+
+   pure function lim_speed(nv, q) result(c)
+   !< |u_1| + c (gamma = 1.4).
+   integer(I4P), intent(in) :: nv
+   real(R8P),    intent(in) :: q(nv)
+   real(R8P)                :: c, p
+   p = 0.4_R8P*(q(nv) - 0.5_R8P*dot_product(q(2:nv-1), q(2:nv-1))/q(1))
+   c = abs(q(2)/q(1)) + sqrt(1.4_R8P*p/q(1))
+   endfunction lim_speed
+
    subroutine stencils(v, w)
    !< N stencil pairs, exact in binary: smooth cubics, jumps, an integer LCG, cycling.
    real(R8P), intent(out) :: v(-4:5,N), w(-4:5,N)

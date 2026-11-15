@@ -14,7 +14,9 @@ program seth_test_positivity
 !<    steps) on the exact condition;
 !< 4. theta = 1 and f = f_high bitwise when f_high keeps both one-sided states admissible (no perturbation);
 !< 5. theta = 0 and f = f_low when even f_low gives an inadmissible state (lam ten times too large);
-!< 6. the low-order flux under its CFL limit is itself admissible (the premise of the limiter, HAS eq. 13).
+!< 6. the low-order flux under its CFL limit is itself admissible (the premise of the limiter, HAS eq. 13);
+!< 7. seth_euler_admissible agrees with the test's own check (every other check uses the test's own, so that a defect
+!<    of the library's admissibility test cannot hide itself).
 !<
 !< Random numbers from a fixed, printed seed (SETH_TEST_SEED overrides it).
 use seth
@@ -36,17 +38,23 @@ do nv=3, 5
       lam = 1._R8P/alpha
       fl(1:nv) = 0.5_R8P*(flux(nv, ql(1:nv)) + flux(nv, qr(1:nv))) - 0.5_R8P*alpha*(qr(1:nv) - ql(1:nv))
       ! 6. the premise: the low-order flux is admissible under its CFL limit
-      if (.not.(seth_euler_admissible(nv, G, ql(1:nv) - lam*fl(1:nv), 0._R8P, 0._R8P) .and. &
-                seth_euler_admissible(nv, G, qr(1:nv) + lam*fl(1:nv), 0._R8P, 0._R8P))) &
+      if (.not.(adm(nv, ql(1:nv) - lam*fl(1:nv), 0._R8P, 0._R8P) .and. &
+                adm(nv, qr(1:nv) + lam*fl(1:nv), 0._R8P, 0._R8P))) &
          call fail('the Lax-Friedrichs flux is not admissible at CFL 1/2')
       ! 4. no perturbation: theta = 1 bitwise when f_high = f_low is admissible
-      if (seth_euler_admissible(nv, G, ql(1:nv) - lam*fl(1:nv), EPS, EPS) .and. &
-          seth_euler_admissible(nv, G, qr(1:nv) + lam*fl(1:nv), EPS, EPS)) then
+      if (adm(nv, ql(1:nv) - lam*fl(1:nv), EPS, EPS) .and. &
+          adm(nv, qr(1:nv) + lam*fl(1:nv), EPS, EPS)) then
          call seth_positivity_euler(nv, G, lam, EPS, EPS, ql(1:nv), qr(1:nv), fl(1:nv), fl(1:nv), f(1:nv), theta)
          if (theta /= 1._R8P .or. any(f(1:nv) /= fl(1:nv))) call fail('theta /= 1 on an admissible flux')
       else
          cycle ! the floors exclude this pair: the limiter has nothing admissible to blend towards
       endif
+      ! the library's admissibility check agrees with the test's on the one-sided low-order states
+      x = 0._R8P
+      if (seth_euler_admissible(nv, G, ql(1:nv) - lam*fl(1:nv), EPS, EPS) .neqv. &
+          adm(nv, ql(1:nv) - lam*fl(1:nv), EPS, EPS)) x = 1._R8P
+      if (seth_euler_admissible(nv, G, qr(1:nv), EPS, EPS) .neqv. adm(nv, qr(1:nv), EPS, EPS)) x = 1._R8P
+      if (x > 0._R8P) call fail('seth_euler_admissible disagrees with the test')
       ! a perturbed high-order flux
       call random_number(x)
       fh(1:nv) = fl(1:nv) + (10._R8P**(4._R8P*x - 3._R8P))*perturbation(nv, ql(1:nv), qr(1:nv))
@@ -56,8 +64,8 @@ do nv=3, 5
       worst_comb = max(worst_comb, maxval(abs(f(1:nv) - (theta*fh(1:nv) + (1._R8P - theta)*fl(1:nv)))) / &
                                    (maxval(abs(fh(1:nv))) + maxval(abs(fl(1:nv)))))
       ! 2.
-      if (.not.(seth_euler_admissible(nv, G, ql(1:nv) - lam*f(1:nv), EPS, EPS) .and. &
-                seth_euler_admissible(nv, G, qr(1:nv) + lam*f(1:nv), EPS, EPS))) &
+      if (.not.(adm(nv, ql(1:nv) - lam*f(1:nv), EPS, EPS) .and. &
+                adm(nv, qr(1:nv) + lam*f(1:nv), EPS, EPS))) &
          call fail('a limited one-sided state is not admissible')
       ! 3.
       if (theta < 1._R8P) then
@@ -98,6 +106,21 @@ contains
    q(nv) = p/(G - 1._R8P) + 0.5_R8P*dot_product(q(2:nv-1), q(2:nv-1))/rho
    endsubroutine random_state
 
+   pure logical function adm(nv, q, er, ep) result(ok)
+   !< The test's own admissibility check (independent of the library's seth_euler_admissible): rho >= er, p >= ep.
+   integer(I4P), intent(in) :: nv
+   real(R8P),    intent(in) :: q(nv), er, ep
+   real(R8P)                :: ke
+   integer(I4P)             :: k
+   ok = .false.
+   if (.not.(q(1) >= er)) return
+   ke = 0._R8P
+   do k=2, nv-1
+      ke = ke + q(k)*q(k)
+   enddo
+   ok = (G - 1._R8P)*(q(nv) - 0.5_R8P*ke/q(1)) >= ep
+   endfunction adm
+
    pure function flux(nv, q) result(fx)
    !< The Euler flux normal to direction 1.
    integer(I4P), intent(in) :: nv
@@ -134,14 +157,14 @@ contains
    real(R8P)                :: t, lo, hi, m, ff(nv)
    integer(I4P)             :: k
    ff = fh
-   if (seth_euler_admissible(nv, G, a - lam*ff, EPS, EPS) .and. seth_euler_admissible(nv, G, b + lam*ff, EPS, EPS)) then
+   if (adm(nv, a - lam*ff, EPS, EPS) .and. adm(nv, b + lam*ff, EPS, EPS)) then
       t = 1._R8P ; return
    endif
    lo = 0._R8P ; hi = 1._R8P
    do k=1, 60
       m = 0.5_R8P*(lo + hi) ; ff = m*fh + (1._R8P - m)*fl
-      if (seth_euler_admissible(nv, G, a - lam*ff, EPS, EPS) .and. &
-          seth_euler_admissible(nv, G, b + lam*ff, EPS, EPS)) then
+      if (adm(nv, a - lam*ff, EPS, EPS) .and. &
+          adm(nv, b + lam*ff, EPS, EPS)) then
          lo = m
       else
          hi = m
@@ -160,8 +183,8 @@ contains
       alpha = max(speed(nv, ql(1:nv)), speed(nv, qr(1:nv)))
       lam = 10._R8P/alpha
       fl(1:nv) = 0.5_R8P*(flux(nv, ql(1:nv)) + flux(nv, qr(1:nv))) - 0.5_R8P*alpha*(qr(1:nv) - ql(1:nv))
-      if (seth_euler_admissible(nv, G, ql(1:nv) - lam*fl(1:nv), EPS, EPS) .and. &
-          seth_euler_admissible(nv, G, qr(1:nv) + lam*fl(1:nv), EPS, EPS)) cycle
+      if (adm(nv, ql(1:nv) - lam*fl(1:nv), EPS, EPS) .and. &
+          adm(nv, qr(1:nv) + lam*fl(1:nv), EPS, EPS)) cycle
       nfound = nfound + 1
       fh(1:nv) = 2._R8P*fl(1:nv)
       call seth_positivity_euler(nv, G, lam, EPS, EPS, ql(1:nv), qr(1:nv), fh(1:nv), fl(1:nv), f(1:nv), theta)

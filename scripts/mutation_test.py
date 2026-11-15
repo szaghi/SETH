@@ -3,8 +3,9 @@
 
 Each mutant changes one thing in a scratch copy of the tree (a coefficient of a generated table, a weight, a tau
 coefficient, the TENO cutoff or power, the WENO-JS exponent, the mirroring, the descaler, the weights ratio, the use
-of eps, the interpolation tables and their wiring), the tests are rebuilt (--force-compile) and run with
-scripts/run_tests.sh, and the mutant is *killed* when at least one test fails. A surviving mutant is a defect the suite cannot see: the report lists them.
+of eps, the interpolation tables and their wiring, the positivity limiter), the tests are rebuilt (--force-compile)
+and run with scripts/run_tests.sh, and the mutant is *killed* when at least one test fails. A surviving mutant is a
+defect the suite cannot see: the report lists them.
 
 Usage (from the repository root, with fobis and the compilers of the mode on PATH, PENF fetched):
 
@@ -56,6 +57,15 @@ MUTANTS = [
      '15.0001_R8P/8._R8P'),
     ('teno5-interp-uses-recon-p', 'src/lib/seth_teno.F90', 'seth_teno5_interp(vp', 'CP(0:MAXW-1,0:NC-1) = TENO5_INTERP_P',
      'CP(0:MAXW-1,0:NC-1) = TENO5_P'),
+    # the positivity limiter (2026-11-15): the pressure quadratic, the density bound, the floor, a one-sided state
+    ('positivity-pressure-quadratic', 'src/lib/seth_positivity.F90', 'qb = s0(1)*d(nv)',
+     '- dot_product(s0(2:nv-1), d(2:nv-1))', '+ dot_product(s0(2:nv-1), d(2:nv-1))'),
+    ('positivity-density-bound', 'src/lib/seth_positivity.F90', 'if (s1(1) < eps_rho) t =',
+     't = (s0(1) - eps_rho)/(s0(1) - s1(1))', 't = 0.5_R8P*(s0(1) - eps_rho)/(s0(1) - s1(1))'),
+    ('positivity-pressure-floor', 'src/lib/seth_positivity.F90', 'ok = (gamma - 1._R8P)*(q(nv)', '>= eps_p',
+     '>= 0._R8P'),
+    ('positivity-right-state', 'src/lib/seth_positivity.F90', 'b0 = qr + lam*f_low', 'b0 = qr + lam*f_low',
+     'b0 = qr - lam*f_low'),
 ]
 
 
