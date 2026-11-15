@@ -7,6 +7,7 @@ program seth_test_wenoz
 !< 2. ENO: a unit step at every cell boundary of the stencil, both orientations; the states lie in [0, 1] to 1e-6.
 !< 3. Mirror: with vm(m) = vp(1-m) the right state equals the left one bitwise (the same arithmetic on the mirror).
 use seth
+use seth_test_rng, only : seed_rng
 implicit none
 real(R8P), parameter :: EPS = 1.e-40_R8P !< WENO-Z regulariser of the tests.
 real(R8P), parameter :: XF = 0.3_R8P
@@ -16,6 +17,7 @@ integer(I4P)         :: s, o, p, j, m, side, jump, n_
 logical              :: passed
 
 passed = .true.
+call seed_rng(1001_I4P)
 floor_ = 1.e3_R8P * epsilon(1._R8P) * exp(XF)
 do s=2, 5 ! WENO-Z(2s-1)
    o = 2*s - 1

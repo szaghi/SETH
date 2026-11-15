@@ -24,6 +24,7 @@ program seth_test_properties
 !<    overflows near 1e77 (WENO-3), 1e51 (WENO-5), 1e38 (WENO-7/9): tested up to 1e30. With the scale-invariant
 !<    descaler (eps + IS rmu^2 = O(1)) WENO-JS is tested up to 1e140, as WENO-Z and TENO are.
 use seth
+use seth_test_rng, only : seed_rng
 use seth_test_schemes
 implicit none
 integer(I4P), parameter :: NR = 2000_I4P
@@ -34,6 +35,7 @@ integer(I4P)            :: id, n_, m, wmin, deg, k, fam, s, failures
 logical                 :: passed
 
 passed = .true.
+call seed_rng(1004_I4P)
 do id=1, NSCHEMES
    fam = SCHEMES(id)%family ; s = SCHEMES(id)%s
    wmin = merge(3_I4P, s, fam == FAM_TENO)

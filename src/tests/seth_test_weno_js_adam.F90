@@ -10,6 +10,7 @@ program seth_test_weno_js_adam
 !< different fused multiply-add contractions an optimising compiler picks for the constant-folded SETH kernels and
 !< ADAM's table-driven ones. Without contraction (the debug builds) the results are bitwise equal; the count is reported.
 use seth
+use seth_test_rng, only : seed_rng
 use seth_weno_js_tables
 use seth_adam_reference, only : weno_reconstruct_upwind, weno_reconstruct_upwind_wratio, weno_descaling
 implicit none
@@ -21,7 +22,7 @@ integer(I4P)            :: S, n_, m, t, bitwise, total
 logical                 :: interp, passed
 
 passed = .true. ; bitwise = 0 ; total = 0
-call random_seed()
+call seed_rng(1003_I4P)
 do S=1, 5
    do t=1, 2
       interp = t == 2

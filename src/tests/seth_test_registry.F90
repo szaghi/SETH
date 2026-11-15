@@ -4,6 +4,7 @@ program seth_test_registry
 !< SETH test: the test registry is complete and consistent (every scheme dispatched, names unique, _wr kernels give
 !< the states of the plain ones bitwise).
 use seth
+use seth_test_rng, only : seed_rng
 use seth_test_schemes
 implicit none
 real(R8P)    :: vp(VLO:VHI), vm(VLO:VHI), rp, rm, rp2, rm2, wrp, wrm
@@ -11,6 +12,7 @@ integer(I4P) :: id, j, n_
 logical      :: passed
 
 passed = .true.
+call seed_rng(1002_I4P)
 do id=1, NSCHEMES
    do j=id+1, NSCHEMES
       if (SCHEMES(id)%name == SCHEMES(j)%name) then ; print '(A)', 'duplicate '//SCHEMES(id)%name ; passed = .false. ; endif

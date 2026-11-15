@@ -14,6 +14,7 @@ program seth_test_teno
 !<    overflow).
 !< 5. vm(m) = vp(1-m) gives rm == rp bitwise.
 use seth
+use seth_test_rng, only : seed_rng
 use seth_z_teno_tables
 implicit none
 real(R8P),    parameter :: XF = 0.3_R8P
@@ -26,6 +27,7 @@ real(R8P),    parameter :: DESIGN(4) = [5._R8P, 6._R8P, 5._R8P, 4._R8P]
 real(R8P),    parameter :: CTS(4) = [SETH_TENO5_CT, SETH_TENO6_CT, SETH_TENO6_OPT_CT, SETH_TENO6_NENO6_CT]
 
 passed = .true.
+call seed_rng(1005_I4P)
 floor_ = 1.e3_R8P * epsilon(1._R8P) * exp(XF)
 do sc=1, 4
    ct = CTS(sc)
