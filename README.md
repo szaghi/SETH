@@ -20,7 +20,7 @@ Twenty-six verification programs, which are also the test suite, check every ker
 ifx and on the GPU. They cover the coefficients against their derivations and ADAM, the orders at a point, at
 critical points and over whole domains, invariances and robustness, golden values, Sod, Lax, 123, Shu-Osher and
 Woodward-Colella in a 1-D Euler harness, Burgers against its exact solution, long-time advection, and the spectral and
-dispersion properties. A mutation run catches 21 of 21 planted defects. On an RTX 4070 the WENO-5/7 kernels run
+dispersion properties. A mutation run catches 25 of 25 planted defects. On an RTX 4070 the WENO-5/7 kernels run
 1.26-1.31x faster than ADAM's.
 
 ```bash

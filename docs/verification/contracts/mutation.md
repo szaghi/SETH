@@ -29,10 +29,12 @@ python3 scripts/mutation_test.py --mode tests-gnu
 
 ## Results
 
-2026-11-15, the final run with all 25 programs: **21 of 21 mutants killed** (`notes/mutation-run-2026-11-15-final.txt`).
+2026-11-15, the final run with all 26 programs: **25 of 25 mutants killed** (`notes/mutation-run-2026-11-15-positivity.txt`;
+the earlier run of the 21 kernel mutants: `notes/mutation-run-2026-11-15-final.txt`).
 Each line of the record names the tests that caught the mutant. The interpolation mutants are caught by the golden,
 interpolation, tables, TENO, WENO-Z and properties tests, and now also by the nonlinear cases (Sod, Lax, 123,
-Shu–Osher, blast, Euler order): a kernel wired to the wrong tables changes every downstream result.
+Shu–Osher, blast, Euler order): a kernel wired to the wrong tables changes every downstream result. The four positivity-limiter
+mutants are all caught by `seth_test_positivity`; the pressure-quadratic one also by `seth_vv_test123`.
 
 ## Findings
 
