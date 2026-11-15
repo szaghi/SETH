@@ -10,4 +10,5 @@ figure, since a plot of a difference that is zero shows nothing.
 | [C3 Coefficient tables](./tables) | C | derived in exact arithmetic, cross-checked with papers and ADAM, re-verified as compiled |
 | [C4 Golden regression](./golden) | C | 8192 values of every kernel on exact binary inputs |
 | [C5 Device](./device) | C | every kernel on the GPU against the host |
-| [C6 Mutation testing](./mutation) | C | 21 deliberate defects, each caught |
+| [C6 Mutation testing](./mutation) | C | 25 deliberate defects, each caught |
+| [C7 Positivity limiter](./positivity) | C | the limited flux admissible, its factor maximal, admissible fluxes untouched; on the GPU against the host |

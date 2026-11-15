@@ -1,6 +1,6 @@
 # Test programs
 
-`fobis build --mode tests-gnu && bash scripts/run_tests.sh` runs 25 programs (`fpm test` the same set). Every one
+`fobis build --mode tests-gnu && bash scripts/run_tests.sh` runs 26 programs (`fpm test` the same set). Every one
 exits non-zero on a violated assertion. They pass with gfortran 16.2, nvfortran 26.9 and ifx 2026.2, debug (all
 checks and floating-point traps on) and optimised, and in the OpenACC build on the GPU. Random stencils come from a
 fixed, printed seed (`SETH_TEST_SEED` overrides it), so a failure reproduces.
@@ -22,7 +22,8 @@ fixed, printed seed (`SETH_TEST_SEED` overrides it), so a failure reproduces.
 | `seth_test_spectral` | modified wavenumber of every linear background | [F1](./spectral/linear-spectra) |
 | `seth_test_tables` | the compiled coefficient tables re-verified | [C3](./contracts/tables) |
 | `seth_test_golden` | 8192 golden values | [C4](./contracts/golden) |
-| `seth_test_device` | every kernel on the device against the host | [C5](./contracts/device) |
+| `seth_test_device` | every kernel on the device against the host, the positivity limiter included | [C5](./contracts/device), [C7](./contracts/positivity) |
+| `seth_test_positivity` | the positivity limiter: admissible, maximal, untouched where not needed | [C7](./contracts/positivity) |
 | `seth_vv_sod`, `seth_vv_lax`, `seth_vv_test123` | shock tubes against the exact solution; positivity with and without the limiter | [S1](./shocks/sod), [S2](./shocks/lax), [S3](./shocks/test123) |
 | `seth_vv_shu_osher`, `seth_vv_blast` | against a finer reference | [S4](./shocks/shu-osher), [S5](./shocks/blast) |
 | `seth_vv_burgers` | Burgers against the exact solution, before and after the shock | [S6](./shocks/burgers) |

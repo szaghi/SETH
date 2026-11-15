@@ -49,6 +49,32 @@ The interpolation kernels take the same arguments as the reconstruction ones; TE
 `eps = SETH_TENO_EPS` ($10^{-40}$); `ct` the cutoff: `SETH_TENO5_CT`, `SETH_TENO6_CT`, `SETH_TENO6_OPT_CT`,
 `SETH_TENO6_NENO6_CT` (see [Schemes](./schemes)).
 
+## Positivity limiter
+
+```fortran
+call seth_positivity_euler(nv, gamma, lam, eps_rho, eps_p, ql, qr, f_high, f_low, f, theta)
+ok = seth_euler_admissible(nv, gamma, q, eps_rho, eps_p)
+```
+
+The positivity-preserving flux limiter of Hu, Adams & Shu (2013) at one face of an Euler (ideal-gas) solver:
+`f = theta f_high + (1 - theta) f_low`, `theta` the largest value in $[0, 1]$ for which the one-sided states
+`ql - lam f` and `qr + lam f` keep $\rho \ge$ `eps_rho` and $p \ge$ `eps_p`. Every argument is plain data:
+
+| Argument | Meaning |
+|---|---|
+| `nv` | 3, 4 or 5: the state is $(\rho, \rho u_1, …, \rho u_d, E)$ in $d = $ `nv` $- 2$ dimensions |
+| `gamma` | ratio of specific heats |
+| `lam` | $2\Delta t/h$ in 1-D; in $d$ dimensions $2\Delta t/(w_k h_k)$ for the faces of direction $k$, the partition weights $w_k$ summing to 1 |
+| `eps_rho`, `eps_p` | the floors; Hu, Adams & Shu take $\min(10^{-13}$, the initial minimum$)$; `SETH_POSITIVITY_EPS` $= 10^{-13}$ |
+| `ql`, `qr` | the states of the cells left and right of the face |
+| `f_high`, `f_low` | the high-order face flux and a first-order positivity-preserving one (Lax–Friedrichs with $\alpha \ge \max(|u_n| + c)$ is, for `lam` $\alpha \le 1$) |
+| `f`, `theta` | the limited flux and its factor (1: `f_high` unchanged) |
+
+If even `f_low` leaves a one-sided state below the floors (`lam` too large, or an inadmissible cell), the kernel
+returns `theta = 0` and `f = f_low`; `seth_euler_admissible` lets the caller check its cells. The kernel is `pure`,
+`acc routine seq` and `omp declare target`, like the reconstruction kernels. See the [positivity
+verification](/verification/contracts/positivity).
+
 ## Tables
 
 `seth_weno_js_tables` and `seth_z_teno_tables` expose every coefficient as a named constant (`WENO5_JS_A`,

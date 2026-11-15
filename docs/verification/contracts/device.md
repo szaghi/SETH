@@ -15,7 +15,7 @@ comparison is trivial; built with `tests-nvf-oac` it is the device test.
 
 | Item | Value |
 |---|---|
-| Cases | 35: the 20 WENO-JS entry points, WENO-JS with the descaler called on the device, WENO-Z3/5/7/9, TENO5/6/6-opt/6-NENO6, the six WENO-Z and TENO interpolations |
+| Cases | 35 kernels: the 20 WENO-JS entry points, WENO-JS with the descaler called on the device, WENO-Z3/5/7/9, TENO5/6/6-opt/6-NENO6, the six WENO-Z and TENO interpolations; and the positivity limiter on 4096 cell pairs for `nv` = 3 and 5 ([C7](./positivity)) |
 | Tolerance | states within $10^{-13}$ of the stencil's magnitude, weights ratios within $10^{-9}$ (the device and the host compile the kernel separately and contract multiply-adds differently: the tolerances of the golden test) |
 | Run | `fobis build --mode tests-nvf-oac --varset cc89`, `CUDA_VISIBLE_DEVICES=1 ./exe/seth_test_device`, on an idle GPU |
 

@@ -21,6 +21,7 @@ defect no test catches is a hole in the suite.
 | `teno6-linear-weight`, `teno6-tau`, `teno6-indicator-pivot`, `wenoz5-tau` | one coefficient of a WENO-Z/TENO descriptor |
 | `z-exponent-p2`, `z-teno-mirror`, `teno-cutoff-10x`, `teno-power-4`, `teno-global-indicator-off` | the shared Z/TENO body |
 | `teno6-interp-weight`, `wenoz5-interp-coefficient`, `teno5-interp-uses-recon-p` | the interpolations: a weight, a face coefficient, a kernel wired to the reconstruction tables |
+| `positivity-pressure-quadratic`, `positivity-density-bound`, `positivity-pressure-floor`, `positivity-right-state` | the positivity limiter: the pressure quadratic, the density bound, the floor, a one-sided state |
 
 ```bash
 python3 scripts/mutation_test.py --mode tests-gnu

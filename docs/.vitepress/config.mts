@@ -67,6 +67,7 @@ export default withMermaid({
           { text: 'C4 Golden regression',      link: '/verification/contracts/golden' },
           { text: 'C5 Device',                 link: '/verification/contracts/device' },
           { text: 'C6 Mutation testing',       link: '/verification/contracts/mutation' },
+          { text: 'C7 Positivity limiter',     link: '/verification/contracts/positivity' },
         ] },
       ],
       '/guide/': [

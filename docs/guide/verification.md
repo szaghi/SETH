@@ -1,6 +1,6 @@
 # Verification
 
-SETH's kernels are verified by 25 programs that are, at the same time, its test suite: they run on gfortran 16.2,
+SETH's kernels are verified by 26 programs that are, at the same time, its test suite: they run on gfortran 16.2,
 nvfortran 26.9 and ifx 2026.2, debug and optimised, and on the GPU, and each asserts its results against something it
 shares no code with. The full documentation, case by case and with figures, is the
 **[Verification](/verification/)** section; this page is the short version.
@@ -10,7 +10,7 @@ shares no code with. The full documentation, case by case and with figures, is t
 | [Accuracy](/verification/accuracy/) | design order of every reconstruction and interpolation at a point, at critical points (against Henrick, Borges, Fu, Zhang), over whole domains, and through a complete Euler solver | A1–A4 |
 | [Shock capturing](/verification/shocks/) | Sod, Lax and 123 against the exact Riemann solution; Shu–Osher and Woodward–Colella against 16× finer references; Burgers against its exact solution with a moving shock; long-time advection of the Jiang–Shu profile; positivity with and without a limiter | S1–S7 |
 | [Spectral](/verification/spectral/) | the modified wavenumber of every linear background; the approximate dispersion relation of every nonlinear scheme | F1–F2 |
-| [Contracts](/verification/contracts/) | WENO-JS bitwise equal to ADAM; invariances and robustness; the coefficient tables re-derived and re-verified; golden values; the device; mutation testing | C1–C6 |
+| [Contracts](/verification/contracts/) | WENO-JS bitwise equal to ADAM; invariances and robustness; the coefficient tables re-derived and re-verified; golden values; the device; mutation testing; the positivity limiter | C1–C7 |
 
 ```bash
 fobis build --mode tests-gnu && bash scripts/run_tests.sh   # the suite (the verification cases on their quick set)
@@ -22,7 +22,9 @@ Findings that matter for users of the kernels, each documented on its page:
 
 - The higher-order interpolations need a positivity safeguard near vacuum, and every interpolation on strong blast
   waves; on the Woodward–Colella blast so do WENO9-JS and the WENO-Z (but Z3) and TENO reconstructions
-  ([S3](/verification/shocks/test123), [S5](/verification/shocks/blast)).
+  ([S3](/verification/shocks/test123), [S5](/verification/shocks/blast)). SETH provides one:
+  `seth_positivity_euler`, the flux limiter of Hu, Adams & Shu ([API](/guide/api#positivity-limiter),
+  [C7](/verification/contracts/positivity)).
 - WENO-Z9 is not robust at shocks: 28% overshoot behind the Burgers shock, oscillations on the composite profile,
   loss of positivity in the first steps of the blast wave ([S6](/verification/shocks/burgers);
   [issue #1](https://github.com/szaghi/SETH/issues/1)).

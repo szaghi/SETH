@@ -70,5 +70,5 @@ peaks of the collision.*
   et al. use a Roe flux with entropy fix, not Lax–Friedrichs splitting. SETH's harness reproduces those results only
   with the limiter. Whether the published runs needed a safeguard is not stated in the summaries of those papers in
   the llm-wiki: an open point, under investigation in [issue #3](https://github.com/szaghi/SETH/issues/3).
-- The positivity-preserving flux limiter will become a SETH feature ([issue #2](https://github.com/szaghi/SETH/issues/2));
-  today it lives in the test harness.
+- The positivity-preserving flux limiter is a SETH kernel, `seth_positivity_euler` ([C7](../contracts/positivity),
+  [API](/guide/api#positivity-limiter)); the harness uses it.

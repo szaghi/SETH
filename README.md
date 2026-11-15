@@ -14,8 +14,9 @@ coefficients as compile-time constants, no dynamic dispatch where the cells are 
 | WENO-JS | `seth_weno{1,3,5,7,9}_js` (+ `_interp`, `_wr`): ADAM's schemes, bitwise |
 | WENO-Z | `seth_wenoz{3,5,7,9}` (+ `_interp`) |
 | TENO | `seth_teno5`, `seth_teno6` (+ `_interp`), `seth_teno6_opt`, `seth_teno6_neno6` |
+| Positivity | `seth_positivity_euler`: the flux limiter of Hu, Adams & Shu (2013), `seth_euler_admissible` |
 
-Twenty-five verification programs, which are also the test suite, check every kernel with gfortran, nvfortran and
+Twenty-six verification programs, which are also the test suite, check every kernel with gfortran, nvfortran and
 ifx and on the GPU. They cover the coefficients against their derivations and ADAM, the orders at a point, at
 critical points and over whole domains, invariances and robustness, golden values, Sod, Lax, 123, Shu-Osher and
 Woodward-Colella in a 1-D Euler harness, Burgers against its exact solution, long-time advection, and the spectral and

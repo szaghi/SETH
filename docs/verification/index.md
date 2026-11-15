@@ -3,7 +3,7 @@
 Every capability of SETH is backed by a verification case: a Fortran program in `src/tests/` that runs the kernels
 and asserts the result against something it shares no code with, such as an exact solution, a fine reference, a
 published number, a theorem or ADAM's own code. The same programs are the test suite (`bash scripts/run_tests.sh`
-runs all 25, on six compiler builds and on the GPU), and with `SETH_VV_DIR` set they run every scheme on the report
+runs all 26, on six compiler builds and on the GPU), and with `SETH_VV_DIR` set they run every scheme on the report
 grids and write the data from which these pages are drawn (`scripts/run_vv.sh`). The figures are real SETH results
 and can be regenerated after any change of the kernels.
 
@@ -108,7 +108,9 @@ baseline, the device, and the suite's own ability to catch defects. [Group page]
 
 [<strong>Device</strong><span>every kernel in an OpenACC loop on the GPU against the host</span><em>contract</em>](./contracts/device)
 
-[<strong>Mutation testing</strong><span>21 deliberate defects, each caught by at least one test</span><em>contract</em>](./contracts/mutation)
+[<strong>Mutation testing</strong><span>25 deliberate defects, each caught by at least one test</span><em>contract</em>](./contracts/mutation)
+
+[<strong>Positivity limiter</strong><span>Hu, Adams & Shu's limiter as a SETH kernel: admissible, maximal, untouched where not needed</span><em>contract</em>](./contracts/positivity)
 
 </div>
 
