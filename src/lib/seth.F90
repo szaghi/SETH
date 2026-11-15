@@ -10,6 +10,7 @@ use seth_weno_js
 use seth_weno_js_tables
 use seth_wenoz
 use seth_teno
+use seth_positivity
 implicit none
 private
 public :: I4P, I8P, R4P, R8P
@@ -25,5 +26,6 @@ public :: seth_wenoz3_interp, seth_wenoz5_interp, seth_wenoz7_interp, seth_wenoz
 public :: seth_teno5, seth_teno6, seth_teno6_opt, seth_teno6_neno6
 public :: seth_teno5_interp, seth_teno6_interp
 public :: SETH_TENO_EPS, SETH_TENO5_CT, SETH_TENO6_CT, SETH_TENO6_OPT_CT, SETH_TENO6_NENO6_CT
+public :: SETH_POSITIVITY_EPS, seth_positivity_euler, seth_euler_admissible
 public :: WENO1_JS_D_SCALE, WENO3_JS_D_SCALE, WENO5_JS_D_SCALE, WENO7_JS_D_SCALE, WENO9_JS_D_SCALE
 endmodule seth
