@@ -81,3 +81,23 @@ main = "seth_test_advection.F90"
 name = "seth_test_spectral"
 source-dir = "src/tests"
 main = "seth_test_spectral.F90"
+
+[[test]]
+name = "seth_test_golden"
+source-dir = "src/tests"
+main = "seth_test_golden.F90"
+
+[[test]]
+name = "seth_test_device"
+source-dir = "src/tests"
+main = "seth_test_device.F90"
+
+[[test]]
+name = "seth_test_convergence"
+source-dir = "src/tests"
+main = "seth_test_convergence.F90"
+
+[[test]]
+name = "seth_test_tables"
+source-dir = "src/tests"
+main = "seth_test_tables.F90"
