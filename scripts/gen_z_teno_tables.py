@@ -7,7 +7,9 @@ Everything is derived in exact rational arithmetic from the definitions listed i
   evaluated at the face;
 - each Jiang-Shu smoothness indicator (Li, Fu & Adams, eq. 10): sum_{j=1}^{w-1} int_{cell 0} (d^j p/dx^j)^2 dx, as a
   quadratic form in the cell averages (unit cells, so the dx powers are absorbed in undivided values);
-- the max-order linear weights: the combination of the candidates exact to the highest degree.
+- the max-order linear weights: the combination of the candidates exact to the highest degree;
+- for interpolation (notes/interpolation-plan.md): the same with point values at the cell centres; the indicators and
+  tau are the reconstruction ones.
 
 Cells are indexed by their offset from the face (cell 0 = [-1, 0] left of it, cell 1 = [0, 1]), the convention of
 SETH's kernels. Cross-checks run before anything is written (the script exits non-zero on any failure):
@@ -16,7 +18,10 @@ SETH's kernels. Cross-checks run before anything is written (the script exits no
 2. the TENO candidates' face coefficients equal Li, Fu & Adams (2020) Table 1;
 3. the indicators of the upwind 3-, 4- and 5-point stencils equal ADAM's WENO-5/7/9 tables divided by 1, 240, 5040;
 4. the max-order linear weights are exact to degree K-1 and are the WENO weights where K = 2S-1;
-5. the order of every tau on smooth data, measured exactly on a Taylor polynomial of exp.
+5. the order of every tau on smooth data, measured exactly on a generic polynomial (not exp: its averages are a
+   constant multiple of its point values), on cell averages and, for the interpolating schemes, on point values;
+6. the interpolation tables: the WENO ones equal ADAM's initialize_interpolation_S*, TENO5's weights equal Hiejima
+   2022 and Chu, Kurganov & Na 2022, every interpolation weight is positive and reaches the design order.
 
 Usage: gen_z_teno_tables.py <adam_weno_object.F90> <output .F90>
 """
@@ -113,6 +118,23 @@ def face_coefficients(cells: list[int]) -> list[Fr]:
     return [peval(b, Fr(0)) for b in basis(cells)]
 
 
+def pv_basis(cells: list[int]) -> list[Poly]:
+    """Lagrange basis of point values: basis[j] is 1 at the centre of cells[j] (x = m - 1/2), 0 at the others."""
+    w = len(cells)
+    a = [[Fr(2 * m - 1, 2) ** n for n in range(w)] for m in cells]
+    return [solve(a, [Fr(1) if i == j else Fr(0) for i in range(w)]) for j in range(w)]
+
+
+def pv_face_coefficients(cells: list[int]) -> list[Fr]:
+    """Interpolation: the face value (x = 0) of the polynomial through the point values of the cells."""
+    return [peval(b, Fr(0)) for b in pv_basis(cells)]
+
+
+def sample(m: int, n: int, interp: bool) -> Fr:
+    """The datum of cell m for the monomial x^n: its point value at the centre (interpolation) or its average."""
+    return Fr(2 * m - 1, 2) ** n if interp else cell_avg_monomial(m, n)
+
+
 def indicator(cells: list[int]) -> list[list[Fr]]:
     """Symmetric matrix B of the Jiang-Shu indicator on cell 0: beta = sum_ab B[a][b] u[a] u[b]."""
     bs = basis(cells)
@@ -199,14 +221,19 @@ SCHEMES = {
                     'TENO6 with the optimised linear weights of the NENO6 paper (4th order)'),
 }
 
+# the schemes that also get interpolation tables (owner decision 2026-11-15: not TENO6-opt nor NENO6, whose weights are
+# tuned for the reconstruction)
+INTERP = ('WENOZ3', 'WENOZ5', 'WENOZ7', 'WENOZ9', 'TENO5', 'TENO6')
 
-def max_order_weights(cands: list[list[int]], label: str) -> tuple[list[Fr], int]:
-    """Linear weights exact to the highest degree; returns them and that degree + 1 (the order)."""
+
+def max_order_weights(cands: list[list[int]], label: str, interp: bool = False) -> tuple[list[Fr], int]:
+    """Linear weights exact to the highest degree (of the reconstruction, or of the interpolation with `interp`);
+    returns them and that degree + 1 (the order)."""
     nc = len(cands)
-    coefs = [face_coefficients(c) for c in cands]
+    coefs = [(pv_face_coefficients if interp else face_coefficients)(c) for c in cands]
 
     def moment(k: int, n: int) -> Fr:
-        return sum(coefs[k][j] * cell_avg_monomial(m, n) for j, m in enumerate(cands[k]))
+        return sum(coefs[k][j] * sample(m, n, interp) for j, m in enumerate(cands[k]))
 
     # exactness for degrees 0, 1, 2, ...: the low degrees hold for every candidate (rows dependent on degree 0), so take
     # the first nc independent rows in degree order; the weights are then unique, and the order is the first degree
@@ -232,11 +259,22 @@ def max_order_weights(cands: list[list[int]], label: str) -> tuple[list[Fr], int
     return d, order
 
 
-def taylor_exp_averages(h: Fr, cells: range, degree: int = 16) -> dict[int, Fr]:
-    """Exact cell averages of the degree-`degree` Taylor polynomial of exp on cells [(m-1)h, mh]."""
-    coef = [Fr(1, math.factorial(n)) for n in range(degree + 1)]
-    prim = [Fr(0)] + [c / (n + 1) for n, c in enumerate(coef)]
-    return {m: (peval(prim, m * h) - peval(prim, (m - 1) * h)) / h for m in cells}
+# A generic smooth function for the tau orders: f(x) = sum_n c_n (x + 3/10)^n with rational c_n of no pattern. Not exp:
+# the cell averages of exp are a constant multiple of its point values (the two data kinds are indistinguishable), and
+# exp satisfies identities such as f' f'''' = f'' f''' that can cancel the leading term of a tau and overstate its order.
+GENERIC = [Fr((-1) ** (n * (n + 1) // 2) * (n + 3), (n * n + 7) * math.factorial(n)) for n in range(17)]
+GENERIC_SHIFT = Fr(3, 10)
+
+
+def generic_data(h: Fr, cells: range, interp: bool) -> dict[int, Fr]:
+    """Exact data of GENERIC on cells [(m-1)h, mh]: point values at the centres (interp) or cell averages."""
+    if interp:
+        return {m: sum(c * ((m - Fr(1, 2)) * h + GENERIC_SHIFT) ** n for n, c in enumerate(GENERIC)) for m in cells}
+
+    def prim(x: Fr) -> Fr:
+        return sum(c / (n + 1) * (x + GENERIC_SHIFT) ** (n + 1) for n, c in enumerate(GENERIC))
+
+    return {m: (prim(m * h) - prim((m - 1) * h)) / h for m in cells}
 
 
 def check_fail(msg: str) -> None:
@@ -298,22 +336,44 @@ def run_checks(adam_source: str) -> None:
         print(f'  {label}: linear-scheme order {got} (expected {want})')
         if got != want:
             check_fail(f'{label}: linear-scheme order {got}, expected {want}')
-    # 5: tau orders
+    # 5: tau orders on a generic function, on cell averages (reconstruction) and on point values (interpolation: the
+    # same indicators applied to point values, notes/interpolation-plan.md section 2.2)
     for name, (cands, tc, glob, tg, _w, _f, need, _doc) in SCHEMES.items():
         mats = [indicator(c) for c in cands]
         gmat = indicator(glob) if glob else None
-        taus = []
-        for e in range(4, 8):
-            h = Fr(1, 2 ** e)
-            avg = taylor_exp_averages(h, range(-4, 6))
-            tau = sum(Fr(c) * quad(m, [avg[x] for x in cl]) for c, m, cl in zip(tc, mats, cands))
-            if gmat:
-                tau += tg * quad(gmat, [avg[x] for x in glob])
-            taus.append(abs(tau))
-        order = math.log2(taus[-2] / taus[-1])
-        print(f'  {name}: tau order {order:.2f} (required {need})')
-        if order < need - 0.1:
-            check_fail(f'{name}: tau of order {order:.2f} < {need}')
+        for interp in (False, True) if name in INTERP else (False,):
+            taus = []
+            for e in range(5, 9):
+                dat = generic_data(Fr(1, 2 ** e), range(-4, 6), interp)
+                tau = sum(Fr(c) * quad(m, [dat[x] for x in cl]) for c, m, cl in zip(tc, mats, cands))
+                if gmat:
+                    tau += tg * quad(gmat, [dat[x] for x in glob])
+                taus.append(abs(tau))
+            order = math.log2(taus[-2] / taus[-1])
+            kind = 'point values' if interp else 'cell averages'
+            print(f'  {name}: tau order {order:.2f} on {kind} (required {need})')
+            if order < need - 0.1:
+                check_fail(f'{name}: tau of order {order:.2f} < {need} on {kind}')
+    # 6: interpolation tables. The point-value face coefficients and max-order weights of the WENO candidates equal
+    # ADAM's interpolation tables (row 2); TENO5's weights are those printed by Hiejima 2022 (WCNS-T, K = 5) and by Chu,
+    # Kurganov & Na 2022; every interpolation weight is positive (max_order_weights) and reaches the design order
+    # (TENO6's: derived here, no published set)
+    for S in range(2, 6):
+        t = _js.parse(_js.routine(adam_source, f'initialize_interpolation_S{S}'))
+        d, order = max_order_weights(weno_cells(S), f'WENO S={S} interpolation', interp=True)
+        if d != [_js.rational(t['a'][2, k]) for k in range(S)] or order != 2 * S - 1:
+            check_fail(f'WENO S={S}: interpolation weights {d} (order {order}) differ from ADAM')
+        for k, cells in enumerate(weno_cells(S)):
+            pv = pv_face_coefficients(cells)
+            if any(pv[cells.index(k - s2)] != _js.rational(t['p'][2, s2, k]) for s2 in range(S)):
+                check_fail(f'WENO S={S} candidate {k}: interpolation coefficients differ from ADAM')
+    d, order = max_order_weights(TENO_CELLS[:3], 'TENO5 interpolation', interp=True)
+    if d != [Fr(5, 8), Fr(5, 16), Fr(1, 16)] or order != 5:
+        check_fail(f'TENO5 interpolation weights {d} order {order}')
+    d, order = max_order_weights(TENO_CELLS, 'TENO6 interpolation', interp=True)
+    print(f'  TENO6 interpolation weights {[str(x) for x in d]}, order {order} (derived)')
+    if order != 6:
+        check_fail(f'TENO6 interpolation weights reach order {order}')
 
 
 # ---------------------------------------------------------------------------------------------------------- emission
@@ -400,6 +460,16 @@ def emit(name: str) -> tuple[str, list[str]]:
                       [fstr(gl[a][i]) for i in range(gw) for a in range(gw)], 'global indicator, sum of squares: L'))
     out.append(farray(f'{name}_DG', f'0:{gw - 1}', f'{gw}', [fstr(x) for x in gd], 'global indicator pivots'))
     names += [f'{name}_LG', f'{name}_DG']
+    if name in INTERP:  # interpolation: other face coefficients and weights, the same indicators and tau
+        ivals = []
+        for k in range(nc):
+            ivals += [fstr(x) for x in pv_face_coefficients(cands[k]) + [Fr(0)] * (maxw - len(cands[k]))]
+        di = max_order_weights(cands, name + ' interpolation', interp=True)[0]
+        out.append(farray(f'{name}_INTERP_P', f'0:{maxw - 1},0:{nc - 1}', f'{maxw},{nc}', ivals,
+                          'interpolation: face coefficient of cell CLO(k)+j'))
+        out.append(farray(f'{name}_INTERP_D', f'0:{nc - 1}', f'{nc}', [fstr(x) for x in di],
+                          'interpolation linear weights'))
+        names += [f'{name}_INTERP_P', f'{name}_INTERP_D']
     return ''.join(out), names
 
 
@@ -419,7 +489,8 @@ module seth_z_teno_tables
 !<
 !< Generated by scripts/gen_z_teno_tables.py, every coefficient derived in exact rational arithmetic from the
 !< definitions in notes/m2-sources.md and cross-checked (candidates exact, TENO Table 1, ADAM's WENO-5/7/9 indicators,
-!< max-order weights, tau orders). Cells by offset from the face i+1/2 (cell 0 left of it); left-biased stencils.
+!< max-order weights, tau orders, ADAM's interpolation tables). Cells by offset from the face i+1/2 (cell 0 left of
+!< it); left-biased stencils. The _INTERP_ arrays interpolate from the point values at the cell centres.
 use penf, only : I4P, R8P
 implicit none
 private

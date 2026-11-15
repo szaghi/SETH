@@ -1,0 +1,47 @@
+WENO S=2: interp d ['1/4', '3/4'] order 3; ADAM interp a(2,:) equal: True
+   face coefficients equal ADAM interp p(2,...): True
+WENO S=3: interp d ['1/16', '5/8', '5/16'] order 5; ADAM interp a(2,:) equal: True
+   face coefficients equal ADAM interp p(2,...): True
+WENO S=4: interp d ['1/64', '21/64', '35/64', '7/64'] order 7; ADAM interp a(2,:) equal: True
+   face coefficients equal ADAM interp p(2,...): True
+WENO S=5: interp d ['1/256', '9/64', '63/128', '21/64', '9/256'] order 9; ADAM interp a(2,:) equal: True
+   face coefficients equal ADAM interp p(2,...): True
+TENO5: interp d ['5/8', '5/16', '1/16'] = [0.625, 0.3125, 0.0625] order 5
+TENO6: interp d ['15/32', '5/16', '1/32', '3/16'] = [0.46875, 0.3125, 0.03125, 0.1875] order 6
+indicator [-1, 0]: interp-integral == reconstruction: True
+indicator [-2, -1, 0]: interp-integral == reconstruction: True
+indicator [-3, -2, -1, 0]: interp-integral == reconstruction: False
+indicator [-4, -3, -2, -1, 0]: interp-integral == reconstruction: False
+indicator [0, 1, 2, 3]: interp-integral == reconstruction: False
+indicator [-2, -1, 0, 1, 2, 3]: interp-integral == reconstruction: False
+  WENOZ3   recon-beta: tau order on point values 2.99
+  WENOZ3   interp-beta: tau order on point values 2.99
+  WENOZ5   recon-beta: tau order on point values 4.99
+  WENOZ5   interp-beta: tau order on point values 4.99
+  WENOZ7   recon-beta: tau order on point values 6.99
+  WENOZ7   interp-beta: tau order on point values 4.99
+  WENOZ9   recon-beta: tau order on point values 6.99
+  WENOZ9   interp-beta: tau order on point values 6.99
+  TENO5    recon-beta: tau order on point values 4.99
+  TENO5    interp-beta: tau order on point values 4.99
+  TENO6    recon-beta: tau order on point values 5.99
+  TENO6    interp-beta: tau order on point values 3.99
+=== generic function (no exp degeneracy): f = sum c_n x^n, c_n = s_n (n+3)/((n*n+7) n!), x0 shift 0.3
+  WENOZ3   recon-beta  on averages: tau orders [3.01, 3.0, 3.0, 3.0]
+  WENOZ3   recon-beta  on points  : tau orders [3.01, 3.0, 3.0, 3.0]
+  WENOZ3   interp-beta on points  : tau orders [3.01, 3.0, 3.0, 3.0]
+  WENOZ5   recon-beta  on averages: tau orders [5.01, 5.0, 5.0, 5.0]
+  WENOZ5   recon-beta  on points  : tau orders [5.01, 5.0, 5.0, 5.0]
+  WENOZ5   interp-beta on points  : tau orders [5.01, 5.0, 5.0, 5.0]
+  WENOZ7   recon-beta  on averages: tau orders [7.01, 7.0, 7.0, 7.0]
+  WENOZ7   recon-beta  on points  : tau orders [7.01, 7.0, 7.0, 7.0]
+  WENOZ7   interp-beta on points  : tau orders [4.99, 5.0, 5.0, 5.0]
+  WENOZ9   recon-beta  on averages: tau orders [7.01, 7.0, 7.0, 7.0]
+  WENOZ9   recon-beta  on points  : tau orders [7.01, 7.0, 7.0, 7.0]
+  WENOZ9   interp-beta on points  : tau orders [7.01, 7.0, 7.0, 7.0]
+  TENO5    recon-beta  on averages: tau orders [5.01, 5.0, 5.0, 5.0]
+  TENO5    recon-beta  on points  : tau orders [5.01, 5.0, 5.0, 5.0]
+  TENO5    interp-beta on points  : tau orders [5.01, 5.0, 5.0, 5.0]
+  TENO6    recon-beta  on averages: tau orders [6.0, 6.0, 6.0, 6.0]
+  TENO6    recon-beta  on points  : tau orders [6.0, 6.0, 6.0, 6.0]
+  TENO6    interp-beta on points  : tau orders [3.98, 3.99, 4.0, 4.0]
