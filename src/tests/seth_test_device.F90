@@ -2,7 +2,7 @@
 program seth_test_device
 !< SETH test: every kernel executed on the device (OpenACC) agrees with the same kernel on the host.
 !<
-!< Each of the 29 cases runs one kernel inside `!$acc parallel loop` over N deterministic stencils (smooth cubics,
+!< Each of the 35 cases runs one kernel inside `!$acc parallel loop` over N deterministic stencils (smooth cubics,
 !< jumps, an integer LCG), then the same loop on the host, and compares: states within 1e-13 of the stencil's
 !< magnitude, weights ratios within 1e-9 (the device and the host compile the kernel separately and may contract
 !< multiply-adds differently; the tolerances are those of seth_test_golden, for the same reasons). One case calls
@@ -12,7 +12,7 @@ program seth_test_device
 use seth
 implicit none
 integer(I4P), parameter :: N = 4096_I4P
-integer(I4P), parameter :: NK = 29_I4P
+integer(I4P), parameter :: NK = 35_I4P
 character(26), parameter :: NAMES(NK) = [ &
    'seth_weno1_js             ', &
    'seth_weno1_js_wr          ', &
@@ -42,7 +42,13 @@ character(26), parameter :: NAMES(NK) = [ &
    'seth_teno5                ', &
    'seth_teno6                ', &
    'seth_teno6_opt            ', &
-   'seth_teno6_neno6          ']
+   'seth_teno6_neno6          ', &
+   'seth_wenoz3_interp        ', &
+   'seth_wenoz5_interp        ', &
+   'seth_wenoz7_interp        ', &
+   'seth_wenoz9_interp        ', &
+   'seth_teno5_interp         ', &
+   'seth_teno6_interp         ']
 real(R8P)               :: v(-4:5,N), w(-4:5,N), rp(N), rm(N), wrp(N), wrm(N), hp(N), hm(N), hwp(N), hwm(N)
 real(R8P)               :: mag, ds, dw, worst_s, worst_w
 integer(I4P)            :: k, i, nbit, nfail
@@ -521,6 +527,102 @@ do k=1, NK
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
          call seth_teno6_neno6(a, b, SETH_TENO_EPS, SETH_TENO6_NENO6_CT, rp(i), rm(i))
+      enddo
+      endblock
+   case(30) ! seth_wenoz3_interp
+      block
+      real(R8P) :: a(-1:2), b(-1:2), rmu
+      rmu = 1._R8P
+      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      do i=1, N
+         a = v(-1:2,i) ; b = w(-1:2,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
+         call seth_wenoz3_interp(a, b, 1.e-40_R8P, 2_I4P, rp(i), rm(i))
+      enddo
+      hp = rp ; hm = rm ; hwp = wrp ; hwm = wrm
+
+      do i=1, N
+         a = v(-1:2,i) ; b = w(-1:2,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
+         call seth_wenoz3_interp(a, b, 1.e-40_R8P, 2_I4P, rp(i), rm(i))
+      enddo
+      endblock
+   case(31) ! seth_wenoz5_interp
+      block
+      real(R8P) :: a(-2:3), b(-2:3), rmu
+      rmu = 1._R8P
+      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      do i=1, N
+         a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
+         call seth_wenoz5_interp(a, b, 1.e-40_R8P, 2_I4P, rp(i), rm(i))
+      enddo
+      hp = rp ; hm = rm ; hwp = wrp ; hwm = wrm
+
+      do i=1, N
+         a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
+         call seth_wenoz5_interp(a, b, 1.e-40_R8P, 2_I4P, rp(i), rm(i))
+      enddo
+      endblock
+   case(32) ! seth_wenoz7_interp
+      block
+      real(R8P) :: a(-3:4), b(-3:4), rmu
+      rmu = 1._R8P
+      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      do i=1, N
+         a = v(-3:4,i) ; b = w(-3:4,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
+         call seth_wenoz7_interp(a, b, 1.e-40_R8P, 2_I4P, rp(i), rm(i))
+      enddo
+      hp = rp ; hm = rm ; hwp = wrp ; hwm = wrm
+
+      do i=1, N
+         a = v(-3:4,i) ; b = w(-3:4,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
+         call seth_wenoz7_interp(a, b, 1.e-40_R8P, 2_I4P, rp(i), rm(i))
+      enddo
+      endblock
+   case(33) ! seth_wenoz9_interp
+      block
+      real(R8P) :: a(-4:5), b(-4:5), rmu
+      rmu = 1._R8P
+      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      do i=1, N
+         a = v(-4:5,i) ; b = w(-4:5,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
+         call seth_wenoz9_interp(a, b, 1.e-40_R8P, 2_I4P, rp(i), rm(i))
+      enddo
+      hp = rp ; hm = rm ; hwp = wrp ; hwm = wrm
+
+      do i=1, N
+         a = v(-4:5,i) ; b = w(-4:5,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
+         call seth_wenoz9_interp(a, b, 1.e-40_R8P, 2_I4P, rp(i), rm(i))
+      enddo
+      endblock
+   case(34) ! seth_teno5_interp
+      block
+      real(R8P) :: a(-2:3), b(-2:3), rmu
+      rmu = 1._R8P
+      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      do i=1, N
+         a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
+         call seth_teno5_interp(a, b, SETH_TENO_EPS, SETH_TENO5_CT, rp(i), rm(i))
+      enddo
+      hp = rp ; hm = rm ; hwp = wrp ; hwm = wrm
+
+      do i=1, N
+         a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
+         call seth_teno5_interp(a, b, SETH_TENO_EPS, SETH_TENO5_CT, rp(i), rm(i))
+      enddo
+      endblock
+   case(35) ! seth_teno6_interp
+      block
+      real(R8P) :: a(-2:3), b(-2:3), rmu
+      rmu = 1._R8P
+      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      do i=1, N
+         a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
+         call seth_teno6_interp(a, b, SETH_TENO_EPS, SETH_TENO6_CT, rp(i), rm(i))
+      enddo
+      hp = rp ; hm = rm ; hwp = wrp ; hwm = wrm
+
+      do i=1, N
+         a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
+         call seth_teno6_interp(a, b, SETH_TENO_EPS, SETH_TENO6_CT, rp(i), rm(i))
       enddo
       endblock
    endselect

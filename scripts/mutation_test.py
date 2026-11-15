@@ -3,8 +3,8 @@
 
 Each mutant changes one thing in a scratch copy of the tree (a coefficient of a generated table, a weight, a tau
 coefficient, the TENO cutoff or power, the WENO-JS exponent, the mirroring, the descaler, the weights ratio, the use
-of eps), the tests are rebuilt incrementally and run with scripts/run_tests.sh, and the mutant is *killed* when at
-least one test fails. A surviving mutant is a defect the suite cannot see: the report lists them.
+of eps, the interpolation tables and their wiring), the tests are rebuilt (--force-compile) and run with
+scripts/run_tests.sh, and the mutant is *killed* when at least one test fails. A surviving mutant is a defect the suite cannot see: the report lists them.
 
 Usage (from the repository root, with fobis and the compilers of the mode on PATH, PENF fetched):
 
@@ -50,6 +50,12 @@ MUTANTS = [
      'g(k) = (g(k)*g(k))*(g(k)*g(k))*(g(k)*g(k))', 'g(k) = (g(k)*g(k))*(g(k)*g(k))'),
     ('teno-global-indicator-off', 'src/lib/seth_z_teno_body.INC', 'tau = tau + TG*betag', 'tau = tau + TG*betag',
      'tau = tau + 0._R8P*betag'),
+    # the interpolations (2026-11-15): a weight, a face coefficient, and a kernel wired to the reconstruction tables
+    ('teno6-interp-weight', 'src/lib/seth_z_teno_tables.F90', 'TENO6_INTERP_D(0:3)', '15._R8P/32._R8P', '0.469_R8P'),
+    ('wenoz5-interp-coefficient', 'src/lib/seth_z_teno_tables.F90', 'WENOZ5_INTERP_P(0:2,0:2)', '15._R8P/8._R8P',
+     '15.0001_R8P/8._R8P'),
+    ('teno5-interp-uses-recon-p', 'src/lib/seth_teno.F90', 'seth_teno5_interp(vp', 'CP(0:MAXW-1,0:NC-1) = TENO5_INTERP_P',
+     'CP(0:MAXW-1,0:NC-1) = TENO5_P'),
 ]
 
 
