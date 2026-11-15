@@ -17,4 +17,5 @@
 /docs/api/
 /docs/.vitepress/dist/
 /docs/.vitepress/cache/
+/docs/package-lock.json
 /docs/public/coverage.json

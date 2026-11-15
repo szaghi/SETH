@@ -1,23 +1,110 @@
-/* SETH docs: the figure, card and cast styles of the ADAM docs harness (ADAM docs/.vitepress/theme/custom.css, the
-   "Figures" and "Layout" blocks, with the class prefix adam- renamed seth-). SETH keeps the default VitePress colours:
-   the ADAM identity tokens (washi / silver ink page grounds) are not copied. */
+/* Sumi identity of the ADAM docs (ADAM, FLUME, PRISM), adopted by SETH (owner decision, 2026-11-15).
+   Copied from ADAM's docs/.vitepress/theme/custom.css (the rules of ADAM's docs/BRAND.md, "Themes"), with the class
+   prefix adam- renamed seth-; nothing else changed. Light theme: washi.  Dark theme: silver ink.
+   Loaded from docs/.vitepress/theme/index.ts. */
 
-/* ---------- Figures ----------
-   The verification figures are drawn on the washi ground (docs/scripts/make_doc_figures.py, as ADAM's and FLUME's);
-   they are shown as washi cards, the way a printed plate sits on the page. A figure with a silver-ink twin
-   (<name>-dark.png, docs/scripts/figure_theme.py) shows the twin in the dark theme, swapped in by index.ts
-   (class seth-dark-twin), on its own silver-ink card. */
-.vp-doc img[src$=".png"] {
+@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@700;800&display=swap');
+
+/* ---------- Light · washi ---------- */
+:root {
+  --vp-c-bg: #f3ede1;
+  --vp-c-bg-alt: #ebe3d3;
+  --vp-c-bg-elv: #f7f2e8;
+  --vp-c-bg-soft: #ebe3d3;
+  --vp-c-divider: #ddd4c3;
+  --vp-c-border: #cfc5b2;
+  --vp-c-gutter: #e6dfcf;
+
+  --vp-c-text-1: #1d1b18;
+  --vp-c-text-2: #5f5a52;
+  --vp-c-text-3: #6f6a62;
+
+  --vp-c-brand-1: #b23417;   /* links, active nav: 5:1 on the paper */
+  --vp-c-brand-2: #c73e1d;   /* seal vermilion, hover */
+  --vp-c-brand-3: #8f2a12;   /* filled buttons */
+  --vp-c-brand-soft: rgba(199, 62, 29, 0.12);
+
+  --vp-button-brand-bg: #b23417;
+  --vp-button-brand-hover-bg: #8f2a12;
+  --vp-button-brand-active-bg: #8f2a12;
+  --vp-button-brand-text: #ffffff;
+  --vp-button-brand-hover-text: #ffffff;
+
+  --vp-home-hero-name-color: #1d1b18;
+  --vp-home-hero-name-background: none;
+  --vp-home-hero-image-background-image: none;   /* the ink carries the mark; no glow */
+  --vp-home-hero-image-filter: none;
+}
+
+/* ---------- Dark · silver ink ---------- */
+.dark {
+  --vp-c-bg: #0e1116;
+  --vp-c-bg-alt: #0a0d11;
+  --vp-c-bg-elv: #141820;
+  --vp-c-bg-soft: #151a21;
+  --vp-c-divider: #222831;
+  --vp-c-border: #2c333d;
+  --vp-c-gutter: #0a0d11;
+
+  --vp-c-text-1: #e8ecf0;
+  --vp-c-text-2: #a9b1bb;
+  --vp-c-text-3: #8b949e;
+
+  --vp-c-brand-1: #ffc24d;   /* links, active nav */
+  --vp-c-brand-2: #ffb020;   /* seal amber, hover */
+  --vp-c-brand-3: #c98500;
+  --vp-c-brand-soft: rgba(255, 176, 32, 0.14);
+
+  --vp-button-brand-bg: #ffb020;
+  --vp-button-brand-hover-bg: #ffc24d;
+  --vp-button-brand-active-bg: #c98500;
+  --vp-button-brand-text: #1a1204;
+  --vp-button-brand-hover-text: #1a1204;
+
+  --vp-home-hero-name-color: #e8ecf0;
+  --vp-home-hero-name-background: none;
+  --vp-home-hero-image-background-image: none;
+}
+
+/* Hero name in the family display face */
+.VPHero .name,
+.VPHero .name .clip {
+  font-family: 'Shippori Mincho', serif;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+/* ---------- Layout (not identity): hero sizes as on the other szaghi.github.io sites ----------
+   The expanded acronym and the tagline are long; at VitePress' default size the subtitle outweighs the
+   hero name, the family's display face. */
+@media (min-width: 640px) {
+  .VPHero .text { font-size: 36px; line-height: 44px; }
+  .VPHero .tagline { font-size: 19px; line-height: 30px; }
+}
+@media (min-width: 960px) {
+  .VPHero .name, .VPHero .name .clip { font-size: 64px; line-height: 72px; }
+  .VPHero .text { font-size: 40px; line-height: 50px; }
+  .VPHero .tagline { font-size: 20px; line-height: 32px; }
+}
+
+/* ---------- Figures (not identity tokens) ----------
+   The verification figures are drawn on the washi ground (docs/scripts/theme_figures.py); on silver ink they are shown
+   as washi cards, the way a printed plate sits on a dark table, rather than as white rectangles. A figure with a
+   silver-ink twin (<name>-dark.png, docs/scripts/figure_theme.py) shows the twin instead, swapped in by index.ts
+   (class seth-dark-twin): drawn on the page ground, it needs no card. */
+.dark .vp-doc img[src$=".png"] {
   background: #f3ede1;
   border-radius: 6px;
   padding: 6px;
 }
 .dark .vp-doc img.seth-dark-twin {
-  background: #0e1116;
+  background: none;
+  border-radius: 0;
+  padding: 0;
 }
 
-/* ---------- Layout: casts and figure cards ----------
-   Casts (.seth-casts: theme-aware videos, the .light-only/.dark-only pair of config.mts) and the figure cards
+/* ---------- Layout (not identity): landing galleries ----------
+   "See it run" (.seth-casts: theme-aware videos, the .light-only/.dark-only pair of config.mts) and the figure cards
    (.seth-gallery: one markdown link per paragraph, image + <strong> title + <span> caption). One column on phones,
    two from 640 px. Flat: borders from the theme tokens, no shadows, no gradients. */
 .vp-doc .seth-casts,
@@ -29,6 +116,8 @@
 }
 @media (min-width: 640px) {
   .vp-doc .seth-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Casts: a justified row. Each card grows in proportion to its video's aspect ratio (--ar, width/height, set on the
+     figure), so the videos of a row share one height whatever their shapes; a wide cast (.seth-cast-wide) takes a row. */
   .vp-doc .seth-casts { display: flex; flex-wrap: wrap; align-items: stretch; }
   .vp-doc .seth-casts .seth-cast { flex: var(--ar, 1.5) 1 0; min-width: 0; }
   .vp-doc .seth-casts .seth-cast-wide,
@@ -70,12 +159,12 @@
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: contain;
-  background: #f3ede1;
+  background: #f3ede1;   /* the figures' washi ground, in both themes */
   border-radius: 0;
   padding: 6px;
 }
 .dark .vp-doc .seth-gallery img.seth-dark-twin {
-  background: #0e1116;
+  background: #0e1116;   /* the silver-ink twin's ground (figure_theme.py) */
   padding: 6px;
 }
 .vp-doc .seth-gallery strong { padding: 8px 12px 0; font-size: 14px; }

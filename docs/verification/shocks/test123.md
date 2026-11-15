@@ -52,7 +52,8 @@ scripts/run_vv.sh --only seth_vv_test123
   TENO6. WENO-Z5 and TENO5 need CFL ≤ 0.1, and TENO6 fails even there. The flux corrections are not the cause: without them the second-order flux fails too.
   The cause is high-order, low-dissipation face states fed to HLLC next to vacuum. The splitting path, whose global
   Lax–Friedrichs splitting adds dissipation, survives at CFL 0.5. This is a property of how a client uses the
-  kernels near vacuum, not a kernel defect: a code using the interpolation path needs a positivity safeguard there.
+  kernels near vacuum, not a kernel defect: a code using the interpolation path needs a positivity safeguard there
+  (to become a SETH feature: [issue #2](https://github.com/szaghi/SETH/issues/2)).
 - With the limiter every scheme stays positive (asserted). The limiter also acts on schemes that would have stayed
   positive, because it checks the stricter one-sided states $q \mp 2\lambda F$. Their $L_1$ is then slightly larger
   than without it.

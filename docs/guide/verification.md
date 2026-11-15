@@ -24,7 +24,8 @@ Findings that matter for users of the kernels, each documented on its page:
   waves; on the Woodward–Colella blast so do WENO9-JS and the WENO-Z (but Z3) and TENO reconstructions
   ([S3](/verification/shocks/test123), [S5](/verification/shocks/blast)).
 - WENO-Z9 is not robust at shocks: 28% overshoot behind the Burgers shock, oscillations on the composite profile,
-  loss of positivity in the first steps of the blast wave ([S6](/verification/shocks/burgers)).
+  loss of positivity in the first steps of the blast wave ([S6](/verification/shocks/burgers);
+  [issue #1](https://github.com/szaghi/SETH/issues/1)).
 - With Lax–Friedrichs splitting, use $\alpha$ a little above $\max|f'|$. With $\alpha = \max|f'|$ exactly, the split
   flux has a second-order critical point where $|f'|$ peaks, and TENO falls to second order there
   ([S6](/verification/shocks/burgers)).

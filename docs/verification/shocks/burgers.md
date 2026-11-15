@@ -71,7 +71,8 @@ after the shock at $N = 80$.*
   starts to act.
 - The overshoot after the shock stays below $10^{-4}$ for most schemes and below $10^{-2}$ for all but one
   (asserted). WENO-Z7 reaches $6\cdot10^{-3}$.
-- **WENO-Z9 overshoots by 0.28 behind the shock** (printed, exempted from the bound, and left to the owner). Its
+- **WENO-Z9 overshoots by 0.28 behind the shock** (printed, exempted from the bound; to be fixed:
+  [issue #1](https://github.com/szaghi/SETH/issues/1)). Its
   $\tau_9 = |\beta_0 - \beta_4|$ (Castro et al.'s rule for odd $r$, as restated by Li et al. 2022b; the choice was
   already recorded as unsourced for WENO-Z9) is small when the two outer candidates straddle a smeared shock
   symmetrically. The weights then stay close to the linear ones across the shock. The same weakness makes WENO-Z9

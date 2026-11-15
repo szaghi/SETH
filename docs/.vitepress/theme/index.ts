@@ -1,6 +1,6 @@
 // docs/.vitepress/theme/index.ts
-// The default theme plus the dark figures of the ADAM docs harness (copied from ADAM's docs/.vitepress/theme/index.ts,
-// without its redirects): in the dark theme a page figure <img src=".../x.png"> shows x-dark.png, the silver-ink twin
+// The ADAM docs identity (custom.css: the sumi tokens, adopted 2026-11-15) plus the dark figures of the ADAM docs
+// harness (copied from ADAM's docs/.vitepress/theme/index.ts, without its redirects): in the dark theme a page figure <img src=".../x.png"> shows x-dark.png, the silver-ink twin
 // drawn by docs/scripts/figure_theme.py, when it exists (dark-figures.data.ts), and stays a washi card otherwise
 // (custom.css). The verification catalog, cards and casts are styled in custom.css.
 import DefaultTheme from 'vitepress/theme'
