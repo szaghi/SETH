@@ -19,3 +19,28 @@ compiler unrolls, nothing to keep on the device.
 
 **Caveat.** The RTX 4070 runs FP64 at 1/64 of its FP32 rate, which favours whichever kernel issues fewer instructions;
 the production margin is the one of a data-centre GPU (A30, H100). Details and raw outputs: `notes/m3-gpu-benchmark.md`.
+
+## Device-kernel rules: arrays and loop extents
+
+Two rules of ADAM's device kernels, measured on SETH by `src/bench/seth_bench_device_arrays.F90`
+(`fobis build --mode bench-arrays-nvf-oac`; RTX 4070, ns per face):
+
+| Rule | Measured on | Follows it | Breaks it | Cost |
+|---|---|---|---|---|
+| No automatic local arrays (bounds from a dummy argument) in a device routine | WENO-JS 5 | 0.97 | 553 | 569× |
+| | positivity limiter, 1-D | 2.70 | 899 | 333× |
+| Loop extents known at compile time | WENO-JS 5 (over-dimensioned arrays, run-time `S`) | 0.97 | 1.04 | 7 % |
+| | positivity limiter, loops to `nv` | 2.67 | 2.70 | 1 % |
+
+An automatic array in a device routine is allocated from the device heap at every call. Besides the time, a launch can
+fail with the default heap (`DEVICE FORTRAN AUTO ALLOCATION FAILED`, `NVCOMPILER_ACC_CUDA_HEAPSIZE`).
+
+SETH's WENO-JS, WENO-Z and TENO kernels follow both rules by construction: every bound and extent is a named constant
+of the kernel. The first version of `seth_positivity_euler` had automatic arrays of size `nv`; its locals are now
+dimensioned `SETH_POSITIVITY_NV_MAX = 5` and it runs 333× faster on the device with the same results. The audit of
+every device routine, routine by routine, and the raw outputs: `notes/gpu-kernel-audit.md`.
+
+::: tip Writing a kernel of your own
+Declare no local array whose bound depends on a dummy argument, and pass no array expression of such a size as an
+argument. Over-dimension with a named constant and loop to the dummy.
+:::

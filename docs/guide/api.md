@@ -75,6 +75,13 @@ returns `theta = 0` and `f = f_low`; `seth_euler_admissible` lets the caller che
 `acc routine seq` and `omp declare target`, like the reconstruction kernels. See the [positivity
 verification](/verification/contracts/positivity).
 
+- **`nv` at most `SETH_POSITIVITY_NV_MAX` = 5.** The kernel's local arrays have that constant dimension, since an array
+  sized by a dummy argument is allocated from the device heap at every call ([measured](/guide/performance#device-kernel-rules-arrays-and-loop-extents):
+  333× slower). For a larger `nv` it returns `theta = 0` and `f = f_low`.
+- **Round-off.** The floors hold for the one-sided states as the kernel evaluates them. A caller that evaluates
+  `ql - lam f` differently (a fused multiply-add) gets states that differ by $\epsilon(|q| + |\lambda f|)$ and pressures
+  that differ by about that times $1 + |u|^2$: choose the floors above it.
+
 ## Tables
 
 `seth_weno_js_tables` and `seth_z_teno_tables` expose every coefficient as a named constant (`WENO5_JS_A`,
