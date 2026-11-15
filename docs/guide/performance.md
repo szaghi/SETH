@@ -11,6 +11,13 @@
 | WENO-5, one i9-13900KF core, gfortran | 23.1 | 21.3 (SETH 0.92x) | 49.8 |
 | WENO-7, one core, gfortran | 34.6 | 38.2 (1.10x) | 78.3 |
 
+![ns per face of SETH's kernels and ADAM's, on the RTX 4070 and on one CPU core with gfortran and nvfortran](/guide/perf-kernels.png)
+
+*GPU: the median of four runs of the program, the error bar their spread (the wide bar of SETH's WENO-5 is the first
+kernel the program launches, 6 % slower in run 1 only). WENO-Z5 and TENO6 have no ADAM counterpart and are shown for
+the cost of their weights: WENO-Z5 costs what WENO5-JS costs, TENO6 (four candidates, a six-point global
+indicator) 1.3 times what WENO7-JS costs. CPU: one run per compiler.*
+
 Against ADAM's host routines (FLUME's CPU path) SETH is about 2x faster on one core. The results are bitwise equal to
 ADAM's on the device.
 
@@ -32,6 +39,13 @@ Two rules of ADAM's device kernels, measured on SETH by `src/bench/seth_bench_de
 | Loop extents known at compile time | WENO-JS 5 (over-dimensioned arrays, run-time `S`) | 0.97 | 1.04 | 7 % |
 | | positivity limiter, loops to `nv` | 2.67 | 2.70 | 1 % |
 
+![ns per face, log scale, of WENO5-JS and of the positivity limiter following or breaking the two rules, on the GPU and on one CPU core](/guide/perf-device-rules.png)
+
+*Blue: follows both rules (the library); light blue: arrays of constant bounds but run-time loop extents; red:
+automatic arrays. On the GPU automatic arrays cost two to three orders of magnitude and run-time extents 7 %; on a
+CPU core both cost a factor of 1.3 to 1.8, together up to 4. The limiter in 1-D (`nv` = 3) and 3-D (`nv` = 5); the
+library's loops to the dummy `nv` cost nothing on the GPU against `nv` constant.*
+
 An automatic array in a device routine is allocated from the device heap at every call. Besides the time, a launch can
 fail with the default heap (`DEVICE FORTRAN AUTO ALLOCATION FAILED`, `NVCOMPILER_ACC_CUDA_HEAPSIZE`).
 
@@ -44,3 +58,8 @@ every device routine, routine by routine, and the raw outputs: `notes/gpu-kernel
 Declare no local array whose bound depends on a dummy argument, and pass no array expression of such a size as an
 argument. Over-dimension with a named constant and loop to the dummy.
 :::
+
+---
+
+*The figures are drawn by `docs/scripts/make_performance_figures.py` from the raw outputs of the two benchmarks
+(`notes/m3-bench-data/`, `notes/gpu-audit-data/`), light and dark.*
