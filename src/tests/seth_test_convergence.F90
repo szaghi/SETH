@@ -18,14 +18,20 @@ program seth_test_convergence
 !< Every scheme and order is printed.
 use seth
 use seth_test_schemes
+use seth_vv_cases, only : vv_report, vv_open
 implicit none
 real(R8P),    parameter :: PI = acos(-1._R8P)
 integer(I4P), parameter :: NLEV = 6_I4P
 real(R8P)               :: eop(NLEV), eadv(4), oop, oadv, need
 integer(I4P)            :: id, p, j, n
 logical                 :: passed, advect_it
+integer                 :: ue, uo
 
 passed = .true.
+if (vv_report()) then
+   call vv_open('convergence.dat', ue, 'scheme p N Linf(D - du/dx) (Henrick field)')
+   call vv_open('convergence-orders.dat', uo, 'scheme p operator-order advection-order (-1: not run)')
+endif
 print '(A16,A3,A12,A12)', 'scheme', 'p', 'operator', 'RK3 advect'
 do id=1, NSCHEMES
    if (SCHEMES(id)%interp) cycle ! the finite-difference flux setting reconstructs: interpolations elsewhere
@@ -33,6 +39,7 @@ do id=1, NSCHEMES
       do j=1, NLEV
          n = 20*2**(j-1)
          eop(j) = operator_error(id, p, n)
+         if (vv_report()) write(ue, '(A,1X,I1,1X,I5,ES24.15)') trim(SCHEMES(id)%name), p, n, eop(j)
       enddo
       oop = finest_order(eop, NLEV, 1)
       advect_it = (SCHEMES(id)%family == FAM_TENO .or. (SCHEMES(id)%family == FAM_Z .and. p == 2)) .and. &
@@ -46,6 +53,7 @@ do id=1, NSCHEMES
          oadv = finest_order(eadv, 4, 0)
       endif
       print '(A16,I3,2F12.2)', SCHEMES(id)%name, p, oop, oadv
+      if (vv_report()) write(uo, '(A,1X,I1,2F8.3)') trim(SCHEMES(id)%name), p, oop, oadv
       ! the expected order
       if (SCHEMES(id)%family == FAM_JS) then
          need = real(max(2*SCHEMES(id)%s - 3, 1), R8P)
@@ -64,6 +72,7 @@ do id=1, NSCHEMES
       endif
    enddo
 enddo
+if (vv_report()) then ; close(ue) ; close(uo) ; endif
 if (.not.passed) error stop 'convergence test failed'
 print '(A)', 'seth_test_convergence: ok'
 

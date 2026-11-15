@@ -37,6 +37,7 @@ program seth_test_critical_points
 !< tested here: the literature has no critical-point test for them.
 use seth
 use seth_test_schemes
+use seth_vv_cases, only : vv_report, vv_open
 implicit none
 integer(I4P), parameter :: NH = 8_I4P
 real(R8P),    parameter :: FLOOR_ = 10._R8P*epsilon(1._R8P)
@@ -44,8 +45,10 @@ real(R8P)               :: o1(2), o2(2), lo, hi
 integer(I4P)            :: id, p, r
 real(R8P)               :: rate1, rate2
 logical                 :: passed
+integer                 :: ur
 
 passed = .true.
+if (vv_report()) call vv_open('critical-points.dat', ur, 'scheme p cp1(a>0) cp1(a<0) cp2(a>0) cp2(a<0)')
 print '(A16,A4,4A12)', 'scheme', 'p', '1st-cp a>0', '1st-cp a<0', '2nd-cp a>0', '2nd-cp a<0'
 do id=1, NSCHEMES
    if (SCHEMES(id)%interp) cycle ! the finite-difference flux setting reconstructs: interpolations elsewhere
@@ -53,6 +56,7 @@ do id=1, NSCHEMES
       call orders(id, 1, p, o1)
       call orders(id, 2, p, o2)
       print '(A16,I4,4F12.2)', SCHEMES(id)%name, p, o1, o2
+      if (vv_report()) write(ur, '(A,1X,I1,4F8.3)') trim(SCHEMES(id)%name), p, o1, o2
       lo = -1._R8P ; hi = 1.e9_R8P
       if (SCHEMES(id)%family == FAM_JS) then ! Henrick et al.'s rate
          r = SCHEMES(id)%s
@@ -80,6 +84,7 @@ do id=1, NSCHEMES
    enddo
 enddo
 if (.not.passed) error stop 'critical-point test failed'
+if (vv_report()) close(ur)
 print '(A)', 'seth_test_critical_points: ok'
 
 contains

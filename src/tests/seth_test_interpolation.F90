@@ -24,14 +24,20 @@ program seth_test_interpolation
 use seth
 use seth_test_schemes
 use seth_test_functions, only : gfun, gder, gder2
+use seth_vv_cases, only : vv_report, vv_open
 implicit none
 real(R8P),    parameter :: PI = acos(-1._R8P)
 integer(I4P), parameter :: NLEV = 6_I4P, NH = 7_I4P
 real(R8P)               :: e(2,NLEV), ep(2,NH), o(2), ocp1(2), ocp2(2), need, par, epsv
 integer(I4P)            :: id, p, j
 logical                 :: passed
+integer                 :: ue, uo
 
 passed = .true.
+if (vv_report()) then
+   call vv_open('interpolation.dat', ue, 'scheme p N Linf (both states, Henrick field)')
+   call vv_open('interpolation-orders.dat', uo, 'scheme p domain(+) domain(-) cp1(+) cp1(-) cp2(+) cp2(-)')
+endif
 print '(A16,A3,6A10)', 'scheme', 'p', 'Linf +', 'Linf -', 'cp1 +', 'cp1 -', 'cp2 +', 'cp2 -'
 do id=1, NSCHEMES
    if (.not.SCHEMES(id)%interp) cycle
@@ -40,11 +46,13 @@ do id=1, NSCHEMES
       epsv = merge(1.e-40_R8P, SCHEMES(id)%eps, SCHEMES(id)%family == FAM_Z .or. SCHEMES(id)%family == FAM_TENO)
       do j=1, NLEV
          call domain_error(id, 20*2**(j-1), par, epsv, e(:,j))
+         if (vv_report()) write(ue, '(A,1X,I1,1X,I5,ES24.15)') trim(SCHEMES(id)%name), p, 20*2**(j-1), maxval(e(:,j))
       enddo
       o = [finest(e(1,:), NLEV), finest(e(2,:), NLEV)]
       call critical(id, 1, par, epsv, ep) ; ocp1 = [finest(ep(1,:), NH), finest(ep(2,:), NH)]
       call critical(id, 2, par, epsv, ep) ; ocp2 = [finest(ep(1,:), NH), finest(ep(2,:), NH)]
       print '(A16,I3,6F10.2)', SCHEMES(id)%name, p, o, ocp1, ocp2
+      if (vv_report()) write(uo, '(A,1X,I1,6F8.3)') trim(SCHEMES(id)%name), p, o, ocp1, ocp2
       if (SCHEMES(id)%family == FAM_JS_INTERP) then
          need = real(merge(SCHEMES(id)%s + 1, 1, SCHEMES(id)%s >= 2), R8P)
       elseif (SCHEMES(id)%family == FAM_Z .and. SCHEMES(id)%s == 2) then
@@ -64,6 +72,7 @@ do id=1, NSCHEMES
       endif
    enddo
 enddo
+if (vv_report()) then ; close(ue) ; close(uo) ; endif
 if (.not.passed) error stop 'interpolation test failed'
 print '(A)', 'seth_test_interpolation: ok'
 

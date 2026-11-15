@@ -19,6 +19,7 @@ program seth_test_spectral
 use seth
 use seth_weno_js_tables
 use seth_z_teno_tables
+use seth_vv_cases, only : vv_report, vv_open
 implicit none
 integer(I4P), parameter :: NX = 20000_I4P
 real(R8P),    parameter :: PI = acos(-1._R8P)
@@ -100,7 +101,15 @@ contains
    complex(R8P)             :: z
    real(R8P)                :: xi
    integer(I4P)             :: i
+   integer                  :: u
    imax = -huge(1._R8P) ; eff = -1._R8P
+   if (vv_report()) then
+      call vv_open('spectral-'//name(1:index(name//' ', ' ')-1)//'.dat', u, 'xi Re(xi~) Im(xi~) (linear background)')
+      do i=1, NX, 100
+         xi = PI*i/NX ; z = xit(c, xi) ; write(u, '(3ES24.15)') xi, real(z, R8P), aimag(z)
+      enddo
+      close(u)
+   endif
    do i=1, NX
       xi = PI*i/NX
       z = xit(c, xi)

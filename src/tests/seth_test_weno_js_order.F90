@@ -4,11 +4,13 @@ program seth_test_weno_js_order
 !<
 !< u = g(x), the generic function of seth_test_functions (not exp, whose averages are a constant multiple of its point
 !< values), no critical point near the face (where Jiang-Shu weights lose order); the face at x = 0.3, cells of width h
-!< halved from h0. Reconstruction from exact cell averages and interpolation from point values, both states (vp = vm = u).
+!< halved from h0. Reconstruction from exact cell averages and interpolation from point values, both states
+!< (vp = vm = u).
 !< The observed order is taken on the finest pair of h whose errors stay above round-off (200 eps) and must reach
 !< 2S-1 - 0.5.
 use seth
 use seth_test_functions, only : gfun, gavg
+use seth_vv_cases, only : vv_report, vv_open
 implicit none
 integer(I4P), parameter :: NH = 6_I4P            !< Number of grid sizes.
 real(R8P),    parameter :: XF = 0.3_R8P          !< Face position.
@@ -17,8 +19,10 @@ real(R8P), allocatable  :: vp(:)
 real(R8P)               :: h, err(2,NH,2), order, floor_
 integer(I4P)            :: S, j, m, t, side
 logical                 :: passed, interp
+integer                 :: ur
 
 passed = .true.
+if (vv_report()) call vv_open('orders-js.dat', ur, 'S interp state observed-order design')
 floor_ = 2.e2_R8P * epsilon(1._R8P) ! 100 eps |g|, |g| < 2 near XF
 do S=1, 5
    if (allocated(vp)) deallocate(vp)
@@ -47,10 +51,12 @@ do S=1, 5
          enddo
          print '(A,I0,A,L1,A,A,A,F6.2,A,I0)', 'S=', S, ' interp=', interp, ' state=', merge('+','-',side==1), &
                ' observed order=', order, ' design=', 2*S-1
+         if (vv_report()) write(ur, '(I2,1X,L1,1X,A1,F8.3,I3)') S, interp, merge('+','-',side==1), order, 2*S-1
          if (order < 2*S - 1 - 0.5_R8P) passed = .false.
       enddo
    enddo
 enddo
+if (vv_report()) close(ur)
 if (.not.passed) error stop 'a WENO-JS kernel misses its design order'
 print '(A)', 'seth_test_weno_js_order: ok'
 

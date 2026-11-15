@@ -11,7 +11,8 @@ program seth_vv_euler_order
 !< (the flux corrections are O(h^6), seth_vv_euler). The wave has first-order critical points (rho' = 0 at x = +-1/2),
 !< where the WENO-JS weights lose accuracy (Henrick et al. 2005) and WENO-Z3 drops: those are printed, not asserted.
 !< The positivity limiter is on, and must never act (a smooth flow). Asserted: every WENO-Z (but Z3) and TENO scheme
-!< at its expected order - 0.5 in L1 on the finest pair above 1e-12; every scheme at least order 2; no limited face.
+!< at its expected order - 0.5 in L1 on the finest pair above 1e-10 (round-off accumulates below); every scheme at
+!< least order 2; no limited face.
 !< Report mode: euler-order.dat (scheme N L1 Linf).
 use seth
 use seth_test_schemes
@@ -81,13 +82,14 @@ contains
    endsubroutine wave
 
    pure function order(e) result(o)
-   !< Observed order on the finest pair whose finer error is above 1e-12.
+   !< Observed order on the finest pair whose finer error is above 1e-10: below it the round-off accumulated over the
+   !< tens of thousands of RK3 steps of the time-accurate dt (a plateau at 1e-12 .. 1e-11, measured) takes over.
    real(R8P), intent(in) :: e(:)
    real(R8P)             :: o
    integer(I4P)          :: j
    o = -1._R8P
    do j=size(e)-1, 1, -1
-      if (e(j+1) > 1.e-12_R8P) then
+      if (e(j+1) > 1.e-10_R8P) then
          o = log(e(j)/e(j+1))/log(2._R8P) ; return
       endif
    enddo

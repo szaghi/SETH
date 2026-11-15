@@ -19,12 +19,14 @@ use seth
 use seth_test_rng, only : seed_rng
 use seth_z_teno_tables
 use seth_test_functions, only : gfun, gavg
+use seth_vv_cases, only : vv_report, vv_open
 implicit none
 real(R8P),    parameter :: XF = 0.3_R8P
 integer(I4P), parameter :: NH = 6_I4P
 real(R8P)               :: vp(-2:3), vm(-2:3), rp, rm, h, err(2,NH), order, floor_, worst, x, lin, ct, big
 integer(I4P)            :: sc, j, m, side, jump, n_
 logical                 :: passed
+integer                 :: ur
 integer(I4P), parameter :: NSC = 6_I4P
 character(12), parameter :: NAMES(NSC) = ['TENO5       ', 'TENO6       ', 'TENO6-opt   ', 'TENO6-NENO6 ', &
                                           'TENO5-interp', 'TENO6-interp']
@@ -34,6 +36,7 @@ real(R8P),    parameter :: CTS(NSC) = [SETH_TENO5_CT, SETH_TENO6_CT, SETH_TENO6_
 
 passed = .true.
 call seed_rng(1005_I4P)
+if (vv_report()) call vv_open('orders-teno.dat', ur, 'scheme state observed-order design')
 floor_ = 2.e2_R8P * epsilon(1._R8P) ! 100 eps |g|, |g| < 2 near XF
 do sc=1, NSC
    ct = CTS(sc)
@@ -58,6 +61,7 @@ do sc=1, NSC
          endif
       enddo
       print '(A,A,A,A,F6.2)', trim(NAMES(sc)), ' state=', merge('+','-',side==1), ' order=', order
+      if (vv_report()) write(ur, '(A,1X,A1,F8.3,F5.1)') trim(NAMES(sc)), merge('+','-',side==1), order, DESIGN(sc)
       if (order < DESIGN(sc) - 0.5_R8P) passed = .false.
    enddo
    ! 2. linear scheme on smooth data
@@ -112,6 +116,7 @@ do sc=1, NSC
       endif
    enddo
 enddo
+if (vv_report()) close(ur)
 if (.not.passed) error stop 'TENO test failed'
 print '(A)', 'seth_test_teno: ok'
 

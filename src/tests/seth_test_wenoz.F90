@@ -13,6 +13,7 @@ program seth_test_wenoz
 use seth
 use seth_test_rng, only : seed_rng
 use seth_test_functions, only : gfun, gavg
+use seth_vv_cases, only : vv_report, vv_open
 implicit none
 real(R8P), parameter :: EPS = 1.e-40_R8P !< WENO-Z regulariser of the tests.
 real(R8P), parameter :: XF = 0.3_R8P
@@ -21,9 +22,11 @@ real(R8P)            :: vp(-4:5), vm(-4:5), rp, rm, h, err(2,NH), order, floor_,
 integer(I4P)         :: s, o, p, j, m, side, jump, n_, t
 logical              :: passed, interp
 character(7)         :: kind
+integer              :: ur
 
 passed = .true.
 call seed_rng(1001_I4P)
+if (vv_report()) call vv_open('orders-wenoz.dat', ur, 'kind order p state observed-order')
 floor_ = 2.e2_R8P * epsilon(1._R8P) ! 100 eps |g|, |g| < 2 near XF
 do t=1, 2
    interp = t == 2
@@ -53,6 +56,7 @@ do t=1, 2
             enddo
             print '(A,A,I0,A,I0,A,A,A,F6.2)', kind, 'WENO-Z', o, ' p=', p, ' state=', merge('+','-',side==1), &
                   ' order=', order
+            if (vv_report()) write(ur, '(A,1X,I2,1X,I1,1X,A1,F8.3)') trim(kind), o, p, merge('+','-',side==1), order
             if (order < o - 0.5_R8P) passed = .false.
          enddo
       enddo
@@ -86,6 +90,7 @@ do t=1, 2
       enddo
    enddo
 enddo
+if (vv_report()) close(ur)
 if (.not.passed) error stop 'WENO-Z test failed'
 print '(A)', 'seth_test_wenoz: ok'
 

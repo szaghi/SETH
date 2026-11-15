@@ -9,14 +9,17 @@ program seth_vv_test123
 !< Both paths (the splitting path with every reconstruction, the interpolation path with every interpolation), N = 200
 !< cells on [0, 1], transmissive ends, CFL 0.5. Every scheme runs without any positivity safeguard (recording whether
 !< rho and p stay positive) and with the positivity-preserving flux limiter of Hu, Adams & Shu (2013) (counting the
-!< limited faces). Asserted: with the limiter positivity throughout; without it, every scheme of the splitting path and
-!< WENO5-JS's interpolation stay positive (measured: the WENO-Z and TENO interpolations lose positivity without the
-!< limiter, the finding documented on the case page); L1 of the density below the recorded bounds (measured + 5%).
+!< limited faces). Asserted: with the limiter positivity throughout; without it, every reconstruction up to 7th order
+!< on the splitting path and the WENO3-JS, WENO5-JS and WENO-Z3 interpolations stay positive (measured: WENO-Z9 on the
+!< splitting path, the WENO7/9-JS interpolations and the higher-order WENO-Z and TENO interpolations lose positivity
+!< without the limiter, the finding documented on the case page); L1 of the density below the recorded bounds of the
+!< quick schemes (measured + 5%).
 !< Report mode: every scheme, the profiles, the exact solution, L1 on 100 .. 1600 cells, and 123-summary.dat (per
 !< scheme: positive without the limiter, limited faces, L1).
 use seth
 use seth_vv_euler
 use seth_vv_cases
+use seth_test_schemes, only : SCHEMES
 implicit none
 integer(I4P), allocatable :: ids(:), nfb(:), nfbu(:), nlim(:)
 real(R8P), allocatable    :: l1(:), l1u(:)
@@ -47,8 +50,9 @@ do path=PATH_SPLIT, PATH_INTERP
             '   limited faces:', nlim(k)
       if (vv_report()) write(us, '(A,1X,L1,1X,I8,ES24.15)') vv_label(ids(k)), posu(k), nlim(k), l1(k)
       if (.not.pos(k)) call fail(vv_label(ids(k))//': not positive with the limiter')
-      if ((path == PATH_SPLIT .or. vv_label(ids(k)) == 'weno5_js_interp') .and. .not.posu(k)) &
-         call fail(vv_label(ids(k))//': not positive without the limiter')
+      if (((path == PATH_SPLIT .and. SCHEMES(ids(k))%order <= 7._R8P) .or. &
+           any(vv_label(ids(k)) == [character(16) :: 'weno3_js_interp', 'weno5_js_interp', 'wenoz3_interp'])) &
+          .and. .not.posu(k)) call fail(vv_label(ids(k))//': not positive without the limiter')
       bound = recorded(vv_label(ids(k)))
       if (.not.vv_report() .and. bound > 0._R8P .and. l1(k) > bound) call fail(vv_label(ids(k))//': L1 above bound')
    enddo
