@@ -140,5 +140,15 @@ export default withMermaid({
     build: {
       target: 'es2022',
     },
+    // The dev server pre-bundles the dependencies with its own esbuild target (es2020), ignoring build.target:
+    // without this, `vitepress dev` dies on the destructuring of mark.js and @vueuse. Bundling mermaid whole also
+    // covers the CJS dependencies vitepress-plugin-mermaid does not list (fastdom since mermaid 11.17), which leave
+    // a white dev page otherwise.
+    optimizeDeps: {
+      include: ['mermaid'],
+      esbuildOptions: {
+        target: 'es2022',
+      },
+    },
   },
 })
