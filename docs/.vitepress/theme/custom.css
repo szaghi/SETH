@@ -1,0 +1,104 @@
+/* SETH docs: the figure, card and cast styles of the ADAM docs harness (ADAM docs/.vitepress/theme/custom.css, the
+   "Figures" and "Layout" blocks, with the class prefix adam- renamed seth-). SETH keeps the default VitePress colours:
+   the ADAM identity tokens (washi / silver ink page grounds) are not copied. */
+
+/* ---------- Figures ----------
+   The verification figures are drawn on the washi ground (docs/scripts/make_doc_figures.py, as ADAM's and FLUME's);
+   they are shown as washi cards, the way a printed plate sits on the page. A figure with a silver-ink twin
+   (<name>-dark.png, docs/scripts/figure_theme.py) shows the twin in the dark theme, swapped in by index.ts
+   (class seth-dark-twin), on its own silver-ink card. */
+.vp-doc img[src$=".png"] {
+  background: #f3ede1;
+  border-radius: 6px;
+  padding: 6px;
+}
+.dark .vp-doc img.seth-dark-twin {
+  background: #0e1116;
+}
+
+/* ---------- Layout: casts and figure cards ----------
+   Casts (.seth-casts: theme-aware videos, the .light-only/.dark-only pair of config.mts) and the figure cards
+   (.seth-gallery: one markdown link per paragraph, image + <strong> title + <span> caption). One column on phones,
+   two from 640 px. Flat: borders from the theme tokens, no shadows, no gradients. */
+.vp-doc .seth-casts,
+.vp-doc .seth-gallery {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin: 16px 0 24px;
+}
+@media (min-width: 640px) {
+  .vp-doc .seth-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vp-doc .seth-casts { display: flex; flex-wrap: wrap; align-items: stretch; }
+  .vp-doc .seth-casts .seth-cast { flex: var(--ar, 1.5) 1 0; min-width: 0; }
+  .vp-doc .seth-casts .seth-cast-wide,
+  .vp-doc .seth-casts-wide .seth-cast { flex-basis: 100%; }
+}
+.vp-doc .seth-cast {
+  margin: 0;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--vp-c-bg-soft);
+}
+.vp-doc .seth-cast video {
+  width: 100%;
+  height: auto;
+  vertical-align: top;
+}
+.vp-doc .seth-cast figcaption,
+.vp-doc .seth-gallery span {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--vp-c-text-2);
+}
+.vp-doc .seth-cast figcaption { padding: 8px 12px 10px; }
+.vp-doc .seth-gallery p { margin: 0; }
+.vp-doc .seth-gallery a {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-1);
+  text-decoration: none;
+}
+.vp-doc .seth-gallery a:hover { border-color: var(--vp-c-brand-1); }
+.vp-doc .seth-gallery img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background: #f3ede1;
+  border-radius: 0;
+  padding: 6px;
+}
+.dark .vp-doc .seth-gallery img.seth-dark-twin {
+  background: #0e1116;
+  padding: 6px;
+}
+.vp-doc .seth-gallery strong { padding: 8px 12px 0; font-size: 14px; }
+.vp-doc .seth-gallery span { padding: 2px 12px 10px; }
+
+/* Verification catalogs (.seth-gallery.seth-catalog): the same cards, three per row on wide screens, a smaller figure,
+   the card's tag (<em>: physics / contract) at its foot. A page without a figure is a text card. */
+@media (min-width: 960px) {
+  .vp-doc .seth-gallery.seth-catalog { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.vp-doc .seth-catalog { gap: 12px; }
+.vp-doc .seth-catalog img { aspect-ratio: 16 / 10; padding: 4px; }
+.dark .vp-doc .seth-catalog img.seth-dark-twin { padding: 4px; }
+.vp-doc .seth-catalog strong { padding-top: 8px; line-height: 1.35; }
+.vp-doc .seth-catalog span { flex: 1; }
+.vp-doc .seth-catalog em {
+  align-self: flex-start;
+  margin: 0 12px 10px;
+  padding: 1px 8px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 10px;
+  font-size: 11px;
+  font-style: normal;
+  letter-spacing: 0.02em;
+  color: var(--vp-c-text-2);
+}
