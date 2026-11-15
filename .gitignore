@@ -19,3 +19,6 @@
 /docs/.vitepress/cache/
 /docs/package-lock.json
 /docs/public/coverage.json
+
+# Python bytecode of the docs scripts
+__pycache__/
