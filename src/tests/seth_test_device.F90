@@ -685,8 +685,9 @@ contains
       worst = max(worst, abs(td(i) - tc(i)), maxval(abs(fd(:,i) - fc(:,i)))/mag)
       if (.not.(abs(td(i) - tc(i)) <= 1.e-10_R8P .and. maxval(abs(fd(:,i) - fc(:,i))) <= 1.e-10_R8P*mag)) &
          nfail = nfail + 1
-      if (.not.(seth_euler_admissible(nv, GM, ql(:,i) - lam(i)*fd(:,i), EP, EP) .and. &
-                seth_euler_admissible(nv, GM, qr(:,i) + lam(i)*fd(:,i), EP, EP))) then
+      ! to the round-off of the states as evaluated here (seth_test_positivity, adm_ro)
+      if (.not.(lim_adm_ro(nv, ql(:,i) - lam(i)*fd(:,i), abs(ql(:,i)) + abs(lam(i)*fd(:,i))) .and. &
+                lim_adm_ro(nv, qr(:,i) + lam(i)*fd(:,i), abs(qr(:,i)) + abs(lam(i)*fd(:,i))))) then
          if (seth_euler_admissible(nv, GM, ql(:,i) - lam(i)*fl(:,i), EP, EP) .and. &
              seth_euler_admissible(nv, GM, qr(:,i) + lam(i)*fl(:,i), EP, EP)) nfail = nfail + 1
       endif
@@ -727,6 +728,26 @@ contains
    u = q(2)/q(1) ; p = 0.4_R8P*(q(nv) - 0.5_R8P*dot_product(q(2:nv-1), q(2:nv-1))/q(1))
    fx = u*q ; fx(2) = fx(2) + p ; fx(nv) = fx(nv) + p*u
    endfunction lim_flux
+
+   pure logical function lim_adm_ro(nv, q, mag) result(ok)
+   !< rho and p above the floor 1e-13 to the round-off of the one-sided state q (mag = |q_cell| + |lam f|): the
+   !< allowance of seth_test_positivity's adm_ro, gamma = 1.4.
+   integer(I4P), intent(in) :: nv
+   real(R8P),    intent(in) :: q(nv), mag(nv)
+   real(R8P)                :: ke, tol, d(nv)
+   integer(I4P)             :: k
+   ok = .false.
+   d = 4._R8P*epsilon(1._R8P)*mag
+   if (.not.(q(1) >= 1.e-13_R8P - d(1))) return
+   ke = 0._R8P ; tol = d(nv)
+   do k=2, nv-1
+      ke = ke + q(k)*q(k)
+      tol = tol + abs(q(k)/q(1))*d(k)
+   enddo
+   ke = 0.5_R8P*ke/q(1)
+   tol = 0.4_R8P*(tol + ke/q(1)*d(1) + 4._R8P*epsilon(1._R8P)*(abs(q(nv)) + ke))
+   ok = 0.4_R8P*(q(nv) - ke) >= 1.e-13_R8P - tol
+   endfunction lim_adm_ro
 
    pure function lim_speed(nv, q) result(c)
    !< |u_1| + c (gamma = 1.4).

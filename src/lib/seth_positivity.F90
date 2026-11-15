@@ -34,19 +34,34 @@ module seth_positivity
 !< (0, theta_rho] when that quadratic is negative at theta_rho (HAS solve the same quadratic). A rounding guard
 !< re-checks the one-sided states of the flux actually returned and, if one is a few ulp below its floor, lowers theta
 !< by relative steps from 1e-15 (doubling). Every routine is pure, `acc routine seq` and `omp declare target`.
+!<
+!< Round-off: the floors hold for the one-sided states as this routine evaluates them (q -+ lam f, in a loop). A
+!< caller that evaluates them differently (an array expression, a fused multiply-add) gets states that differ by
+!< epsilon (|q| + |lam f|), and pressures that differ by about that times (1 + |u|^2): choose eps_rho and eps_p above
+!< it. With HAS's 1e-13, a state of density 1e-7 at |u| = 400 next to a cell 1e9 times denser can come out with a
+!< pressure of -1e-12 in the caller's arithmetic (seth_test_positivity, adm_ro).
+!<
+!< Device rule (notes/gpu-kernel-audit.md): no local array has a bound that depends on a dummy argument, and no array
+!< expression makes a temporary of such a size. Automatic arrays in a device routine are allocated from the device heap
+!< at every call: on an RTX 4070 that made this kernel 300 times slower, and above the default heap size the launch
+!< failed. The locals are dimensioned SETH_POSITIVITY_NV_MAX = 5 and the loops run to nv; nv > 5 is not supported (the
+!< routine then returns theta = 0 and f = f_low).
 use penf, only : I4P, R8P
 implicit none
 private
 public :: SETH_POSITIVITY_EPS
+public :: SETH_POSITIVITY_NV_MAX
 public :: seth_positivity_euler
 public :: seth_euler_admissible
 
-real(R8P), parameter :: SETH_POSITIVITY_EPS = 1.e-13_R8P !< The floor of Hu, Adams & Shu (2013).
+real(R8P),    parameter :: SETH_POSITIVITY_EPS = 1.e-13_R8P !< The floor of Hu, Adams & Shu (2013).
+integer(I4P), parameter :: SETH_POSITIVITY_NV_MAX = 5_I4P   !< Largest nv (3-D Euler): the dimension of the locals.
+integer(I4P), parameter :: NVM = SETH_POSITIVITY_NV_MAX
 
 contains
    pure subroutine seth_positivity_euler(nv, gamma, lam, eps_rho, eps_p, ql, qr, f_high, f_low, f, theta)
    !< The positivity-preserving limited flux at one face (Hu, Adams & Shu 2013).
-   integer(I4P), intent(in)  :: nv              !< Variables: rho, nv-2 momentum components, E.
+   integer(I4P), intent(in)  :: nv              !< Variables: rho, nv-2 momentum components, E (nv <= 5).
    real(R8P),    intent(in)  :: gamma           !< Ratio of specific heats.
    real(R8P),    intent(in)  :: lam             !< 2 dt/h (2 dt/(w h) per direction in multi-D).
    real(R8P),    intent(in)  :: eps_rho, eps_p  !< Floors of density and pressure.
@@ -55,21 +70,38 @@ contains
    real(R8P),    intent(in)  :: f_low(nv)       !< Low-order, positivity-preserving face flux.
    real(R8P),    intent(out) :: f(nv)           !< Limited face flux.
    real(R8P),    intent(out) :: theta           !< Limiting factor: f = theta f_high + (1 - theta) f_low.
-   real(R8P)                 :: a0(nv), a1(nv), b0(nv), b1(nv), t
-   integer(I4P)              :: it
+   real(R8P)                 :: a0(NVM), a1(NVM), b0(NVM), b1(NVM), t
+   integer(I4P)              :: it, k
    !$acc routine seq
    !$omp declare target
 
+   if (nv > NVM) then ! not supported: the low-order flux
+      theta = 0._R8P
+      do k=1, nv
+         f(k) = f_low(k)
+      enddo
+      return
+   endif
    ! the one-sided states with the low-order (0) and the high-order (1) flux: left q_l - lam F, right q_r + lam F
-   a0 = ql - lam*f_low  ; a1 = ql - lam*f_high
-   b0 = qr + lam*f_low  ; b1 = qr + lam*f_high
+   do k=1, nv
+      a0(k) = ql(k) - lam*f_low(k) ; a1(k) = ql(k) - lam*f_high(k)
+      b0(k) = qr(k) + lam*f_low(k) ; b1(k) = qr(k) + lam*f_high(k)
+   enddo
    if (seth_euler_admissible(nv, gamma, a1, eps_rho, eps_p) .and. &
        seth_euler_admissible(nv, gamma, b1, eps_rho, eps_p)) then
-      theta = 1._R8P ; f = f_high ; return
+      theta = 1._R8P
+      do k=1, nv
+         f(k) = f_high(k)
+      enddo
+      return
    endif
    if (.not.(seth_euler_admissible(nv, gamma, a0, eps_rho, eps_p) .and. &
              seth_euler_admissible(nv, gamma, b0, eps_rho, eps_p))) then
-      theta = 0._R8P ; f = f_low ; return ! the low-order flux itself fails: nothing to blend
+      theta = 0._R8P ! the low-order flux itself fails: nothing to blend
+      do k=1, nv
+         f(k) = f_low(k)
+      enddo
+      return
    endif
    t = min(segment_bound(nv, gamma, eps_rho, eps_p, a0, a1), segment_bound(nv, gamma, eps_rho, eps_p, b0, b1))
    ! rounding guard on the flux actually returned: the closed form puts a state on the floor, where rounding can leave
@@ -77,31 +109,48 @@ contains
    ! maximum), down to theta = 0 (f_low, admissible) at worst
    theta = t
    do it=0, 52
-      f = theta*f_high + (1._R8P - theta)*f_low
-      if (seth_euler_admissible(nv, gamma, ql - lam*f, eps_rho, eps_p) .and. &
-          seth_euler_admissible(nv, gamma, qr + lam*f, eps_rho, eps_p)) return
+      do k=1, nv
+         f(k) = theta*f_high(k) + (1._R8P - theta)*f_low(k)
+      enddo
+      ! a loop of its own, on the stored f: fused with the one above, nvfortran -fast contracts the two statements and
+      ! checks states of an unrounded flux, not of the one returned (seth_test_positivity then fails)
+      do k=1, nv
+         a1(k) = ql(k) - lam*f(k) ; b1(k) = qr(k) + lam*f(k)
+      enddo
+      if (seth_euler_admissible(nv, gamma, a1, eps_rho, eps_p) .and. &
+          seth_euler_admissible(nv, gamma, b1, eps_rho, eps_p)) return
       theta = max(t*(1._R8P - 1.e-15_R8P*2._R8P**it), 0._R8P)
    enddo
-   theta = 0._R8P ; f = f_low
+   theta = 0._R8P
+   do k=1, nv
+      f(k) = f_low(k)
+   enddo
    endsubroutine seth_positivity_euler
 
    pure function segment_bound(nv, gamma, eps_rho, eps_p, s0, s1) result(t)
    !< The largest t in [0, 1] with s0 + tau (s1 - s0) admissible for every tau in [0, t] (s0 admissible).
    integer(I4P), intent(in) :: nv
-   real(R8P),    intent(in) :: gamma, eps_rho, eps_p, s0(nv), s1(nv)
-   real(R8P)                :: t, d(nv), kappa, qa, qb, qc, disc, r1, r2
+   real(R8P),    intent(in) :: gamma, eps_rho, eps_p, s0(NVM), s1(NVM)
+   real(R8P)                :: t, d(NVM), kappa, qa, qb, qc, disc, r1, r2, dd, sd, ss
+   integer(I4P)             :: k
    !$acc routine seq
    !$omp declare target
 
-   d = s1 - s0
+   do k=1, nv
+      d(k) = s1(k) - s0(k)
+   enddo
    ! density: linear
    t = 1._R8P
    if (s1(1) < eps_rho) t = (s0(1) - eps_rho)/(s0(1) - s1(1))
    ! pressure: G(tau) = rho E - |m|^2/2 - kappa rho, kappa = eps_p/(gamma - 1), G = qa tau^2 + qb tau + qc, qc >= 0
    kappa = eps_p/(gamma - 1._R8P)
-   qa = d(1)*d(nv) - 0.5_R8P*dot_product(d(2:nv-1), d(2:nv-1))
-   qb = s0(1)*d(nv) + s0(nv)*d(1) - dot_product(s0(2:nv-1), d(2:nv-1)) - kappa*d(1)
-   qc = s0(1)*s0(nv) - 0.5_R8P*dot_product(s0(2:nv-1), s0(2:nv-1)) - kappa*s0(1)
+   dd = 0._R8P ; sd = 0._R8P ; ss = 0._R8P
+   do k=2, nv-1
+      dd = dd + d(k)*d(k) ; sd = sd + s0(k)*d(k) ; ss = ss + s0(k)*s0(k)
+   enddo
+   qa = d(1)*d(nv) - 0.5_R8P*dd
+   qb = s0(1)*d(nv) + s0(nv)*d(1) - sd - kappa*d(1)
+   qc = s0(1)*s0(nv) - 0.5_R8P*ss - kappa*s0(1)
    if (qa*t*t + qb*t + qc >= 0._R8P) return ! admissible up to the density bound (the set is convex)
    ! a sign change in (0, t): the smallest positive root
    if (abs(qa) <= epsilon(1._R8P)*(abs(qb) + abs(qc))) then
@@ -131,10 +180,16 @@ contains
    !< rho >= eps_rho and p >= eps_p for the conservative state q = (rho, m(1:nv-2), E) of an ideal gas.
    integer(I4P), intent(in) :: nv
    real(R8P),    intent(in) :: gamma, q(nv), eps_rho, eps_p
+   real(R8P)                :: ke
+   integer(I4P)             :: k
    !$acc routine seq
    !$omp declare target
    ok = .false.
    if (.not.(q(1) >= eps_rho)) return
-   ok = (gamma - 1._R8P)*(q(nv) - 0.5_R8P*dot_product(q(2:nv-1), q(2:nv-1))/q(1)) >= eps_p
+   ke = 0._R8P
+   do k=2, nv-1
+      ke = ke + q(k)*q(k)
+   enddo
+   ok = (gamma - 1._R8P)*(q(nv) - 0.5_R8P*ke/q(1)) >= eps_p
    endfunction seth_euler_admissible
 endmodule seth_positivity

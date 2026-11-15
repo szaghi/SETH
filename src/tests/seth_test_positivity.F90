@@ -9,7 +9,8 @@ program seth_test_positivity
 !< positivity. Asserted:
 !<
 !< 1. theta in [0, 1] and f = theta f_high + (1 - theta) f_low (to round-off);
-!< 2. the limited one-sided states q_l - lam f, q_r + lam f are admissible (rho >= eps, p >= eps, eps = 1e-13);
+!< 2. the limited one-sided states q_l - lam f, q_r + lam f are admissible (rho >= eps, p >= eps, eps = 1e-13) to the
+!<    round-off of their evaluation (adm_ro);
 !< 3. theta is maximal: for theta < 1 it lies within 1e-9 of the largest admissible factor found by bisection (60
 !<    steps) on the exact condition;
 !< 4. theta = 1 and f = f_high bitwise when f_high keeps both one-sided states admissible (no perturbation);
@@ -64,8 +65,8 @@ do nv=3, 5
       worst_comb = max(worst_comb, maxval(abs(f(1:nv) - (theta*fh(1:nv) + (1._R8P - theta)*fl(1:nv)))) / &
                                    (maxval(abs(fh(1:nv))) + maxval(abs(fl(1:nv)))))
       ! 2.
-      if (.not.(adm(nv, ql(1:nv) - lam*f(1:nv), EPS, EPS) .and. &
-                adm(nv, qr(1:nv) + lam*f(1:nv), EPS, EPS))) &
+      if (.not.(adm_ro(nv, ql(1:nv) - lam*f(1:nv), abs(ql(1:nv)) + abs(lam*f(1:nv))) .and. &
+                adm_ro(nv, qr(1:nv) + lam*f(1:nv), abs(qr(1:nv)) + abs(lam*f(1:nv))))) &
          call fail('a limited one-sided state is not admissible')
       ! 3.
       if (theta < 1._R8P) then
@@ -120,6 +121,35 @@ contains
    enddo
    ok = (G - 1._R8P)*(q(nv) - 0.5_R8P*ke/q(1)) >= ep
    endfunction adm
+
+   pure logical function adm_ro(nv, q, mag) result(ok)
+   !< Admissible to the round-off of the one-sided state: rho >= EPS - d_1 and p >= EPS - tol.
+   !<
+   !< A one-sided state q = q_cell -+ lam f near vacuum is a difference of far larger numbers (mag = |q_cell| + |lam f|),
+   !< so two evaluations of it (the kernel's loop, the caller's array expression; a compiler that contracts one of
+   !< them into a fused multiply-add) differ by d_k ~ epsilon mag_k, which is not small against EPS = 1e-13, and its
+   !< pressure by tol = (gamma - 1)(d_E + sum |u_k| d_k + |u|^2/2 d_1) plus the round-off of E - |m|^2/(2 rho).
+   !< Measured (nvfortran -fast): the kernel's states pass the floors exactly, the test's evaluation of the same
+   !< states is typically up to 8e-16 below the pressure floor, and 1e-12 below it (a negative pressure) for a state
+   !< with rho = 1e-7 and |u| = 400 next to a cell 1e9 times denser. The limiter guarantees its floors on the states
+   !< as it evaluates them; a floor below the round-off of the caller's states cannot be guaranteed by any limiter:
+   !< the caller chooses eps_p above epsilon |q| (1 + |u|^2).
+   integer(I4P), intent(in) :: nv
+   real(R8P),    intent(in) :: q(nv), mag(nv)
+   real(R8P)                :: ke, tol, d(nv)
+   integer(I4P)             :: k
+   ok = .false.
+   d = 4._R8P*epsilon(1._R8P)*mag
+   if (.not.(q(1) >= EPS - d(1))) return
+   ke = 0._R8P ; tol = d(nv)
+   do k=2, nv-1
+      ke = ke + q(k)*q(k)
+      tol = tol + abs(q(k)/q(1))*d(k)
+   enddo
+   ke = 0.5_R8P*ke/q(1)
+   tol = (G - 1._R8P)*(tol + ke/q(1)*d(1) + 4._R8P*epsilon(1._R8P)*(abs(q(nv)) + ke))
+   ok = (G - 1._R8P)*(q(nv) - ke) >= EPS - tol
+   endfunction adm_ro
 
    pure function flux(nv, q) result(fx)
    !< The Euler flux normal to direction 1.

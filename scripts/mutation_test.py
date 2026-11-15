@@ -59,13 +59,13 @@ MUTANTS = [
      'CP(0:MAXW-1,0:NC-1) = TENO5_P'),
     # the positivity limiter (2026-11-15): the pressure quadratic, the density bound, the floor, a one-sided state
     ('positivity-pressure-quadratic', 'src/lib/seth_positivity.F90', 'qb = s0(1)*d(nv)',
-     '- dot_product(s0(2:nv-1), d(2:nv-1))', '+ dot_product(s0(2:nv-1), d(2:nv-1))'),
+     '- sd - kappa*d(1)', '+ sd - kappa*d(1)'),
     ('positivity-density-bound', 'src/lib/seth_positivity.F90', 'if (s1(1) < eps_rho) t =',
      't = (s0(1) - eps_rho)/(s0(1) - s1(1))', 't = 0.5_R8P*(s0(1) - eps_rho)/(s0(1) - s1(1))'),
     ('positivity-pressure-floor', 'src/lib/seth_positivity.F90', 'ok = (gamma - 1._R8P)*(q(nv)', '>= eps_p',
      '>= 0._R8P'),
-    ('positivity-right-state', 'src/lib/seth_positivity.F90', 'b0 = qr + lam*f_low', 'b0 = qr + lam*f_low',
-     'b0 = qr - lam*f_low'),
+    ('positivity-right-state', 'src/lib/seth_positivity.F90', 'b0(k) = qr(k) + lam*f_low(k)',
+     'b0(k) = qr(k) + lam*f_low(k)', 'b0(k) = qr(k) - lam*f_low(k)'),
 ]
 
 
