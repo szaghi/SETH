@@ -146,3 +146,8 @@ main = "seth_vv_euler_order.F90"
 name = "seth_vv_advection"
 source-dir = "src/tests"
 main = "seth_vv_advection.F90"
+
+[[test]]
+name = "seth_vv_adr"
+source-dir = "src/tests"
+main = "seth_vv_adr.F90"
