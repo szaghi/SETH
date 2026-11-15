@@ -28,7 +28,7 @@ logical                 :: passed, advect_it
 passed = .true.
 print '(A16,A3,A12,A12)', 'scheme', 'p', 'operator', 'RK3 advect'
 do id=1, NSCHEMES
-   if (SCHEMES(id)%family == FAM_JS_INTERP) cycle
+   if (SCHEMES(id)%interp) cycle ! the finite-difference flux setting reconstructs: interpolations elsewhere
    do p=1, merge(2, 1, SCHEMES(id)%family == FAM_Z)
       do j=1, NLEV
          n = 20*2**(j-1)

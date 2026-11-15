@@ -9,7 +9,7 @@ program seth_test_golden
 !< generator), so the inputs are bit-identical on every compiler and any difference is the kernels'. The two states
 !< (and the weights ratios of WENO-JS) are compared with the golden file:
 !<
-!<   seth_test_golden                    compare with src/tests/golden/seth_golden_v1.txt (run from the repository root)
+!<   seth_test_golden                    compare with src/tests/golden/seth_golden_v2.txt (run from the repository root)
 !<   seth_test_golden write <file>       write a new golden file (refuses to overwrite an existing one)
 !<
 !< A state passes when it differs from the golden one by at most 1e-13 of the stencil's magnitude: other compilers
@@ -19,12 +19,13 @@ program seth_test_golden
 !< the Balsara-Shu coefficients of WENO-7/9), while the states, a combination of nearly equal candidates on smooth
 !< data, barely move (measured: gfortran -O3 2.6e-13, nvfortran -fast 3.5e-10). The numbers of bitwise-equal values
 !< and the worst differences are printed. A golden file is never edited: a deliberate change of results gets a new
-!< file (seth_golden_v2.txt) and this test's default path.
+!< file and this test's default path. v2 (2026-11-15) adds the WENO-Z and TENO interpolations; its lines for the schemes
+!< of v1 are identical to v1's, character for character (checked when v2 was written, same build), and v1 is kept.
 use, intrinsic :: iso_fortran_env, only : compiler_version, compiler_options
 use seth
 use seth_test_schemes
 implicit none
-character(*), parameter :: GOLDEN = 'src/tests/golden/seth_golden_v1.txt'
+character(*), parameter :: GOLDEN = 'src/tests/golden/seth_golden_v2.txt'
 integer(I4P), parameter :: NST = 64_I4P
 real(R8P),    parameter :: TOL = 1.e-13_R8P, TOL_WR = 1.e-9_R8P
 real(R8P)               :: vp(VLO:VHI,NST), vm(VLO:VHI,NST), r(4), g(4), mag, d, worst, worst_wr

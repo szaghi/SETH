@@ -9,13 +9,18 @@ program seth_test_tables
 !<
 !< - WENO-Z and TENO descriptors: every candidate exact for polynomials below its width (cell averages, face at 0);
 !<   sum d = 1 and the linear combination exact below the scheme's order; every indicator, global one included, 0 on
-!<   constants and 1 on unit-slope data; tau of its order on smooth data (cell averages of e^x - 1, h halved).
+!<   constants and 1 on unit-slope data; tau of its order on smooth data (cell averages of the generic function g of
+!<   seth_test_functions, h halved; not exp, whose averages are a constant multiple of its point values).
+!< - The interpolation descriptors (_INTERP_P, _INTERP_D) of WENO-Z3/5/7/9, TENO5, TENO6: every candidate exact on
+!<   point values at the cell centres below its width; the weights positive, summing to 1, the combination exact
+!<   below the scheme's order; tau (the reconstruction indicators on point values) of its order on point values of g.
 !< - WENO-JS tables: each interface's weights sum to 1; the candidates and the optimal combination exact below 2S-1
 !<   (cell averages; point values for the interpolation tables); the indicators 0 on constants and WENO<N>_JS_D_SCALE
 !<   on unit slope.
 use seth
 use seth_weno_js_tables
 use seth_z_teno_tables
+use seth_test_functions, only : gfun, gavg
 implicit none
 real(R8P), parameter :: TOL = 1.e-12_R8P
 logical              :: passed
@@ -39,6 +44,22 @@ call descriptor('teno6_opt', 5, 6._R8P, TENO6_OPT_NC, TENO6_OPT_MAXW, TENO6_OPT_
 call descriptor('teno6_neno6', 4, 6._R8P, TENO6_NENO6_NC, TENO6_NENO6_MAXW, TENO6_NENO6_CLO, TENO6_NENO6_CW, &
                 TENO6_NENO6_P, TENO6_NENO6_D, TENO6_NENO6_L, TENO6_NENO6_DQ, TENO6_NENO6_TC, TENO6_NENO6_TG, &
                 TENO6_NENO6_GLO, TENO6_NENO6_GW, TENO6_NENO6_LG, TENO6_NENO6_DG)
+call interp_descriptor('wenoz3_interp', 3, 3._R8P, WENOZ3_NC, WENOZ3_MAXW, WENOZ3_CLO, WENOZ3_CW, WENOZ3_INTERP_P, &
+                       WENOZ3_INTERP_D, WENOZ3_L, WENOZ3_DQ, WENOZ3_TC, WENOZ3_TG, WENOZ3_GLO, WENOZ3_GW, WENOZ3_LG, &
+                       WENOZ3_DG)
+call interp_descriptor('wenoz5_interp', 5, 5._R8P, WENOZ5_NC, WENOZ5_MAXW, WENOZ5_CLO, WENOZ5_CW, WENOZ5_INTERP_P, &
+                       WENOZ5_INTERP_D, WENOZ5_L, WENOZ5_DQ, WENOZ5_TC, WENOZ5_TG, WENOZ5_GLO, WENOZ5_GW, WENOZ5_LG, &
+                       WENOZ5_DG)
+call interp_descriptor('wenoz7_interp', 7, 7._R8P, WENOZ7_NC, WENOZ7_MAXW, WENOZ7_CLO, WENOZ7_CW, WENOZ7_INTERP_P, &
+                       WENOZ7_INTERP_D, WENOZ7_L, WENOZ7_DQ, WENOZ7_TC, WENOZ7_TG, WENOZ7_GLO, WENOZ7_GW, WENOZ7_LG, &
+                       WENOZ7_DG)
+call interp_descriptor('wenoz9_interp', 9, 7._R8P, WENOZ9_NC, WENOZ9_MAXW, WENOZ9_CLO, WENOZ9_CW, WENOZ9_INTERP_P, &
+                       WENOZ9_INTERP_D, WENOZ9_L, WENOZ9_DQ, WENOZ9_TC, WENOZ9_TG, WENOZ9_GLO, WENOZ9_GW, WENOZ9_LG, &
+                       WENOZ9_DG)
+call interp_descriptor('teno5_interp', 5, 5._R8P, TENO5_NC, TENO5_MAXW, TENO5_CLO, TENO5_CW, TENO5_INTERP_P, &
+                       TENO5_INTERP_D, TENO5_L, TENO5_DQ, TENO5_TC, TENO5_TG, TENO5_GLO, TENO5_GW, TENO5_LG, TENO5_DG)
+call interp_descriptor('teno6_interp', 6, 6._R8P, TENO6_NC, TENO6_MAXW, TENO6_CLO, TENO6_CW, TENO6_INTERP_P, &
+                       TENO6_INTERP_D, TENO6_L, TENO6_DQ, TENO6_TC, TENO6_TG, TENO6_GLO, TENO6_GW, TENO6_LG, TENO6_DG)
 call js('weno3_js', 2, WENO3_JS_A, WENO3_JS_P, WENO3_JS_D, WENO3_JS_D_SCALE, WENO3_JS_INTERP_A, WENO3_JS_INTERP_P)
 call js('weno5_js', 3, WENO5_JS_A, WENO5_JS_P, WENO5_JS_D, WENO5_JS_D_SCALE, WENO5_JS_INTERP_A, WENO5_JS_INTERP_P)
 call js('weno7_js', 4, WENO7_JS_A, WENO7_JS_P, WENO7_JS_D, WENO7_JS_D_SCALE, WENO7_JS_INTERP_A, WENO7_JS_INTERP_P)
@@ -108,8 +129,8 @@ contains
    ! tau of its order on smooth data
    do lev=1, 4
       h = 0.2_R8P/2._R8P**(lev-1)
-      do m=-8, 8 ! cell averages of e^x - 1 on cells of width h
-         u(m) = ((exp(m*h) - exp((m-1)*h))/h) - 1._R8P
+      do m=-8, 8 ! cell averages of g on cells of width h
+         u(m) = gavg((m-1)*h, m*h)
       enddo
       tau(lev) = 0._R8P
       do k=0, nc-1
@@ -122,6 +143,54 @@ contains
    print '(A,F6.2,A,F4.1,A)', '   tau order ', o, ' (required ', tau_order, ')'
    if (o < tau_order - 0.3_R8P) call fail('tau below its order')
    endsubroutine descriptor
+
+   subroutine interp_descriptor(name, order, tau_order, nc, maxw, clo, cw, cp, d, cl, dq, tc, tg, glo, gw, lg, dg)
+   !< The interpolation tables of a descriptor (the indicators and tau are the reconstruction ones, on point values).
+   character(*), intent(in) :: name
+   integer,      intent(in) :: order
+   real(R8P),    intent(in) :: tau_order
+   integer(I4P), intent(in) :: nc, maxw, clo(0:nc-1), cw(0:nc-1), glo, gw
+   real(R8P),    intent(in) :: cp(0:maxw-1,0:nc-1), d(0:nc-1), cl(0:maxw-1,0:maxw-1,0:nc-1), dq(0:maxw-1,0:nc-1)
+   real(R8P),    intent(in) :: tc(0:nc-1), tg, lg(0:gw-1,0:gw-1), dg(0:gw-1)
+   real(R8P)                :: s, lin, u(-8:8), tau(4), h, o
+   integer(I4P)             :: k, j, n, m, lev
+   print '(A)', name
+   do k=0, nc-1 ! candidates exact on point values (cell centres m - 1/2) below their width
+      do n=0, cw(k)-1
+         s = 0._R8P
+         do j=0, cw(k)-1
+            s = s + cp(j,k)*(clo(k) + j - 0.5_R8P)**n
+         enddo
+         if (abs(s - merge(1._R8P, 0._R8P, n == 0)) > TOL*10._R8P**n) call fail('interpolation candidate not exact')
+      enddo
+   enddo
+   if (any(d <= 0._R8P)) call fail('an interpolation weight is not positive')
+   if (abs(sum(d) - 1._R8P) > 16._R8P*epsilon(1._R8P)) call fail('interpolation weights do not sum to 1')
+   do n=0, order-1
+      lin = 0._R8P
+      do k=0, nc-1
+         do j=0, cw(k)-1
+            lin = lin + d(k)*cp(j,k)*(clo(k) + j - 0.5_R8P)**n
+         enddo
+      enddo
+      if (abs(lin - merge(1._R8P, 0._R8P, n == 0)) > TOL*10._R8P**n) call fail('interpolation not of its order')
+   enddo
+   do lev=1, 4 ! tau on point values of g
+      h = 0.2_R8P/2._R8P**(lev-1)
+      do m=-8, 8
+         u(m) = gfun((m - 0.5_R8P)*h)
+      enddo
+      tau(lev) = 0._R8P
+      do k=0, nc-1
+         tau(lev) = tau(lev) + tc(k)*beta(k, u, nc, maxw, clo, cw, cl, dq)
+      enddo
+      if (tg /= 0._R8P) tau(lev) = tau(lev) + tg*betag(u, gw, glo, lg, dg)
+      tau(lev) = abs(tau(lev))
+   enddo
+   o = log(tau(3)/tau(4))/log(2._R8P)
+   print '(A,F6.2,A,F4.1,A)', '   tau order on point values ', o, ' (required ', tau_order, ')'
+   if (o < tau_order - 0.3_R8P) call fail('tau below its order on point values')
+   endsubroutine interp_descriptor
 
    pure function beta(k, u, nc, maxw, clo, cw, cl, dq) result(b)
    !< Indicator of candidate k from its factors: sum_i DQ(i) (sum_{a>=i} L(a,i) u_a)^2.

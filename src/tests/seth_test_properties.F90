@@ -45,7 +45,7 @@ do id=1, NSCHEMES
       deg = wmin - 1
       call random_number(coef) ; coef = 2._R8P*coef - 1._R8P
       do m=VLO, VHI
-         if (fam == FAM_JS_INTERP) then
+         if (SCHEMES(id)%interp) then
             vp(m) = poly(coef, deg, m - 0.5_R8P)
          else
             vp(m) = poly_avg(coef, deg, m)

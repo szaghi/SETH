@@ -2,11 +2,13 @@
 program seth_test_weno_js_order
 !< SETH test: the WENO-JS kernels converge at their design order 2S-1 on smooth data.
 !<
-!< u = exp(x), no critical point (where Jiang-Shu weights lose order); the face at x = 0.3, cells of width h halved
-!< from h0. Reconstruction from exact cell averages and interpolation from point values, both states (vp = vm = u).
-!< The observed order is taken on the finest pair of h whose errors stay above round-off (1e3 eps |u|) and must reach
+!< u = g(x), the generic function of seth_test_functions (not exp, whose averages are a constant multiple of its point
+!< values), no critical point near the face (where Jiang-Shu weights lose order); the face at x = 0.3, cells of width h
+!< halved from h0. Reconstruction from exact cell averages and interpolation from point values, both states (vp = vm = u).
+!< The observed order is taken on the finest pair of h whose errors stay above round-off (200 eps) and must reach
 !< 2S-1 - 0.5.
 use seth
+use seth_test_functions, only : gfun, gavg
 implicit none
 integer(I4P), parameter :: NH = 6_I4P            !< Number of grid sizes.
 real(R8P),    parameter :: XF = 0.3_R8P          !< Face position.
@@ -17,7 +19,7 @@ integer(I4P)            :: S, j, m, t, side
 logical                 :: passed, interp
 
 passed = .true.
-floor_ = 1.e3_R8P * epsilon(1._R8P) * exp(XF)
+floor_ = 2.e2_R8P * epsilon(1._R8P) ! 100 eps |g|, |g| < 2 near XF
 do S=1, 5
    if (allocated(vp)) deallocate(vp)
    allocate(vp(1-S:S))
@@ -27,13 +29,13 @@ do S=1, 5
          h = H0(S) / 2._R8P**(j-1)
          do m=1-S, S ! cell m spans [XF + (m-1)h, XF + m h]
             if (interp) then
-               vp(m) = exp(XF + (m - 0.5_R8P)*h)
+               vp(m) = gfun(XF + (m - 0.5_R8P)*h)
             else
-               vp(m) = (exp(XF + m*h) - exp(XF + (m-1)*h)) / h
+               vp(m) = gavg(XF + (m-1)*h, XF + m*h)
             endif
          enddo
          call kernel(S, interp, err(1,j,t), err(2,j,t))
-         err(:,j,t) = abs(err(:,j,t) - exp(XF))
+         err(:,j,t) = abs(err(:,j,t) - gfun(XF))
       enddo
       do side=1, 2
          order = -1._R8P

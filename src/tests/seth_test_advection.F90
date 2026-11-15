@@ -5,8 +5,8 @@ program seth_test_advection
 !< Finite-difference WENO for u_t + a u_x = 0 (point values on nodes, the flux reconstructed at the faces by the
 !< kernels, du_i/dt = -(F_{i+1/2} - F_{i-1/2})/h; a > 0 uses the left state, a < 0 the right one).
 !<
-!< 1. Derivative convergence (no time error, no critical point): D = (F_{i+1/2} - F_{i-1/2})/h of u = e^x at x = 0.3
-!<    against e^0.3, h halved from h0; every reconstruction scheme, both signs of a; the observed order on the finest
+!< 1. Derivative convergence (no time error, no critical point): D = (F_{i+1/2} - F_{i-1/2})/h of u = g(x), the generic
+!<    function of seth_test_functions, at x = 0.3 against g'(0.3), h halved from h0; every reconstruction scheme, both signs of a; the observed order on the finest
 !<    pair above round-off must reach the order of the scheme's linear background minus 0.5.
 !< 2. TENO keeps its linear scheme on smooth data (Fu, Hu & Adams 2016, via llm-wiki `targeted-eno.md`): one period
 !<    of a Gaussian pulse exp(-50 x^2) on [-1, 1], 200 nodes, SSP-RK3, CFL 0.4: the TENO solution equals the solution
@@ -16,6 +16,7 @@ program seth_test_advection
 !<    unstable scheme exceeds it; the values are printed), and L1(WENO5-Z) < L1(WENO5-JS), the ranking of Borges et
 !<    al. 2008 (Table 4).
 use seth
+use seth_test_functions, only : gfun, gder
 use seth_test_schemes
 use seth_z_teno_tables
 implicit none
@@ -30,7 +31,7 @@ passed = .true.
 ! 1. derivative convergence
 print '(A16,2A10)', 'scheme', 'a > 0', 'a < 0'
 do id=1, NSCHEMES
-   if (SCHEMES(id)%family == FAM_JS_INTERP) cycle
+   if (SCHEMES(id)%interp) cycle ! the finite-difference flux setting reconstructs: interpolations elsewhere
    call derivative_orders(id, o)
    print '(A16,2F10.2)', SCHEMES(id)%name, o
    if (any(o < SCHEMES(id)%order - 0.5_R8P)) then
@@ -39,7 +40,7 @@ do id=1, NSCHEMES
 enddo
 ! 2. TENO = its linear scheme on a smooth pulse
 do id=1, NSCHEMES
-   if (SCHEMES(id)%family /= FAM_TENO) cycle
+   if (SCHEMES(id)%family /= FAM_TENO .or. SCHEMES(id)%interp) cycle
    l1 = teno_vs_linear(id)
    print '(A16,A,ES9.2)', SCHEMES(id)%name, ': max |TENO - linear| after one period of a Gaussian: ', l1
    if (l1 > 1.e-13_R8P) passed = .false.
@@ -68,7 +69,7 @@ print '(A)', 'seth_test_advection: ok'
 
 contains
    subroutine derivative_orders(id, o)
-   !< Orders of the finite-difference derivative of e^x at 0.3, both signs of a.
+   !< Orders of the finite-difference derivative of g (seth_test_functions) at 0.3, both signs of a.
    integer(I4P), intent(in)  :: id
    real(R8P),    intent(out) :: o(2)
    real(R8P)                 :: up(VLO:VHI), um(VLO:VHI), h, h0, err(2,NH), flo(NH), rp1, rm1, rp0, rm0
@@ -77,14 +78,14 @@ contains
    do j=1, NH
       h = h0/2._R8P**(j-1)
       do m=VLO, VHI ! face i+1/2: cell m is node i+m; face i-1/2: node i+m-1 (x_i = 0.3)
-         up(m) = exp(0.3_R8P + m*h)
-         um(m) = exp(0.3_R8P + (m-1)*h)
+         up(m) = gfun(0.3_R8P + m*h)
+         um(m) = gfun(0.3_R8P + (m-1)*h)
       enddo
       call reconstruct(id, up, up, rp1, rm1)
       call reconstruct(id, um, um, rp0, rm0)
-      err(1,j) = abs((rp1 - rp0)/h - exp(0.3_R8P))
-      err(2,j) = abs((rm1 - rm0)/h - exp(0.3_R8P))
-      flo(j) = 1.e3_R8P*epsilon(1._R8P)*exp(0.3_R8P)/h
+      err(1,j) = abs((rp1 - rp0)/h - gder(0.3_R8P))
+      err(2,j) = abs((rm1 - rm0)/h - gder(0.3_R8P))
+      flo(j) = 2.e3_R8P*epsilon(1._R8P)/h ! |g| < 2 near 0.3
    enddo
    do side=1, 2
       o(side) = 99._R8P

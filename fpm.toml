@@ -101,3 +101,8 @@ main = "seth_test_convergence.F90"
 name = "seth_test_tables"
 source-dir = "src/tests"
 main = "seth_test_tables.F90"
+
+[[test]]
+name = "seth_test_interpolation"
+source-dir = "src/tests"
+main = "seth_test_interpolation.F90"

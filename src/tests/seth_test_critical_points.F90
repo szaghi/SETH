@@ -48,7 +48,7 @@ logical                 :: passed
 passed = .true.
 print '(A16,A4,4A12)', 'scheme', 'p', '1st-cp a>0', '1st-cp a<0', '2nd-cp a>0', '2nd-cp a<0'
 do id=1, NSCHEMES
-   if (SCHEMES(id)%family == FAM_JS_INTERP) cycle
+   if (SCHEMES(id)%interp) cycle ! the finite-difference flux setting reconstructs: interpolations elsewhere
    do p=1, merge(2, 1, SCHEMES(id)%family == FAM_Z)
       call orders(id, 1, p, o1)
       call orders(id, 2, p, o2)

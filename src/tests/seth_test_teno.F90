@@ -1,11 +1,13 @@
-!< SETH test: TENO5, TENO6, TENO6-opt and TENO6-NENO6: order, the linear scheme restored on smooth data, cutoff across a jump,
-!< no overflow on a large jump, exact mirroring.
+!< SETH test: TENO5, TENO6, TENO6-opt, TENO6-NENO6 and the TENO5/6 interpolations: order, linear scheme on smooth data,
+!< cutoff across a jump, no overflow on a large jump, exact mirroring.
 program seth_test_teno
-!< SETH test: TENO5, TENO6, TENO6-opt and TENO6-NENO6: order, the linear scheme restored on smooth data, cutoff across a jump,
-!< no overflow on a large jump, exact mirroring.
+!< SETH test: TENO5, TENO6, TENO6-opt, TENO6-NENO6 and the TENO5/6 interpolations: order, linear scheme on smooth data,
+!< cutoff across a jump, no overflow on a large jump, exact mirroring.
 !<
-!< 1. Order on u = exp(x) (cell averages, face at 0.3), >= order - 0.5: TENO5 5, TENO6 6, TENO6-opt 5 (Fu et al.'s
-!<    optimised weights lose one order), TENO6-NENO6 4 (the NENO6 paper's weights lose two). C_T: the sourced values.
+!< 1. Order on u = g(x), the generic function of seth_test_functions (cell averages, or point values at the cell
+!<    centres for the interpolations; face at 0.3), >= order - 0.5: TENO5 5, TENO6 6, TENO6-opt 5 (Fu et al.'s
+!<    optimised weights lose one order), TENO6-NENO6 4 (the NENO6 paper's weights lose two), the interpolations 5 and
+!<    6. C_T: the sourced values.
 !< 2. Smooth data keeps every candidate (delta = 1): the state equals the linear scheme sum d_k q_k / sum d to 4 eps of
 !<    the data magnitude.
 !< 3. A unit step at every cell boundary, both orientations: the states lie in [0, 1] to 1e-12 (the candidates
@@ -16,29 +18,37 @@ program seth_test_teno
 use seth
 use seth_test_rng, only : seed_rng
 use seth_z_teno_tables
+use seth_test_functions, only : gfun, gavg
 implicit none
 real(R8P),    parameter :: XF = 0.3_R8P
 integer(I4P), parameter :: NH = 6_I4P
 real(R8P)               :: vp(-2:3), vm(-2:3), rp, rm, h, err(2,NH), order, floor_, worst, x, lin, ct, big
 integer(I4P)            :: sc, j, m, side, jump, n_
 logical                 :: passed
-character(11), parameter :: NAMES(4) = ['TENO5      ', 'TENO6      ', 'TENO6-opt  ', 'TENO6-NENO6']
-real(R8P),    parameter :: DESIGN(4) = [5._R8P, 6._R8P, 5._R8P, 4._R8P]
-real(R8P),    parameter :: CTS(4) = [SETH_TENO5_CT, SETH_TENO6_CT, SETH_TENO6_OPT_CT, SETH_TENO6_NENO6_CT]
+integer(I4P), parameter :: NSC = 6_I4P
+character(12), parameter :: NAMES(NSC) = ['TENO5       ', 'TENO6       ', 'TENO6-opt   ', 'TENO6-NENO6 ', &
+                                          'TENO5-interp', 'TENO6-interp']
+real(R8P),    parameter :: DESIGN(NSC) = [5._R8P, 6._R8P, 5._R8P, 4._R8P, 5._R8P, 6._R8P]
+real(R8P),    parameter :: CTS(NSC) = [SETH_TENO5_CT, SETH_TENO6_CT, SETH_TENO6_OPT_CT, SETH_TENO6_NENO6_CT, &
+                                       SETH_TENO5_CT, SETH_TENO6_CT]
 
 passed = .true.
 call seed_rng(1005_I4P)
-floor_ = 1.e3_R8P * epsilon(1._R8P) * exp(XF)
-do sc=1, 4
+floor_ = 2.e2_R8P * epsilon(1._R8P) ! 100 eps |g|, |g| < 2 near XF
+do sc=1, NSC
    ct = CTS(sc)
    ! 1. order
    do j=1, NH
       h = 0.4_R8P / 2._R8P**(j-1)
       do m=-2, 3
-         vp(m) = (exp(XF + m*h) - exp(XF + (m-1)*h)) / h
+         if (sc > 4) then
+            vp(m) = gfun(XF + (m - 0.5_R8P)*h)
+         else
+            vp(m) = gavg(XF + (m-1)*h, XF + m*h)
+         endif
       enddo
       call kernel(sc, vp, vp, ct, rp, rm)
-      err(:,j) = abs([rp, rm] - exp(XF))
+      err(:,j) = abs([rp, rm] - gfun(XF))
    enddo
    do side=1, 2
       order = -1._R8P
@@ -115,6 +125,8 @@ contains
    case(2) ; call seth_teno6(vp, vm, SETH_TENO_EPS, ct, rp, rm)
    case(3) ; call seth_teno6_opt(vp, vm, SETH_TENO_EPS, ct, rp, rm)
    case(4) ; call seth_teno6_neno6(vp, vm, SETH_TENO_EPS, ct, rp, rm)
+   case(5) ; call seth_teno5_interp(vp, vm, SETH_TENO_EPS, ct, rp, rm)
+   case(6) ; call seth_teno6_interp(vp, vm, SETH_TENO_EPS, ct, rp, rm)
    endselect
    endsubroutine kernel
 
@@ -129,6 +141,8 @@ contains
    case(3) ; r = lin_of(TENO6_OPT_NC, TENO6_OPT_MAXW, TENO6_OPT_CLO, TENO6_OPT_CW, TENO6_OPT_P, TENO6_OPT_D, v)
    case(4) ; r = lin_of(TENO6_NENO6_NC, TENO6_NENO6_MAXW, TENO6_NENO6_CLO, TENO6_NENO6_CW, TENO6_NENO6_P, &
                         TENO6_NENO6_D, v)
+   case(5) ; r = lin_of(TENO5_NC, TENO5_MAXW, TENO5_CLO, TENO5_CW, TENO5_INTERP_P, TENO5_INTERP_D, v)
+   case(6) ; r = lin_of(TENO6_NC, TENO6_MAXW, TENO6_CLO, TENO6_CW, TENO6_INTERP_P, TENO6_INTERP_D, v)
    endselect
    endfunction linear
 
