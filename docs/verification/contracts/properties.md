@@ -16,7 +16,7 @@ it).
 |---|---|---|
 | Exactness | polynomials of degree below the narrowest candidate are reproduced whatever the weights (cell averages for reconstructions, point values for interpolations) | 64 ε of the data |
 | Constants | a constant stencil returns the constant | 16 ε |
-| Translation | $R(v + c) = R(v) + c$ (the indicators are blind to constants) | $10^{-11}(|c| + \max|v|)$ |
+| Translation | $R(v + c) = R(v) + c$ (the indicators are blind to constants) | $10^{-11}(\vert c\vert  + \max\vert v\vert )$ |
 | Mirror | $v_m(m) = v_p(1-m)$ gives $r_m = r_p$ | bitwise for WENO-Z and TENO; $10^{-11}$ for WENO-JS (mirrored tables summed in another order) |
 | Power-of-2 scaling | $R(2^k v) = 2^k R(v)$ | bitwise for WENO-Z, TENO and scale-invariant WENO-JS; plain WENO-JS is asserted **not** scale invariant (its absolute ε) |
 | Robustness | the zero stencil, and magnitudes from $10^{-200}$ to each scheme's limit, give finite states within the data's range ($10^{140}$; plain WENO-JS $10^{30}$, as $(\varepsilon + IS)^{w}$ overflows near $10^{38}$–$10^{77}$) | debug builds trap overflow, invalid, zero divide |

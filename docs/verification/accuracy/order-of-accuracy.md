@@ -25,7 +25,7 @@ What the case catches:
 | Test function | $g(x) = \sin(0.9x + 0.4) + 0.5\,e^{0.6x} + 0.3\cos(1.7x - 1.1)$, face at $x = 0.3$ ($g' > 1$ there: no critical point) | [`seth_test_functions.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_test_functions.F90) |
 | Cell averages | 10-point Gauss–Legendre on each cell: no cancellation, error far below round-off | `gavg` |
 | Grids | $h_0 = 0.4$ ($0.8$ for $S = 5$), six halvings | the three programs |
-| Order | the finest pair whose finer error is above $100\,\varepsilon\,|g|$; asserted $\ge$ design $- 0.5$ | idem |
+| Order | the finest pair whose finer error is above $100\,\varepsilon\,\vert g\vert$; asserted $\ge$ design $- 0.5$ | idem |
 | Kernels | every reconstruction and interpolation, `eps` = 1e-6 (WENO-JS), 1e-40 (WENO-Z, TENO), WENO-Z with $p = 1$ and 2 | [`seth_weno_js.F90`](https://github.com/szaghi/SETH/blob/main/src/lib/seth_weno_js.F90), [`seth_wenoz.F90`](https://github.com/szaghi/SETH/blob/main/src/lib/seth_wenoz.F90), [`seth_teno.F90`](https://github.com/szaghi/SETH/blob/main/src/lib/seth_teno.F90) |
 
 Why $g$ and not $e^x$: the cell averages of $e^x$ are $\sinh(h/2)/(h/2)$ times its point values, so the two data

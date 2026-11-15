@@ -18,7 +18,7 @@ wrong curve.
 |---|---|---|
 | Operator | $D u_i = (F_{i+1/2} - F_{i-1/2})/h$, $F_{i+1/2} = \sum_m c_m u_{i+m}$, $c_m$ the background's face coefficients | [`seth_test_spectral.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_test_spectral.F90) |
 | Modified wavenumber | $\tilde\xi = -i\sum_m c_m e^{im\xi}(1 - e^{-i\xi})$; Re $\tilde\xi$ the dispersion, Im $\tilde\xi$ the dissipation (negative: dissipative) | `xit` |
-| Asserted | Im $\tilde\xi \le 10^{-14}$ on $(0, \pi]$ for the max-order backgrounds; low-wavenumber error slope $\ge o + 1 - 0.3$; resolution (largest $\xi/\pi$ with $|{\rm Re}\,\tilde\xi - \xi|/\xi < 1\%$) 0.35 for the 5th-order and 0.42 for the 7th-order WENO background, within 0.01 (Martín et al. 2006, via llm-wiki `methods/bandwidth-optimized-weno.md`) | |
+| Asserted | Im $\tilde\xi \le 10^{-14}$ on $(0, \pi]$ for the max-order backgrounds; low-wavenumber error slope $\ge o + 1 - 0.3$; resolution (largest $\xi/\pi$ with $\vert {\rm Re}\,\tilde\xi - \xi\vert /\xi < 1\%$) 0.35 for the 5th-order and 0.42 for the 7th-order WENO background, within 0.01 (Martín et al. 2006, via llm-wiki `methods/bandwidth-optimized-weno.md`) | |
 
 The interpolation tables are not a derivative operator and are left out (their accuracy is in [A1](../accuracy/order-of-accuracy)).
 

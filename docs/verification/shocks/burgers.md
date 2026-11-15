@@ -16,7 +16,7 @@ farther than 0.1 from the shock should stay high order, and the overshoot must s
 
 | Item | Choice | Code |
 |---|---|---|
-| Scheme | conservative finite differences, global Lax–Friedrichs splitting $f^\pm = (f \pm \alpha u)/2$, $\alpha = 1.1\max|u|$, SSP-RK3 | [`seth_vv_scalar.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_vv_scalar.F90) |
+| Scheme | conservative finite differences, global Lax–Friedrichs splitting $f^\pm = (f \pm \alpha u)/2$, $\alpha = 1.1\max\vert u\vert$, SSP-RK3 | [`seth_vv_scalar.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_vv_scalar.F90) |
 | Time step | before the shock $\Delta t = 0.4\,h\,(h/h_0)^{(o-3)/3}$, $h_0 = 2/40$: the $O(\Delta t^3)$ error of RK3 falls with the $O(h^o)$ spatial one (Henrick et al. use $\Delta t \sim h^{5/3}$ for 5th order) | [`seth_vv_burgers.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_vv_burgers.F90) |
 | Exact solution | in the frame moving at 0.5, $v = u - 0.5$ solves Burgers from $\sin\pi y$; the characteristics cross first at $y = \pm 1$ at $t = 1/\pi$ and by odd symmetry the shock stays there; $v(y) = \sin\pi\xi$, $\xi$ the root of $\xi + t\sin\pi\xi = y$ on the rising branch $[0, \xi_m]$, $\xi_m = \arccos(-1/\pi t)/\pi$ (the characteristics beyond it have entered the shock); bisection to $10^{-15}$ | `exact`, `v` |
 

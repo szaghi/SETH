@@ -15,7 +15,7 @@ one-sided states are admissible, with the largest admissible blending factor, an
 | Item | Choice | Code |
 |---|---|---|
 | Limited flux | $F = \theta F_{\rm high} + (1 - \theta)F_{\rm low}$, the one-sided states $q_l - \lambda F$, $q_r + \lambda F$ above the floors | [`seth_positivity.F90`](https://github.com/szaghi/SETH/blob/main/src/lib/seth_positivity.F90) |
-| $\theta$ | closed form: a ratio for the density, the smallest root of $\rho E - \tfrac12|m|^2 - \varepsilon_p\rho/(\gamma - 1)$ for the pressure (the admissible set is convex, so the admissible factors form an interval $[0, \theta^*]$) | `segment_bound` |
+| $\theta$ | closed form: a ratio for the density, the smallest root of $\rho E - \tfrac12\vert m\vert ^2 - \varepsilon_p\rho/(\gamma - 1)$ for the pressure (the admissible set is convex, so the admissible factors form an interval $[0, \theta^*]$) | `segment_bound` |
 | Rounding guard | the one-sided states of the returned flux are re-checked; a state a few ulp below its floor lowers $\theta$ by relative steps $10^{-15}, 2\cdot10^{-15}, …$ | `seth_positivity_euler` |
 | Layout | $q = (\rho, \rho u_1, …, \rho u_d, E)$, `nv` $= 3, 4, 5$; ideal gas | |
 | Device rule | no local array sized by `nv` (dimension `SETH_POSITIVITY_NV_MAX` = 5, loops to `nv`): automatic arrays made the first version 333× slower on the GPU ([performance](/guide/performance#device-kernel-rules-arrays-and-loop-extents)) | |

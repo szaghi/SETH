@@ -67,7 +67,7 @@ The positivity-preserving flux limiter of Hu, Adams & Shu (2013) at one face of 
 | `lam` | $2\Delta t/h$ in 1-D; in $d$ dimensions $2\Delta t/(w_k h_k)$ for the faces of direction $k$, the partition weights $w_k$ summing to 1 |
 | `eps_rho`, `eps_p` | the floors; Hu, Adams & Shu take $\min(10^{-13}$, the initial minimum$)$; `SETH_POSITIVITY_EPS` $= 10^{-13}$ |
 | `ql`, `qr` | the states of the cells left and right of the face |
-| `f_high`, `f_low` | the high-order face flux and a first-order positivity-preserving one (Lax–Friedrichs with $\alpha \ge \max(|u_n| + c)$ is, for `lam` $\alpha \le 1$) |
+| `f_high`, `f_low` | the high-order face flux and a first-order positivity-preserving one (Lax–Friedrichs with $\alpha \ge \max(\vert u_n\vert  + c)$ is, for `lam` $\alpha \le 1$) |
 | `f`, `theta` | the limited flux and its factor (1: `f_high` unchanged) |
 
 If even `f_low` leaves a one-sided state below the floors (`lam` too large, or an inadmissible cell), the kernel

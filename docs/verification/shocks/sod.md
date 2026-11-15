@@ -24,13 +24,13 @@ What the case catches:
 | Item | Choice | Code |
 |---|---|---|
 | Equations | 1-D Euler, ideal gas, $\gamma = 1.4$; point values at the cell centres, conservative finite differences, 5 ghost cells | [`seth_vv_euler.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_vv_euler.F90) |
-| Splitting path | Roe-averaged eigenvectors $L$, $R$ at each face; $w = Lq$, $g = Lf$; $g^\pm = (g \pm \alpha_k w)/2$ with $\alpha_k = 1.1\max|\lambda_k|$ over the domain; $g^+$ by the left-biased kernel (`vp`), $g^-$ by the right-biased one (`vm`); $F = R(r_p + r_m)$ | `residual`, PATH_SPLIT |
-| Why $1.1\max$ | with $\alpha = \max|\lambda|$ exactly, $\partial_x g^- = (\lambda - \alpha)\partial_x w$ vanishes to second order where $|\lambda|$ peaks: a second-order critical point, where TENO falls to second order ([A2](../accuracy/critical-points)) | |
+| Splitting path | Roe-averaged eigenvectors $L$, $R$ at each face; $w = Lq$, $g = Lf$; $g^\pm = (g \pm \alpha_k w)/2$ with $\alpha_k = 1.1\max\vert \lambda_k\vert$ over the domain; $g^+$ by the left-biased kernel (`vp`), $g^-$ by the right-biased one (`vm`); $F = R(r_p + r_m)$ | `residual`, PATH_SPLIT |
+| Why $1.1\max$ | with $\alpha = \max\vert \lambda\vert$ exactly, $\partial_x g^- = (\lambda - \alpha)\partial_x w$ vanishes to second order where $\vert \lambda\vert$ peaks: a second-order critical point, where TENO falls to second order ([A2](../accuracy/critical-points)) | |
 | Interpolation path | $w = Lq$ interpolated to both sides of the face by the `_interp` kernels; HLLC (Toro, Spruce & Speares 1994; Davis–Einfeldt speeds); $F = F_0 - \tfrac{h^2}{24}f_{xx} + \tfrac{7h^4}{5760}f_{xxxx}$, the derivatives from the six node fluxes around the face (exact coefficients, error $O(h^6)$); a non-positive face state falls back to first order | PATH_INTERP |
 | Positivity limiter | SETH's `seth_positivity_euler` ([C7](../contracts/positivity)): $F = \theta F_{\rm high} + (1-\theta)F_{\rm LF}$ per face, $\theta$ the largest keeping $\rho$, $p \ge 10^{-13}$ in $q_i - 2\lambda F$ and $q_{i+1} + 2\lambda F$ (Hu, Adams & Shu 2013); positive under CFL $\le 0.5$ | `limit` |
 | Time | SSP-RK3, CFL 0.5; a stage with a non-positive cell stops the run (recorded as not positive) | `euler_step` |
 | Exact solution | exact Riemann solver: Newton on the pressure functions from the two-rarefaction guess, sampling at $x/t$ (Toro 2009, ch. 4) | [`seth_vv_riemann.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_vv_riemann.F90) |
-| Error | $L_1(\rho) = h\sum|\rho_i - \rho(x_i, t)|$, point values at the cell centres, pairwise summation | [`seth_vv_cases.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_vv_cases.F90) |
+| Error | $L_1(\rho) = h\sum\vert \rho_i - \rho(x_i, t)\vert$, point values at the cell centres, pairwise summation | [`seth_vv_cases.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_vv_cases.F90) |
 
 ## Initial and boundary conditions
 
