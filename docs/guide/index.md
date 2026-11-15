@@ -11,4 +11,4 @@ WenOOF is Abel.
 
 WENO-JS 1/3/5/7/9 (reconstruction and interpolation, extracted from ADAM and bitwise equal to it), WENO-Z3/5/7/9 and
 TENO5/6 with the optimised TENO6 variants: one kernel per scheme, coefficients as compile-time constants, `pure` and
-callable on the device. See [Schemes](./schemes), [API](./api), and how it is checked in [Verification](./verification).
+callable on the device. See [Schemes](./schemes), [API](./api), and how it is checked in [Verification](/verification/).

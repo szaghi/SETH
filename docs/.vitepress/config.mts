@@ -100,7 +100,7 @@ export default withMermaid({
         {
           text: 'Quality',
           items: [
-            { text: 'Verification', link: '/guide/verification' },
+            { text: 'Verification', link: '/verification/' },
             { text: 'Performance',  link: '/guide/performance' },
             { text: 'Sources',      link: '/guide/sources' },
           ],

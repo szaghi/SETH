@@ -38,6 +38,23 @@ card says what kind of check it is:
 </figure>
 </div>
 
+## What a user of the kernels should know
+
+The findings that change how the kernels should be used, each documented on its page:
+
+- The higher-order interpolations need a positivity safeguard near vacuum, and every interpolation on strong blast
+  waves; on the Woodward–Colella blast so do WENO9-JS and the WENO-Z (but Z3) and TENO reconstructions
+  ([S3](./shocks/test123), [S5](./shocks/blast)). SETH provides one: `seth_positivity_euler`, the flux limiter of
+  Hu, Adams & Shu ([API](/guide/api#positivity-limiter), [C7](./contracts/positivity)).
+- WENO-Z9 is not robust at shocks: 28% overshoot behind the Burgers shock, oscillations on the composite profile,
+  loss of positivity in the first steps of the blast wave ([S6](./shocks/burgers);
+  [issue #1](https://github.com/szaghi/SETH/issues/1)).
+- With Lax–Friedrichs splitting, use $\alpha$ a little above $\max|f'|$. With $\alpha = \max|f'|$ exactly, the split
+  flux has a second-order critical point where $|f'|$ peaks, and TENO falls to second order there
+  ([S6](./shocks/burgers)).
+- TENO6 is anti-dissipative in a narrow band near $\vartheta \approx 0.47\pi$ and leaves grid-scale packets behind a
+  shock undamped ([F2](./spectral/adr), [S6](./shocks/burgers)).
+
 ## Accuracy
 
 The design order on smooth data, at critical points and over whole domains, for the reconstructions and the
@@ -113,6 +130,16 @@ baseline, the device, and the suite's own ability to catch defects. [Group page]
 [<strong>Positivity limiter</strong><span>Hu, Adams & Shu's limiter as a SETH kernel: admissible, maximal, untouched where not needed</span><em>contract</em>](./contracts/positivity)
 
 </div>
+
+## Running it
+
+The suite runs on gfortran 16.2, nvfortran 26.9 and ifx 2026.2, debug and optimised, and on the GPU:
+
+```bash
+fobis build --mode tests-gnu && bash scripts/run_tests.sh   # the suite (the verification cases on their quick set)
+scripts/run_vv.sh                                           # every scheme on the report grids: data, tables, figures
+python3 scripts/mutation_test.py --mode tests-gnu           # does every planted defect make a test fail?
+```
 
 The list of all test programs, with what each asserts and the page that documents it, is on the
 [unit tests](./unit-tests) page.
