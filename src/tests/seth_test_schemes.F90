@@ -43,7 +43,7 @@ type(scheme_t), parameter :: SCHEMES(NSCHEMES) = [ &
    scheme_t('wenoz3',          FAM_Z,         2, 3._R8P, 1.e-40_R8P, 1._R8P), &
    scheme_t('wenoz5',          FAM_Z,         3, 5._R8P, 1.e-40_R8P, 1._R8P), &
    scheme_t('wenoz7',          FAM_Z,         4, 7._R8P, 1.e-40_R8P, 1._R8P), &
-   scheme_t('wenoz9',          FAM_Z,         5, 9._R8P, 1.e-40_R8P, 1._R8P), &
+   scheme_t('wenoz9',          FAM_Z,         5, 9._R8P, 1.e-40_R8P, 2._R8P), &
    scheme_t('teno5',           FAM_TENO,      3, 5._R8P, 1.e-40_R8P, SETH_TENO5_CT), &
    scheme_t('teno6',           FAM_TENO,      3, 6._R8P, 1.e-40_R8P, SETH_TENO6_CT), &
    scheme_t('teno6_opt',       FAM_TENO,      3, 5._R8P, 1.e-40_R8P, SETH_TENO6_OPT_CT), &
@@ -51,7 +51,7 @@ type(scheme_t), parameter :: SCHEMES(NSCHEMES) = [ &
    scheme_t('wenoz3_interp',   FAM_Z,         2, 3._R8P, 1.e-40_R8P, 1._R8P, .true.), &
    scheme_t('wenoz5_interp',   FAM_Z,         3, 5._R8P, 1.e-40_R8P, 1._R8P, .true.), &
    scheme_t('wenoz7_interp',   FAM_Z,         4, 7._R8P, 1.e-40_R8P, 1._R8P, .true.), &
-   scheme_t('wenoz9_interp',   FAM_Z,         5, 9._R8P, 1.e-40_R8P, 1._R8P, .true.), &
+   scheme_t('wenoz9_interp',   FAM_Z,         5, 9._R8P, 1.e-40_R8P, 2._R8P, .true.), &
    scheme_t('teno5_interp',    FAM_TENO,      3, 5._R8P, 1.e-40_R8P, SETH_TENO5_CT, .true.), &
    scheme_t('teno6_interp',    FAM_TENO,      3, 6._R8P, 1.e-40_R8P, SETH_TENO6_CT, .true.)]
 

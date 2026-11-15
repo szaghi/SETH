@@ -15,8 +15,7 @@ program seth_vv_burgers
 !<    (order > 2).
 !< 2. Shocked, t = 1.5/pi: L1 over all cells (first order at best: the shock), and over the cells farther than 0.1
 !<    from the shock (smooth: high order expected, Shu 1998); the overshoot max(u) - 1.5 and undershoot -0.5 - min(u)
-!<    below 1e-2 (no maximum principle is claimed for WENO, but large oscillations would show here), except WENO-Z9,
-!<    which overshoots by 0.28 (measured; a documented finding, printed). Asserted: the
+!<    below 1e-2 (no maximum principle is claimed for WENO, but large oscillations would show here). Asserted: the
 !<    smooth-region L1 at N = 320 is at least 50 times smaller than the whole-domain one for the quick schemes; the
 !<    overshoots bounded.
 !< Report mode: the error tables, the profiles at both times, and 61 frames from t = 0 to 1.5/pi (WENO5-JS, TENO6).
@@ -61,12 +60,7 @@ do k=1, size(ids)
    case('teno6') ; if (o < 5.5_R8P) call fail('TENO6 below order 5.5 before the shock')
    end select
    if (o < 2._R8P) call fail(vv_label(ids(k))//' does not converge before the shock')
-   ! WENO-Z9 is the documented exception: 0.28 overshoot behind the shock (tau_9 = |beta_0 - beta_4| leaves near-linear
-   ! weights across a smeared shock); printed, left to the owner (docs/verification/shocks/burgers.md)
-   if (vv_label(ids(k)) /= 'wenoz9' .and. maxval(osh(k,:)) > 1.e-2_R8P) &
-      call fail(vv_label(ids(k))//' overshoot above 1e-2 after the shock')
-   if (vv_label(ids(k)) == 'wenoz9') print '(A,ES10.2)', '   WENO-Z9 overshoot after the shock (documented): ', &
-                                                         maxval(osh(k,:))
+   if (maxval(osh(k,:)) > 1.e-2_R8P) call fail(vv_label(ids(k))//' overshoot above 1e-2 after the shock')
    if (.not.vv_report() .and. .not.(es(k,4) < et(k,4)/50._R8P)) call fail(vv_label(ids(k))//' smooth region polluted')
 enddo
 if (vv_report()) then
