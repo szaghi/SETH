@@ -114,7 +114,7 @@ export default withMermaid({
     },
 
     footer: {
-      message: 'Released under the <a href="http://www.gnu.org/licenses/gpl-3.0.html">GPL v3 License</a>.',
+      message: 'Released under your choice of the GPL v3, BSD-2-Clause, BSD-3-Clause or MIT license.',
       copyright: 'Copyright © 2026 Stefano Zaghi',
     },
   },

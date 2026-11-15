@@ -51,7 +51,16 @@ fobis build --mode static-gnu                                 # lib/gnu/static/l
 fobis build --mode tests-gnu && bash scripts/run_tests.sh     # the 26 verification programs
 ```
 
-or, as an fpm dependency:
+as a FoBiS dependency, in the `fobos` of your project (then `fobis fetch && fobis build`):
+
+```ini
+[dependencies]
+deps_dir = src/third_party
+PENF     = https://github.com/szaghi/PENF :: branch=master   # SETH's own dependency: fobis fetch is not transitive
+SETH     = https://github.com/szaghi/SETH :: branch=main
+```
+
+or as an fpm dependency, in your `fpm.toml`:
 
 ```toml
 [dependencies]
@@ -64,8 +73,8 @@ The two states at the face i+1/2, from the values around it (cells by offset fro
 use seth
 real(R8P) :: vp(-2:3), vm(-2:3), rp, rm
 
-call seth_weno5_js(vp, vm, SETH_WENO_JS_EPS, 1._R8P, rp, rm)   ! WENO-JS 5: rp left state, rm right state
-call seth_teno5(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, rp, rm)  ! TENO5, same layout
+call seth_weno5_js(vp, vm, SETH_WENO_JS_EPS, 1._R8P, rp, rm)   ! WENO-JS 5: rp left, rm right
+call seth_teno5(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, rp, rm)  ! TENO5
 ```
 
 The [quick start](https://szaghi.github.io/SETH/guide/quickstart) lists every kernel and its parameters;

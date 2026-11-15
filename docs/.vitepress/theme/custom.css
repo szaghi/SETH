@@ -191,3 +191,44 @@
   letter-spacing: 0.02em;
   color: var(--vp-c-text-2);
 }
+
+/* ---------- Layout (not identity): home sections below the features ----------
+   Quick start, authors and license, as in the README (the layout of the mosaic home): centred headings and leads,
+   code and tables at a reading width. The authors are VitePress' own VPTeamMembers cards. */
+.seth-home {
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 2rem 24px 1rem;
+}
+.seth-home h2 {
+  border-top: 0;
+  margin-top: 2.5rem;
+  text-align: center;
+}
+.seth-home .seth-lead {
+  text-align: center;
+  color: var(--vp-c-text-2);
+  max-width: 720px;
+  margin: 0.5rem auto 1.5rem;
+}
+.seth-home div[class*='language-'],
+.seth-home .vp-code-group {
+  max-width: 820px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.seth-home table {
+  display: table;
+  margin: 0 auto;
+}
+.VPHome .VPTeamMembers {
+  max-width: 1152px;
+  margin: 0 auto 1rem;
+  padding: 0 24px;
+}
+/* the authors' avatars are photos, not figures: no washi card in the dark theme */
+.dark .vp-doc .VPTeamMembers img[src$=".png"] {
+  background: none;
+  border-radius: 50%;
+  padding: 0;
+}
