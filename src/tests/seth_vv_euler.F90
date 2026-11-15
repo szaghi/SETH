@@ -23,7 +23,7 @@ module seth_vv_euler
 !< Positivity: with `limiter` on, the flux of every face is blended with the first-order Lax-Friedrichs flux,
 !< F = theta F_high + (1 - theta) F_LF, theta in [0, 1] as large as keeps rho and p of the two one-sided states
 !< q_i - 2 lambda F and q_{i+1} + 2 lambda F above 1e-13 (lambda = dt/h): the positivity-preserving flux limiter of
-!< Hu, Adams & Shu (2013) for finite-difference WENO, theta by bisection. Each stage is then a convex combination of
+!< Hu, Adams & Shu (2013) for finite-difference WENO, SETH's kernel seth_positivity_euler (theta in closed form). Each stage is then a convex combination of
 !< positive states when dt max(|u| + c) <= h/2 (CFL <= 0.5), and SSP-RK3 keeps that. Every face with theta < 1 is
 !< counted in `nlimited`: the cases assert that the limiter never acts on smooth flows, and report how often each
 !< scheme needs it on the stress tests.
@@ -212,14 +212,13 @@ contains
    endsubroutine residual
 
    subroutine limit(q, n, h, dt, fhat)
-   !< Hu, Adams & Shu (2013): blend each face flux with the Lax-Friedrichs flux so that q_i - 2 (dt/h) F and
-   !< q_{i+1} + 2 (dt/h) F keep rho, p >= 1e-13.
+   !< The positivity-preserving flux limiter of SETH (seth_positivity_euler, Hu, Adams & Shu 2013) at every face: the
+   !< low-order flux is Lax-Friedrichs with alpha = max(|u| + c) over the domain, lam = 2 dt/h, floors 1e-13.
    integer(I4P), intent(in)    :: n
    real(R8P),    intent(in)    :: q(3,1-NG:n+NG), h, dt
    real(R8P),    intent(inout) :: fhat(3,0:n)
-   real(R8P),    parameter     :: FLOOR = 1.e-13_R8P
-   real(R8P)                   :: lam, a, w(3), flf(3), lo, hi, th
-   integer(I4P)                :: i, it
+   real(R8P)                   :: lam, a, w(3), flf(3), f(3), theta
+   integer(I4P)                :: i
    lam = 2._R8P*dt/h
    a = 0._R8P
    do i=0, n+1
@@ -227,25 +226,13 @@ contains
       a = max(a, abs(w(2)) + sqrt(max(GAMMA*w(3)/w(1), 0._R8P)))
    enddo
    do i=0, n
-      if (ok(fhat(:,i))) cycle
       flf = 0.5_R8P*(flux(q(:,i)) + flux(q(:,i+1))) - 0.5_R8P*a*(q(:,i+1) - q(:,i))
-      lo = 0._R8P ; hi = 1._R8P
-      do it=1, 50
-         th = 0.5_R8P*(lo + hi)
-         if (ok(th*fhat(:,i) + (1._R8P - th)*flf)) then ; lo = th ; else ; hi = th ; endif
-      enddo
-      fhat(:,i) = lo*fhat(:,i) + (1._R8P - lo)*flf
-      nlimited = nlimited + 1
+      call seth_positivity_euler(3_I4P, GAMMA, lam, SETH_POSITIVITY_EPS, SETH_POSITIVITY_EPS, q(:,i), q(:,i+1), &
+                                 fhat(:,i), flf, f, theta)
+      if (theta < 1._R8P) then
+         fhat(:,i) = f ; nlimited = nlimited + 1
+      endif
    enddo
-   contains
-      pure logical function ok(f)
-      real(R8P), intent(in) :: f(3)
-      real(R8P)             :: ql(3), qr(3)
-      ql = q(:,i) - lam*f ; qr = q(:,i+1) + lam*f
-      ok = ql(1) >= FLOOR .and. qr(1) >= FLOOR .and. &
-           (GAMMA - 1._R8P)*(ql(3) - 0.5_R8P*ql(2)**2/ql(1)) >= FLOOR .and. &
-           (GAMMA - 1._R8P)*(qr(3) - 0.5_R8P*qr(2)**2/qr(1)) >= FLOOR
-      endfunction ok
    endsubroutine limit
 
    subroutine euler_step(id, path, q, n, h, dt, bc, ok, par)

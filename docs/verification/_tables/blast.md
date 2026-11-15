@@ -9,9 +9,9 @@
 | WENO-Z7 | 0.07433 | **no** | 1826 |
 | WENO-Z9 | 0.06884 | **no** | 6294 |
 | TENO5 | 0.08839 | **no** | 515 |
-| TENO6 | 0.05788 | **no** | 226 |
-| TENO6-opt | 0.0614 | **no** | 253 |
-| TENO6-NENO6 | 0.06984 | **no** | 67 |
+| TENO6 | 0.05839 | **no** | 197 |
+| TENO6-opt | 0.06444 | **no** | 251 |
+| TENO6-NENO6 | 0.07098 | **no** | 84 |
 | WENO3-JS interp. | 0.1256 | **no** | 5494 |
 | WENO5-JS interp. | 0.07447 | **no** | 5933 |
 | WENO7-JS interp. | 0.06314 | **no** | 6186 |
@@ -19,6 +19,6 @@
 | WENO-Z3 interp. | 0.09706 | **no** | 6276 |
 | WENO-Z5 interp. | 0.05801 | **no** | 7119 |
 | WENO-Z7 interp. | 0.05012 | **no** | 6940 |
-| WENO-Z9 interp. | 0.0539 | **no** | 15008 |
+| WENO-Z9 interp. | 0.05379 | **no** | 14994 |
 | TENO5 interp. | 0.05513 | **no** | 7055 |
 | TENO6 interp. | 0.05295 | **no** | 6943 |
