@@ -41,7 +41,7 @@ Two rules of ADAM's device kernels, measured on SETH by `src/bench/seth_bench_de
 
 ![ns per face, log scale, of WENO5-JS and of the positivity limiter following or breaking the two rules, on the GPU and on one CPU core](/guide/perf-device-rules.png)
 
-*Blue: follows both rules (the library); light blue: arrays of constant bounds but run-time loop extents; red:
+*Blue: follows both rules (the library); light blue: arrays of constant bounds but run-time loop extents; umber:
 automatic arrays. On the GPU automatic arrays cost two to three orders of magnitude and run-time extents 7 %; on a
 CPU core both cost a factor of 1.3 to 1.8, together up to 4. The limiter in 1-D (`nv` = 3) and 3-D (`nv` = 5); the
 library's loops to the dummy `nv` cost nothing on the GPU against `nv` constant.*

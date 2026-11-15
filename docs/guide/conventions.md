@@ -34,7 +34,7 @@ face: `1-S:S` for WENO-$(2S-1)$, `-2:3` for TENO5 and TENO6.
 <video class="light-only" autoplay loop muted playsinline poster="/guide/casts/conv-sweep-light.png" aria-label="WENO5 sweeping a field with a jump"><source src="/guide/casts/conv-sweep-light.webm" type="video/webm"><source src="/guide/casts/conv-sweep-light.mp4" type="video/mp4"></video>
 <video class="dark-only" autoplay loop muted playsinline poster="/guide/casts/conv-sweep-dark.png" aria-label="WENO5 sweeping a field with a jump"><source src="/guide/casts/conv-sweep-dark.webm" type="video/webm"><source src="/guide/casts/conv-sweep-dark.mp4" type="video/mp4"></video>
 <figcaption>WENO5-JS sweeping the faces of 32 cell averages, a smooth wave with a jump. At each face, the stencils of
-<code>vp</code> (blue band) and <code>vm</code> (lower band), the candidate polynomials (drawn thicker as their weight
+<code>vp</code> (blue, upper band) and <code>vm</code> (green, lower band), the candidate polynomials (drawn thicker as their weight
 grows), and the two states ◀ <code>rp</code> and ▶ <code>rm</code>; below, the nonlinear weights against the linear
 ones. On the smooth wave the weights stay near <i>d<sub>k</sub></i> and the two states agree; next to the jump each state puts its
 weight on the candidate that does not cross it.</figcaption>
