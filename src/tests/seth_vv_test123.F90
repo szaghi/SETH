@@ -10,9 +10,10 @@ program seth_vv_test123
 !< cells on [0, 1], transmissive ends, CFL 0.5. Every scheme runs without any positivity safeguard (recording whether
 !< rho and p stay positive) and with the positivity-preserving flux limiter of Hu, Adams & Shu (2013) (counting the
 !< limited faces). Asserted: with the limiter positivity throughout; without it, every reconstruction up to 7th order
-!< on the splitting path and the WENO3-JS, WENO5-JS and WENO-Z3 interpolations stay positive (measured: WENO-Z9 on the
-!< splitting path, the WENO7/9-JS interpolations and the higher-order WENO-Z and TENO interpolations lose positivity
-!< without the limiter, the finding documented on the case page); L1 of the density below the recorded bounds of the
+!< on the splitting path and the WENO3-JS, WENO5-JS and WENO-Z3 interpolations stay positive (measured: the
+!< WENO7/9-JS interpolations and the higher-order WENO-Z and TENO interpolations lose positivity without the limiter,
+!< the finding documented on the case page; WENO-Z9 on the splitting path stays positive with p = 2); L1 of the
+!< density below the recorded bounds of the
 !< quick schemes (measured + 5%).
 !< Report mode: every scheme, the profiles, the exact solution, L1 on 100 .. 1600 cells, and 123-summary.dat (per
 !< scheme: positive without the limiter, limited faces, L1).

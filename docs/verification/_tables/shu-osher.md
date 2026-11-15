@@ -7,7 +7,7 @@
 | WENO-Z3 | 0.7562 | — | — |
 | WENO-Z5 | 0.19 | — | — |
 | WENO-Z7 | 0.1421 | — | — |
-| WENO-Z9 | 0.1255 | — | — |
+| WENO-Z9 | 0.1374 | — | — |
 | TENO5 | 0.1714 | — | — |
 | TENO6 | 0.1515 | — | — |
 | TENO6-opt | 0.1492 | — | — |
@@ -19,6 +19,6 @@
 | WENO-Z3 interp. | 0.5701 | — | — |
 | WENO-Z5 interp. | 0.1457 | — | — |
 | WENO-Z7 interp. | 0.1045 | — | — |
-| WENO-Z9 interp. | 0.1309 | — | — |
+| WENO-Z9 interp. | 0.1297 | — | — |
 | TENO5 interp. | 0.1503 | — | — |
 | TENO6 interp. | 0.1353 | — | — |

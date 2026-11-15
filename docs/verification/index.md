@@ -46,9 +46,9 @@ The findings that change how the kernels should be used, each documented on its 
   waves; on the Woodward–Colella blast so do WENO9-JS and the WENO-Z (but Z3) and TENO reconstructions
   ([S3](./shocks/test123), [S5](./shocks/blast)). SETH provides one: `seth_positivity_euler`, the flux limiter of
   Hu, Adams & Shu ([API](/guide/api#positivity-limiter), [C7](./contracts/positivity)).
-- WENO-Z9 is not robust at shocks: 28% overshoot behind the Burgers shock, oscillations on the composite profile,
-  loss of positivity in the first steps of the blast wave ([S6](./shocks/burgers);
-  [issue #1](https://github.com/szaghi/SETH/issues/1)).
+- WENO-Z9 needs the exponent $p = 2$: with $p = 1$ it overshoots by 28% behind the Burgers shock and oscillates
+  on the composite profile; with $p = 2$ it stays within the bounds of the other schemes, on the one-dimensional
+  cases run here ([S6](./shocks/burgers); [issue #1](https://github.com/szaghi/SETH/issues/1)).
 - With Lax–Friedrichs splitting, use $\alpha$ a little above $\max|f'|$. With $\alpha = \max|f'|$ exactly, the split
   flux has a second-order critical point where $|f'|$ peaks, and TENO falls to second order there
   ([S6](./shocks/burgers)).

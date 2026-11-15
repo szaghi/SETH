@@ -59,13 +59,14 @@ peaks of the collision.*
 
 - **Without the limiter only WENO3/5/7-JS and WENO-Z3 on the splitting path stay positive** (WENO5-JS asserted);
   WENO9-JS, the higher-order WENO-Z, every TENO and every interpolation lose positivity. WENO-Z5, TENO5 and TENO6
-  lose it in the low-pressure gap before the collision. WENO-Z7 and WENO-Z9 fail within the first three
-  steps, next to the initial 1000 : 0.01 jump. After one step WENO-Z9 undershoots that jump by 0.6% of its height,
-  enough to drive the 0.01 side negative; WENO9-JS, with its heavier weights, stays positive at that step (it fails
-  later). Lowering the CFL number does not
-  help (measured at 0.2–0.5), nor does refining to 800 cells.
+  lose it in the low-pressure gap before the collision. WENO-Z7 fails within the first three
+  steps, next to the initial 1000 : 0.01 jump. WENO-Z9 runs with $p = 2$ ([Burgers](./burgers)) and loses
+  positivity too; with $p = 1$ it undershot that jump by 0.6% of its height after one step, enough to drive the
+  0.01 side negative. Lowering the CFL number does not
+  help (measured at 0.2–0.5; for WENO-Z9 with $p = 1$ only), nor does refining to 800 cells.
 - With the limiter every scheme completes the run (asserted). On the splitting path WENO-Z5, TENO5 and TENO6 need
-  about 100 to 500 limited faces, WENO-Z7 and WENO-Z9 thousands; the interpolation path needs 5000 to 15000.
+  about 100 to 500 limited faces, WENO-Z9 ($p = 2$) 585, WENO-Z7 ($p = 1$) 1826; the interpolation path needs
+  5500 to 7100.
 - Borges et al. (2008) and Fu, Hu & Adams (2016) report WENO-Z5 and TENO results on this problem at 400 cells; Fu
   et al. use a Roe flux with entropy fix, not Lax–Friedrichs splitting. SETH's harness reproduces those results only
   with the limiter. Whether the published runs needed a safeguard is not stated in the summaries of those papers in

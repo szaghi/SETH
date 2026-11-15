@@ -47,7 +47,8 @@ scripts/run_vv.sh --only seth_vv_test123
 ## Findings
 
 - Without the limiter, every reconstruction up to 7th order stays positive on the splitting path, and so do the
-  WENO3-JS, WENO5-JS and WENO-Z3 interpolations (asserted). WENO-Z9 on the splitting path does not.
+  WENO3-JS, WENO5-JS and WENO-Z3 interpolations (asserted). So does WENO-Z9 with $p = 2$ (measured, not
+  asserted); with $p = 1$ it did not.
 - **The higher-order interpolations lose positivity without the limiter**: WENO7/9-JS, WENO-Z5/7/9, TENO5 and
   TENO6. WENO-Z5 and TENO5 need CFL ≤ 0.1, and TENO6 fails even there. The flux corrections are not the cause: without them the second-order flux fails too.
   The cause is high-order, low-dissipation face states fed to HLLC next to vacuum. The splitting path, whose global

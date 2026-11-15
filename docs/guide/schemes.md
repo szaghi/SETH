@@ -186,8 +186,9 @@ WENO-JS's. Across a jump, $\tau = O(1)$ and the smooth candidates, with small $\
 
 $p$ = 1 (Borges) or 2 (fifth order at first-order critical points; recommended for higher orders); $\varepsilon =
 10^{-40}$ is the usual choice. The orders of $\tau$ are measured exactly by the table generator (Castro et al.'s
-$\tau_7 = \lvert\beta_0-\beta_1-\beta_2+\beta_3\rvert$ is $O(h^6)$, as Li et al. 2022 state). WENO-Z9 is not robust
-at strong shocks ([issue #1](https://github.com/szaghi/SETH/issues/1)).
+$\tau_7 = \lvert\beta_0-\beta_1-\beta_2+\beta_3\rvert$ is $O(h^6)$, as Li et al. 2022 state). WENO-Z9 needs
+$p = 2$: with $p = 1$ it is not robust at shocks ([Burgers](/verification/shocks/burgers),
+[issue #1](https://github.com/szaghi/SETH/issues/1)).
 
 ## TENO: TENO5, TENO6, TENO6-opt, TENO6-NENO6
 

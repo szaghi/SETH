@@ -69,11 +69,14 @@ after the shock at $N = 80$.*
   shock with an upstream group velocity, and TENO6 does not damp them. The [ADR](../spectral/adr) shows why: TENO6 is
   anti-dissipative in a narrow band near $\vartheta/\pi \approx 0.47$, a wavelength of about $4h$, where its cutoff
   starts to act.
-- The overshoot after the shock stays below $10^{-4}$ for most schemes and below $10^{-2}$ for all but one
-  (asserted). WENO-Z7 reaches $6\cdot10^{-3}$.
-- **WENO-Z9 overshoots by 0.28 behind the shock** (printed, exempted from the bound; to be fixed:
-  [issue #1](https://github.com/szaghi/SETH/issues/1)). Its
-  $\tau_9 = |\beta_0 - \beta_4|$ (Castro et al.'s rule for odd $r$, as restated by Li et al. 2022b; the choice was
-  already recorded as unsourced for WENO-Z9) is small when the two outer candidates straddle a smeared shock
-  symmetrically. The weights then stay close to the linear ones across the shock. The same weakness makes WENO-Z9
-  lose positivity in the first step of the [blast wave](./blast) and on the [123 problem](./test123).
+- The overshoot after the shock stays below $10^{-4}$ for most schemes and below $10^{-2}$ for all (asserted).
+  WENO-Z7 reaches $6\cdot10^{-3}$, WENO-Z9 $9\cdot10^{-4}$.
+- **WENO-Z9 needs the exponent $p = 2$.** With $p = 1$ it overshoots by 0.19 to 0.28 behind the shock on every
+  grid, leaves $[-0.05, 1.05]$ on the [composite profile](./advection) and needs 6294 limited faces on the
+  [blast wave](./blast); with $p = 2$, which every case of this section now runs, the overshoot is at most
+  $9\cdot10^{-4}$, the composite profile stays within $[-8\cdot10^{-5}, 1.0005]$ and the blast wave needs 585
+  limited faces. The convergence before the shock is the same for both. The cause is the exponent, not
+  $\tau_9 = |\beta_0 - \beta_4|$: Castro et al. (2011) use that $\tau_9$ and report low exponents unstable at
+  high order (llm-wiki high-order-capturing-schemes `methods/weno-z.md`). Measured on these one-dimensional cases
+  only ([issue #1](https://github.com/szaghi/SETH/issues/1)); $p = 3$ and 4 bring no further gain here and cost
+  accuracy (blast $L_1(\rho)$ 0.077 at $p = 2$, 0.083 at $p = 4$).
