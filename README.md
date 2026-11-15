@@ -12,12 +12,15 @@ coefficients as compile-time constants, no dynamic dispatch where the cells are 
 | Family | Kernels |
 |---|---|
 | WENO-JS | `seth_weno{1,3,5,7,9}_js` (+ `_interp`, `_wr`): ADAM's schemes, bitwise |
-| WENO-Z | `seth_wenoz{3,5,7,9}` |
-| TENO | `seth_teno5`, `seth_teno6`, `seth_teno6_opt`, `seth_teno6_neno6` |
+| WENO-Z | `seth_wenoz{3,5,7,9}` (+ `_interp`) |
+| TENO | `seth_teno5`, `seth_teno6` (+ `_interp`), `seth_teno6_opt`, `seth_teno6_neno6` |
 
-Eleven test programs check the coefficients against their derivations and ADAM, the orders on smooth data and at
-critical points against the literature, invariances, robustness, SSP-RK3 advection and the spectral properties, with
-gfortran, nvfortran and ifx. On an RTX 4070 the WENO-5/7 kernels run 1.26-1.31x faster than ADAM's.
+Twenty-five verification programs, which are also the test suite, check every kernel with gfortran, nvfortran and
+ifx and on the GPU. They cover the coefficients against their derivations and ADAM, the orders at a point, at
+critical points and over whole domains, invariances and robustness, golden values, Sod, Lax, 123, Shu-Osher and
+Woodward-Colella in a 1-D Euler harness, Burgers against its exact solution, long-time advection, and the spectral and
+dispersion properties. A mutation run catches 21 of 21 planted defects. On an RTX 4070 the WENO-5/7 kernels run
+1.26-1.31x faster than ADAM's.
 
 ```bash
 fobis fetch && fobis build --mode tests-gnu && bash scripts/run_tests.sh

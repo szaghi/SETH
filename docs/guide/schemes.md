@@ -36,6 +36,27 @@ the Jiang–Shu weights, or the inverse of a magnitude of the data for scale-inv
 **Interpolation** (`_interp`): face values from point values (Jiang, Shu & Zhang 2013), other candidate coefficients
 and linear weights, the same indicators.
 
+## Interpolation with WENO-Z and TENO
+
+`seth_wenoz<N>_interp` and `seth_teno<5|6>_interp` interpolate the face value from point values at the cell centres,
+for the alternative finite-difference formulation (Shu & Osher 1988; Jiang, Shu & Zhang 2013) and WCNS-type schemes.
+Only two things change from the reconstruction kernels: the candidates' face coefficients, those of the Lagrange
+interpolant of their points, and the max-order linear weights. Everything else is shared, the body included: the
+indicators, $\tau$, the mirroring and the cutoff.
+
+| Scheme | Interpolation linear weights | Order | Source |
+|---|---|---|---|
+| WENO-Z3/5/7/9 | those of WENO-JS interpolation: 1/4, 3/4; 1/16, 5/8, 5/16; ... | 3, 5, 7, 9 | equal to ADAM's `initialize_interpolation_S*` |
+| TENO5 | 5/8, 5/16, 1/16 | 5 | Hiejima (2022), Chu, Kurganov & Na (2022) |
+| TENO6 | 15/32, 5/16, 1/32, 3/16 | 6 | derived (positive; no published set) |
+
+The indicators are the reconstruction ones applied to point values. That choice keeps every $\tau$ order (measured
+exactly on a generic polynomial): integrating the derivatives of the point-value interpolant instead would drop
+WENO-Z7's $\tau$ from 7 to 5 and TENO6's from 6 to 4 (`notes/interpolation-plan.md`). Verification: every page of
+the [Verification](/verification/) section covers the interpolations, and the [123](/verification/shocks/test123)
+and [blast](/verification/shocks/blast) cases show that the WENO-Z and TENO interpolations need a positivity
+safeguard near vacuum and on strong shocks.
+
 ## WENO-Z: WENO-Z3/5/7/9
 
 The candidates and linear weights of WENO-JS, the weights of Borges et al. (2008):

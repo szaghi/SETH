@@ -10,6 +10,9 @@ hero:
       text: Guide
       link: /guide/
     - theme: alt
+      text: Verification
+      link: /verification/
+    - theme: alt
       text: API Reference
       link: /api/
     - theme: alt
@@ -22,5 +25,8 @@ features:
   - title: Built for HPC
     details: Concrete kernels, scheme chosen once outside the hot loop, no dynamic dispatch where the cells are swept.
   - title: CPU and GPU
-    details: Tested with gfortran, nvfortran and ifx; OpenACC builds with nvfortran.
+    details: Tested with gfortran, nvfortran and ifx; every kernel verified on the GPU through OpenACC.
+  - title: Verified, case by case
+    details: Exact Riemann and Burgers solutions, fine references, critical points, dispersion relations, bitwise equivalence with ADAM and mutation testing, with figures from real runs.
+    link: /verification/
 ---

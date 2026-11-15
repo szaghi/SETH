@@ -28,7 +28,8 @@ rmu = seth_weno_descaling(S, sigma, vp, vm)   ! sigma = 0: rmu = 1 exactly; sigm
 ## WENO-Z
 
 ```fortran
-call seth_wenoz<N>(vp, vm, eps, p, rp, rm)   ! N = 3, 5, 7, 9; vp, vm(1-S:S); p integer, 1 or 2
+call seth_wenoz<N>       (vp, vm, eps, p, rp, rm)   ! N = 3, 5, 7, 9; vp, vm(1-S:S); p integer, 1 or 2
+call seth_wenoz<N>_interp(vp, vm, eps, p, rp, rm)   ! the same from point values at the cell centres
 ```
 
 ## TENO
@@ -38,7 +39,12 @@ call seth_teno5      (vp, vm, eps, ct, rp, rm)   ! vp, vm(-2:3)
 call seth_teno6      (vp, vm, eps, ct, rp, rm)
 call seth_teno6_opt  (vp, vm, eps, ct, rp, rm)
 call seth_teno6_neno6(vp, vm, eps, ct, rp, rm)
+call seth_teno5_interp(vp, vm, eps, ct, rp, rm)   ! interpolation from point values at the cell centres
+call seth_teno6_interp(vp, vm, eps, ct, rp, rm)
 ```
+
+The interpolation kernels take the same arguments as the reconstruction ones; TENO6-opt and TENO6-NENO6 have none
+(their weights are tuned for the reconstruction).
 
 `eps = SETH_TENO_EPS` ($10^{-40}$); `ct` the cutoff: `SETH_TENO5_CT`, `SETH_TENO6_CT`, `SETH_TENO6_OPT_CT`,
 `SETH_TENO6_NENO6_CT` (see [Schemes](./schemes)).

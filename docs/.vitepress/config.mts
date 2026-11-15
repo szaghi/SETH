@@ -4,7 +4,12 @@ export default withMermaid({
   title: 'SETH',
   description: 'Smoothness-weighted ENO, TENO and Hybrids: high-order non-oscillatory reconstruction and interpolation for HPC',
   base: '/SETH/',
-  srcExclude: ['ford.md'],
+  srcExclude: ['ford.md', '**/_tables/**'],
+
+  // the theme-aware videos of the verification pages: <video class="light-only"> / <video class="dark-only">
+  head: [
+    ['style', {}, '.dark-only{display:none}.dark .dark-only{display:block}.dark .light-only{display:none}'],
+  ],
 
   markdown: {
     math: true,
@@ -21,11 +26,49 @@ export default withMermaid({
     nav: [
       { text: 'Home',   link: '/' },
       { text: 'Guide',  link: '/guide/' },
+      { text: 'Verification', link: '/verification/' },
       { text: 'GitHub', link: 'https://github.com/szaghi/SETH' },
     ],
 
     // Add your guide pages here.
     sidebar: {
+      '/verification/': [
+        { text: 'Verification', items: [
+          { text: 'Catalog',       link: '/verification/' },
+          { text: 'Test programs', link: '/verification/unit-tests' },
+        ] },
+        { text: 'Accuracy', collapsed: false, items: [
+          { text: 'Overview',                    link: '/verification/accuracy/' },
+          { text: 'A1 Order of accuracy',        link: '/verification/accuracy/order-of-accuracy' },
+          { text: 'A2 Critical points',          link: '/verification/accuracy/critical-points' },
+          { text: 'A3 Whole-domain convergence', link: '/verification/accuracy/convergence' },
+          { text: 'A4 Euler order of accuracy',  link: '/verification/accuracy/euler-order' },
+        ] },
+        { text: 'Shock capturing', collapsed: false, items: [
+          { text: 'Overview',                  link: '/verification/shocks/' },
+          { text: 'S1 Sod',                    link: '/verification/shocks/sod' },
+          { text: 'S2 Lax',                    link: '/verification/shocks/lax' },
+          { text: 'S3 123 problem',            link: '/verification/shocks/test123' },
+          { text: 'S4 Shu–Osher',              link: '/verification/shocks/shu-osher' },
+          { text: 'S5 Woodward–Colella blast', link: '/verification/shocks/blast' },
+          { text: 'S6 Burgers',                link: '/verification/shocks/burgers' },
+          { text: 'S7 Composite profile',      link: '/verification/shocks/advection' },
+        ] },
+        { text: 'Spectral', collapsed: false, items: [
+          { text: 'Overview',                  link: '/verification/spectral/' },
+          { text: 'F1 Linear backgrounds',     link: '/verification/spectral/linear-spectra' },
+          { text: 'F2 Dispersion relation',    link: '/verification/spectral/adr' },
+        ] },
+        { text: 'Contracts', collapsed: false, items: [
+          { text: 'Overview',                  link: '/verification/contracts/' },
+          { text: 'C1 Equivalence with ADAM',  link: '/verification/contracts/adam-equivalence' },
+          { text: 'C2 Properties',             link: '/verification/contracts/properties' },
+          { text: 'C3 Coefficient tables',     link: '/verification/contracts/tables' },
+          { text: 'C4 Golden regression',      link: '/verification/contracts/golden' },
+          { text: 'C5 Device',                 link: '/verification/contracts/device' },
+          { text: 'C6 Mutation testing',       link: '/verification/contracts/mutation' },
+        ] },
+      ],
       '/guide/': [
         {
           text: 'Introduction',

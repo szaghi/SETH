@@ -1,0 +1,41 @@
+# Mutation testing
+
+| ID | Group | Type | Backends | Figure | Program |
+|---|---|---|---|---|---|
+| C6 | Contracts | C | CPU (gfortran) | no | `scripts/mutation_test.py` |
+
+## Case and scope
+
+A test suite is only as good as the defects it catches. The mutation run plants one defect at a time in a scratch
+copy of the tree, rebuilds (with `--force-compile`: FoBiS does not rebuild the dependents of a changed cpp
+`#include`, [FoBiS#212](https://github.com/szaghi/FoBiS/issues/212)), runs the suite, and records which tests fail. A
+defect no test catches is a hole in the suite.
+
+## Setup
+
+| Mutant | What it changes |
+|---|---|
+| `js5-face-coefficient`, `js5-linear-weight`, `js7-indicator`, `js3-interp-weight` | one coefficient of a generated WENO-JS table |
+| `js-exponent-s3`, `js-mirror`, `js-eps-ignored`, `js-weights-ratio` | the WENO-JS body: the weight exponent, the right-state mirroring, the use of eps, the weights ratio |
+| `descaling` | the scale-invariant descaler |
+| `teno6-linear-weight`, `teno6-tau`, `teno6-indicator-pivot`, `wenoz5-tau` | one coefficient of a WENO-Z/TENO descriptor |
+| `z-exponent-p2`, `z-teno-mirror`, `teno-cutoff-10x`, `teno-power-4`, `teno-global-indicator-off` | the shared Z/TENO body |
+| `teno6-interp-weight`, `wenoz5-interp-coefficient`, `teno5-interp-uses-recon-p` | the interpolations: a weight, a face coefficient, a kernel wired to the reconstruction tables |
+
+```bash
+python3 scripts/mutation_test.py --mode tests-gnu
+```
+
+## Results
+
+2026-11-15: **21 of 21 mutants killed** (`notes/mutation-run-2026-11-15-v2.txt`). Each line of the record names the
+tests that caught the mutant. The interpolation mutants are caught by the golden, interpolation, tables, TENO,
+WENO-Z and properties tests.
+
+## Findings
+
+- The first runs had survivors: two TENO mutants (a $\tau$ coefficient, an indicator pivot) that change only cut
+  decisions no stencil sat near. `seth_test_tables` was added and kills them.
+- A mutant that edits a comment is an equivalent mutant (it once survived that way): the anchors must be in code.
+- Without `--force-compile` a mutated `.INC` body stayed compiled into later builds and the mutants after it were
+  misattributed; reported upstream as FoBiS#212.

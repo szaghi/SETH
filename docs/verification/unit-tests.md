@@ -1,0 +1,40 @@
+# Test programs
+
+`fobis build --mode tests-gnu && bash scripts/run_tests.sh` runs 25 programs (`fpm test` the same set). Every one
+exits non-zero on a violated assertion. They pass with gfortran 16.2, nvfortran 26.9 and ifx 2026.2, debug (all
+checks and floating-point traps on) and optimised, and in the OpenACC build on the GPU. Random stencils come from a
+fixed, printed seed (`SETH_TEST_SEED` overrides it), so a failure reproduces.
+
+| Program | What it asserts | Page |
+|---|---|---|
+| `seth_test_kinds` | the working kinds of PENF | — |
+| `seth_test_registry` | the test registry: every kernel dispatched, names unique, `_wr` kernels equal the plain ones bitwise | [C2](./contracts/properties) |
+| `seth_test_weno_js_adam` | WENO-JS against ADAM's kernels copied verbatim, 1.4 M results | [C1](./contracts/adam-equivalence) |
+| `seth_test_weno_js_order` | WENO-JS design order, reconstruction and interpolation | [A1](./accuracy/order-of-accuracy) |
+| `seth_test_weno_js_eno` | WENO-JS across a unit step at every cell boundary | [C2](./contracts/properties) |
+| `seth_test_wenoz` | WENO-Z order, ENO, mirror; reconstruction and interpolation | [A1](./accuracy/order-of-accuracy), [C2](./contracts/properties) |
+| `seth_test_teno` | TENO order, linear scheme on smooth data, cutoff, large jump, mirror; reconstruction and interpolation | [A1](./accuracy/order-of-accuracy), [C2](./contracts/properties) |
+| `seth_test_properties` | exactness, constants, translation, mirror, scaling, robustness, on every scheme | [C2](./contracts/properties) |
+| `seth_test_critical_points` | the literature's orders at first- and second-order critical points (reconstructions) | [A2](./accuracy/critical-points) |
+| `seth_test_interpolation` | the interpolations over a whole domain and at critical points | [A2](./accuracy/critical-points), [A3](./accuracy/convergence) |
+| `seth_test_convergence` | whole-domain $L_\infty$ of the operator and of SSP-RK3 advection on Henrick's field | [A3](./accuracy/convergence) |
+| `seth_test_advection` | the derivative's order in a finite-difference scheme; TENO equal to its linear scheme over a period; the composite profile bounded | [A1](./accuracy/order-of-accuracy), [S7](./shocks/advection) |
+| `seth_test_spectral` | modified wavenumber of every linear background | [F1](./spectral/linear-spectra) |
+| `seth_test_tables` | the compiled coefficient tables re-verified | [C3](./contracts/tables) |
+| `seth_test_golden` | 8192 golden values | [C4](./contracts/golden) |
+| `seth_test_device` | every kernel on the device against the host | [C5](./contracts/device) |
+| `seth_vv_sod`, `seth_vv_lax`, `seth_vv_test123` | shock tubes against the exact solution; positivity with and without the limiter | [S1](./shocks/sod), [S2](./shocks/lax), [S3](./shocks/test123) |
+| `seth_vv_shu_osher`, `seth_vv_blast` | against a finer reference | [S4](./shocks/shu-osher), [S5](./shocks/blast) |
+| `seth_vv_burgers` | Burgers against the exact solution, before and after the shock | [S6](./shocks/burgers) |
+| `seth_vv_euler_order` | the design order through the complete Euler solver | [A4](./accuracy/euler-order) |
+| `seth_vv_advection` | the composite profile over four periods | [S7](./shocks/advection) |
+| `seth_vv_adr` | the approximate dispersion relation of every nonlinear scheme | [F2](./spectral/adr) |
+
+The mutation run (`scripts/mutation_test.py`, [C6](./contracts/mutation)) checks the suite itself.
+
+## Verification and regression
+
+Most programs verify: they compare the kernels with something they share no code with (exact rationals, analytic and
+exact solutions, theorems, published numbers) and assert orders, properties and bounds. The L1 bounds of the
+nonlinear cases are recorded measurements plus 5%, a regression guard on top of the physics checks (positivity,
+low-dissipation orderings, convergence). The golden test pins the values themselves.
