@@ -69,8 +69,15 @@ after the shock at $N = 80$.*
   shock with an upstream group velocity, and TENO6 does not damp them. The [ADR](../spectral/adr) shows why: TENO6 is
   anti-dissipative in a narrow band near $\vartheta/\pi \approx 0.47$, a wavelength of about $4h$, where its cutoff
   starts to act.
-- The overshoot after the shock stays below $10^{-4}$ for most schemes and below $10^{-2}$ for all (asserted).
+- The overshoot after the shock stays below $10^{-4}$ for most schemes and below $10^{-2}$ for all but one (asserted).
   WENO-Z7 reaches $6\cdot10^{-3}$, WENO-Z9 $9\cdot10^{-4}$.
+- **TENO5-AZ overshoots behind the shock**: $3.0\cdot10^{-2}$ at 160 cells, $3.5\cdot10^{-2}$ at 320,
+  $4.6\cdot10^{-3}$ at 640 (asserted below $5\cdot10^{-2}$, printed), where TENO5 stays below $3\cdot10^{-5}$. Its
+  cutoff, $\min(10^{-5}, \tau)$ with $\tau = \lvert\beta_0 + \beta_2 - 2\beta_1\rvert$ (Tang 2024), drops to zero where
+  the smeared shock lies across the stencil so that the upwind and downwind indicators balance the central one; then
+  no candidate is cut. The descaled cutoff gives the same overshoot to three digits (the data is of order 1). The
+  same scheme keeps fifth order at critical points where TENO5 falls to second
+  ([critical points](../accuracy/critical-points)): the two properties come from the same vanishing cutoff.
 - **WENO-Z9 needs the exponent $p = 2$.** With $p = 1$ it overshoots by 0.19 to 0.28 behind the shock on every
   grid, leaves $[-0.05, 1.05]$ on the [composite profile](./advection) and needs 6294 limited faces on the
   [blast wave](./blast); with $p = 2$, which every case of this section now runs, the overshoot is at most
