@@ -18,8 +18,15 @@ program seth_vv_roe
 !<    without it at least FAN_FACTOR times larger (the negative control: the fix must matter).
 !< 4. The 123 problem (two transonic rarefactions, near vacuum), with the fix: positive with the positivity limiter,
 !<    L1 printed with and without it.
+!< 5. The Woodward-Colella blast waves at Fu, Hu & Adams's N = 400 (the question of issue #5), against WENO5-JS
+!<    (splitting path) on 1600 cells (report: 6400): PATH_ROE without the limiter at CFL 0.5 and 0.6 (Fu et al.'s), with
+!<    it at 0.5, and PATH_SPLIT without it at 0.6. Asserted: with the limiter positive, L1 below the recorded bounds
+!<    (measured + 5%); without it, WENO5-JS, WENO-Z5 and TENO6 (C_T = 1e-7) positive at CFL 0.5 (measured: TENO5 at
+!<    C_T = 1e-5 is not, and on the splitting path only WENO5-JS is); the entropy fix acted.
 !< Quick schemes (WENO5-JS, WENO-Z5, TENO5, TENO6) in the test run; every reconstruction in the report mode, which
-!< writes roe-summary.dat (case scheme L1-roe L1-split positive-without-limiter).
+!< writes roe-summary.dat: per case and scheme, L1-roe L1-split positive (sod, lax; toro1: Linf with and without the
+!< fix; 123: L1 with and without the limiter), and for the blast: positive without the limiter (Roe 0.5, Roe 0.6,
+!< split 0.6), the L1 of those runs, limited faces and L1 of Roe with the limiter.
 use seth
 use seth_test_schemes
 use seth_vv_euler
@@ -27,9 +34,10 @@ use seth_vv_cases
 use seth_vv_riemann, only : riemann_sample
 implicit none
 real(R8P), parameter      :: PI = acos(-1._R8P)
-! Recorded bounds (gfortran -O3, quick schemes, 2026-11-16): Sod/Lax L1 ratio to PATH_SPLIT at most 1.18 (TENO6 on Sod),
-! the others 0.76-0.93; Linf in the transonic fan 1.32e-2 .. 1.66e-2 with the fix, 5.3 .. 10.6 times that without it.
-real(R8P), parameter      :: TUBE_RATIO = 1.25_R8P, FAN_BOUND = 1.75e-2_R8P, FAN_FACTOR = 4._R8P
+! Recorded bounds (gfortran -O3, every reconstruction, 2026-11-16): Sod/Lax L1 ratio to PATH_SPLIT 0.71 .. 1.18 (TENO6
+! on Sod); Linf in the transonic fan 1.26e-2 .. 1.95e-2 with the fix (the third-order schemes the largest), 4.2 .. 13.2
+! times that without it.
+real(R8P), parameter      :: TUBE_RATIO = 1.25_R8P, FAN_BOUND = 2.05e-2_R8P, FAN_FACTOR = 3.5_R8P
 integer(I4P), allocatable :: ids(:), nfb(:)
 real(R8P), allocatable    :: l1r(:), l1s(:), e1(:), ei(:)
 logical, allocatable      :: posr(:), poss(:)
@@ -96,11 +104,70 @@ do k=1, size(ids)
    if (.not.posr(k)) call fail(vv_label(ids(k))//': 123 not positive with the limiter')
 enddo
 
+! 5. blast waves
+call blast()
+
 if (vv_report()) close(us)
 if (.not.passed) error stop 'Roe path verification failed'
 print '(A)', 'seth_vv_roe: ok'
 
 contains
+   subroutine blast()
+   !< The Woodward-Colella blast waves at Fu et al.'s N = 400, against WENO5-JS (splitting path) on 4 (report: 16) times
+   !< the cells, as seth_vv_blast. PATH_ROE without the limiter at CFL 0.5 and at Fu et al.'s 0.6, with the limiter
+   !< at 0.5; PATH_SPLIT without the limiter at 0.6 (its 0.5 runs are seth_vv_blast's).
+   integer(I4P)              :: kk, nref
+   real(R8P), allocatable    :: qref(:,:), l1u(:), l1u6(:), l1l(:), l1s6(:)
+   logical, allocatable      :: posu(:), posu6(:), posl(:), poss6(:)
+   integer(I4P), allocatable :: nlim(:)
+   integer(I8P)              :: ns
+   real(R8P)                 :: bound
+   allocate(l1u(size(ids)), l1u6(size(ids)), l1l(size(ids)), l1s6(size(ids)), posu(size(ids)), posu6(size(ids)), &
+            posl(size(ids)), poss6(size(ids)), nlim(size(ids)))
+   nref = merge(6400, 1600, vv_report())
+   limiter = .false.
+   nsonic = 0
+   call reference_problem('roe-blast', init_blast, 0._R8P, 1._R8P, BC_REFLECTIVE, 0.038_R8P, 0.5_R8P, 400, nref, &
+                          3_I4P, ids, PATH_ROE, l1u, posu, files=.false., qref_in=qref)
+   ns = nsonic
+   call reference_problem('roe-blast', init_blast, 0._R8P, 1._R8P, BC_REFLECTIVE, 0.038_R8P, 0.6_R8P, 400, nref, &
+                          3_I4P, ids, PATH_ROE, l1u6, posu6, files=.false., qref_in=qref)
+   call reference_problem('roe-blast', init_blast, 0._R8P, 1._R8P, BC_REFLECTIVE, 0.038_R8P, 0.6_R8P, 400, nref, &
+                          3_I4P, ids, PATH_SPLIT, l1s6, poss6, files=.false., qref_in=qref)
+   limiter = .true.
+   call reference_problem('roe-blast', init_blast, 0._R8P, 1._R8P, BC_REFLECTIVE, 0.038_R8P, 0.5_R8P, 400, nref, &
+                          3_I4P, ids, PATH_ROE, l1l, posl, nlim=nlim, files=.false., qref_in=qref)
+   limiter = .false.
+   print '(A,I0,A)', '5. blast waves, N = 400 against ', nref, ': positive without the limiter (Roe CFL 0.5, Roe 0.6, '// &
+         'GLF 0.6), L1(rho) of those runs, Roe with the limiter: limited faces, L1'
+   do kk=1, size(ids)
+      print '(A18,3L3,3ES12.4,I7,ES12.4)', vv_label(ids(kk)), posu(kk), posu6(kk), poss6(kk), l1u(kk), l1u6(kk), &
+            l1s6(kk), nlim(kk), l1l(kk)
+      if (vv_report()) write(us, '(A,1X,A,1X,3L2,3ES24.15,I8,ES24.15)') 'blast', vv_label(ids(kk)), posu(kk), &
+                                posu6(kk), poss6(kk), l1u(kk), l1u6(kk), l1s6(kk), nlim(kk), l1l(kk)
+      if (.not.posl(kk)) call fail(vv_label(ids(kk))//': blast not positive with the limiter')
+      if (any(vv_label(ids(kk)) == [character(16) :: 'weno5_js', 'wenoz5', 'teno6']) .and. .not.posu(kk)) &
+         call fail(vv_label(ids(kk))//': blast not positive without the limiter (the answer of issue #5)')
+      bound = recorded(vv_label(ids(kk)))
+      if (.not.vv_report() .and. bound > 0._R8P .and. l1l(kk) > bound) call fail(vv_label(ids(kk))//': blast L1 above bound')
+   enddo
+   print '(A,I0)', '   fields evaluated with the entropy fix (local Lax-Friedrichs), Roe CFL 0.5 runs: ', ns
+   if (ns == 0) call fail('the entropy fix never acted on the blast waves')
+   endsubroutine blast
+
+   pure function recorded(name) result(b)
+   !< L1 bounds of the blast test run (N = 400 against N = 1600, Roe path, with the limiter): measured + 5%; -1: none.
+   character(*), intent(in) :: name
+   real(R8P)                :: b
+   select case(name)
+   case('weno5_js') ; b = 5.5638e-02_R8P ! 5.2989e-02
+   case('wenoz5') ; b = 3.1122e-02_R8P ! 2.9640e-02
+   case('teno5') ; b = 2.7880e-02_R8P ! 2.6552e-02
+   case('teno6') ; b = 2.2824e-02_R8P ! 2.1737e-02
+   case default ; b = -1._R8P
+   end select
+   endfunction recorded
+
    subroutine tube(name, wl, wr, x0, tend)
    !< A shock tube on both PATH_ROE and PATH_SPLIT, without the limiter.
    character(*), intent(in) :: name
