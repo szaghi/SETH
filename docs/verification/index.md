@@ -57,8 +57,9 @@ The findings that change how the kernels should be used, each documented on its 
   ([S6](./shocks/burgers)).
 - TENO6 is anti-dissipative in a narrow band near $\vartheta \approx 0.47\pi$ and leaves grid-scale packets behind a
   shock undamped ([F2](./spectral/adr), [S6](./shocks/burgers)).
-- The centred WENO6-C and WENO8-C leave such packets too, without any anti-dissipation, and WENO8-C is not ENO for a
-  jump in its two outer cells ([A5](./accuracy/centred-weno), [S6](./shocks/burgers)).
+- The centred WENO6-C and WENO8-C leave such packets too, without any anti-dissipation: their blend damps a small
+  disturbance on a smooth flow at a rate that does not grow with the resolution. WENO8-C is not ENO for a jump in its
+  two outer cells ([A5](./accuracy/centred-weno), [S6](./shocks/burgers)).
 
 ## Accuracy
 

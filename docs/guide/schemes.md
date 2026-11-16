@@ -359,7 +359,9 @@ What it is, and what it is not:
 - **Behind a shock, smooth regions converge slowly.** After the Burgers shock forms, WENO6-C and WENO8-C leave a
   grid-scale packet upstream of it, and their smooth-region error converges at first order or below, about
   $3\cdot10^{-6}$ at 640 cells where their upwind parts reach $10^{-10}$ and below
-  ([S6](/verification/shocks/burgers)). WENO8-C also loses positivity on the blast wave
+  ([S6](/verification/shocks/burgers)). The blend damps a small disturbance on a smooth flow at $\phi$ times the
+  upwind rate, and $\phi$ there is the flow's, $O(h)$: what a shock leaves behind is damped at a rate that does not
+  grow with the resolution. WENO8-C also loses positivity on the blast wave
   ([S5](/verification/shocks/blast)).
 - **No paper.** The blend is ADAM's own construction; its pair term is $\sqrt{1-\psi^2}$ of Ren et al.'s smoothness
   ratio $\psi = 2\lvert ab\rvert/(a^2+b^2)$ (for $\varepsilon = 0$, an identity): a continuous form of the switch of the

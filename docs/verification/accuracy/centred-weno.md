@@ -70,7 +70,9 @@ Against ADAM:
   wave without the limiter; WENO8-C does not, and with the Roe flux it needs 1623 limited faces against 4 with the
   splitting ([S5](../shocks/blast#the-flux-issue-5)). After the Burgers shock WENO6-C and WENO8-C leave a
   grid-scale packet upstream of it, and their smooth-region error falls to $\sim3\cdot10^{-6}$ at 640 cells, where
-  their upwind parts reach $10^{-10}$ and below ([S6](../shocks/burgers)): the cause is not established.
+  their upwind parts reach $10^{-10}$ and below ([S6](../shocks/burgers)). The cause is the blend: a small packet on
+  a smooth background is damped at $\phi$ times the upwind rate, with the background's $\phi = O(h)$, a damping that
+  does not grow with the resolution; the ADR, one wave of unit amplitude with no background, cannot show it.
 - **The mirror is WENO-JS's**, not bitwise: the central sums and the blend mirror exactly, the upwind WENO-JS sums its
   mirrored tables in another order ([C2](../contracts/properties)). The frozen bound of 4 ulps was raised to WENO-JS's
   tolerance for that reason.

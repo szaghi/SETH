@@ -54,6 +54,8 @@ scripts/run_vv.sh --only seth_vv_adr
   approach it at low wavenumbers, within $5\cdot10^{-5}\vartheta$ and $3\cdot10^{-6}\vartheta$ (asserted, as for
   every scheme of order $\ge 5$); WENO4-C, whose upwind part is third order, stays within $4.5\cdot10^{-3}\vartheta$
   (printed). None of the three is anti-dissipative at any wavenumber (Im $\tilde\vartheta \le -2\cdot10^{-15}$).
+  This analysis advects one wave of unit amplitude with no background, which the blend's detector sees in full; a
+  small disturbance on a smooth flow it barely sees, and damps far less ([S6](../shocks/burgers)).
 - **TENO6 is anti-dissipative**, Im $\tilde\vartheta$ up to $2\cdot10^{-4}$, in a narrow band
   $\vartheta/\pi = 0.46$–$0.49$ just where its cutoff starts to act. Modes of that wavelength (about $4h$) are the
   packets TENO6 leaves undamped behind the [Burgers](../shocks/burgers) shock. The optimised TENO6 weights, with the

@@ -73,10 +73,24 @@ after the shock at $N = 80$.*
   $1.9\cdot10^{-5}$ and $1.8\cdot10^{-4}$ at most, against $1.0\cdot10^{-5}$ for WENO7-JS. Their smooth-region error
   then converges at first order or below on the finest pairs ($2.6\cdot10^{-6}$ and $3.6\cdot10^{-6}$ at 640 cells,
   against $10^{-10}$ and $3\cdot10^{-12}$ for WENO5-JS and WENO7-JS, their upwind parts), where before the shock both
-  converge at 5 to 8. The ADR does not explain it: neither is anti-dissipative ([ADR](../spectral/adr)). A hypothesis, not
-  tested: the blend's detector reads the smooth background, $\phi$ stays small, and a small grid-scale packet riding
-  on that background meets the central row, which does not dissipate. WENO4-C stays at WENO3-JS's level
-  ($6\cdot10^{-7}$).
+  converge at 5 to 8. Neither is anti-dissipative ([ADR](../spectral/adr)); the cause is the blend's damping, measured
+  with $\phi$ traced and varied in a copy of this harness (note
+  [`weno-c-burgers-packet.md`](https://github.com/szaghi/SETH/blob/main/notes/weno-c-burgers-packet.md)):
+  - every scheme's error grows in the last steepening before the shock forms; the centred schemes leave about 5 times
+    their upwind parts' there, as a grid-scale packet (about 80% of neighbouring cells alternate in sign), at
+    wavenumbers where the central rows' group velocity is reversed ($-1.2$ to $-2.6$ times the exact one): it moves
+    into the smooth region against the flow;
+  - the upwind parts then damp their error 23 and 12 times; the centred ones do not. The detector sees a small packet
+    only as a small change of the background's differences: where the packet is, $\phi \approx 10^{-2}$, 1 to 3.5
+    times its value on the exact solution. A small packet is damped at $\phi$ times the upwind rate, and the
+    background's $\phi$ is $O(h)$ while that rate is $O(1/h)$: a damping that does not grow with the resolution. On
+    linear advection a packet of amplitude $10^{-5}$ on $\sin(\pi x)$ keeps 30% of itself after 20 cells of travel
+    under WENO6-C, 0.16% under WENO5-JS;
+  - refuted: the upwind part ($\phi = 1$: $8\cdot10^{-11}$ and $4\cdot10^{-12}$), the regulariser as the cause
+    ($\varepsilon = 10^{-40}$ in the blend changes $\phi$ there by less than 15%; the error falls 7.5 and 3.9 times), and
+    the detector's reach (the whole stencil: at most 1.6 times lower).
+
+  WENO4-C stays at WENO3-JS's level ($6\cdot10^{-7}$).
 - The overshoot after the shock stays below $10^{-4}$ for most schemes and below $10^{-2}$ for all but one (asserted).
   WENO-Z7 reaches $6\cdot10^{-3}$, WENO-Z9 $9\cdot10^{-4}$.
 - **TENO5-AZ overshoots behind the shock**: $3.0\cdot10^{-2}$ at 160 cells, $3.5\cdot10^{-2}$ at 320,
