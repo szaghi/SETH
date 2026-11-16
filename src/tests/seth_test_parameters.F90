@@ -40,8 +40,11 @@ integer,      parameter :: GOLDEN_SCALE_DEXP = 10  !< 2^50 (12 of them): normal,
 ! (its weights are ratios to the smallest indicator there), so it has the same bound.
 real(R_P), parameter :: BIG_JUMP          = 1.e16_R_P !< The TENO test's large jump: at the edge of R4P's range.
 real(R_P), parameter :: ROBUST_EXP_MIN    = -30._R_P  !< Robustness magnitudes from 1e-30 (normal; squares underflow) ..
-real(R_P), parameter :: ROBUST_EXP_MAX    = 16._R_P   !< .. 1e16, every scheme ..
-real(R_P), parameter :: ROBUST_EXP_MAX_JS = 16._R_P   !< .. and plain WENO-JS.
+real(R_P), parameter :: ROBUST_EXP_MAX    = 13._R_P   !< .. 1e13, every scheme ..
+real(R_P), parameter :: ROBUST_EXP_MAX_JS = 13._R_P   !< .. and plain WENO-JS: WENO9-JS's indicators, computed on the raw
+                                                      !< data before any descaler, have integer coefficients up to
+                                                      !< 2.5e6 (3e7 summed), so they overflow from data of ~3e15 (the
+                                                      !< debug build traps at 1e16); 1e13 leaves a factor 30.
 ! orders (phase 4: measured on gfortran 16.2, tests-gnu-r4). R4P's round-off plateau sits ~1e-5 for a derivative on
 ! the grids of the tests, so a scheme of order 6 or more reaches it between the first two grids: no pair of grids is
 ! above round-off, and the order cannot be observed. Such a scheme converged at least as fast as R4P allows (a
@@ -106,7 +109,8 @@ real(R_P), parameter :: POS_RANGE_EXP = 5._R_P !< seth_test_positivity: densitie
                                              !< the R8P range (1e-8) a one-sided state q - lam f next to an O(1)
                                              !< cell rounds to a negative pressure (its round-off, eps 50, exceeds
                                              !< p): the Lax-Friedrichs premise fails at round-off, and it still does
-                                             !< from 1e-6 (measured, 4 pairs); 1e-5 is clean.
+                                             !< from 1e-6 (measured, 4 pairs); 1e-5 is clean. seth_test_device's
+                                             !< limiter states use the same range (a density rounded to 0 traps).
 real(R_P), parameter :: SMALL_STEP = 1.220703125e-4_R_P !< seth_test_properties: the small step on the offset 1, 2^-13
                                                      !< (1024 ulps of 1; R8P's 1e-7 is one ulp of R4P), its square
                                                      !< still far below the WENO-JS eps (the mean-|v| check needs it).

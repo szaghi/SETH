@@ -17,7 +17,9 @@ with every factor at most 1. The R8P forms overflow R4P's range (3.4e38): $(\tau
 (WENO9) to $10^9$ (WENO3). Two limits remain, both of
 R4P itself:
 
-- the indicators are quadratic in the data, so a jump above about $10^{19}$ inside a stencil overflows them;
+- the indicators are quadratic in the data, so data above about $10^{19}$ overflow them, less by the square root of
+  the indicator's coefficients: about $3\cdot10^{15}$ for WENO9-JS, whose integer coefficients reach $2.5\cdot10^6$
+  (the indicators are computed on the raw data, before any descaler);
 - the expanded WENO-JS indicator cancels to about $10^{-7} v^2$, so data with a large mean needs the descaler `rmu`.
 
 Two more things hold in R4P only, both measured by the test suite:

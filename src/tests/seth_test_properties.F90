@@ -27,7 +27,8 @@ program seth_test_properties
 !<    descaler (eps + IS rmu^2 = O(1)) WENO-JS is tested up to 1e140, as WENO-Z and TENO are. These are the R8P
 !<    ranges; R4P's (seth_test_parameters' ROBUST_EXP_*) stop where its squares do.
 use seth
-use seth_test_parameters, only : AI_STEP_TOL, ROBUST_EXP_MAX, ROBUST_EXP_MAX_JS, ROBUST_EXP_MIN, SMALL_STEP, TOL_PROPERTIES
+use seth_test_parameters, only : AI_STEP_TOL, ROBUST_EXP_MAX, ROBUST_EXP_MAX_JS, ROBUST_EXP_MIN, SMALL_STEP, &
+                                 TOL_PROPERTIES
 use seth_test_rng, only : seed_rng
 use seth_test_schemes
 implicit none

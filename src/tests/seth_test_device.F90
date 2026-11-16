@@ -11,7 +11,8 @@ program seth_test_device
 !< (CUDA_VISIBLE_DEVICES). Generated case by case: one block per kernel, the same body. The positivity limiter
 !< (seth_positivity_euler, nv = 3 and 5) is checked after them on random cell pairs (limiter_case).
 use seth
-use seth_test_parameters, only : EPS_ZT, POSITIVITY_FLOOR, TOL_DEVICE_FLUX, TOL_DEVICE_STATE, TOL_DEVICE_WR
+use seth_test_parameters, only : EPS_ZT, POS_RANGE_EXP, POSITIVITY_FLOOR, TOL_DEVICE_FLUX, TOL_DEVICE_STATE, &
+                                 TOL_DEVICE_WR
 implicit none
 integer(I4P), parameter :: N = 4096_I4P
 integer(I4P), parameter :: NK = 46_I4P
@@ -916,7 +917,7 @@ contains
    real(R_P),    intent(out)   :: q(nv)
    real(R_P)                   :: rho, p
    integer(I4P)                :: kk
-   rho = 10._R_P**(-8._R_P*lim_rnd(st)) ; p = 10._R_P**(-8._R_P*lim_rnd(st))
+   rho = 10._R_P**(-POS_RANGE_EXP*lim_rnd(st)) ; p = 10._R_P**(-POS_RANGE_EXP*lim_rnd(st)) ! R8P: from 1e-8
    q(1) = rho
    do kk=2, nv-1
       q(kk) = rho*(20._R_P*lim_rnd(st) - 10._R_P)
