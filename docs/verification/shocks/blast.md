@@ -71,9 +71,8 @@ peaks of the collision.*
   neither paper mentions a positivity safeguard ([issue #3](https://github.com/szaghi/SETH/issues/3)). Borges et al.
   (§5.2) project the Lax–Friedrichs-split fluxes on the Roe eigenvectors, at CFL 0.4; Fu et al. (§5.3) evaluate the
   flux with "a Roe scheme with entropy-fix" and write in their conclusions that the limiter of Hu, Adams & Shu "can
-  also be applied to the TENO schemes to further improve robustness". SETH's harness splits the fluxes globally with
-  $\alpha = 1.1\max|\lambda|$, so it differs from Fu et al.'s in the flux, and reproduces their results only with
-  the limiter.
+  also be applied to the TENO schemes to further improve robustness". With that flux TENO6 at their cutoff needs no
+  safeguard, TENO5 at theirs still does ([below](#the-flux-issue-5)).
 - **The cutoff decides much of it.** Later TENO papers run this case with $C_T = 10^{-4}$ (llm-wiki weno-teno
   `benchmarks/woodward-colella-blast-wave.md`). In this harness, without the limiter:
 
@@ -87,5 +86,55 @@ peaks of the collision.*
   A larger cutoff buys robustness with dissipation: TENO6 at $10^{-4}$ needs no safeguard and loses half its accuracy
   advantage. Measured on 2026-11-15 by running the case with the cutoff of the registry changed (not a registry
   default).
+## The flux (issue #5)
+
+[Issue #5](https://github.com/szaghi/SETH/issues/5) asked whether the flux explains the difference with Fu, Hu &
+Adams (2016). Their "Roe scheme with entropy-fix" is not defined in the paper; in the lineage it is Jiang & Shu's
+(1996) WENO-RF, which ran this very case: Roe's flux splitting with entropy fix of Shu & Osher (1989, Algorithm 2.3),
+upwind by the sign of each characteristic field's Roe eigenvalue, local Lax–Friedrichs where that eigenvalue changes
+sign (`notes/issue5-roe-sources.md`). The harness has it as `PATH_ROE` ([models](./sod#models-and-numerics)), checked
+on its own by `seth_vv_roe`: design order on the density wave, Sod and Lax within 0.71–1.18 of the splitting path's
+$L_1$, the transonic rarefaction of Toro's test 1 resolved with the fix and broken by an expansion shock without it
+(error 4–13 times larger).
+
+Same case and grid as above (N = 400 against 6400 cells), every reconstruction; positive without the limiter at CFL
+0.5 (the Roe path also at Fu et al.'s 0.6, with the same outcome for every scheme), then with the limiter:
+
+| Scheme | positive, GLF | positive, Roe | limited faces, GLF | limited faces, Roe | $L_1(\rho)$, GLF | $L_1(\rho)$, Roe |
+|---|---|---|---|---|---|---|
+| WENO3-JS | yes | yes | 0 | 0 | 0.2148 | 0.1364 |
+| WENO5-JS | yes | yes | 0 | 0 | 0.1312 | 0.0843 |
+| WENO7-JS | yes | **no** | 2 | 41 | 0.1084 | 0.0688 |
+| WENO9-JS | **no** | **no** | 67 | 72 | 0.0895 | 0.0612 |
+| WENO-Z3 | yes | yes | 0 | 0 | 0.1832 | 0.1096 |
+| WENO-Z5 | **no** | yes | 104 | 0 | 0.0977 | 0.0603 |
+| WENO-Z7 | **no** | **no** | 1826 | 2023 | 0.0743 | 0.0534 |
+| WENO-Z9 | **no** | **no** | 585 | 892 | 0.0774 | 0.0522 |
+| TENO5 ($C_T = 10^{-5}$) | **no** | **no** | 515 | 36 | 0.0884 | 0.0570 |
+| TENO5-opt | **no** | yes | 111 | 0 | 0.0798 | 0.0567 |
+| TENO5-AZ | **no** | **no** | 824 | 1701 | 0.0913 | 0.0552 |
+| TENO6 ($C_T = 10^{-7}$) | **no** | yes | 197 | 5 | 0.0584 | 0.0502 |
+| TENO6-opt | **no** | yes | 251 | 8 | 0.0644 | 0.0504 |
+| TENO6-NENO6 | **no** | yes | 84 | 0 | 0.0710 | 0.0535 |
+| TENO8 | **no** | yes | 418 | 2 | 0.0568 | 0.0463 |
+| TENO5-A | **no** | **no** | 1930 | 21 | 0.0865 | 0.0527 |
+| TENO8-A | **no** | **no** | 760 | 3 | 0.0557 | 0.0429 |
+
+- **The answer is: largely, not entirely.** With the Roe flux, WENO-Z5, TENO6 at Fu et al.'s $C_T = 10^{-7}$, TENO5-opt,
+  TENO6-opt, TENO6-NENO6 and TENO8 need no safeguard; TENO5 at their $C_T = 10^{-5}$ still loses positivity (36
+  limited faces instead of 515), and so do TENO5-AZ, TENO5-A, TENO8-A, WENO-Z7/9 and WENO9-JS. The Roe flux is not
+  uniformly more robust: WENO7-JS, positive with GLF, is not with it. $L_1$ falls by 14–40% on every scheme: the
+  global splitting dissipates everywhere at the rate of the largest wave speed of the domain (that of the 1000 : 0.01
+  jump), the Roe flux at the local one.
+- **What does it** (one-off variants of the harness on the quick schemes, recorded in the note): the entropy fix plays
+  no part (Roe without it: the same outcomes); local Lax–Friedrichs in every field, with the local $\alpha$ of the
+  fix, makes WENO-Z5 positive but not TENO6; global Lax–Friedrichs without the 10% margin changes nothing. The local
+  wave speed rescues WENO-Z5, and TENO6 needs the unsplit upwind reconstruction. At $C_T = 10^{-4}$ TENO5 is
+  positive on the Roe path, not on GLF.
+- The harness keeps global Lax–Friedrichs as its splitting path (it needs no sonic switch and is what the other TENO
+  papers use); the Roe path exists to answer this question, and runs in `seth_vv_roe` only.
+
+## Notes
+
 - The positivity-preserving flux limiter is a SETH kernel, `seth_positivity_euler` ([C7](../contracts/positivity),
   [API](/guide/api#positivity-limiter)); the harness uses it.

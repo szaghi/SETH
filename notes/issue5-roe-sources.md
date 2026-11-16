@@ -68,3 +68,27 @@ control on the transonic rarefaction.
 
 Not known, and not recoverable from the paper: whether Fu et al. used Algorithm 2.3 or Remark 2.3's relaxed form, and
 their CFL on this case (0.6 is the paper-wide setting).
+
+## Measurements (2026-11-16, gfortran 16.2 -O3)
+
+`seth_vv_roe`, section 5, N = 400 against WENO5-JS (splitting path) on 1600 cells: with the Roe flux and the fix,
+without the limiter, at CFL 0.5 and at Fu et al.'s 0.6, WENO5-JS, WENO-Z5 and TENO6 (C_T = 1e-7) stay positive and
+TENO5 (C_T = 1e-5) does not; the splitting path at CFL 0.6 keeps only WENO5-JS positive, as at 0.5.
+
+One-off scratch variants of the harness (not kept; the same case and grid), to tell which part of the Roe path does
+it:
+
+| Variant | WENO5-JS | WENO-Z5 | TENO5 (1e-5) | TENO6 (1e-7) |
+|---|---|---|---|---|
+| Roe with the fix (`PATH_ROE`) | positive | positive | no | positive |
+| Roe without the fix (`roe_fix = .false.`) | positive | positive | no | positive |
+| local Lax–Friedrichs in every field, alpha of Eq. (4.4) | positive | positive | no | no |
+| global Lax–Friedrichs, alpha = 1.1 max \|lambda\| (`PATH_SPLIT`) | positive | no | no | no |
+| global Lax–Friedrichs, alpha = max \|lambda\| (no margin) | positive | no | no | no |
+
+With C_T = 1e-4 for both TENO schemes: positive on the Roe path, with and without the fix, and with local
+Lax–Friedrichs; on the splitting path TENO6 positive and TENO5 not (as `docs/verification/shocks/blast.md` records).
+
+Reading (inferred from the table, not from a source): the entropy fix plays no part in positivity on this case; the
+local wave speed of the splitting rescues WENO-Z5; TENO6 at 1e-7 needs the unsplit upwind reconstruction of Roe's
+splitting; TENO5 at 1e-5 needs a larger cutoff or the limiter whatever the flux.

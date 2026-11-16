@@ -1,6 +1,6 @@
 # Test programs
 
-`fobis build --mode tests-gnu && bash scripts/run_tests.sh` runs 31 programs (`fpm test` the same set). Every one
+`fobis build --mode tests-gnu && bash scripts/run_tests.sh` runs 32 programs (`fpm test` the same set). Every one
 exits non-zero on a violated assertion. They pass with gfortran 16.2, nvfortran 26.9 and ifx 2026.2, debug (all
 checks and floating-point traps on) and optimised, and in the OpenACC build on the GPU. Random stencils come from a
 fixed, printed seed (`SETH_TEST_SEED` overrides it), so a failure reproduces.
@@ -16,6 +16,7 @@ fixed, printed seed (`SETH_TEST_SEED` overrides it), so a failure reproduces.
 | `seth_test_teno` | TENO order, linear scheme on smooth data, cutoff, large jump, mirror; reconstruction and interpolation | [A1](./accuracy/order-of-accuracy), [C2](./contracts/properties) |
 | `seth_test_properties` | exactness, constants, translation, mirror, scaling, robustness, on every scheme | [C2](./contracts/properties) |
 | `seth_vv_hybrid` | hybrids in the 1-D Euler harness: the sensor quiet on a smooth wave, the central/TENO5 junction at fifth order, conservation with random switching, Sod/Lax/Shu–Osher against the pure schemes | [H3](./hybrids/harness) |
+| `seth_vv_roe` | the Roe flux path with entropy fix of the 1-D Euler harness: design order on a smooth wave (the fix silent), Sod and Lax, the transonic rarefaction with and without the fix, the 123 problem; the blast waves at Fu et al.'s cutoffs without the limiter ([issue #5](https://github.com/szaghi/SETH/issues/5)) | [S5](./shocks/blast#the-flux-issue-5) |
 | `seth_test_central` | the KEEP-PE central fluxes of order 2 to 8: order, consistency, the kinetic-energy identity, pressure equilibrium, bitwise equal to ADAM's `compute_kep_flux`, the device; the Ducros sensors | [H2](./hybrids/central) |
 | `seth_test_sensors` | the four sensors on Li, Chen & Ren's static tests: their wavenumbers reproduced, the jump of test (b) flagged alone by theirs, constants smooth, steps not | [H1](./hybrids/sensors) |
 | `seth_test_linear` | the linear kernels: design order, equal to TENO5/6/8 and the TENO5/6 interpolations on smooth data (8 eps), mirror bitwise | [Schemes](/guide/schemes#hybrids) |

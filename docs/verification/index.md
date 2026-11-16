@@ -3,7 +3,7 @@
 Every capability of SETH is backed by a verification case: a Fortran program in `src/tests/` that runs the kernels
 and asserts the result against something it shares no code with, such as an exact solution, a fine reference, a
 published number, a theorem or ADAM's own code. The same programs are the test suite (`bash scripts/run_tests.sh`
-runs all 31, on six compiler builds and on the GPU), and with `SETH_VV_DIR` set they run every scheme on the report
+runs all 32, on six compiler builds and on the GPU), and with `SETH_VV_DIR` set they run every scheme on the report
 grids and write the data from which these pages are drawn (`scripts/run_vv.sh`). The figures are real SETH results
 and can be regenerated after any change of the kernels.
 
@@ -45,7 +45,10 @@ The findings that change how the kernels should be used, each documented on its 
 - The higher-order interpolations need a positivity safeguard near vacuum, and every interpolation on strong blast
   waves; on the Woodward–Colella blast so do WENO9-JS and the WENO-Z (but Z3) and TENO reconstructions
   ([S3](./shocks/test123), [S5](./shocks/blast)). SETH provides one: `seth_positivity_euler`, the flux limiter of
-  Hu, Adams & Shu ([API](/guide/api#positivity-limiter), [C7](./contracts/positivity)).
+  Hu, Adams & Shu ([API](/guide/api#positivity-limiter), [C7](./contracts/positivity)). The flux matters as much as
+  the scheme: with Roe's flux splitting with entropy fix instead of global Lax–Friedrichs, WENO-Z5, TENO5-opt, TENO6,
+  TENO6-opt, TENO6-NENO6 and TENO8 stay positive on the blast, TENO5 at its published cutoff still does not
+  ([S5](./shocks/blast#the-flux-issue-5), [issue #5](https://github.com/szaghi/SETH/issues/5)).
 - WENO-Z9 needs the exponent $p = 2$: with $p = 1$ it overshoots by 28% behind the Burgers shock and oscillates
   on the composite profile; with $p = 2$ it stays within the bounds of the other schemes, on the one-dimensional
   cases run here ([S6](./shocks/burgers); [issue #1](https://github.com/szaghi/SETH/issues/1)).
