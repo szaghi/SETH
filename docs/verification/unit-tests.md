@@ -5,6 +5,14 @@ exits non-zero on a violated assertion. They pass with gfortran 16.2, nvfortran 
 checks and floating-point traps on) and optimised, and in the OpenACC build on the GPU. Random stencils come from a
 fixed, printed seed (`SETH_TEST_SEED` overrides it), so a failure reproduces.
 
+The tests compute in the library's kind `R_P`. Their kind-sensitive literals (tolerances, regularisers, data
+magnitudes) live in `src/tests/seth_test_parameters.F90`, one set per kind, and `scripts/check_literals.py` fails on
+any left in a program. The R4P build (`fobis build --mode tests-gnu-r4 && bash scripts/run_tests.sh --exe-dir exe-r4`)
+leaves out the two comparisons with ADAM, which are R8P only, and has its own golden file
+(`src/tests/golden/seth_golden_r4_v1.txt`). Its expectations are not recorded yet
+([issue #4](https://github.com/szaghi/SETH/issues/4), 6.2, phase 4): it builds on every compiler, and some
+programs still fail.
+
 | Program | What it asserts | Page |
 |---|---|---|
 | `seth_test_kinds` | the working kinds of PENF | — |

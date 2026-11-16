@@ -20,8 +20,10 @@ R4P itself:
 - the indicators are quadratic in the data, so a jump above about $10^{19}$ inside a stencil overflows them;
 - the expanded WENO-JS indicator cancels to about $10^{-7} v^2$, so data with a large mean needs the descaler `rmu`.
 
-The R4P kernels are not yet verified by the test suite (roadmap [issue #4](https://github.com/szaghi/SETH/issues/4),
-6.2, phase 3).
+The test suite builds in R4P (`fobis build --mode tests-gnu-r4 && bash scripts/run_tests.sh --exe-dir exe-r4`, 33
+programs: the comparisons with ADAM are R8P only), with the tolerances of the tests per kind in `seth_test_parameters`.
+It does not pass yet: the R4P expectations (bounds, orders above the R4P round-off plateau) are recorded in phase 4 of
+roadmap [issue #4](https://github.com/szaghi/SETH/issues/4), 6.2.
 
 ## WENO-JS
 
