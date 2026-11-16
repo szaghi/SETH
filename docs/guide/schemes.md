@@ -161,10 +161,12 @@ the Jiang–Shu weights, or the inverse of a magnitude of the data for scale-inv
   a density: $\mu$ is then the offset, $\varepsilon$ swamps the indicators, the weights become the linear ones and the
   scheme oscillates. `seth_weno_descaling_ai` takes $\mu$ = the mean deviation from the stencil's mean (Wang & Don 2022,
   Eq. (13)), so that the weights ignore the offset too. Measured on a step of height $10^{-7}$ on the offset 1: WENO5-JS
-  overshoots by 18% of the jump with the mean-$|v|$ descaler and by $1.6\cdot10^{-6}$ with the affine-invariant one.
-  For WENO7/9-JS the descaler alone is not enough (0.2% overshoot): their expanded integer-form indicators cancel the
-  offset only to its round-off, which $\mu^{-2}$ amplifies; subtracting the stencil's mean from the data first and
-  adding it back to the states (Wang & Don's Remark 2) gives no overshoot at all. The cost is one more pass over the
+  overshoots by 18% of the jump with the mean-$|v|$ descaler and by $1.6\cdot10^{-6}$ (gfortran) to $3\cdot10^{-4}$
+  (nvfortran, fused multiply-adds) with the affine-invariant one.
+  The descaler alone depends on that round-off, and for WENO7/9-JS it is not enough (0.2% to 5% overshoot by compiler):
+  their expanded integer-form indicators cancel the offset only to its round-off, which $\mu^{-2}$ amplifies.
+  Subtracting the stencil's mean from the data first and adding it back to the states (Wang & Don's Remark 2) gives no
+  overshoot at all, with every compiler: that is the recommended use. The cost is one more pass over the
   stencil: WENO5-JS with it 1.336 ns per face on the RTX 4070, with the mean-$|v|$ descaler 1.105.
 - **Range.** $(\varepsilon + \beta)^{w}$ overflows double precision near $|v| \sim 10^{77}$ (WENO-3), $10^{51}$
   (WENO-5), $10^{38}$ (WENO-7/9); with the descaler the limit is $|v| \sim 10^{150}$ ($\beta$ itself).

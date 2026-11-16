@@ -741,20 +741,24 @@ do k=1, NK
       endblock
    case(42) ! seth_weno9_js+mp_bound
       block
-      real(R8P) :: a(-4:5), b(-4:5), rmu
+      real(R8P) :: a(-4:5), b(-4:5), c(-2:3), e(-2:3), rmu
       rmu = 1._R8P
-      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      ! rmu is private and so undefined on the device: the kernels take the literal 1 (passing rmu put the WENO9-JS
+      ! states up to 0.51 off the host on the GPU)
+      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, c, e, rmu)
       do i=1, N
          a = v(-4:5,i) ; b = w(-4:5,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
-         call seth_weno9_js(a, b, SETH_WENO_JS_EPS, rmu, rp(i), rm(i))
-         call seth_mp_bound(a(-2:3), b(-2:3), SETH_MP_ALPHA, rp(i), rm(i))
+         call seth_weno9_js(a, b, SETH_WENO_JS_EPS, 1._R8P, rp(i), rm(i))
+         c = a(-2:3) ; e = b(-2:3)
+         call seth_mp_bound(c, e, SETH_MP_ALPHA, rp(i), rm(i))
       enddo
       hp = rp ; hm = rm ; hwp = wrp ; hwm = wrm
 
       do i=1, N
          a = v(-4:5,i) ; b = w(-4:5,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
-         call seth_weno9_js(a, b, SETH_WENO_JS_EPS, rmu, rp(i), rm(i))
-         call seth_mp_bound(a(-2:3), b(-2:3), SETH_MP_ALPHA, rp(i), rm(i))
+         call seth_weno9_js(a, b, SETH_WENO_JS_EPS, 1._R8P, rp(i), rm(i))
+         c = a(-2:3) ; e = b(-2:3)
+         call seth_mp_bound(c, e, SETH_MP_ALPHA, rp(i), rm(i))
       enddo
       endblock
    case(43) ! seth_linear5

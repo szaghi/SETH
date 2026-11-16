@@ -8,7 +8,8 @@ program seth_test_mp
 !<    that overshoots) and TENO6: the bounded states lie in [0, 1] to 1e-12.
 !< 3. Well-resolved smooth monotone data: the bound leaves the state bitwise unchanged.
 !< 4. f = sin^4(pi x) on [0, 1], periodic, cell averages, N = 20 .. 640: the L1 and Linf errors of the left state with
-!<    and without the bound, their orders printed; asserted: every face the bound changes lies within 2 h of an
+!<    and without the bound, their orders printed; asserted: the bound changes no face (its curvature terms leave the
+!<    accurate states at the extrema alone), every face it would change lies within 2 h of an
 !<    extremum of f (x = 0 and 1/2), and the L1 order with the bound at the finest pair is at least 4.5. Balsara & Shu
 !<    (2000, Table V) report order loss at the flat extrema of this function; this measures how much (WENO5-JS: the
 !<    bound never acts on these grids, the orders are those of the plain scheme).
@@ -19,7 +20,7 @@ use seth_test_functions, only : gavg
 implicit none
 real(R8P), parameter :: PI = acos(-1._R8P)
 real(R8P)            :: vp(-4:5), vm(-4:5), rp, rm, rp0, rm0, x, worst, sc, s1, s2
-integer(I4P)         :: n_, m, jump, side, k, j, nn, i
+integer(I4P)         :: n_, m, jump, side, k, j, nn, i, nchanged = 0
 integer(I4P), parameter :: NG = 7_I4P
 integer(I4P)         :: ngrid(NG) = [20, 40, 80, 160, 320, 640, 1280]
 real(R8P)            :: e1(NG,2), ei(NG,2)
@@ -100,6 +101,7 @@ do i=1, NG
       x = real(j+1, R8P)/nn
       e1(i,1) = e1(i,1) + abs(rp0 - sin(PI*x)**4)/nn ; ei(i,1) = max(ei(i,1), abs(rp0 - sin(PI*x)**4))
       e1(i,2) = e1(i,2) + abs(rp - sin(PI*x)**4)/nn  ; ei(i,2) = max(ei(i,2), abs(rp - sin(PI*x)**4))
+      if (rp /= rp0) nchanged = nchanged + 1
       if (rp /= rp0 .and. min(abs(x - 0.5_R8P), x, 1._R8P - x) > 2._R8P/nn) then
          print '(A,I5,F9.5)', '   the bound changed a state away from the extrema: N, x = ', nn, x ; passed = .false.
       endif
@@ -114,6 +116,10 @@ do i=1, NG
             log(e1(i-1,2)/e1(i,2))/log(2._R8P), ei(i,1), ei(i,2)
    endif
 enddo
+print '(A,I0)', '   faces the bound changed, all grids: ', nchanged
+if (nchanged > 0) then ! the curvature terms must leave accurate states near the extrema alone (Suresh & Huynh)
+   print '(A)', '   ^ the bound changed an accurate state' ; passed = .false.
+endif
 if (log(e1(NG-1,2)/e1(NG,2))/log(2._R8P) < 4.5_R8P) then
    print '(A)', '   ^ L1 order with the bound below 4.5' ; passed = .false.
 endif
