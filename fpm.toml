@@ -191,3 +191,8 @@ main = "seth_vv_roe.F90"
 name = "seth_vv_sensors"
 source-dir = "src/tests"
 main = "seth_vv_sensors.F90"
+
+[[test]]
+name = "seth_test_sensor_fields"
+source-dir = "src/tests"
+main = "seth_test_sensor_fields.F90"
