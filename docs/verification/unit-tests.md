@@ -5,13 +5,28 @@ exits non-zero on a violated assertion. They pass with gfortran 16.2, nvfortran 
 checks and floating-point traps on) and optimised, and in the OpenACC build on the GPU. Random stencils come from a
 fixed, printed seed (`SETH_TEST_SEED` overrides it), so a failure reproduces.
 
+## Single precision
+
 The tests compute in the library's kind `R_P`. Their kind-sensitive literals (tolerances, regularisers, data
 magnitudes) live in `src/tests/seth_test_parameters.F90`, one set per kind, and `scripts/check_literals.py` fails on
 any left in a program. The R4P build (`fobis build --mode tests-gnu-r4 && bash scripts/run_tests.sh --exe-dir exe-r4`)
-leaves out the two comparisons with ADAM, which are R8P only, and has its own golden file
-(`src/tests/golden/seth_golden_r4_v1.txt`). Its expectations are not recorded yet
-([issue #4](https://github.com/szaghi/SETH/issues/4), 6.2, phase 4): it builds on every compiler, and some
-programs still fail.
+leaves out the two comparisons with ADAM, which are R8P only, has its own golden file
+(`src/tests/golden/seth_golden_r4_v1.txt`), and passes its 33 programs on gfortran, nvfortran and ifx and in the
+OpenACC build on the GPU. Its expectations are measured in R4P, the worst of the three compilers plus 5 %, each with
+its derivation next to it; the R8P set keeps every test as it was. What R4P changes:
+
+- **Orders.** An order is taken on a pair of grids whose finer error is above R4P's round-off, which for a derivative
+  sits near $10^{-5}$ on these grids and, in a time-accurate run, grows with the number of steps. Schemes of order 6
+  or more reach it between the first two grids: no order can be observed, and the test accepts that they converged
+  as far as R4P allows (a degraded scheme would stay above it). The pairs that remain are coarse, with the same
+  errors as in R8P there, so their orders are pre-asymptotic: the loss is recorded per test (0.2 to 0.8 of an order;
+  2.65 at the critical points of the interpolations).
+- **Data.** Test data beyond R4P's range or resolution are per kind: magnitudes whose squares overflow, a step of
+  $10^{-7}$ on 1 (one ulp), densities of $10^{-8}$ next to $O(1)$ cells (their one-sided states round to negative
+  pressures, which no limiter can prevent), cell averages that cancel on fine grids.
+- **Two R4P properties.** The affine-invariant descaler alone does not keep WENO-JS ENO on a small step over a large
+  offset (subtract the mean, [API](/guide/api)); TENO6 with LCR as a cost hybrid on Shu–Osher loses accuracy (3 to 9
+  times pure TENO6, by compiler), the one case exempted from its bound, pending an analysis.
 
 | Program | What it asserts | Page |
 |---|---|---|

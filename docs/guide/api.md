@@ -20,10 +20,21 @@ R4P itself:
 - the indicators are quadratic in the data, so a jump above about $10^{19}$ inside a stencil overflows them;
 - the expanded WENO-JS indicator cancels to about $10^{-7} v^2$, so data with a large mean needs the descaler `rmu`.
 
-The test suite builds in R4P (`fobis build --mode tests-gnu-r4 && bash scripts/run_tests.sh --exe-dir exe-r4`, 33
-programs: the comparisons with ADAM are R8P only), with the tolerances of the tests per kind in `seth_test_parameters`.
-It does not pass yet: the R4P expectations (bounds, orders above the R4P round-off plateau) are recorded in phase 4 of
-roadmap [issue #4](https://github.com/szaghi/SETH/issues/4), 6.2.
+Two more things hold in R4P only, both measured by the test suite:
+
+- the affine-invariant descaler `seth_weno_descaling_ai` alone does not keep WENO-JS ENO on a small step over a large
+  offset: the expanded indicators cancel the offset to $\varepsilon\,\text{offset}^2$, which $\mu^{-2}$ then makes
+  $O(1)$ (an overshoot of 0.25 of a step of $2^{-13}$ on 1, as without a descaler). Subtract the stencil's mean first
+  (Wang & Don), which stays ENO in R4P;
+- a scheme of order 6 or more reaches R4P's round-off within the first refinements of a smooth problem (errors near
+  $10^{-5}$ for a derivative on grids of 20 to 640 points): its design order cannot be observed in R4P, only that it
+  converged as far as R4P allows.
+
+The test suite passes in R4P (`fobis build --mode tests-gnu-r4 && bash scripts/run_tests.sh --exe-dir exe-r4`, 33
+programs: the comparisons with ADAM are R8P only) on gfortran, nvfortran and ifx, against expectations measured in R4P
+([test programs](/verification/unit-tests#single-precision)). One case is not held to its bound: TENO6 with the LCR
+sensor as a cost hybrid on Shu–Osher has 3 to 9 times the L1 error of pure TENO6 in R4P, depending on the compiler
+(2.1 in R8P), an instability not analysed yet ([issue #4](https://github.com/szaghi/SETH/issues/4), 6.2).
 
 ## WENO-JS
 

@@ -65,3 +65,8 @@ order):
 - Second-order critical points of the *split fluxes* matter in practice: with $\alpha = \max|f'|$ exactly, the
   Lax–Friedrichs split flux $f^- = (f - \alpha u)/2$ has one where $|f'|$ peaks, and TENO falls to second order
   there. The nonlinear harness splits with $\alpha = 1.1\max|f'|$ ([Burgers](../shocks/burgers)).
+- In R4P the asymptotic orders at critical points cannot be observed: the errors fall below R4P's round-off on the
+  grids where R8P measures them. The coarse grids R4P can use carry R8P's errors exactly, and their orders are
+  pre-asymptotic (WENO-Z7, $p = 2$: 4.0 at $h = 0.4 \to 0.2$ against 7). TENO5-AZ's error at the second-order point
+  drops from $4\cdot10^{-4}$ to $2\cdot10^{-10}$ as its cutoff switches, below R4P's round-off: Tang's 5 is verified
+  in R8P only ([test programs](../unit-tests#single-precision)).
