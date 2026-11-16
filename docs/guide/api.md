@@ -17,12 +17,13 @@ call seth_weno<N>_js_interp_wr(vp, vm, eps, rmu, rp, rm, wrp, wrm)
 |---|---|---|
 | `vp`, `vm` | `real(R8P), intent(in) :: v(1-S:S)` | left-/right-biased stencils, $S = (N+1)/2$ |
 | `eps` | `real(R8P), intent(in)` | regulariser; `SETH_WENO_JS_EPS` = $10^{-6}$ (ADAM's) |
-| `rmu` | `real(R8P), intent(in)` | inverse descaler: `1` (Jiang–Shu) or `seth_weno_descaling(...)` |
+| `rmu` | `real(R8P), intent(in)` | inverse descaler: `1` (Jiang–Shu), `seth_weno_descaling(...)` or `seth_weno_descaling_ai(...)` |
 | `rp`, `rm` | `real(R8P), intent(out)` | left and right states at the face |
 | `wrp`, `wrm` | `real(R8P), intent(out)` | weights ratios $\min_k \omega_k/d_k \in [0,1]$: 1 on smooth data, toward 0 near a jump |
 
 ```fortran
 rmu = seth_weno_descaling(S, sigma, vp, vm)   ! sigma = 0: rmu = 1 exactly; sigma = 1: 1/mean|v|
+rmu = seth_weno_descaling_ai(S, vp, vm)       ! affine invariant: 1/mean|v - mean v| (Wang & Don 2022)
 ```
 
 ## WENO-Z

@@ -14,7 +14,7 @@ use seth_positivity
 implicit none
 private
 public :: I4P, I8P, R4P, R8P
-public :: seth_weno_descaling
+public :: seth_weno_descaling, seth_weno_descaling_ai
 public :: SETH_WENO_JS_EPS
 public :: seth_weno1_js, seth_weno1_js_wr, seth_weno1_js_interp, seth_weno1_js_interp_wr
 public :: seth_weno3_js, seth_weno3_js_wr, seth_weno3_js_interp, seth_weno3_js_interp_wr

@@ -45,3 +45,5 @@ which cite the paper; the provenance of every formula is in `notes/m2-sources.md
 - Li, Y., Chen, C., Ren, Y.-X. (2022). A class of high-order finite difference schemes with minimized dispersion and
   adaptive dissipation for solving compressible flows. *J. Comput. Phys.* 448:110770 — Ren's sensor at critical points
   (§3.2) (read in the paper).
+- Wang, B.-S., Don, W.S. (2022). Affine-invariant WENO weights and operator. *Appl. Numer. Math.* 181:630 — the
+  affine-invariant descaler (Eqs. (9)–(14), Remark 2) (read in the paper).

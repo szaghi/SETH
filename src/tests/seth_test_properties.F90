@@ -31,7 +31,7 @@ use seth_test_schemes
 implicit none
 integer(I4P), parameter :: NR = 2000_I4P
 real(R8P),    parameter :: E = epsilon(1._R8P)
-real(R8P)               :: vp(VLO:VHI), vm(VLO:VHI), wp(VLO:VHI), wm(VLO:VHI), rp, rm, sp, sm, c, x, vmax, sc
+real(R8P)               :: vp(VLO:VHI), vm(VLO:VHI), wp(VLO:VHI), wm(VLO:VHI), rp, rm, sp, sm, c, x, vmax, sc, worst
 real(R8P)               :: coef(0:4), rmu
 integer(I4P)            :: id, n_, m, wmin, deg, k, fam, s, failures
 logical                 :: passed
@@ -130,6 +130,39 @@ do id=1, NSCHEMES
    vp = 0._R8P
    call reconstruct(id, vp, vp, rp, rm)
    if (rp /= 0._R8P .or. rm /= 0._R8P) call fail('zero stencil', rp, rm)
+   ! affine-invariant descaler (Wang & Don 2022): bitwise under 2^k scaling; a step of height 1e-7 on an offset of 1 keeps
+   ! the ENO property (states within the data's range to 1e-12 of the jump), which the mean-|v| descaler loses
+   if (fam == FAM_JS .and. s >= 3) then
+      x = 0._R8P ; worst = 0._R8P
+      do n_=1, 200
+         call stencil(vp, vm, rough=.true.)
+         call random_number(sc) ; k = int(40._R8P*sc) - 20 ; sc = 2._R8P**k
+         call reconstruct(id, vp, vm, rp, rm, par=seth_weno_descaling_ai(s, vp(1-s:s), vm(1-s:s)))
+         call reconstruct(id, sc*vp, sc*vm, sp, sm, par=seth_weno_descaling_ai(s, sc*vp(1-s:s), sc*vm(1-s:s)))
+         if (sp /= sc*rp .or. sm /= sc*rm) call fail('scaling, affine-invariant JS (bitwise)', sp/sc - rp, sm/sc - rm)
+      enddo
+      c = 0._R8P
+      do k=1-s, s ! a step of height 1e-7 at every cell boundary, on the offset 1
+         do n_=VLO, VHI
+            vp(n_) = 1._R8P + merge(1.e-7_R8P, 0._R8P, n_ >= k) ; vm(n_) = vp(n_)
+         enddo
+         call reconstruct(id, vp, vm, rp, rm, par=seth_weno_descaling_ai(s, vp(1-s:s), vm(1-s:s)))
+         x = max(x, (max(rp, rm) - (1._R8P + 1.e-7_R8P))/1.e-7_R8P, (1._R8P - min(rp, rm))/1.e-7_R8P)
+         ! with the stencil's mean subtracted first and added back (Wang & Don, Remark 2): the expanded indicators of
+         ! WENO-7/9 (Balsara-Shu integer forms) cancel the offset only to its round-off, which rmu^2 then amplifies
+         wp = vp - sum(vp(1-s:s-1))/real(2*s-1, R8P) ; wm = wp
+         call reconstruct(id, wp, wm, sp, sm, par=seth_weno_descaling_ai(s, wp(1-s:s), wm(1-s:s)))
+         sp = sp + sum(vp(1-s:s-1))/real(2*s-1, R8P) ; sm = sm + sum(vp(1-s:s-1))/real(2*s-1, R8P)
+         c = max(c, (max(sp, sm) - (1._R8P + 1.e-7_R8P))/1.e-7_R8P, (1._R8P - min(sp, sm))/1.e-7_R8P)
+         call reconstruct(id, vp, vm, rp, rm, par=seth_weno_descaling(s, 1._R8P, vp(1-s:s), vm(1-s:s)))
+         worst = max(worst, (max(rp, rm) - (1._R8P + 1.e-7_R8P))/1.e-7_R8P, (1._R8P - min(rp, rm))/1.e-7_R8P)
+      enddo
+      print '(A16,A,3ES10.2)', SCHEMES(id)%name, ': 1e-7 step on 1, overshoot / jump: Ai, Ai on v - mean, mean-|v|: ', &
+            x, c, worst
+      if (c > 1.e-5_R8P) call fail('affine-invariant JS (mean subtracted): overshoot on a small step on an offset', c, x)
+      if (s == 3 .and. x > 1.e-5_R8P) call fail('affine-invariant WENO-5: overshoot on a small step on an offset', x, c)
+      if (worst < 1.e-2_R8P) call fail('mean-|v| descaler unexpectedly ENO on a small step on an offset', x, worst)
+   endif
    ! plain WENO-JS and the adaptive cutoffs with rmu = 1 (the papers' forms) are not scale invariant: data of magnitude
    ! 1e-4 is reconstructed differently from the same data at 1
    if (((fam == FAM_JS .or. fam == FAM_JS_INTERP) .and. s >= 2) .or. dimensional(SCHEMES(id)%name)) then

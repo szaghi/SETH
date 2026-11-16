@@ -157,6 +157,15 @@ the Jiang–Shu weights, or the inverse of a magnitude of the data for scale-inv
 - **Scale invariance.** With `rmu = 1` the weights depend on the scale of the data (an absolute $\varepsilon$): data of
   magnitude $10^{-4}$ is reconstructed differently from the same data at $1$. With the descaler the result scales
   bitwise under $v \to 2^k v$.
+- **Affine invariance.** The mean $|v|$ fails for small fluctuations on a large offset, the usual case of a pressure or
+  a density: $\mu$ is then the offset, $\varepsilon$ swamps the indicators, the weights become the linear ones and the
+  scheme oscillates. `seth_weno_descaling_ai` takes $\mu$ = the mean deviation from the stencil's mean (Wang & Don 2022,
+  Eq. (13)), so that the weights ignore the offset too. Measured on a step of height $10^{-7}$ on the offset 1: WENO5-JS
+  overshoots by 18% of the jump with the mean-$|v|$ descaler and by $1.6\cdot10^{-6}$ with the affine-invariant one.
+  For WENO7/9-JS the descaler alone is not enough (0.2% overshoot): their expanded integer-form indicators cancel the
+  offset only to its round-off, which $\mu^{-2}$ amplifies; subtracting the stencil's mean from the data first and
+  adding it back to the states (Wang & Don's Remark 2) gives no overshoot at all. The cost is one more pass over the
+  stencil: WENO5-JS with it 1.336 ns per face on the RTX 4070, with the mean-$|v|$ descaler 1.105.
 - **Range.** $(\varepsilon + \beta)^{w}$ overflows double precision near $|v| \sim 10^{77}$ (WENO-3), $10^{51}$
   (WENO-5), $10^{38}$ (WENO-7/9); with the descaler the limit is $|v| \sim 10^{150}$ ($\beta$ itself).
 - **Critical points.** Where $u' = 0$ the $\beta_k$ differ at relative $O(h)$, $\omega_k - d_k$ is larger than

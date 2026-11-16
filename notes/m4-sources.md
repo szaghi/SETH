@@ -69,3 +69,17 @@ C_T = 1e-7, and no mode of that band grows when advected.
 | Fu 2021's own set (C_r = 0.265, e = 1e-40, a1 = 14, a2 = 6.4) | quoted, not used (it is for the 8/10-point TENO-AA) | Fu 2021, after Eq. (19) |
 
 Not in the papers: the rmu argument (xi/rmu), for a scale-invariant sensor.
+
+## Affine-invariant descaler (step 1.1)
+
+Wang, B.-S., Don, W.S. (2022). *Appl. Numer. Math.* 181:630.
+
+| Item | Status | Where |
+|---|---|---|
+| Ai-weights: the indicators divided by mu^2, mu = mu_0 + (1/(2r-1)) sum abs(f_j - mean f) over the global stencil | quoted | Eqs. (9)-(14) |
+| mu_0 = 1e-40 (double precision) | quoted; SETH floors mu at 64 eps mean abs(v) and tiny instead (same purpose, exactly scale invariant) | after Eq. (14) |
+| Equivalent implementation: subtract the mean, apply the scale-invariant operator, add the mean back | quoted | Remark 2 |
+| The Si descaler (mean abs(f)) fails on a small jump on an offset | quoted (their Fig. 5, WENO-Z); reproduced for WENO5-JS: 18 % overshoot | Section 3.2.1 |
+
+SETH applies the descaler per bias (each state's own global stencil) and averages the two mu, since one rmu serves
+both states of a face.
