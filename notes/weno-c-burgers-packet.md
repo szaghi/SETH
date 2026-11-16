@@ -108,12 +108,18 @@ matters only for a packet with no background); the detector's reach as the cause
 The ADR (F2) cannot show this: it advects one wave of unit amplitude with no background, which the detector sees in
 full (phi = O(1) at high wavenumbers).
 
-## What would change it (left to the owner)
+## Decision (owner, 2026-11-16): accepted as documented
 
-Each is a change of ADAM's scheme; measured here, not proposed as a fix:
+SETH keeps ADAM's scheme unchanged; the packet is a documented property of the centred WENO (S6, A5, the guide).
+Whether it matters in turbulence (grid-scale energy that is never damped) is ADAM's to verify on its flows, under the
+SETH/ADAM verification split.
+
+Measured and not adopted (each a change of ADAM's scheme):
 
 - eps = 1e-40 in the blend: 3.4e-7 and 9.2e-7 (7.5 and 3.9 times lower), about second order.
-- eps = 1e-40 and the widened detector: 1.9e-7 and 3.2e-7 (13 and 11 times lower), about second order.
+- eps = 1e-40 and the widened detector: 1.9e-7 and 3.2e-7 (13 and 11 times lower), about second order; it costs the
+  smooth flow (before the shock, 640 cells: WENO6-C 1.8e-11 -> 6.2e-11) and was not run on the rest of the suite.
 
 No variant reaches the upwind parts' level: the mechanism (damping proportional to the background's phi) is the
-blend's construction. A floor on phi, or a detector made of higher differences, was not tried.
+blend's construction. The principled alternative, a floor on phi (equivalently a dissipative smooth branch), costs
+one order (2S -> 2S-1) and would be a new scheme rather than ADAM's; not tried.
