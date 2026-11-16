@@ -393,8 +393,11 @@ the central–WENO and central–TENO hybrids of the turbulence literature.
   Measured further on H1: Li, Chen & Ren's never flags a critical point, and is the most selective in flows, so
   selective that TENO6's cost hybrid on Shu–Osher sends the entropy waves to the nearly central background (1.81
   times the pure scheme's $L_1$), where Fu's detector gives 1.04 and Wan & Xia's 1.00; none is scale invariant by
-  itself, and $r_\mu = 1/(\max f - \min f)$ over the field makes all four so. No sensor is the guide's default yet:
-  the flows that decide it are turbulent ones, ADAM's;
+  itself, and $r_\mu = 1/(\max f - \min f)$ over the field makes all four so. **Recommended** (from these
+  one-dimensional measurements, published thresholds, nothing tuned; turbulent flows may revise it): Li, Chen & Ren's
+  sensor for an upwind background (TENO5, WENO-Z5's linear scheme); Fu's TENO detector, or Wan & Xia's, for a nearly
+  non-dissipative one (TENO6; by extension TENO8 and a central flux, not measured); never Ren's (it flags extrema at
+  every resolution); and always $r_\mu = 1/(\max f - \min f)$, one reduction over the field;
 - **the cost**, measured at kernel level on the RTX 4070: a sensor 0.30 ns per face, a linear kernel 0.095, WENO-Z5
   0.985. A hybrid that calls the sensor on both biases and the linear kernel where both say smooth costs 0.67 on a
   mostly smooth field, and breaks even with WENO-Z5 at about 30% of faces flagged (60% with one sensor call per face,

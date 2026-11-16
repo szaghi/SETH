@@ -113,7 +113,9 @@ Averaged over the 60 frames, the fraction of faces flagged on Shu–Osher is 4.1
   smooth and go to TENO6's nearly central background ([H3](./harness)). With Fu's TENO detector it is 1.04, with Wan &
   Xia's 1.00, at 14 % and 28 % of the faces nonlinear instead of 6 %. TENO5's upwind background tolerates every sensor
   (0.995–1.07), and on the blast every hybrid is within 0.94–1.11 of its pure scheme. Selectivity and safety pull
-  apart: the sensor that flags least is the one that can starve a nearly non-dissipative background.
+  apart: the sensor that flags least is the one that can starve a nearly non-dissipative background. The guide's
+  recommendation follows from it ([Schemes](/guide/schemes#hybrids)): Li, Chen & Ren's for an upwind background,
+  Fu's TENO detector or Wan & Xia's for a nearly non-dissipative one, never Ren's, always the range normalisation.
 - **Ducros sees what the velocity says, and only that.** It never flags the Taylor–Green vortex at any resolution
   (the discrete divergence vanishes); there Fu's and Wan & Xia's detectors flag the under-resolved field ($N \le 16$
   and $N = 8$), Li, Chen & Ren's flags nothing at any $N$, and Ren's flags the extrema at every $N$. A shock inside a vortex escapes it once the vorticity exceeds twice the shock's
