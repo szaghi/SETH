@@ -338,6 +338,30 @@ the [Verification](/verification/) section covers the interpolations, and the [1
 and [blast](/verification/shocks/blast) cases show that the WENO-Z and TENO interpolations need a positivity
 safeguard near vacuum and on strong shocks (`seth_positivity_euler`, [API](/guide/api#positivity-limiter)).
 
+## Monotonicity-preserving bound
+
+`seth_mp_bound` bounds the two states of a face, after any reconstruction, by the interval of Suresh & Huynh (1997,
+Eqs. (2.8)–(2.29)), from the five values $v_{j-2} \dots v_{j+2}$ around the upwind cell:
+
+$$ d_k = v_{k-1} - 2v_k + v_{k+1},\quad
+   d^{M4}_{j\pm1/2} = \operatorname{minmod}(4d_j - d_{j\pm1},\ 4d_{j\pm1} - d_j,\ d_j,\ d_{j\pm1}), $$
+$$ v^{UL} = v_j + \alpha(v_j - v_{j-1}),\quad v^{MD} = \tfrac12(v_j + v_{j+1}) - \tfrac12 d^{M4}_{j+1/2},\quad
+   v^{LC} = v_j + \tfrac12(v_j - v_{j-1}) + \tfrac43 d^{M4}_{j-1/2}, $$
+$$ v^{\min} = \max\!\big(\min(v_j, v_{j+1}, v^{MD}),\ \min(v_j, v^{UL}, v^{LC})\big),\quad
+   v^{\max} = \min\!\big(\max(v_j, v_{j+1}, v^{MD}),\ \max(v_j, v^{UL}, v^{LC})\big), $$
+
+and the state becomes the median of itself, $v^{\min}$ and $v^{\max}$. On monotone data the interval is
+$[v_j, v_{j+1}]$; near a smooth extremum the curvature terms widen it so that an accurate state is left alone.
+$\alpha = 4$ (`SETH_MP_ALPHA`), Suresh & Huynh's value for Runge–Kutta stepping, whose monotonicity proof needs CFL
+$\le 1/(1+\alpha) = 0.2$. Suresh & Huynh skip the bound where the state already lies in a first-order interval, with
+an absolute tolerance $10^{-10}$ (Eq. (2.30)); SETH always applies the median, which there returns the state
+unchanged: no branch, and scale invariant.
+
+Measured (`seth_test_mp`): on monotone data the bounded WENO5-JS states stay in $[v_0, v_1]$; the steps that WENO9-JS,
+WENO-Z9 with $p = 1$ and TENO6 reconstruct end in $[0, 1]$ exactly; on $\sin^4(\pi x)$, the test where Balsara & Shu
+(2000) report order loss for MPWENO, the bound never acts on WENO5-JS's states for $N = 20 \dots 1280$ (order 5.3).
+Cost on the RTX 4070: 0.42 ns per face, 0.43 times WENO5-JS (over the budget of 0.35 set before coding).
+
 ## Hybrids
 
 A **hybrid** scheme uses a cheap linear reconstruction where a sensor judges the data smooth, and a nonlinear one

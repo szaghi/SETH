@@ -69,7 +69,7 @@ features:
       width: 44
       height: 44
     title: Verification you can read
-    details: Twenty-six programs, also the test suite. Orders at a point, at critical points and over whole domains, invariances, golden values, Sod, Lax, 123, Shu–Osher and the blast wave, Burgers against its exact solution, spectral properties; figures and animations on every case page.
+    details: Twenty-seven programs, also the test suite. Orders at a point, at critical points and over whole domains, invariances, golden values, Sod, Lax, 123, Shu–Osher and the blast wave, Burgers against its exact solution, spectral properties; figures and animations on every case page.
     link: /verification/
     linkText: Verification
   - icon:
@@ -125,7 +125,7 @@ const authors = [
 git clone https://github.com/szaghi/SETH && cd SETH
 fobis fetch                                                   # PENF, into src/third_party/
 fobis build --mode static-gnu                                 # lib/gnu/static/libseth.a
-fobis build --mode tests-gnu && bash scripts/run_tests.sh     # the 26 verification programs
+fobis build --mode tests-gnu && bash scripts/run_tests.sh     # the 27 verification programs
 ```
 
 ```ini [FoBiS dependency]

@@ -55,6 +55,15 @@ The interpolation kernels take the same arguments as the reconstruction ones; TE
 `eps = SETH_TENO_EPS` ($10^{-40}$); `ct` the cutoff: `SETH_TENO5_CT`, `SETH_TENO5_OPT_CT`, `SETH_TENO5_AZ_CT` (the ceiling of the adaptive one), `SETH_TENO6_CT`, `SETH_TENO6_OPT_CT`,
 `SETH_TENO6_NENO6_CT`, `SETH_TENO8_CT` (see [Schemes](./schemes)).
 
+## Monotonicity-preserving bound
+
+```fortran
+call seth_mp_bound(vp, vm, alpha, rp, rm)   ! vp, vm(-2:3): the data; rp, rm: the states, bounded in place
+```
+
+`alpha = SETH_MP_ALPHA` (4). Call it after any reconstruction kernel, on the five values around each state's upwind
+cell (pass `vp(-2:3)`, `vm(-2:3)` of a wider stencil). See [Schemes](./schemes#monotonicity-preserving-bound).
+
 ## Positivity limiter
 
 ```fortran

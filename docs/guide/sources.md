@@ -47,3 +47,5 @@ which cite the paper; the provenance of every formula is in `notes/m2-sources.md
   (§3.2) (read in the paper).
 - Wang, B.-S., Don, W.S. (2022). Affine-invariant WENO weights and operator. *Appl. Numer. Math.* 181:630 — the
   affine-invariant descaler (Eqs. (9)–(14), Remark 2) (read in the paper).
+- Suresh, A., Huynh, H.T. (1997). Accurate monotonicity-preserving schemes with Runge–Kutta time stepping. *J.
+  Comput. Phys.* 136:83 — the monotonicity-preserving bound (Eqs. (2.8)–(2.30)), $\alpha = 4$ (read in the paper).

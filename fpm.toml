@@ -156,3 +156,8 @@ main = "seth_vv_adr.F90"
 name = "seth_test_positivity"
 source-dir = "src/tests"
 main = "seth_test_positivity.F90"
+
+[[test]]
+name = "seth_test_mp"
+source-dir = "src/tests"
+main = "seth_test_mp.F90"

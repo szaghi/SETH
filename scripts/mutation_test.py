@@ -36,6 +36,8 @@ MUTANTS = [
     ('js-eps-ignored', 'src/lib/seth_weno_js_body.INC', 'b = eps + ', 'b = eps + ', 'b = 1.e-6_R8P + '),
     ('js-weights-ratio', 'src/lib/seth_weno_js_body.INC', 'wr(f) = min(', 'wr(f) = min(', 'wr(f) = max('),
     ('descaling-ai-mean', 'src/lib/seth_descaling.F90', 'mu = mu + abs(vp(m) - avp)', 'abs(vp(m) - avp)', 'abs(vp(m))'),
+    ('mp-curvature', 'src/lib/seth_mp.F90', 'lc = c + 0.5_R8P*(c - b)', '(4._R8P/3._R8P)*m4m', '(1._R8P/3._R8P)*m4m'),
+    ('mp-median', 'src/lib/seth_mp.F90', 'v = max(vmin, min(v, vmax))', 'v = max(vmin, min(v, vmax))', 'v = min(v, vmax)'),
     ('descaling', 'src/lib/seth_descaling.F90', 'mu = mu + abs(vp(m))', 'mu = mu + abs(vp(m))',
      'mu = mu + abs(vp(m+1))'),
     ('teno6-linear-weight', 'src/lib/seth_z_teno_tables.F90', 'TENO6_D(0:3)', '9._R8P/20._R8P', '0.451_R8P'),

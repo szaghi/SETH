@@ -1,6 +1,6 @@
 # Test programs
 
-`fobis build --mode tests-gnu && bash scripts/run_tests.sh` runs 26 programs (`fpm test` the same set). Every one
+`fobis build --mode tests-gnu && bash scripts/run_tests.sh` runs 27 programs (`fpm test` the same set). Every one
 exits non-zero on a violated assertion. They pass with gfortran 16.2, nvfortran 26.9 and ifx 2026.2, debug (all
 checks and floating-point traps on) and optimised, and in the OpenACC build on the GPU. Random stencils come from a
 fixed, printed seed (`SETH_TEST_SEED` overrides it), so a failure reproduces.
@@ -15,6 +15,7 @@ fixed, printed seed (`SETH_TEST_SEED` overrides it), so a failure reproduces.
 | `seth_test_wenoz` | WENO-Z order, ENO, mirror; reconstruction and interpolation | [A1](./accuracy/order-of-accuracy), [C2](./contracts/properties) |
 | `seth_test_teno` | TENO order, linear scheme on smooth data, cutoff, large jump, mirror; reconstruction and interpolation | [A1](./accuracy/order-of-accuracy), [C2](./contracts/properties) |
 | `seth_test_properties` | exactness, constants, translation, mirror, scaling, robustness, on every scheme | [C2](./contracts/properties) |
+| `seth_test_mp` | the monotonicity-preserving bound: monotone data inside $[v_0, v_1]$, steps of WENO9-JS, WENO-Z9 and TENO6 inside $[0, 1]$, smooth data unchanged, $\sin^4$ orders with and without it, mirror and scaling bitwise | [Schemes](/guide/schemes#monotonicity-preserving-bound) |
 | `seth_test_critical_points` | the literature's orders at first- and second-order critical points (reconstructions) | [A2](./accuracy/critical-points) |
 | `seth_test_interpolation` | the interpolations over a whole domain and at critical points | [A2](./accuracy/critical-points), [A3](./accuracy/convergence) |
 | `seth_test_convergence` | whole-domain $L_\infty$ of the operator and of SSP-RK3 advection on Henrick's field | [A3](./accuracy/convergence) |

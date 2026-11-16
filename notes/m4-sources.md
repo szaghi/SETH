@@ -83,3 +83,17 @@ Wang, B.-S., Don, W.S. (2022). *Appl. Numer. Math.* 181:630.
 
 SETH applies the descaler per bias (each state's own global stencil) and averages the two mu, since one rmu serves
 both states of a face.
+
+## Monotonicity-preserving bound (step 1.2)
+
+Suresh, A., Huynh, H.T. (1997). *J. Comput. Phys.* 136:83.
+
+| Item | Status | Where |
+|---|---|---|
+| minmod of k arguments, median(x, y, z) = x + minmod(y - x, z - x) | quoted | Eqs. (2.4)-(2.6) |
+| v_UL = v_j + alpha (v_j - v_{j-1}), v_MP = v_j + minmod(v_{j+1} - v_j, alpha (v_j - v_{j-1})) | quoted | Eqs. (2.8), (2.12) |
+| d_j = v_{j-1} + v_{j+1} - 2 v_j; d^M4 = minmod(4 d_j - d_{j+1}, 4 d_{j+1} - d_j, d_j, d_{j+1}) | quoted | Eqs. (2.19), (2.27) |
+| v_MD = v_AV - d^M4_{j+1/2}/2, v_LC = v_j + (v_j - v_{j-1})/2 + 4/3 d^M4_{j-1/2} | quoted | Eqs. (2.28)-(2.29) |
+| v_min, v_max: the intersection of I[v_j, v_{j+1}, v_MD] and I[v_j, v_UL, v_LC]; v <- median(v, v_min, v_max) | quoted | Eqs. (2.24)-(2.26) |
+| alpha = 4 for Runge-Kutta, CFL <= 1/(1 + alpha) | quoted | section 2, after Eq. (2.10) |
+| skip test with tolerance 1e-10 | quoted; not used (the median is applied everywhere, same result where the test would skip) | Eq. (2.30) |
