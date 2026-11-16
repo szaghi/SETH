@@ -39,6 +39,33 @@ catches large regressions.
 python3 scripts/bench_compare.py notes/bench-baseline/rtx4070-nvf-oac run-1.txt run-2.txt run-3.txt
 ```
 
+## The kernels added after v0.1.0
+
+ns per face, the median of three runs of `seth_bench_weno` (raw outputs in `notes/m4-bench-data/`): the GPU column on
+the RTX 4070 (`bench-nvf-oac`), the CPU column on one pinned core of the i9-13900KF (`bench-gnu`). The ratio is to the
+kernel the cost budget of the roadmap (issue #4) was set against, on the GPU.
+
+| Kernel | GPU | CPU | GPU ratio | against | budget |
+|---|---|---|---|---|---|
+| `seth_teno5` | 1.435 | 79.5 | — | — | — |
+| `seth_teno5_opt` | 1.435 | 79.1 | 1.00 | TENO5 | 1.02 |
+| `seth_teno5_az` | 1.461 | 80.8 | 1.02 | TENO5 | 1.05 |
+| `seth_teno5_a` | 2.025 | 80.0 | **1.41** | TENO5 | 1.25 |
+| `seth_teno8` | 3.977 | 131.1 | **1.66** | TENO6 | 1.6 |
+| `seth_teno8_a` | 4.624 | 136.7 | 1.16 | TENO8 | 1.25 |
+| `seth_weno5_js` + `seth_weno_descaling_ai` | 1.336 | 23.6 | (descaler) **~3** | the mean-\|v\| descaler | 1.15 |
+| `seth_weno5_js` + `seth_mp_bound` | 1.413 | 29.8 | (bound) **0.43** | WENO5-JS | 0.35 |
+| `seth_linear5` | 0.095 | 2.3 | 0.10 | WENO5-JS | 0.25 |
+| `seth_linear7` | 0.120 | 2.7 | 0.07 | WENO7-JS | 0.25 |
+| `seth_sensor_lcr` | 0.298 | 15.9 | — | — | — |
+| sensor + `seth_linear5` | 0.393 | 18.2 | 0.40 | WENO-Z5 | 0.6 |
+| `seth_keep_pe6` | 0.777 | 31.8 | 1.00 | ADAM's `compute_kep_flux` | 1.0 |
+
+Bold: over the budget set before coding, a finding rather than an edit of the budget. On one CPU core the picture
+differs: the adaptive cutoff of TENO5-A costs nothing measurable (80.0 against 79.5) while it costs 41% on the GPU,
+whose FP64 rate (1/64 of FP32 on this card) makes every division count; the data-centre GPU was not measured. The
+old kernels did not slow down (`bench_compare.py`: ok on both machines).
+
 ## Device-kernel rules: arrays and loop extents
 
 Two rules of ADAM's device kernels, measured on SETH by `src/bench/seth_bench_device_arrays.F90`
