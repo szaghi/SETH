@@ -66,6 +66,13 @@ differs: the adaptive cutoff of TENO5-A costs nothing measurable (80.0 against 7
 whose FP64 rate (1/64 of FP32 on this card) makes every division count; the data-centre GPU was not measured. The
 old kernels did not slow down (`bench_compare.py`: ok on both machines).
 
+## Single precision
+
+`src/bench/seth_bench_kinds.F90` times the same kernels in the working kind, built in R8P and in R4P
+(`bench-kinds-nvf-oac` against `bench-nvf-oac-r4`, `bench-kinds-gnu` against `bench-gnu-r4`). On the RTX 4070 R4P is
+5.17 times faster (the median over 18 kernels: 2 for the linear ones, 3 to 14 for the weighted ones); on one CPU core
+0.99 times, nothing gained. What R4P changes, its limits and the per-kernel table: [Precision](/guide/precision).
+
 ## Device-kernel rules: arrays and loop extents
 
 Two rules of ADAM's device kernels, measured on SETH by `src/bench/seth_bench_device_arrays.F90`

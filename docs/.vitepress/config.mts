@@ -101,6 +101,7 @@ export default withMermaid({
             { text: 'Conventions',  link: '/guide/conventions' },
             { text: 'Schemes',      link: '/guide/schemes' },
             { text: 'API',          link: '/guide/api' },
+            { text: 'Precision',    link: '/guide/precision' },
           ],
         },
         {

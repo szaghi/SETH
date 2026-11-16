@@ -34,7 +34,8 @@ Two more things hold in R4P only, both measured by the test suite:
 
 The test suite passes in R4P (`fobis build --mode tests-gnu-r4 && bash scripts/run_tests.sh --exe-dir exe-r4`, 33
 programs: the comparisons with ADAM are R8P only) on gfortran, nvfortran and ifx, against expectations measured in R4P
-([test programs](/verification/unit-tests#single-precision)), every case held to its bound.
+([test programs](/verification/unit-tests#single-precision)), every case held to its bound. What R4P costs and buys,
+measured: [Precision](/guide/precision).
 
 ## WENO-JS
 
