@@ -27,6 +27,7 @@ program seth_test_critical_points
 !< | WENO5-Z, p = 2    | 5 (>= 4.5)                | Borges 2008: analysis 5, measured 4.80-4.98   |
 !< | TENO5             | 5 (>= 4.5)                | Tang et al. 2024                              |
 !< | TENO6 / TENO6-opt | 6 / 5 (>= 5.5 / >= 4.5)   | Zhang et al. 2024b                            |
+!< | TENO5-opt         | 4 (>= 3.5)                | its linear scheme's order (Fu et al. 2016)    |
 !<
 !< WENO-JS of every order, at both points: Henrick et al.'s rate max(2r - 2 - n_cp, n_cp) (eq. 60: r <= 6, eps = 0;
 !< llm-wiki high-order-capturing-schemes `properties/accuracy-at-critical-points.md`), within 0.5.
@@ -73,6 +74,7 @@ do id=1, NSCHEMES
       case('teno5')     ; lo = 4.5_R8P
       case('teno6')     ; lo = 5.5_R8P
       case('teno6_opt') ; lo = 4.5_R8P
+      case('teno5_opt') ; lo = 3.5_R8P
       endselect
       if (any(o1 < lo) .or. any(o1 > hi)) then
          print '(A,2ES10.2)', '   ^ first-order critical point outside the literature range: ', lo, hi

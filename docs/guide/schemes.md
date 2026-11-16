@@ -199,12 +199,12 @@ Mach reflection for $r > 4$ (llm-wiki high-order-capturing-schemes `methods/weno
 one-dimensional, so that claim is neither confirmed nor refuted here. The orders of $\tau$ are measured exactly by the table generator (Castro et al.'s
 $\tau_7 = \lvert\beta_0-\beta_1-\beta_2+\beta_3\rvert$ is $O(h^6)$, as Li et al. 2022 state).
 
-## TENO: TENO5, TENO6, TENO6-opt, TENO6-NENO6
+## TENO: TENO5, TENO5-opt, TENO6, TENO6-opt, TENO6-NENO6
 
 TENO (Fu, Hu & Adams 2016) changes two things. Its candidates have **incremental widths**: three-cell candidates
 around the face and, for TENO6, a fourth one of four cells that reaches downwind, so that the full stencil can carry
 a linear scheme of a chosen order and spectral behaviour. TENO5's linear weights give exactly WENO5's linear scheme;
-TENO6's give a sixth-order one, and TENO6-opt and NENO6 trade order for lower dispersion and dissipation. And its
+TENO6's give a sixth-order one, and TENO5-opt, TENO6-opt and NENO6 trade order for lower dispersion and dissipation. And its
 weights are a **cutoff**: each candidate either keeps its linear weight or is dropped, so on smooth data the scheme
 *is* its linear scheme, with that scheme's spectral properties, not an approximation of it.
 
@@ -225,9 +225,20 @@ $g = 1 + \tau/(\beta+\varepsilon)$: the same values, without the overflow of $\g
 | Kernel | $d_k$ | Order | $C_T$ constant | Source |
 |---|---|---|---|---|
 | `seth_teno5` | 0.6, 0.3, 0.1 | 5 | `SETH_TENO5_CT` = $10^{-5}$ | Fu et al. 2016, Table 5 |
+| `seth_teno5_opt` | 0.55, 0.4, 0.05 | 4 | `SETH_TENO5_OPT_CT` = $10^{-5}$ | Fu et al. 2016, Tables 3 and 5 |
 | `seth_teno6` | 0.45, 0.3, 0.05, 0.2 | 6 | `SETH_TENO6_CT` = $10^{-7}$ | Fu et al. 2016, Table 5 |
 | `seth_teno6_opt` | 0.462, 0.3, 0.054, 0.184 | 5 | `SETH_TENO6_OPT_CT` = $10^{-7}$ | Fu et al. 2016, Table 5 |
 | `seth_teno6_neno6` | 0.42943, 0.17273, 0.08557, 0.31227 | 4 | `SETH_TENO6_NENO6_CT` = $10^{-6}$ | the NENO6 paper |
+
+**The optimised weights.** Fu et al. (2016, §4, Eq. (31)) build the background of order $K-1$ as
+$\eta\, g^{(1)} + (1-\eta)\, g^{(2)}$, two schemes of order $K-1$ on the $K$-point stencil: for $K = 5$ the upwind
+$\tfrac1{12}(f_{i-2} - 5f_{i-1} + 13f_i + 3f_{i+1})$ and the central $\tfrac1{12}(-f_{i-1} + 7f_i + 7f_{i+1} - f_{i+2})$
+(Eq. (32)); for $K = 6$ two fifth-order ones that share the dispersion of the sixth-order central scheme (Eq. (33)).
+$\eta = 0.4$ gives back the upwind fifth-order scheme; smaller $\eta$ moves toward the central one and removes
+dissipation. The table generator solves for the candidates' weights that reproduce that combination: $\eta = 0.2$
+gives exactly $\tfrac{11}{20}, \tfrac25, \tfrac1{20}$ and $\eta = 0.54$ exactly $0.462, 0.3, 0.054, 0.184$, the
+values of Fu et al.'s Tables 3 to 5, which it asserts. TENO5-opt's linear scheme is fourth order, measured 3.99–4.01,
+and stays fourth order at a first-order critical point.
 
 "TENO6-opt" denotes different weights in different papers; SETH's is the founding paper's. Lowering $C_T$ keeps more
 candidates (less dissipation, less robustness); the defaults are the papers'.
@@ -281,7 +292,7 @@ What exists is the pieces:
 |---|---|---|---|---|
 | WENO-JS | `seth_weno{1,3,5,7,9}_js` (+ `_wr`, `_interp`, `_interp_wr`) | $S = 1..5$, width $S$ | $2S-1$ | `rmu` |
 | WENO-Z | `seth_wenoz{3,5,7,9}` (+ `_interp`) | $S = 2..5$, width $S$ | $2S-1$ | `p` |
-| TENO | `seth_teno5`, `seth_teno6` (+ `_interp`), `seth_teno6_opt`, `seth_teno6_neno6` | 3 or 4, incremental | 5, 6 (opt 5, NENO6 4) | `ct` |
+| TENO | `seth_teno5`, `seth_teno6` (+ `_interp`), `seth_teno5_opt`, `seth_teno6_opt`, `seth_teno6_neno6` | 3 or 4, incremental | 5, 6 (5-opt 4, 6-opt 5, NENO6 4) | `ct` |
 | positivity | `seth_positivity_euler`, `seth_euler_admissible` | | | |
 
 Arguments and constants: [API](/guide/api). Stencil layout: [Conventions](/guide/conventions).

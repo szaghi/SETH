@@ -13,7 +13,8 @@ which cite the paper; the provenance of every formula is in `notes/m2-sources.md
 - Don, W.S., Li, P., Wang, K.Y., Wang, Y. (2022). *J. Comput. Phys.* 448:110724 — scale-invariant weights (through
   ADAM).
 - Fu, L., Hu, X.Y., Adams, N.A. (2016). A family of high-order targeted ENO schemes. *J. Comput. Phys.* 305:333.
-  doi:10.1016/j.jcp.2015.10.037 — TENO, $C_T$, TENO6 and TENO6-opt weights (via llm-wiki).
+  doi:10.1016/j.jcp.2015.10.037 — TENO, $C_T$, the TENO6 weights; the optimised backgrounds (Eqs. (31)–(33)) from
+  which the generator derives the TENO5-opt and TENO6-opt weights of Tables 3–5 (read in the paper).
 - Henrick, A.K., Aslam, T.D., Powers, J.M. (2005). Mapped WENO schemes. *J. Comput. Phys.* 207:542.
   doi:10.1016/j.jcp.2005.01.023 — accuracy at critical points (via llm-wiki).
 - Jiang, G.-S., Shu, C.-W. (1996). Efficient implementation of WENO schemes. *J. Comput. Phys.* 126:202.

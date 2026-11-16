@@ -29,7 +29,7 @@ logical                 :: passed
 
 passed = .true.
 print '(A16,A6,3A14)', 'background', 'order', 'max Im xi~', 'slope at 0', 'resolution'
-do k=1, 10
+do k=1, 11
    select case(k)
    case(1) ; call js(1, WENO1_JS_A, WENO1_JS_P, c) ; call check('weno1_js', 1, .true., -1._R8P)
    case(2) ; call js(2, WENO3_JS_A, WENO3_JS_P, c) ; call check('weno3_js', 3, .true., -1._R8P)
@@ -47,6 +47,8 @@ do k=1, 10
              call check('teno6_neno6', 4, .false., -1._R8P)
    case(10); call dsc(WENOZ7_NC, WENOZ7_MAXW, WENOZ7_CLO, WENOZ7_CW, WENOZ7_P, WENOZ7_D, c)
              call check('wenoz7 (= js7)', 7, .true., 0.42_R8P)
+   case(11); call dsc(TENO5_OPT_NC, TENO5_OPT_MAXW, TENO5_OPT_CLO, TENO5_OPT_CW, TENO5_OPT_P, TENO5_OPT_D, c)
+             call check('teno5_opt', 4, .true., -1._R8P)
    endselect
 enddo
 if (.not.passed) error stop 'spectral test failed'

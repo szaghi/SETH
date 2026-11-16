@@ -117,6 +117,22 @@ public :: TENO6_LG
 public :: TENO6_DG
 public :: TENO6_INTERP_P
 public :: TENO6_INTERP_D
+public :: TENO5_OPT_NC
+public :: TENO5_OPT_LO
+public :: TENO5_OPT_UMAX
+public :: TENO5_OPT_MAXW
+public :: TENO5_OPT_TG
+public :: TENO5_OPT_CLO
+public :: TENO5_OPT_CW
+public :: TENO5_OPT_P
+public :: TENO5_OPT_L
+public :: TENO5_OPT_DQ
+public :: TENO5_OPT_D
+public :: TENO5_OPT_TC
+public :: TENO5_OPT_GLO
+public :: TENO5_OPT_GW
+public :: TENO5_OPT_LG
+public :: TENO5_OPT_DG
 public :: TENO6_OPT_NC
 public :: TENO6_OPT_LO
 public :: TENO6_OPT_UMAX
@@ -395,6 +411,35 @@ real(R8P), parameter :: TENO6_INTERP_P(0:3,0:3) = reshape([ & !< interpolation: 
       1._R8P/16._R8P], [4,4])
 real(R8P), parameter :: TENO6_INTERP_D(0:3) = reshape([ & !< interpolation linear weights
       15._R8P/32._R8P, 5._R8P/16._R8P, 1._R8P/32._R8P, 3._R8P/16._R8P], [4])
+
+! TENO5-opt: TENO5 with the optimised linear weights of Fu, Hu & Adams 2016 (eta = 0.2, 4th order)
+integer(I4P), parameter :: TENO5_OPT_NC = 3_I4P !< candidate stencils
+integer(I4P), parameter :: TENO5_OPT_LO = -2_I4P !< first cell of the stencil arrays (bounds LO:1-LO)
+integer(I4P), parameter :: TENO5_OPT_UMAX = 2_I4P !< last cell any candidate reads (left bias)
+integer(I4P), parameter :: TENO5_OPT_MAXW = 3_I4P !< widest candidate
+real(R8P), parameter :: TENO5_OPT_TG = 0._R8P !< coefficient of the global indicator in tau (0: none)
+integer(I4P), parameter :: TENO5_OPT_CLO(0:2) = [-1_I4P, 0_I4P, -2_I4P] !< first cell of each candidate
+integer(I4P), parameter :: TENO5_OPT_CW(0:2) = [3_I4P, 3_I4P, 3_I4P] !< width of each candidate
+real(R8P), parameter :: TENO5_OPT_P(0:2,0:2) = reshape([ & !< face coefficient of cell CLO(k)+j
+      -1._R8P/6._R8P, 5._R8P/6._R8P, 1._R8P/3._R8P, 1._R8P/3._R8P, 5._R8P/6._R8P, -1._R8P/6._R8P, 1._R8P/3._R8P, &
+      -7._R8P/6._R8P, 11._R8P/6._R8P], [3,3])
+real(R8P), parameter :: TENO5_OPT_L(0:2,0:2,0:2) = reshape([ & !< indicator factors: beta_k = sum_i DQ(i,k) (sum_a L(a,i,k) u_a)^2
+      1._R8P, -13._R8P/8._R8P, 5._R8P/8._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 1._R8P, 1._R8P, &
+      -31._R8P/20._R8P, 11._R8P/20._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 1._R8P, 1._R8P, -19._R8P/8._R8P, &
+      11._R8P/8._R8P, 0._R8P, 1._R8P, -1._R8P, 0._R8P, 0._R8P, 1._R8P], [3,3,3])
+real(R8P), parameter :: TENO5_OPT_DQ(0:2,0:2) = reshape([ & !< indicator pivots DQ(i,k) >= 0
+      4._R8P/3._R8P, 13._R8P/16._R8P, 0._R8P, 10._R8P/3._R8P, 13._R8P/40._R8P, 0._R8P, 4._R8P/3._R8P, 13._R8P/16._R8P, &
+      0._R8P], [3,3])
+real(R8P), parameter :: TENO5_OPT_D(0:2) = reshape([ & !< linear weights
+      11._R8P/20._R8P, 2._R8P/5._R8P, 1._R8P/20._R8P], [3])
+real(R8P), parameter :: TENO5_OPT_TC(0:2) = reshape([ & !< tau coefficients on the beta_k
+      0._R8P, 1._R8P, -1._R8P], [3])
+integer(I4P), parameter :: TENO5_OPT_GLO = -2_I4P !< first cell of the global stencil
+integer(I4P), parameter :: TENO5_OPT_GW = 1_I4P !< width of the global stencil
+real(R8P), parameter :: TENO5_OPT_LG(0:0,0:0) = reshape([ & !< global indicator, sum of squares: L
+      0._R8P], [1,1])
+real(R8P), parameter :: TENO5_OPT_DG(0:0) = reshape([ & !< global indicator pivots
+      0._R8P], [1])
 
 ! TENO6-opt: TENO6 with the optimised linear weights of Fu, Hu & Adams 2016 (5th order)
 integer(I4P), parameter :: TENO6_OPT_NC = 4_I4P !< candidate stencils

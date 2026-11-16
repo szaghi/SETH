@@ -38,6 +38,7 @@ MUTANTS = [
     ('descaling', 'src/lib/seth_descaling.F90', 'mu = mu + abs(vp(m))', 'mu = mu + abs(vp(m))',
      'mu = mu + abs(vp(m+1))'),
     ('teno6-linear-weight', 'src/lib/seth_z_teno_tables.F90', 'TENO6_D(0:3)', '9._R8P/20._R8P', '0.451_R8P'),
+    ('teno5-opt-linear-weight', 'src/lib/seth_z_teno_tables.F90', 'TENO5_OPT_D(0:2)', '11._R8P/20._R8P', '0.5501_R8P'),
     ('teno6-tau', 'src/lib/seth_z_teno_tables.F90', 'TENO6_TC(0:3)', '-2._R8P/3._R8P', '-0.6_R8P'),
     ('teno6-indicator-pivot', 'src/lib/seth_z_teno_tables.F90', 'TENO6_DQ(0:3,0:3)', '4._R8P/3._R8P', '1.4_R8P'),
     ('wenoz5-tau', 'src/lib/seth_z_teno_tables.F90', 'WENOZ5_TC(0:2)', '1._R8P, 0._R8P, -1._R8P',

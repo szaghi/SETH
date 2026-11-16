@@ -122,6 +122,8 @@ contains
    case('teno6_neno6')
       call dsc(TENO6_NENO6_NC, TENO6_NENO6_MAXW, TENO6_NENO6_CLO, TENO6_NENO6_CW, TENO6_NENO6_P, TENO6_NENO6_D, c)
       dissipative = .false.
+   case('teno5_opt')
+      call dsc(TENO5_OPT_NC, TENO5_OPT_MAXW, TENO5_OPT_CLO, TENO5_OPT_CW, TENO5_OPT_P, TENO5_OPT_D, c)
    case default ; error stop 'background: unknown scheme'
    end select
    endsubroutine background

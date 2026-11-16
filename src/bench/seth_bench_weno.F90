@@ -12,6 +12,8 @@ program seth_bench_weno
 !<  7 SETH seth_wenoz5 (p=1), 8 SETH seth_teno6 (C_T=1e-7): for reference
 !<  9, 10 ADAM's host weno_reconstruct_upwind (what FLUME's CPU backend calls), S=3 and S=4: CPU builds only (no
 !<        acc routine); in an OpenACC build they are skipped
+!< 11.. SETH kernels added after v0.1.0, each against its cost budget (roadmap issue #4, gate PERF1): 11 seth_teno5,
+!<      12 seth_teno5_opt
 !<
 !< ADAM's variants pack ADAM's rows as FLUME does (v(2,m) = fp(i+m), v(1,m) = fm(i+m+1)). Built with -acc the loops run
 !< on the device (timed with !$acc wait + system_clock); without, on one CPU core. Each variant: 2 warm-up passes, then
@@ -27,13 +29,14 @@ use adam_fnl_weno_width_kernels, only : weno_reconstruct_upwind_s3_dev, weno_rec
 use seth_adam_reference,         only : weno_reconstruct_upwind
 implicit none
 integer(I4P), parameter :: NG = 4_I4P         !< Ghost cells (WENO-7 reads i-3..i+4).
-integer(I4P), parameter :: NV = 10_I4P        !< Variants.
+integer(I4P), parameter :: NV = 12_I4P        !< Variants.
 integer(I4P), parameter :: SAMPLE = 65536_I4P !< Faces checked against the host.
 real(R8P),    parameter :: TOL = 64._R8P*epsilon(1._R8P)
 character(31), parameter :: NAMES(NV) = [character(31) :: 'SETH  weno5_js', 'ADAM  generic S=3', 'ADAM  width s3', &
                                          'SETH  weno7_js', 'ADAM  generic S=4', 'ADAM  width s4', &
                                          'SETH  wenoz5 (p=1)', 'SETH  teno6 (C_T=1e-7)', &
-                                         'ADAM  host S=3 (FLUME CPU)', 'ADAM  host S=4 (FLUME CPU)']
+                                         'ADAM  host S=3 (FLUME CPU)', 'ADAM  host S=4 (FLUME CPU)', &
+                                         'SETH  teno5 (C_T=1e-5)', 'SETH  teno5_opt (C_T=1e-5)']
 real(R8P), allocatable :: fp(:), fm(:), rp(:), rm(:), rp5(:), rm5(:), rp7(:), rm7(:)
 real(R8P), allocatable :: a3(:,:,:), p3(:,:,:,:), d3(:,:,:,:), a4(:,:,:), p4(:,:,:,:), d4(:,:,:,:)
 real(R8P), allocatable :: times(:)
@@ -64,7 +67,7 @@ print '(A,I0,A,I0,A)', 'faces: ', n, ', timed passes: ', reps, ' per variant'
 med = -1._R8P ; tmin = -1._R8P
 do v=1, NV
 #ifdef _OPENACC
-   if (v >= 9) cycle ! host routines: no acc routine
+   if (v == 9 .or. v == 10) cycle ! host routines: no acc routine
 #endif
    do r=1, 2
       call run(v)
@@ -171,6 +174,22 @@ contains
          enddo
          call seth_teno6(vp5, vm5, SETH_TENO_EPS, 1.e-7_R8P, rp(i), rm(i))
       enddo
+   case(11)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm) private(vp5, vm5)
+      do i=1, n
+         do m=-2, 3
+            vp5(m) = fp(i+m) ; vm5(m) = fm(i+m)
+         enddo
+         call seth_teno5(vp5, vm5, SETH_TENO_EPS, SETH_TENO5_CT, rp(i), rm(i))
+      enddo
+   case(12)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm) private(vp5, vm5)
+      do i=1, n
+         do m=-2, 3
+            vp5(m) = fp(i+m) ; vm5(m) = fm(i+m)
+         enddo
+         call seth_teno5_opt(vp5, vm5, SETH_TENO_EPS, SETH_TENO5_OPT_CT, rp(i), rm(i))
+      enddo
    case(9)
       do i=1, n
          do m=-2, 2
@@ -197,7 +216,7 @@ contains
    integer(I4P)             :: i, m, k, stride
    diff = 0._R8P
    select case(v)
-   case(1, 4, 7, 8)
+   case(1, 4, 7, 8, 11:)
       stride = max(1_I4P, n/SAMPLE)
       do k=1, n, stride
          i = k
@@ -212,6 +231,8 @@ contains
          case(4) ; call seth_weno7_js(vp7, vm7, SETH_WENO_JS_EPS, 1._R8P, hp, hm)
          case(7) ; call seth_wenoz5(vp5, vm5, 1.e-40_R8P, 1_I4P, hp, hm)
          case(8) ; call seth_teno6(vp5, vm5, SETH_TENO_EPS, 1.e-7_R8P, hp, hm)
+         case(11) ; call seth_teno5(vp5, vm5, SETH_TENO_EPS, SETH_TENO5_CT, hp, hm)
+         case(12) ; call seth_teno5_opt(vp5, vm5, SETH_TENO_EPS, SETH_TENO5_OPT_CT, hp, hm)
          endselect
          vmax = max(maxval(abs(vp7)), maxval(abs(vm7)))
          diff = max(diff, abs(rp(i) - hp)/vmax, abs(rm(i) - hm)/vmax)

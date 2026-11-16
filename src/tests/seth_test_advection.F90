@@ -169,6 +169,8 @@ contains
                                     TENO6_OPT_D, v)
    case('teno6_neno6') ; r = lin_of(TENO6_NENO6_NC, TENO6_NENO6_MAXW, TENO6_NENO6_CLO, TENO6_NENO6_CW, &
                                     TENO6_NENO6_P, TENO6_NENO6_D, v)
+   case('teno5_opt')    ; r = lin_of(TENO5_OPT_NC, TENO5_OPT_MAXW, TENO5_OPT_CLO, TENO5_OPT_CW, TENO5_OPT_P, &
+                                    TENO5_OPT_D, v)
    case default        ; error stop 'linear_teno: not a TENO scheme'
    endselect
    endfunction linear_teno

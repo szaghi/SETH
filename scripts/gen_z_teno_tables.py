@@ -196,9 +196,22 @@ def weno_cells(S: int) -> list[list[int]]:
 
 TENO_CELLS = [[-1, 0, 1], [0, 1, 2], [-2, -1, 0], [0, 1, 2, 3]]  # Li, Fu & Adams 2020, Table 1 (i -> 0)
 TABLE1 = [[Fr(-1, 6), Fr(5, 6), Fr(2, 6)], [Fr(2, 6), Fr(5, 6), Fr(-1, 6)], [Fr(2, 6), Fr(-7, 6), Fr(11, 6)],
-          [Fr(3, 12), Fr(13, 12), Fr(-5, 12), Fr(1, 12)]]
+          [Fr(3, 12), Fr(13, 12), Fr(-5, 12), Fr(1, 12)],
+          # k = 4, 5 of the eight-point TENO: Fu, Hu & Adams 2016, Table 1
+          [Fr(-3, 12), Fr(13, 12), Fr(-23, 12), Fr(25, 12)],
+          [Fr(12, 60), Fr(77, 60), Fr(-43, 60), Fr(17, 60), Fr(-3, 60)]]
+TENO8_CELLS = TENO_CELLS + [[-3, -2, -1, 0], [0, 1, 2, 3, 4]]  # Fu, Hu & Adams 2016, Table 1, k = 0..5
 # TENO6-opt of Fu, Hu & Adams 2016, Table 5 (llm-wiki weno-teno targeted-eno.md, high-order-capturing teno.md)
 TENO6_OPT_D = ['0.462_R8P', '0.3_R8P', '0.054_R8P', '0.184_R8P']
+# The optimised backgrounds of Fu, Hu & Adams 2016, section 4, Eq. (31): eta g1 + (1 - eta) g2, two sub-schemes of
+# order K-1 on the K-point stencil: Eq. (32) for K = 5 (eta = 0.2: TENO5-opt), Eq. (33) for K = 6 (eta = 0.54:
+# TENO6-opt). Cells by offset (i -> 0), coefficients as printed.
+OPT_SUBSCHEMES = {
+    5: ([-2, -1, 0, 1], [Fr(1, 12), Fr(-5, 12), Fr(13, 12), Fr(3, 12)],
+        [-1, 0, 1, 2], [Fr(-1, 12), Fr(7, 12), Fr(7, 12), Fr(-1, 12)]),
+    6: ([-2, -1, 0, 1, 2], [Fr(2, 60), Fr(-13, 60), Fr(47, 60), Fr(27, 60), Fr(-3, 60)],
+        [-1, 0, 1, 2, 3], [Fr(-3, 60), Fr(27, 60), Fr(47, 60), Fr(-13, 60), Fr(2, 60)]),
+}
 # the optimised weights of the NENO6 paper (arXiv:2207.08500, section 2.2), a later and different optimisation
 TENO6_NENO6_D = ['0.4294317718960898_R8P', '0.1727270875843552_R8P', '0.0855682281039113_R8P', '0.312272912415645_R8P']
 
@@ -215,6 +228,8 @@ SCHEMES = {
     'TENO5': (TENO_CELLS[:3], [0, 1, -1], None, 0, 'max', 'teno', 5, 'TENO5: tau_5 = |beta_1 - beta_2|'),
     'TENO6': (TENO_CELLS, [Fr(-4, 6), Fr(-1, 6), Fr(-1, 6), 0], list(range(-2, 4)), 1, 'max', 'teno', 6,
               'TENO6: tau_6 = beta_6 - (beta_1 + beta_2 + 4 beta_0)/6, max-order linear weights'),
+    'TENO5_OPT': (TENO_CELLS[:3], [0, 1, -1], None, 0, 'opt5', 'teno', 5,
+                  'TENO5-opt: TENO5 with the optimised linear weights of Fu, Hu & Adams 2016 (eta = 0.2, 4th order)'),
     'TENO6_OPT': (TENO_CELLS, [Fr(-4, 6), Fr(-1, 6), Fr(-1, 6), 0], list(range(-2, 4)), 1, TENO6_OPT_D, 'teno', 6,
                   'TENO6-opt: TENO6 with the optimised linear weights of Fu, Hu & Adams 2016 (5th order)'),
     'TENO6_NENO6': (TENO_CELLS, [Fr(-4, 6), Fr(-1, 6), Fr(-1, 6), 0], list(range(-2, 4)), 1, TENO6_NENO6_D, 'teno', 6,
@@ -224,6 +239,31 @@ SCHEMES = {
 # the schemes that also get interpolation tables (owner decision 2026-11-15: not TENO6-opt nor NENO6, whose weights are
 # tuned for the reconstruction)
 INTERP = ('WENOZ3', 'WENOZ5', 'WENOZ7', 'WENOZ9', 'TENO5', 'TENO6')
+
+
+def opt_weights(cands: list[list[int]], k: int, eta: Fr) -> list[Fr]:
+    """Linear weights of the candidates whose combination is eta g1 + (1 - eta) g2 (Fu, Hu & Adams 2016, Eq. (31)):
+    solved on the face coefficients over the union of the cells, and checked on every cell (exit if inconsistent)."""
+    c1, g1, c2, g2 = OPT_SUBSCHEMES[k]
+    cells = sorted({x for c in cands for x in c} | set(c1) | set(c2))
+    target = {m: Fr(0) for m in cells}
+    for m, g in zip(c1, g1):
+        target[m] += eta * g
+    for m, g in zip(c2, g2):
+        target[m] += (1 - eta) * g
+    a = [[dict(zip(c, face_coefficients(c))).get(m, Fr(0)) for c in cands] for m in cells]
+    rows, rhs = [], []
+    for m, row in zip(cells, a):
+        if rank(rows + [row]) > len(rows):
+            rows.append(row)
+            rhs.append(target[m])
+        if len(rows) == len(cands):
+            break
+    d = solve(rows, rhs)
+    for m, row in zip(cells, a):
+        if sum(x * y for x, y in zip(d, row)) != target[m]:
+            sys.exit(f'opt weights K={k} eta={eta}: the candidates cannot represent eta g1 + (1 - eta) g2')
+    return d
 
 
 def max_order_weights(cands: list[list[int]], label: str, interp: bool = False) -> tuple[list[Fr], int]:
@@ -288,9 +328,20 @@ def run_checks(adam_source: str) -> None:
         for n in range(len(cells)):
             if sum(c * cell_avg_monomial(m, n) for c, m in zip(coefs, cells)) != (1 if n == 0 else 0):
                 check_fail(f'candidate {cells} not exact to degree {n}')
-    for k, cells in enumerate(TENO_CELLS):
+    for k, cells in enumerate(TENO8_CELLS):
         if face_coefficients(cells) != TABLE1[k]:
             check_fail(f'TENO candidate {k} differs from Table 1: {face_coefficients(cells)}')
+    # the sub-schemes of Eqs. (32)-(33) are the order K-1 reconstructions on their cells, and the eta combinations give
+    # Fu et al.'s optimised weights: Table 3 (eta = 0.2) = Table 5 TENO5-opt, Table 4 (eta = 0.54) = Table 5 TENO6-opt
+    for k, (c1, g1, c2, g2) in OPT_SUBSCHEMES.items():
+        if face_coefficients(c1) != g1 or face_coefficients(c2) != g2:
+            check_fail(f'K={k}: the sub-schemes of Fu et al. Eq. (32)/(33) are not the reconstructions of their cells')
+    for k, eta, cands, want in ((5, Fr(1, 5), TENO_CELLS[:3], [Fr(55, 100), Fr(40, 100), Fr(5, 100)]),
+                                (6, Fr(54, 100), TENO_CELLS, [Fr(w.replace('_R8P', '')) for w in TENO6_OPT_D])):
+        got = opt_weights(cands, k, eta)
+        print(f'  K={k}, eta={eta}: optimised weights {[str(x) for x in got]}')
+        if got != want:
+            check_fail(f'K={k}, eta={eta}: optimised weights {got} differ from Fu et al. Table 5 {want}')
     # 3: indicators vs ADAM's tables (row 2, stencil s1 = k: cells k-S+1..k, IS = sum d(s3,s2,k) v(k-s3) v(k-s2))
     for S, scale in ((3, 1), (4, 240), (5, 5040)):
         d = _js.parse(_js.routine(adam_source, f'initialize_upwind_S{S}'))['d']
@@ -323,13 +374,14 @@ def run_checks(adam_source: str) -> None:
         if d != [_js.rational(a[2, k]) for k in range(S)] or order != 2 * S - 1:
             check_fail(f'WENO S={S}: derived linear weights {d} differ from ADAM\'s')
     # the order of the quoted optimised TENO6 weights: Fu's lose one order, NENO6's two
-    for label, wq, want in (('TENO6-opt', TENO6_OPT_D, 5), ('TENO6-NENO6', TENO6_NENO6_D, 4)):
-        dq = [Fr(w.replace('_R8P', '')) for w in wq]
-        coefs = [face_coefficients(c) for c in TENO_CELLS]
+    for label, wq, want, cl in (('TENO6-opt', TENO6_OPT_D, 5, TENO_CELLS), ('TENO6-NENO6', TENO6_NENO6_D, 4, TENO_CELLS),
+                                ('TENO5-opt', opt_weights(TENO_CELLS[:3], 5, Fr(1, 5)), 4, TENO_CELLS[:3])):
+        dq = [Fr(w.replace('_R8P', '')) if isinstance(w, str) else w for w in wq]
+        coefs = [face_coefficients(c) for c in cl]
         got = 0
         for n in range(8):
-            r = sum(dq[k] * sum(coefs[k][j] * cell_avg_monomial(m, n) for j, m in enumerate(TENO_CELLS[k]))
-                    for k in range(4)) - (1 if n == 0 else 0)
+            r = sum(dq[k] * sum(coefs[k][j] * cell_avg_monomial(m, n) for j, m in enumerate(cl[k]))
+                    for k in range(len(cl))) - (1 if n == 0 else 0)
             if abs(float(r)) > 1e-12:
                 break
             got += 1
@@ -412,7 +464,12 @@ def emit(name: str) -> tuple[str, list[str]]:
     maxw = max(len(c) for c in cands)
     lo = min(min(c) for c in cands)
     umax = max(max(c) for c in cands)
-    d = max_order_weights(cands, name)[0] if wts == 'max' else wts
+    if wts == 'max':
+        d = max_order_weights(cands, name)[0]
+    elif wts == 'opt5':
+        d = opt_weights(cands, 5, Fr(1, 5))
+    else:
+        d = wts
     out = [f'! {doc}\n']
     names = []
 
