@@ -27,6 +27,18 @@ compiler unrolls, nothing to keep on the device.
 **Caveat.** The RTX 4070 runs FP64 at 1/64 of its FP32 rate, which favours whichever kernel issues fewer instructions;
 the production margin is the one of a data-centre GPU (A30, H100). Details and raw outputs: `notes/m3-gpu-benchmark.md`.
 
+## Regressions
+
+Every kernel added after v0.1.0 is benchmarked against a recorded baseline before it is merged:
+`notes/bench-baseline/` holds three raw runs per build (the RTX 4070 and one core of the i9-13900KF), and
+`scripts/bench_compare.py` fails when a variant's median exceeds the baseline's by more than 3 % plus the spread of
+the baseline's runs. On the GPU that spread is below 1 %; on one WSL2 CPU core it is 5 to 20 %, so the CPU check only
+catches large regressions.
+
+```bash
+python3 scripts/bench_compare.py notes/bench-baseline/rtx4070-nvf-oac run-1.txt run-2.txt run-3.txt
+```
+
 ## Device-kernel rules: arrays and loop extents
 
 Two rules of ADAM's device kernels, measured on SETH by `src/bench/seth_bench_device_arrays.F90`

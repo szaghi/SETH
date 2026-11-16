@@ -1,0 +1,20 @@
+faces: 16777216, timed passes: 20 per variant
+SETH  weno5_js                 : device vs host SETH, max scaled difference  0.00E+00
+ADAM  generic S=3              : vs SETH weno5_js, max scaled difference  0.00E+00
+ADAM  width s3                 : vs SETH weno5_js, max scaled difference  0.00E+00
+SETH  weno7_js                 : device vs host SETH, max scaled difference  0.00E+00
+ADAM  generic S=4              : vs SETH weno7_js, max scaled difference  0.00E+00
+ADAM  width s4                 : vs SETH weno7_js, max scaled difference  0.00E+00
+SETH  wenoz5 (p=1)             : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno6 (C_T=1e-7)         : device vs host SETH, max scaled difference  4.44E-16
+
+                        variant    median ms       min ms      ns/face vs ADAM gen.
+SETH  weno5_js                        16.591       16.555        0.989         1.42
+ADAM  generic S=3                     23.593       23.497        1.406         1.00
+ADAM  width s3                        21.760       21.716        1.297         1.08
+SETH  weno7_js                        30.158       30.122        1.798         1.34
+ADAM  generic S=4                     40.268       40.150        2.400         1.00
+ADAM  width s4                        37.935       37.858        2.261         1.06
+SETH  wenoz5 (p=1)                    16.488       16.464        0.983         1.43
+SETH  teno6 (C_T=1e-7)                39.863       39.800        2.376         1.01
+seth_bench_weno: checks ok
