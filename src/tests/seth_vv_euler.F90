@@ -4,7 +4,8 @@ module seth_vv_euler
 !<
 !< Ideal gas, gamma = 1.4, conservative variables q = (rho, rho u, E) on N cells of width h with NG = 5 ghost cells
 !< (WENO-9), point values at the cell centres (conservative finite differences: the fluxes at the faces, du/dt =
-!< -(F_{i+1/2} - F_{i-1/2})/h). Two space discretizations, the two ways SETH's kernels are used:
+!< -(F_{i+1/2} - F_{i-1/2})/h). Three space discretizations, the two ways SETH's kernels are used and a variant of the
+!< first:
 !<
 !< - PATH_SPLIT, the reconstruction kernels: flux splitting (Shu & Osher 1989; Jiang & Shu 1996) on characteristic
 !<   variables. At each face the Roe-averaged left and right eigenvectors L, R project the stencil's states and fluxes,
@@ -19,6 +20,13 @@ module seth_vv_euler
 !<   order with the even derivatives of the flux, F = F0 - h^2/24 f_xx + 7 h^4/5760 f_xxxx, f_xx h^2 and f_xxxx h^4
 !<   from the six node fluxes around the face (exact coefficients: O(h^4) and O(h^2), so the correction errs by
 !<   O(h^6)). A face state with rho <= 0 or p <= 0 falls back to the first-order states (counted in `nfallback`).
+!< - PATH_ROE, the reconstruction kernels with Roe's flux splitting with entropy fix (issue #5; the "RF" of Jiang & Shu
+!<   1996, Shu & Osher 1989 Algorithm 2.3 in characteristic fields, notes/issue5-roe-sources.md): w and g as on the
+!<   splitting path; per field k, when lambda_k of cell i, of cell i+1 and of the Roe average all have one sign, g is
+!<   reconstructed unsplit with the upwind bias of that sign; otherwise (a sign change or a zero: the sonic case) local
+!<   Lax-Friedrichs, g+- = (g +- alpha w)/2, alpha = max(|lambda_k(q_i)|, |lambda_k(q_{i+1})|) (Shu & Osher Eq. (4.4)),
+!<   reconstructed as on the splitting path; such fields are counted in `nsonic`. With `roe_fix` off, every field is
+!<   upwinded by the sign of the Roe eigenvalue (Algorithm 2.1, no entropy fix: the negative control).
 !<
 !< Positivity: with `limiter` on, the flux of every face is blended with the first-order Lax-Friedrichs flux,
 !< F = theta F_high + (1 - theta) F_LF, theta in [0, 1] as large as keeps rho and p of the two one-sided states
@@ -46,13 +54,14 @@ use seth
 use seth_test_schemes, only : reconstruct, VLO, VHI, SCHEMES
 implicit none
 private
-public :: GAMMA, NG, PATH_SPLIT, PATH_INTERP, BC_PERIODIC, BC_TRANSMISSIVE, BC_REFLECTIVE
+public :: GAMMA, NG, PATH_SPLIT, PATH_INTERP, PATH_ROE, BC_PERIODIC, BC_TRANSMISSIVE, BC_REFLECTIVE
 public :: prim2cons, cons2prim, euler_dt, euler_step, nfallback, corrections, limiter, nlimited, positive_state
+public :: roe_fix, nsonic
 public :: HYB_NONE, HYB_COST, HYB_KEP, HYB_LEFT_KEP, HYB_RANDOM, hybrid, hyb_buffer, hyb_split, nflagged, nhybfaces
 
 real(R8P),    parameter :: GAMMA = 1.4_R8P
 integer(I4P), parameter :: NG = 5_I4P
-integer(I4P), parameter :: PATH_SPLIT = 1, PATH_INTERP = 2
+integer(I4P), parameter :: PATH_SPLIT = 1, PATH_INTERP = 2, PATH_ROE = 3
 integer(I4P), parameter :: BC_PERIODIC = 1, BC_TRANSMISSIVE = 2, BC_REFLECTIVE = 3
 ! f'' h^2 and f'''' h^4 at the face from the node fluxes of cells -2..3 (exact rationals)
 real(R8P), parameter :: C2(-2:3) = [-5._R8P/48._R8P, 13._R8P/16._R8P, -17._R8P/24._R8P, -17._R8P/24._R8P, &
@@ -62,6 +71,8 @@ integer(I4P) :: nfallback = 0 !< Interpolated face states replaced by first-orde
 logical      :: corrections = .true. !< PATH_INTERP: add the flux corrections (off: the second-order flux F0).
 logical      :: limiter = .false.    !< Positivity-preserving flux limiter (Hu, Adams & Shu 2013).
 integer(I4P) :: nlimited = 0         !< Faces where the limiter blended in the first-order flux (theta < 1).
+logical      :: roe_fix = .true.     !< PATH_ROE: the entropy fix (local Lax-Friedrichs at sign changes).
+integer(I8P) :: nsonic = 0           !< PATH_ROE: characteristic fields evaluated with local Lax-Friedrichs.
 integer(I4P), parameter :: HYB_NONE = 0, HYB_COST = 1, HYB_KEP = 2, HYB_LEFT_KEP = 3, HYB_RANDOM = 4
 integer(I4P) :: hybrid = HYB_NONE    !< The hybrid of PATH_SPLIT (HYB_NONE: the nonlinear scheme everywhere).
 integer(I4P) :: hyb_buffer = 2       !< Faces each side of a flagged one that are flagged too.
@@ -175,7 +186,7 @@ contains
    real(R8P)                          :: fhat(3,0:n), fn(3,1-NG:n+NG), l(3,3), r(3,3), lam(3), alpha(3)
    real(R8P)                          :: w(3,VLO:VHI), g(3,VLO:VHI), vp(VLO:VHI), vm(VLO:VHI), rp, rm, fc(3)
    real(R8P)                          :: wl(3), wr(3), ql(3), qr(3), pl(3), pr(3)
-   real(R8P)                          :: ws(5,-2:3), fk(5), sv
+   real(R8P)                          :: ws(5,-2:3), fk(5), sv, laml(3), lamr(3), a
    logical                            :: flagged(0:n), raw(0:n)
    integer(I4P)                       :: i, m, k
    call ghosts(q, n, bc)
@@ -251,6 +262,25 @@ contains
             vm = 0.5_R8P*(g(k,:) - alpha(k)*w(k,:))
             call reconstruct(id, vp, vm, rp, rm, par=par)
             fc(k) = rp + rm
+         enddo
+         fhat(:,i) = matmul(r, fc)
+      elseif (path == PATH_ROE) then
+         pl = cons2prim(q(:,i)) ; pr = cons2prim(q(:,i+1))
+         a = sqrt(GAMMA*pl(3)/pl(1)) ; laml = [pl(2) - a, pl(2), pl(2) + a]
+         a = sqrt(GAMMA*pr(3)/pr(1)) ; lamr = [pr(2) - a, pr(2), pr(2) + a]
+         do k=1, 3
+            if (roe_fix .and. .not.((laml(k) > 0._R8P .and. lamr(k) > 0._R8P .and. lam(k) > 0._R8P) .or. &
+                                    (laml(k) < 0._R8P .and. lamr(k) < 0._R8P .and. lam(k) < 0._R8P))) then
+               a = max(abs(laml(k)), abs(lamr(k)))
+               vp = 0.5_R8P*(g(k,:) + a*w(k,:))
+               vm = 0.5_R8P*(g(k,:) - a*w(k,:))
+               call reconstruct(id, vp, vm, rp, rm, par=par)
+               fc(k) = rp + rm ; nsonic = nsonic + 1
+            else
+               vp = g(k,:)
+               call reconstruct(id, vp, vp, rp, rm, par=par)
+               fc(k) = merge(rp, rm, lam(k) >= 0._R8P)
+            endif
          enddo
          fhat(:,i) = matmul(r, fc)
       else
