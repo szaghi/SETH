@@ -20,21 +20,21 @@ integer(I4P), parameter :: FLUX_ADVECTION = 1, FLUX_BURGERS = 2
 contains
    subroutine residual(id, kind, u, n, h, res, par)
    integer(I4P), intent(in)           :: id, kind, n
-   real(R8P),    intent(in)           :: u(0:n-1), h
-   real(R8P),    intent(out)          :: res(0:n-1)
-   real(R8P),    intent(in), optional :: par
-   real(R8P)                          :: f(0:n-1), fh(0:n-1), alpha, vp(VLO:VHI), vm(VLO:VHI), rp, rm
+   real(R_P),    intent(in)           :: u(0:n-1), h
+   real(R_P),    intent(out)          :: res(0:n-1)
+   real(R_P),    intent(in), optional :: par
+   real(R_P)                          :: f(0:n-1), fh(0:n-1), alpha, vp(VLO:VHI), vm(VLO:VHI), rp, rm
    integer(I4P)                       :: i, m, j
    if (kind == FLUX_ADVECTION) then
-      f = u ; alpha = 1._R8P
+      f = u ; alpha = 1._R_P
    else
-      f = 0.5_R8P*u*u ; alpha = 1.1_R8P*maxval(abs(u))
+      f = 0.5_R_P*u*u ; alpha = 1.1_R_P*maxval(abs(u))
    endif
    do i=0, n-1 ! face i+1/2
       do m=VLO, VHI
          j = modulo(i+m, n)
-         vp(m) = 0.5_R8P*(f(j) + alpha*u(j))
-         vm(m) = 0.5_R8P*(f(j) - alpha*u(j))
+         vp(m) = 0.5_R_P*(f(j) + alpha*u(j))
+         vm(m) = 0.5_R_P*(f(j) - alpha*u(j))
       enddo
       call reconstruct(id, vp, vm, rp, rm, par=par)
       fh(i) = rp + rm
@@ -47,12 +47,12 @@ contains
    subroutine scalar_step(id, kind, u, n, h, dt, par)
    !< One SSP-RK3 step.
    integer(I4P), intent(in)           :: id, kind, n
-   real(R8P),    intent(inout)        :: u(0:n-1)
-   real(R8P),    intent(in)           :: h, dt
-   real(R8P),    intent(in), optional :: par
-   real(R8P)                          :: u1(0:n-1), u2(0:n-1), r(0:n-1)
+   real(R_P),    intent(inout)        :: u(0:n-1)
+   real(R_P),    intent(in)           :: h, dt
+   real(R_P),    intent(in), optional :: par
+   real(R_P)                          :: u1(0:n-1), u2(0:n-1), r(0:n-1)
    call residual(id, kind, u, n, h, r, par)  ; u1 = u + dt*r
-   call residual(id, kind, u1, n, h, r, par) ; u2 = 0.75_R8P*u + 0.25_R8P*(u1 + dt*r)
-   call residual(id, kind, u2, n, h, r, par) ; u = u/3._R8P + 2._R8P/3._R8P*(u2 + dt*r)
+   call residual(id, kind, u1, n, h, r, par) ; u2 = 0.75_R_P*u + 0.25_R_P*(u1 + dt*r)
+   call residual(id, kind, u2, n, h, r, par) ; u = u/3._R_P + 2._R_P/3._R_P*(u2 + dt*r)
    endsubroutine scalar_step
 endmodule seth_vv_scalar

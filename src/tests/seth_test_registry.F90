@@ -7,7 +7,7 @@ use seth
 use seth_test_rng, only : seed_rng
 use seth_test_schemes
 implicit none
-real(R8P)    :: vp(VLO:VHI), vm(VLO:VHI), rp, rm, rp2, rm2, wrp, wrm
+real(R_P)    :: vp(VLO:VHI), vm(VLO:VHI), rp, rm, rp2, rm2, wrp, wrm
 integer(I4P) :: id, j, n_
 logical      :: passed
 
@@ -24,8 +24,8 @@ do id=1, NSCHEMES
       if (rp /= rp2 .or. rm /= rm2) then
          print '(A)', trim(SCHEMES(id)%name)//': _wr kernel states differ from the plain kernel' ; passed = .false. ; exit
       endif
-      if (SCHEMES(id)%family <= FAM_JS_INTERP .and. .not.(wrp >= 0._R8P .and. wrp <= 1._R8P + 4._R8P*epsilon(1._R8P) &
-                                                      .and. wrm >= 0._R8P .and. wrm <= 1._R8P + 4._R8P*epsilon(1._R8P))) then
+      if (SCHEMES(id)%family <= FAM_JS_INTERP .and. .not.(wrp >= 0._R_P .and. wrp <= 1._R_P + 4._R_P*epsilon(1._R_P) &
+                                                      .and. wrm >= 0._R_P .and. wrm <= 1._R_P + 4._R_P*epsilon(1._R_P))) then
          print '(A,2ES12.4)', trim(SCHEMES(id)%name)//': weights ratio outside [0,1]: ', wrp, wrm ; passed = .false. ; exit
       endif
    enddo

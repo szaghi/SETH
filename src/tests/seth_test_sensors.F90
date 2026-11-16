@@ -20,22 +20,23 @@ program seth_test_sensors
 !<    without normalisation the absolute regularisers change decisions at a = 1e-6 (the control).
 !< Report mode: sensors-cp.dat and sensors-scaling.dat too.
 use seth
+use seth_test_parameters, only : TOL_X
 use seth_vv_cases, only : vv_report, vv_open
 implicit none
 integer(I4P), parameter :: N = 192_I4P, NS = 4_I4P
-real(R8P),    parameter :: PI = acos(-1._R8P)
+real(R_P),    parameter :: PI = acos(-1._R_P)
 character(8), parameter :: NAMES(NS) = ['teno    ', 'ren     ', 'lcr     ', 'tau     ']
-real(R8P)               :: f(0:N-1), v(-2:3), s, k, frac(NS), kok(NS), x, sb(NS)
+real(R_P)               :: f(0:N-1), v(-2:3), s, k, frac(NS), kok(NS), x, sb(NS)
 integer                 :: uk, ub
 integer(I4P)            :: is, j, ik, nsm, nf, m, jump
 logical                 :: passed, ok(NS), flag
 
 passed = .true.
 ! 1. monochromatic waves
-kok = 0._R8P ; ok = .true.
+kok = 0._R_P ; ok = .true.
 if (vv_report()) call vv_open('sensors-k.dat', uk, 'k fraction-smooth: teno ren lcr tau (N = 192, unit sine)')
 do ik=1, 300
-   k = 0.01_R8P*ik
+   k = 0.01_R_P*ik
    do j=0, N-1
       f(j) = sin(k*j)
    enddo
@@ -45,9 +46,9 @@ do ik=1, 300
          v = f(j-2:j+3)
          call sensor(is, v, s)
          nf = nf + 1
-         if (s >= 1._R8P) nsm = nsm + 1
+         if (s >= 1._R_P) nsm = nsm + 1
       enddo
-      frac(is) = real(nsm, R8P)/nf
+      frac(is) = real(nsm, R_P)/nf
       if (ok(is) .and. nsm == nf) then
          kok(is) = k
       else
@@ -61,16 +62,16 @@ print '(A)', '1. largest wavenumber below which every interface of a sine is jud
 do is=1, NS
    print '(A10,F6.2)', NAMES(is), kok(is)
 enddo
-if (abs(kok(1) - 0.64_R8P) > 0.05_R8P) then ; print '(A)', '   ^ Fu: not 0.64 +- 0.05' ; passed = .false. ; endif
-if (abs(kok(3) - 2.06_R8P) > 0.05_R8P) then ; print '(A)', '   ^ Li, Chen & Ren: not 2.06 +- 0.05' ; passed = .false. ; endif
-if (kok(2) > 0.3_R8P) then ; print '(A)', '   ^ Ren: smooth beyond 0.3' ; passed = .false. ; endif
+if (abs(kok(1) - 0.64_R_P) > 0.05_R_P) then ; print '(A)', '   ^ Fu: not 0.64 +- 0.05' ; passed = .false. ; endif
+if (abs(kok(3) - 2.06_R_P) > 0.05_R_P) then ; print '(A)', '   ^ Li, Chen & Ren: not 2.06 +- 0.05' ; passed = .false. ; endif
+if (kok(2) > 0.3_R_P) then ; print '(A)', '   ^ Ren: smooth beyond 0.3' ; passed = .false. ; endif
 ! 2. test (b)
 do j=0, N-1
-   x = -1._R8P + (j + 0.5_R8P)*2._R8P/N
-   if (x < 0._R8P) then
-      f(j) = sin(12._R8P*PI*x) - 2._R8P
+   x = -1._R_P + (j + 0.5_R_P)*2._R_P/N
+   if (x < 0._R_P) then
+      f(j) = sin(12._R_P*PI*x) - 2._R_P
    else
-      f(j) = sin(24._R8P*PI*x + PI/2._R8P) + 2._R8P
+      f(j) = sin(24._R_P*PI*x + PI/2._R_P) + 2._R_P
    endif
 enddo
 print '(A)', '2. test (b): interfaces judged non-smooth (s < 1), total and farther than 3 h from the jump:'
@@ -80,7 +81,7 @@ if (vv_report()) then
       do is=1, NS
          v = f(j-2:j+3) ; call sensor(is, v, sb(is))
       enddo
-      write(ub, '(6ES16.7)') -1._R8P + (j + 1._R8P)*2._R8P/N, f(j), sb
+      write(ub, '(6ES16.7)') -1._R_P + (j + 1._R_P)*2._R_P/N, f(j), sb
    enddo
    close(ub)
 endif
@@ -89,11 +90,11 @@ do is=1, NS
    do j=2, N-4
       v = f(j-2:j+3)
       call sensor(is, v, s)
-      x = -1._R8P + (j + 1._R8P)*2._R8P/N ! the face j+1/2
-      if (s < 1._R8P) then
+      x = -1._R_P + (j + 1._R_P)*2._R_P/N ! the face j+1/2
+      if (s < 1._R_P) then
          nf = nf + 1
-         if (abs(x) > 3._R8P*2._R8P/N + 1.e-12_R8P) nsm = nsm + 1
-         if (abs(x) < 1.e-12_R8P) flag = .true.
+         if (abs(x) > 3._R_P*2._R_P/N + TOL_X) nsm = nsm + 1
+         if (abs(x) < TOL_X) flag = .true.
       endif
    enddo
    print '(A10,2I6,A,L2)', NAMES(is), nf, nsm, '   the jump flagged:', flag
@@ -103,15 +104,15 @@ do is=1, NS
 enddo
 ! 3. properties
 do is=1, NS
-   v = 3.7_R8P
+   v = 3.7_R_P
    call sensor(is, v, s)
-   if (s /= 1._R8P) then ; print '(A)', NAMES(is)//': constant data not smooth' ; passed = .false. ; endif
+   if (s /= 1._R_P) then ; print '(A)', NAMES(is)//': constant data not smooth' ; passed = .false. ; endif
    do jump=merge(-1, -1, is /= 4), merge(3, 2, is /= 4)
       do m=-2, 3
-         v(m) = merge(1._R8P, 0._R8P, m >= jump)
+         v(m) = merge(1._R_P, 0._R_P, m >= jump)
       enddo
       call sensor(is, v, s)
-      if (.not.(s >= 0._R8P .and. s < 1._R8P)) then
+      if (.not.(s >= 0._R_P .and. s < 1._R_P)) then
          print '(A,I3,ES12.4)', NAMES(is)//': a unit step not flagged, jump at ', jump, s ; passed = .false.
       endif
    enddo
@@ -131,23 +132,23 @@ contains
    !< from which on no face near the point is flagged.
    integer(I4P), parameter :: NM = 10
    integer(I4P)            :: ncp, im, m, jf, is2, mres(NS)
-   real(R8P)               :: hh, vv(-2:3), ss
+   real(R_P)               :: hh, vv(-2:3), ss
    logical                 :: fl(NS,NM)
    integer                 :: uc
    if (vv_report()) call vv_open('sensors-cp.dat', uc, 'n_cp m(cells per unit) flagged: teno ren lcr tau '// &
                                  '(1 = some face of the five around the critical point has s < 1)')
    do ncp=1, 2
       do im=1, NM
-         m = 2**im ; hh = 1._R8P/m
+         m = 2**im ; hh = 1._R_P/m
          do is2=1, NS
             fl(is2,im) = .false.
             do jf=-2, 2 ! face jf h: stencil cells jf-3 .. jf+2, i.e. v(-2:3) = f(cells jf-3+1 .. ) with cell 0 = jf-1
                do j=-2, 3
-                  x = (jf - 1 + j + 0.5_R8P)*hh
+                  x = (jf - 1 + j + 0.5_R_P)*hh
                   vv(j) = merge(cos(PI*x), sin(PI*x)**3, ncp == 1)
                enddo
                call sensor(is2, vv, ss)
-               if (ss < 1._R8P) fl(is2,im) = .true.
+               if (ss < 1._R_P) fl(is2,im) = .true.
             enddo
          enddo
          if (vv_report()) write(uc, '(2I6,4I3)') ncp, m, merge(1, 0, fl(:,im))
@@ -176,15 +177,15 @@ contains
    !< Test (b) transformed to a f + b, a = 1e-6 .. 1e6, b = 0, 100: the fraction of faces whose decision (s = 1 or
    !< not) differs from that on the untransformed data, with three normalisations of the stencil: none (rmu = 1), the
    !< paper's per-stencil 1/max(|v|_max, 1), and the field's range 1/(max f - min f) (a global descaler).
-   real(R8P), parameter :: AS(5) = [1.e-6_R8P, 1.e-3_R8P, 1._R8P, 1.e3_R8P, 1.e6_R8P], BS(2) = [0._R8P, 100._R8P]
+   real(R_P), parameter :: AS(5) = [1.e-6_R_P, 1.e-3_R_P, 1._R_P, 1.e3_R_P, 1.e6_R_P], BS(2) = [0._R_P, 100._R_P]
    character(8), parameter :: NORMS(3) = ['none    ', 'paper   ', 'range   ']
-   real(R8P)            :: g(0:N-1), vv(-2:3), r, ss
+   real(R_P)            :: g(0:N-1), vv(-2:3), r, ss
    logical              :: base(NS,3,2:N-4), dec
    integer(I4P)         :: ia, ib, in, is2, jj, nmis(NS,3)
    integer              :: ul
    do jj=0, N-1
-      x = -1._R8P + (jj + 0.5_R8P)*2._R8P/N
-      f(jj) = merge(sin(12._R8P*PI*x) - 2._R8P, sin(24._R8P*PI*x + PI/2._R8P) + 2._R8P, x < 0._R8P)
+      x = -1._R_P + (jj + 0.5_R_P)*2._R_P/N
+      f(jj) = merge(sin(12._R_P*PI*x) - 2._R_P, sin(24._R_P*PI*x + PI/2._R_P) + 2._R_P, x < 0._R_P)
    enddo
    if (vv_report()) call vv_open('sensors-scaling.dat', ul, 'a b normalisation mismatched-fraction: teno ren lcr tau')
    print '(A)', '5. test (b) as a f + b: faces whose decision changes, fraction (none / paper / range normalisation)'
@@ -194,7 +195,7 @@ contains
          vv = f(jj-2:jj+3)
          do is2=1, NS
             call sensor_n(is2, in, vv, r, ss)
-            base(is2,in,jj) = ss >= 1._R8P
+            base(is2,in,jj) = ss >= 1._R_P
          enddo
       enddo
    enddo
@@ -208,7 +209,7 @@ contains
                vv = g(jj-2:jj+3)
                do is2=1, NS
                   call sensor_n(is2, in, vv, r, ss)
-                  dec = ss >= 1._R8P
+                  dec = ss >= 1._R_P
                   if (dec .neqv. base(is2,in,jj)) nmis(is2,in) = nmis(is2,in) + 1
                enddo
             enddo
@@ -234,13 +235,13 @@ contains
    subroutine sensor_n(is2, in, v, r, s)
    !< Sensor is2 with normalisation in (1: none, 2: the paper's per-stencil max(|v|, 1), 3: 1/r, r the field's range).
    integer(I4P), intent(in)  :: is2, in
-   real(R8P),    intent(in)  :: v(-2:3), r
-   real(R8P),    intent(out) :: s
-   real(R8P)                 :: rmu
+   real(R_P),    intent(in)  :: v(-2:3), r
+   real(R_P),    intent(out) :: s
+   real(R_P)                 :: rmu
    select case(in)
-   case(1) ; rmu = 1._R8P
-   case(2) ; rmu = 1._R8P/max(maxval(abs(v)), 1._R8P)
-   case default ; rmu = 1._R8P/r
+   case(1) ; rmu = 1._R_P
+   case(2) ; rmu = 1._R_P/max(maxval(abs(v)), 1._R_P)
+   case default ; rmu = 1._R_P/r
    endselect
    select case(is2)
    case(1) ; call seth_sensor_teno(v, rmu, SETH_SENSOR_TENO_CT, s)
@@ -252,16 +253,16 @@ contains
 
    subroutine sensor(is, v, s)
    integer(I4P), intent(in)  :: is
-   real(R8P),    intent(in)  :: v(-2:3)
-   real(R8P),    intent(out) :: s
-   real(R8P)                 :: rmu
-   rmu = 1._R8P/max(maxval(abs(v)), 1._R8P) ! Li, Chen & Ren's normalisation (Eq. (61))
+   real(R_P),    intent(in)  :: v(-2:3)
+   real(R_P),    intent(out) :: s
+   real(R_P)                 :: rmu
+   rmu = 1._R_P/max(maxval(abs(v)), 1._R_P) ! Li, Chen & Ren's normalisation (Eq. (61))
    select case(is)
    case(1) ; call seth_sensor_teno(v, rmu, SETH_SENSOR_TENO_CT, s)
    case(2) ; call seth_sensor_ren(v, rmu, SETH_SENSOR_REN_PSIC, s)
    case(3) ; call seth_sensor_lcr(v, rmu, SETH_SENSOR_LCR_PSIC, s)
    case(4) ; call seth_sensor_tau(v, rmu, SETH_SENSOR_TAU_ETA, s)
    endselect
-   if (.not.(s >= 0._R8P .and. s <= 1._R8P)) error stop 'sensor outside [0, 1]'
+   if (.not.(s >= 0._R_P .and. s <= 1._R_P)) error stop 'sensor outside [0, 1]'
    endsubroutine sensor
 endprogram seth_test_sensors

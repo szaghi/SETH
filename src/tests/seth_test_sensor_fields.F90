@@ -30,14 +30,15 @@ program seth_test_sensor_fields
 !<    flags it; neither Ducros sensor flags anything.
 !< Report mode: sensor-fields.dat (case parameter sensor flagged-fraction) for the documentation's table.
 use seth
+use seth_test_parameters, only : EPS_FIELD_SENSOR
 use seth_vv_cases, only : vv_report, vv_open
 implicit none
-real(R8P),    parameter :: PI = acos(-1._R8P), GAM = 1.4_R8P, THR = 0.2_R8P
+real(R_P),    parameter :: PI = acos(-1._R_P), GAM = 1.4_R_P, THR = 0.2_R_P
 integer(I4P), parameter :: NS = 6
 character(8), parameter :: NAMES(NS) = ['teno    ', 'ren     ', 'lcr     ', 'tau     ', 'ducros  ', 'ducros-c']
-real(R8P), allocatable  :: u(:,:), v(:,:), rho(:,:)
+real(R_P), allocatable  :: u(:,:), v(:,:), rho(:,:)
 logical, allocatable    :: fl(:,:,:)
-real(R8P)               :: frac(NS), u1, u2, r1, r2, ratio, theta, om0, gv
+real(R_P)               :: frac(NS), u1, u2, r1, r2, ratio, theta, om0, gv
 integer(I4P)            :: n, k, i, j, m, nsh, ndet(NS)
 integer                 :: ur
 logical                 :: passed
@@ -52,70 +53,70 @@ do k=0, 4
    do j=1, n
       do i=1, n
          u(i,j) = sin(PI*xc(i))*cos(PI*xc(j)) ; v(i,j) = -cos(PI*xc(i))*sin(PI*xc(j))
-         rho(i,j) = 1._R8P + 0.25_R8P*(cos(2._R8P*PI*xc(i)) + cos(2._R8P*PI*xc(j)))
+         rho(i,j) = 1._R_P + 0.25_R_P*(cos(2._R_P*PI*xc(i)) + cos(2._R_P*PI*xc(j)))
       enddo
    enddo
    call flags(frac)
    print '(A,I5,6F8.4)', '   N ', n, frac
-   call report('taylor-green', real(n, R8P), frac)
-   if (any(frac(5:6) > 0._R8P)) call fail('Taylor-Green: a Ducros sensor flagged a divergence-free field')
-   if (n >= 32 .and. frac(3) > 0._R8P) call fail('Taylor-Green: Li, Chen & Ren flagged a resolved vortex')
+   call report('taylor-green', real(n, R_P), frac)
+   if (any(frac(5:6) > 0._R_P)) call fail('Taylor-Green: a Ducros sensor flagged a divergence-free field')
+   if (n >= 32 .and. frac(3) > 0._R_P) call fail('Taylor-Green: Li, Chen & Ren flagged a resolved vortex')
 enddo
 
 ! 2. normal shock, Mach 2 (shock frame)
 n = 64 ; call grid(n)
-call shock_states(2._R8P, r1, u1, r2, u2)
-call set_shock(0._R8P)
+call shock_states(2._R_P, r1, u1, r2, u2)
+call set_shock(0._R_P)
 call flags(frac)
 print '(A)', '2. normal shock, Mach 2, N = 64: fraction of the cells next to the shock flagged; cells flagged farther'
-call shock_detection(0._R8P, ndet, nsh)
+call shock_detection(0._R_P, ndet, nsh)
 print '(A,6F8.4)', '   next to it ', real(ndet)/nsh
-call report('shock', 2._R8P, real(ndet, R8P)/nsh)
+call report('shock', 2._R_P, real(ndet, R_P)/nsh)
 do m=1, NS
    if (ndet(m) < nsh) call fail('shock: '//trim(NAMES(m))//' missed a shock cell')
    if (far(m) > 0) call fail('shock: '//trim(NAMES(m))//' flagged a cell more than 3 h from the shock')
 enddo
 
 ! 3. the shock through a vortex
-theta = abs(u2 - u1)/(2._R8P*2._R8P/n)
+theta = abs(u2 - u1)/(2._R_P*2._R_P/n)
 print '(A)', '3. shock through a vortex, N = 64: fraction of the shock cells within r0 flagged, against omega_0/|theta|'
 do k=0, 4
-   ratio = merge(0._R8P, 0.5_R8P*2._R8P**k, k == 0)
-   om0 = ratio*theta ; gv = 0.5_R8P*om0
+   ratio = merge(0._R_P, 0.5_R_P*2._R_P**k, k == 0)
+   om0 = ratio*theta ; gv = 0.5_R_P*om0
    call set_shock(gv)
    call flags(frac)
-   call shock_detection(0.25_R8P, ndet, nsh)
+   call shock_detection(0.25_R_P, ndet, nsh)
    print '(A,F5.1,6F8.4)', '   omega_0/|theta| ', ratio, real(ndet)/nsh
-   call report('shock-vortex', ratio, real(ndet, R8P)/nsh)
+   call report('shock-vortex', ratio, real(ndet, R_P)/nsh)
    if (any(ndet(1:4) < nsh)) call fail('shock-vortex: a stencil sensor missed a shock cell')
-   if (ratio <= 1._R8P .and. ndet(5) < nsh) call fail('shock-vortex: Ducros missed a shock cell in a weak vortex')
-   if (ratio >= 4._R8P .and. ndet(5) == nsh) call fail('shock-vortex: Ducros saw through a strong vortex (prediction)')
+   if (ratio <= 1._R_P .and. ndet(5) < nsh) call fail('shock-vortex: Ducros missed a shock cell in a weak vortex')
+   if (ratio >= 4._R_P .and. ndet(5) == nsh) call fail('shock-vortex: Ducros saw through a strong vortex (prediction)')
 enddo
 
 ! 4. steep expansion
 call grid(64)
 do j=1, n
    do i=1, n
-      u(i,j) = 0.5_R8P*tanh(xc(i)/(2._R8P/n)) ; v(i,j) = 0._R8P ; rho(i,j) = 1._R8P + 0.2_R8P*tanh(xc(i)/(2._R8P/n))
+      u(i,j) = 0.5_R_P*tanh(xc(i)/(2._R_P/n)) ; v(i,j) = 0._R_P ; rho(i,j) = 1._R_P + 0.2_R_P*tanh(xc(i)/(2._R_P/n))
    enddo
 enddo
 call flags(frac)
 print '(A,6F8.4)', '4. steep expansion, N = 64: fraction flagged ', frac
-call report('expansion', 0._R8P, frac)
-if (.not.(frac(5) > 0._R8P)) call fail('expansion: seth_ducros did not flag it')
-if (frac(6) > 0._R8P) call fail('expansion: seth_ducros_compression flagged it')
+call report('expansion', 0._R_P, frac)
+if (.not.(frac(5) > 0._R_P)) call fail('expansion: seth_ducros did not flag it')
+if (frac(6) > 0._R_P) call fail('expansion: seth_ducros_compression flagged it')
 
 ! 5. contact
 do j=1, n
    do i=1, n
-      u(i,j) = 0._R8P ; v(i,j) = 0._R8P ; rho(i,j) = merge(1._R8P, 2._R8P, xc(i) < 0._R8P)
+      u(i,j) = 0._R_P ; v(i,j) = 0._R_P ; rho(i,j) = merge(1._R_P, 2._R_P, xc(i) < 0._R_P)
    enddo
 enddo
 call flags(frac)
 print '(A,6F8.4)', '5. contact, N = 64: fraction flagged ', frac
-call report('contact', 0._R8P, frac)
-if (any(.not.(frac(1:4) > 0._R8P))) call fail('contact: a stencil sensor did not flag it')
-if (any(frac(5:6) > 0._R8P)) call fail('contact: a Ducros sensor flagged a contact')
+call report('contact', 0._R_P, frac)
+if (any(.not.(frac(1:4) > 0._R_P))) call fail('contact: a stencil sensor did not flag it')
+if (any(frac(5:6) > 0._R_P)) call fail('contact: a Ducros sensor flagged a contact')
 
 if (vv_report()) close(ur)
 if (.not.passed) error stop 'sensor field test failed'
@@ -125,8 +126,8 @@ contains
    pure function xc(i) result(x)
    !< Centre of cell i.
    integer(I4P), intent(in) :: i
-   real(R8P)                :: x
-   x = -1._R8P + (i - 0.5_R8P)*2._R8P/n
+   real(R_P)                :: x
+   x = -1._R_P + (i - 0.5_R_P)*2._R_P/n
    endfunction xc
 
    subroutine grid(nn)
@@ -138,35 +139,35 @@ contains
 
    subroutine shock_states(mach, ra, ua, rb, ub)
    !< Rankine-Hugoniot: upstream rho = 1, p = 1/gamma (c = 1), u = mach; downstream from the normal-shock relations.
-   real(R8P), intent(in)  :: mach
-   real(R8P), intent(out) :: ra, ua, rb, ub
-   ra = 1._R8P ; ua = mach
-   rb = ra*(GAM + 1._R8P)*mach**2/((GAM - 1._R8P)*mach**2 + 2._R8P)
+   real(R_P), intent(in)  :: mach
+   real(R_P), intent(out) :: ra, ua, rb, ub
+   ra = 1._R_P ; ua = mach
+   rb = ra*(GAM + 1._R_P)*mach**2/((GAM - 1._R_P)*mach**2 + 2._R_P)
    ub = ua*ra/rb
    endsubroutine shock_states
 
    subroutine set_shock(g)
    !< The shock at x = 0 (cell faces), plus the Gaussian vortex of strength g (u_theta = g r exp(-r^2/r0^2)).
-   real(R8P), intent(in) :: g
-   real(R8P), parameter  :: R0 = 0.25_R8P
-   real(R8P)             :: e
+   real(R_P), intent(in) :: g
+   real(R_P), parameter  :: R0 = 0.25_R_P
+   real(R_P)             :: e
    integer(I4P)          :: ii, jj
    do jj=1, n
       do ii=1, n
          e = g*exp(-(xc(ii)**2 + xc(jj)**2)/R0**2)
-         u(ii,jj) = merge(u1, u2, xc(ii) < 0._R8P) - e*xc(jj)
+         u(ii,jj) = merge(u1, u2, xc(ii) < 0._R_P) - e*xc(jj)
          v(ii,jj) = e*xc(ii)
-         rho(ii,jj) = merge(r1, r2, xc(ii) < 0._R8P)
+         rho(ii,jj) = merge(r1, r2, xc(ii) < 0._R_P)
       enddo
    enddo
    endsubroutine set_shock
 
    subroutine flags(fr)
    !< Flag every interior cell (3 cells from the edges) by each sensor; fr: the flagged fraction of them.
-   real(R8P), intent(out) :: fr(NS)
-   real(R8P)              :: st(-2:3), s, g(3,3), hh, eps, phi
+   real(R_P), intent(out) :: fr(NS)
+   real(R_P)              :: st(-2:3), s, g(3,3), hh, eps, phi
    integer(I4P)           :: ii, jj, is, d, c
-   hh = 2._R8P/n ; eps = 1.e-8_R8P/hh**2
+   hh = 2._R_P/n ; eps = EPS_FIELD_SENSOR/hh**2
    fl = .false.
    do jj=4, n-3
       do ii=4, n-3
@@ -179,32 +180,32 @@ contains
                      st = rho(ii,jj+c-2:jj+c+3)
                   endif
                   call stencil_sensor(is, st, s)
-                  if (s < 1._R8P) fl(ii,jj,is) = .true.
+                  if (s < 1._R_P) fl(ii,jj,is) = .true.
                enddo
             enddo
          enddo
-         g = 0._R8P
-         g(1,1) = (u(ii+1,jj) - u(ii-1,jj))/(2._R8P*hh) ; g(1,2) = (u(ii,jj+1) - u(ii,jj-1))/(2._R8P*hh)
-         g(2,1) = (v(ii+1,jj) - v(ii-1,jj))/(2._R8P*hh) ; g(2,2) = (v(ii,jj+1) - v(ii,jj-1))/(2._R8P*hh)
+         g = 0._R_P
+         g(1,1) = (u(ii+1,jj) - u(ii-1,jj))/(2._R_P*hh) ; g(1,2) = (u(ii,jj+1) - u(ii,jj-1))/(2._R_P*hh)
+         g(2,1) = (v(ii+1,jj) - v(ii-1,jj))/(2._R_P*hh) ; g(2,2) = (v(ii,jj+1) - v(ii,jj-1))/(2._R_P*hh)
          call seth_ducros(eps, g, phi) ; fl(ii,jj,5) = phi > THR
          call seth_ducros_compression(eps, g, phi) ; fl(ii,jj,6) = phi > THR
       enddo
    enddo
    do is=1, NS
-      fr(is) = count(fl(4:n-3,4:n-3,is))/real((n-6)**2, R8P)
+      fr(is) = count(fl(4:n-3,4:n-3,is))/real((n-6)**2, R_P)
    enddo
    endsubroutine flags
 
    subroutine shock_detection(rad, nd, nt)
    !< The cells next to the shock (the two columns around x = 0), within rad of the centre (rad = 0: all of them):
    !< nt of them, nd(is) flagged by sensor is.
-   real(R8P),    intent(in)  :: rad
+   real(R_P),    intent(in)  :: rad
    integer(I4P), intent(out) :: nd(NS), nt
    integer(I4P)              :: ii, jj
    nd = 0 ; nt = 0
    do jj=4, n-3
       do ii=n/2, n/2+1
-         if (rad > 0._R8P .and. xc(ii)**2 + xc(jj)**2 > rad**2) cycle
+         if (rad > 0._R_P .and. xc(ii)**2 + xc(jj)**2 > rad**2) cycle
          nt = nt + 1
          where (fl(ii,jj,:)) nd = nd + 1
       enddo
@@ -218,17 +219,17 @@ contains
    far = 0
    do jj=4, n-3
       do ii=4, n-3
-         if (fl(ii,jj,is) .and. abs(xc(ii)) > 3._R8P*2._R8P/n) far = far + 1
+         if (fl(ii,jj,is) .and. abs(xc(ii)) > 3._R_P*2._R_P/n) far = far + 1
       enddo
    enddo
    endfunction far
 
    subroutine stencil_sensor(is, st, s)
    integer(I4P), intent(in)  :: is
-   real(R8P),    intent(in)  :: st(-2:3)
-   real(R8P),    intent(out) :: s
-   real(R8P)                 :: rmu
-   rmu = 1._R8P/max(maxval(abs(st)), 1._R8P)
+   real(R_P),    intent(in)  :: st(-2:3)
+   real(R_P),    intent(out) :: s
+   real(R_P)                 :: rmu
+   rmu = 1._R_P/max(maxval(abs(st)), 1._R_P)
    select case(is)
    case(1) ; call seth_sensor_teno(st, rmu, SETH_SENSOR_TENO_CT, s)
    case(2) ; call seth_sensor_ren(st, rmu, SETH_SENSOR_REN_PSIC, s)
@@ -239,7 +240,7 @@ contains
 
    subroutine report(case, par, fr)
    character(*), intent(in) :: case
-   real(R8P),    intent(in) :: par, fr(NS)
+   real(R_P),    intent(in) :: par, fr(NS)
    integer(I4P)             :: is
    if (.not.vv_report()) return
    do is=1, NS

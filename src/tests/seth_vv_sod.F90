@@ -18,14 +18,14 @@ use seth_vv_euler
 use seth_vv_cases
 implicit none
 integer(I4P), allocatable :: ids(:), nfb(:), nfbu(:), nlim(:)
-real(R8P), allocatable    :: l1(:), l1u(:)
+real(R_P), allocatable    :: l1(:), l1u(:)
 logical, allocatable      :: pos(:), posu(:)
 integer(I4P)              :: path, k, us
-real(R8P)                 :: bound, js5
+real(R_P)                 :: bound, js5
 logical                   :: passed
-real(R8P), parameter      :: WL(3) = [1._R8P, 0._R8P, 1._R8P]
-real(R8P), parameter      :: WR(3) = [0.125_R8P, 0._R8P, 0.1_R8P]
-real(R8P), parameter      :: X0 = 0.5_R8P, TEND = 0.2_R8P
+real(R_P), parameter      :: WL(3) = [1._R_P, 0._R_P, 1._R_P]
+real(R_P), parameter      :: WR(3) = [0.125_R_P, 0._R_P, 0.1_R_P]
+real(R_P), parameter      :: X0 = 0.5_R_P, TEND = 0.2_R_P
 passed = .true.
 if (vv_report()) call vv_open('sod-summary.dat', us, 'scheme positive-without-limiter limited-faces L1(rho)')
 do path=PATH_SPLIT, PATH_INTERP
@@ -33,11 +33,11 @@ do path=PATH_SPLIT, PATH_INTERP
    allocate(l1(size(ids)), pos(size(ids)), l1u(size(ids)), posu(size(ids)), nfb(size(ids)), nfbu(size(ids)), &
             nlim(size(ids)))
    limiter = .false.
-   call riemann_problem('sod', WL, WR, X0, TEND, 0.5_R8P, 200, ids, path, l1u, posu, nfbu, files=.false.)
+   call riemann_problem('sod', WL, WR, X0, TEND, 0.5_R_P, 200, ids, path, l1u, posu, nfbu, files=.false.)
    limiter = .true.
-   call riemann_problem('sod', WL, WR, X0, TEND, 0.5_R8P, 200, ids, path, l1, pos, nfb, nlim)
+   call riemann_problem('sod', WL, WR, X0, TEND, 0.5_R_P, 200, ids, path, l1, pos, nfb, nlim)
    limiter = .false.
-   js5 = -1._R8P
+   js5 = -1._R_P
    do k=1, size(ids)
       if (vv_label(ids(k)) == 'weno5_js' .or. vv_label(ids(k)) == 'weno5_js_interp') js5 = l1(k)
    enddo
@@ -53,7 +53,7 @@ do path=PATH_SPLIT, PATH_INTERP
          if (.not.(l1(k) < js5)) call fail(vv_label(ids(k))//': not closer to the exact solution than WENO5-JS')
       end select
       bound = recorded(vv_label(ids(k)))
-      if (.not.vv_report() .and. bound > 0._R8P .and. l1(k) > bound) call fail(vv_label(ids(k))//': L1 above bound')
+      if (.not.vv_report() .and. bound > 0._R_P .and. l1(k) > bound) call fail(vv_label(ids(k))//': L1 above bound')
    enddo
    deallocate(l1, pos, l1u, posu, nfb, nfbu, nlim)
 enddo
@@ -65,17 +65,17 @@ contains
    pure function recorded(name) result(b)
    !< L1 bounds of the test run (N = 200, with the limiter): measured (gfortran -O2) + 5%; -1: none.
    character(*), intent(in) :: name
-   real(R8P)                :: b
+   real(R_P)                :: b
    select case(name)
-   case('weno5_js') ; b = 4.0102e-03_R8P ! 3.8192e-03
-   case('wenoz5') ; b = 2.9696e-03_R8P ! 2.8282e-03
-   case('teno5') ; b = 2.8670e-03_R8P ! 2.7305e-03
-   case('teno6') ; b = 2.4527e-03_R8P ! 2.3359e-03
-   case('weno5_js_interp') ; b = 2.9953e-03_R8P ! 2.8527e-03
-   case('wenoz5_interp') ; b = 2.4393e-03_R8P ! 2.3231e-03
-   case('teno5_interp') ; b = 2.3849e-03_R8P ! 2.2713e-03
-   case('teno6_interp') ; b = 2.3867e-03_R8P ! 2.2730e-03
-   case default ; b = -1._R8P
+   case('weno5_js') ; b = 4.0102e-03_R_P ! 3.8192e-03
+   case('wenoz5') ; b = 2.9696e-03_R_P ! 2.8282e-03
+   case('teno5') ; b = 2.8670e-03_R_P ! 2.7305e-03
+   case('teno6') ; b = 2.4527e-03_R_P ! 2.3359e-03
+   case('weno5_js_interp') ; b = 2.9953e-03_R_P ! 2.8527e-03
+   case('wenoz5_interp') ; b = 2.4393e-03_R_P ! 2.3231e-03
+   case('teno5_interp') ; b = 2.3849e-03_R_P ! 2.2713e-03
+   case('teno6_interp') ; b = 2.3867e-03_R_P ! 2.2730e-03
+   case default ; b = -1._R_P
    end select
    endfunction recorded
 

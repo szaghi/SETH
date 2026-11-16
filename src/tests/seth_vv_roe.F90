@@ -28,21 +28,22 @@ program seth_vv_roe
 !< fix; 123: L1 with and without the limiter), and for the blast: positive without the limiter (Roe 0.5, Roe 0.6,
 !< split 0.6), the L1 of those runs, limited faces and L1 of Roe with the limiter.
 use seth
+use seth_test_parameters, only : ORDER_FLOOR_EULER, T_SLACK
 use seth_test_schemes
 use seth_vv_euler
 use seth_vv_cases
 use seth_vv_riemann, only : riemann_sample
 implicit none
-real(R8P), parameter      :: PI = acos(-1._R8P)
+real(R_P), parameter      :: PI = acos(-1._R_P)
 ! Recorded bounds (gfortran -O3, every reconstruction, 2026-11-16): Sod/Lax L1 ratio to PATH_SPLIT 0.71 .. 1.18 (TENO6
 ! on Sod); Linf in the transonic fan 1.26e-2 .. 1.95e-2 with the fix (the third-order schemes the largest), 4.2 .. 13.2
 ! times that without it.
-real(R8P), parameter      :: TUBE_RATIO = 1.25_R8P, FAN_BOUND = 2.05e-2_R8P, FAN_FACTOR = 3.5_R8P
+real(R_P), parameter      :: TUBE_RATIO = 1.25_R_P, FAN_BOUND = 2.05e-2_R_P, FAN_FACTOR = 3.5_R_P
 integer(I4P), allocatable :: ids(:), nfb(:)
-real(R8P), allocatable    :: l1r(:), l1s(:), e1(:), ei(:)
+real(R_P), allocatable    :: l1r(:), l1s(:), e1(:), ei(:)
 logical, allocatable      :: posr(:), poss(:)
 integer(I4P)              :: k, j, nl, n, us
-real(R8P)                 :: o, need, efix, enofix
+real(R_P)                 :: o, need, efix, enofix
 logical                   :: passed
 passed = .true.
 if (vv_report()) call vv_open('roe-summary.dat', us, 'case scheme L1-roe L1-split positive-without-limiter')
@@ -66,16 +67,16 @@ do k=1, size(ids)
    need = SCHEMES(ids(k))%order
    print '(A18,2ES12.4,F8.2,A,F4.1)', vv_label(ids(k)), e1(nl), ei(nl), o, '  expected ', need
    if (nsonic /= 0) call fail(vv_label(ids(k))//': the entropy fix acted on a flow without sonic points')
-   if (o < 2._R8P) call fail(vv_label(ids(k))//': below second order')
+   if (o < 2._R_P) call fail(vv_label(ids(k))//': below second order')
    if (SCHEMES(ids(k))%family == FAM_TENO .or. (SCHEMES(ids(k))%family == FAM_Z .and. SCHEMES(ids(k))%s >= 3)) then
-      if (o < need - 0.5_R8P) call fail(vv_label(ids(k))//': below its expected order')
+      if (o < need - 0.5_R_P) call fail(vv_label(ids(k))//': below its expected order')
    endif
 enddo
 limiter = .false.
 
 ! 2. Sod and Lax
-call tube('sod', [1._R8P, 0._R8P, 1._R8P], [0.125_R8P, 0._R8P, 0.1_R8P], 0.5_R8P, 0.2_R8P)
-call tube('lax', [0.445_R8P, 0.698_R8P, 3.528_R8P], [0.5_R8P, 0._R8P, 0.571_R8P], 0.5_R8P, 0.13_R8P)
+call tube('sod', [1._R_P, 0._R_P, 1._R_P], [0.125_R_P, 0._R_P, 0.1_R_P], 0.5_R_P, 0.2_R_P)
+call tube('lax', [0.445_R_P, 0.698_R_P, 3.528_R_P], [0.5_R_P, 0._R_P, 0.571_R_P], 0.5_R_P, 0.13_R_P)
 
 ! 3. transonic rarefaction
 print '(A)', '3. transonic rarefaction (Toro test 1), N = 200: Linf(rho) in x = 0.2 .. 0.35, with and without the fix'
@@ -92,10 +93,10 @@ enddo
 ! 4. 123
 print '(A)', '4. 123 problem, N = 200: L1(rho) PATH_ROE with the limiter, without it, positive without it'
 limiter = .false.
-call riemann_problem('roe-123', [1._R8P, -2._R8P, 0.4_R8P], [1._R8P, 2._R8P, 0.4_R8P], 0.5_R8P, 0.15_R8P, 0.5_R8P, &
+call riemann_problem('roe-123', [1._R_P, -2._R_P, 0.4_R_P], [1._R_P, 2._R_P, 0.4_R_P], 0.5_R_P, 0.15_R_P, 0.5_R_P, &
                      200, ids, PATH_ROE, l1s, poss, nfb, files=.false.)
 limiter = .true.
-call riemann_problem('roe-123', [1._R8P, -2._R8P, 0.4_R8P], [1._R8P, 2._R8P, 0.4_R8P], 0.5_R8P, 0.15_R8P, 0.5_R8P, &
+call riemann_problem('roe-123', [1._R_P, -2._R_P, 0.4_R_P], [1._R_P, 2._R_P, 0.4_R_P], 0.5_R_P, 0.15_R_P, 0.5_R_P, &
                      200, ids, PATH_ROE, l1r, posr, nfb, files=.false.)
 limiter = .false.
 do k=1, size(ids)
@@ -117,25 +118,25 @@ contains
    !< the cells, as seth_vv_blast. PATH_ROE without the limiter at CFL 0.5 and at Fu et al.'s 0.6, with the limiter
    !< at 0.5; PATH_SPLIT without the limiter at 0.6 (its 0.5 runs are seth_vv_blast's).
    integer(I4P)              :: kk, nref
-   real(R8P), allocatable    :: qref(:,:), l1u(:), l1u6(:), l1l(:), l1s6(:)
+   real(R_P), allocatable    :: qref(:,:), l1u(:), l1u6(:), l1l(:), l1s6(:)
    logical, allocatable      :: posu(:), posu6(:), posl(:), poss6(:)
    integer(I4P), allocatable :: nlim(:)
    integer(I8P)              :: ns
-   real(R8P)                 :: bound
+   real(R_P)                 :: bound
    allocate(l1u(size(ids)), l1u6(size(ids)), l1l(size(ids)), l1s6(size(ids)), posu(size(ids)), posu6(size(ids)), &
             posl(size(ids)), poss6(size(ids)), nlim(size(ids)))
    nref = merge(6400, 1600, vv_report())
    limiter = .false.
    nsonic = 0
-   call reference_problem('roe-blast', init_blast, 0._R8P, 1._R8P, BC_REFLECTIVE, 0.038_R8P, 0.5_R8P, 400, nref, &
+   call reference_problem('roe-blast', init_blast, 0._R_P, 1._R_P, BC_REFLECTIVE, 0.038_R_P, 0.5_R_P, 400, nref, &
                           3_I4P, ids, PATH_ROE, l1u, posu, files=.false., qref_in=qref)
    ns = nsonic
-   call reference_problem('roe-blast', init_blast, 0._R8P, 1._R8P, BC_REFLECTIVE, 0.038_R8P, 0.6_R8P, 400, nref, &
+   call reference_problem('roe-blast', init_blast, 0._R_P, 1._R_P, BC_REFLECTIVE, 0.038_R_P, 0.6_R_P, 400, nref, &
                           3_I4P, ids, PATH_ROE, l1u6, posu6, files=.false., qref_in=qref)
-   call reference_problem('roe-blast', init_blast, 0._R8P, 1._R8P, BC_REFLECTIVE, 0.038_R8P, 0.6_R8P, 400, nref, &
+   call reference_problem('roe-blast', init_blast, 0._R_P, 1._R_P, BC_REFLECTIVE, 0.038_R_P, 0.6_R_P, 400, nref, &
                           3_I4P, ids, PATH_SPLIT, l1s6, poss6, files=.false., qref_in=qref)
    limiter = .true.
-   call reference_problem('roe-blast', init_blast, 0._R8P, 1._R8P, BC_REFLECTIVE, 0.038_R8P, 0.5_R8P, 400, nref, &
+   call reference_problem('roe-blast', init_blast, 0._R_P, 1._R_P, BC_REFLECTIVE, 0.038_R_P, 0.5_R_P, 400, nref, &
                           3_I4P, ids, PATH_ROE, l1l, posl, nlim=nlim, files=.false., qref_in=qref)
    limiter = .false.
    print '(A,I0,A)', '5. blast waves, N = 400 against ', nref, ': positive without the limiter (Roe CFL 0.5, Roe 0.6, '// &
@@ -149,7 +150,7 @@ contains
       if (any(vv_label(ids(kk)) == [character(16) :: 'weno5_js', 'wenoz5', 'teno6']) .and. .not.posu(kk)) &
          call fail(vv_label(ids(kk))//': blast not positive without the limiter (the answer of issue #5)')
       bound = recorded(vv_label(ids(kk)))
-      if (.not.vv_report() .and. bound > 0._R8P .and. l1l(kk) > bound) call fail(vv_label(ids(kk))//': blast L1 above bound')
+      if (.not.vv_report() .and. bound > 0._R_P .and. l1l(kk) > bound) call fail(vv_label(ids(kk))//': blast L1 above bound')
    enddo
    print '(A,I0)', '   fields evaluated with the entropy fix (local Lax-Friedrichs), Roe CFL 0.5 runs: ', ns
    if (ns == 0) call fail('the entropy fix never acted on the blast waves')
@@ -158,23 +159,23 @@ contains
    pure function recorded(name) result(b)
    !< L1 bounds of the blast test run (N = 400 against N = 1600, Roe path, with the limiter): measured + 5%; -1: none.
    character(*), intent(in) :: name
-   real(R8P)                :: b
+   real(R_P)                :: b
    select case(name)
-   case('weno5_js') ; b = 5.5638e-02_R8P ! 5.2989e-02
-   case('wenoz5') ; b = 3.1122e-02_R8P ! 2.9640e-02
-   case('teno5') ; b = 2.7880e-02_R8P ! 2.6552e-02
-   case('teno6') ; b = 2.2824e-02_R8P ! 2.1737e-02
-   case default ; b = -1._R8P
+   case('weno5_js') ; b = 5.5638e-02_R_P ! 5.2989e-02
+   case('wenoz5') ; b = 3.1122e-02_R_P ! 2.9640e-02
+   case('teno5') ; b = 2.7880e-02_R_P ! 2.6552e-02
+   case('teno6') ; b = 2.2824e-02_R_P ! 2.1737e-02
+   case default ; b = -1._R_P
    end select
    endfunction recorded
 
    subroutine tube(name, wl, wr, x0, tend)
    !< A shock tube on both PATH_ROE and PATH_SPLIT, without the limiter.
    character(*), intent(in) :: name
-   real(R8P),    intent(in) :: wl(3), wr(3), x0, tend
+   real(R_P),    intent(in) :: wl(3), wr(3), x0, tend
    integer(I4P)             :: kk
-   call riemann_problem(name, wl, wr, x0, tend, 0.5_R8P, 200, ids, PATH_ROE, l1r, posr, nfb, files=.false.)
-   call riemann_problem(name, wl, wr, x0, tend, 0.5_R8P, 200, ids, PATH_SPLIT, l1s, poss, nfb, files=.false.)
+   call riemann_problem(name, wl, wr, x0, tend, 0.5_R_P, 200, ids, PATH_ROE, l1r, posr, nfb, files=.false.)
+   call riemann_problem(name, wl, wr, x0, tend, 0.5_R_P, 200, ids, PATH_SPLIT, l1s, poss, nfb, files=.false.)
    print '(A)', '2. '//name//', N = 200, no limiter: L1(rho) PATH_ROE, PATH_SPLIT, ratio'
    do kk=1, size(ids)
       print '(A18,2ES12.4,F8.3)', vv_label(ids(kk)), l1r(kk), l1s(kk), l1r(kk)/l1s(kk)
@@ -187,63 +188,63 @@ contains
    subroutine toro1(id, einf)
    !< Toro's test 1 on [0, 1], N = 200, CFL 0.5, PATH_ROE: Linf of the density error in the fan region.
    integer(I4P), intent(in)  :: id
-   real(R8P),    intent(out) :: einf
+   real(R_P),    intent(out) :: einf
    integer(I4P), parameter   :: NN = 200
-   real(R8P), parameter      :: WL(3) = [1._R8P, 0.75_R8P, 1._R8P], WR(3) = [0.125_R8P, 0._R8P, 0.1_R8P]
-   real(R8P)                 :: w0(3,NN), q(3,1-NG:NN+NG), h, x, ex(3)
+   real(R_P), parameter      :: WL(3) = [1._R_P, 0.75_R_P, 1._R_P], WR(3) = [0.125_R_P, 0._R_P, 0.1_R_P]
+   real(R_P)                 :: w0(3,NN), q(3,1-NG:NN+NG), h, x, ex(3)
    logical                   :: pos
    integer(I4P)              :: i
-   h = 1._R8P/NN
+   h = 1._R_P/NN
    do i=1, NN
-      w0(:,i) = merge(WL, WR, (i - 0.5_R8P)*h < 0.3_R8P)
+      w0(:,i) = merge(WL, WR, (i - 0.5_R_P)*h < 0.3_R_P)
    enddo
-   call euler_run(id, PATH_ROE, w0, NN, h, BC_TRANSMISSIVE, 0.2_R8P, 0.5_R8P, q, pos)
-   einf = huge(1._R8P)
+   call euler_run(id, PATH_ROE, w0, NN, h, BC_TRANSMISSIVE, 0.2_R_P, 0.5_R_P, q, pos)
+   einf = huge(1._R_P)
    if (.not.pos) return
-   einf = 0._R8P
+   einf = 0._R_P
    do i=1, NN
-      x = (i - 0.5_R8P)*h
-      if (x < 0.2_R8P .or. x > 0.35_R8P) cycle
-      ex = riemann_sample(WL, WR, GAMMA, (x - 0.3_R8P)/0.2_R8P)
+      x = (i - 0.5_R_P)*h
+      if (x < 0.2_R_P .or. x > 0.35_R_P) cycle
+      ex = riemann_sample(WL, WR, GAMMA, (x - 0.3_R_P)/0.2_R_P)
       einf = max(einf, abs(q(1,i) - ex(1)))
    enddo
    endsubroutine toro1
 
    subroutine wave(id, n, l1, linf)
    integer(I4P), intent(in)  :: id, n
-   real(R8P),    intent(out) :: l1, linf
-   real(R8P)                 :: q(3,1-NG:n+NG), h, t, dt, sc, e(n), x
+   real(R_P),    intent(out) :: l1, linf
+   real(R_P)                 :: q(3,1-NG:n+NG), h, t, dt, sc, e(n), x
    logical                   :: ok
    integer(I4P)              :: i
-   h = 2._R8P/n
+   h = 2._R_P/n
    do i=1, n
-      x = -1._R8P + (i - 0.5_R8P)*h
-      q(:,i) = prim2cons([1._R8P + 0.2_R8P*sin(PI*x), 1._R8P, 1._R8P])
+      x = -1._R_P + (i - 0.5_R_P)*h
+      q(:,i) = prim2cons([1._R_P + 0.2_R_P*sin(PI*x), 1._R_P, 1._R_P])
    enddo
-   sc = (h/0.1_R8P)**((SCHEMES(id)%order - 3._R8P)/3._R8P)
-   t = 0._R8P
-   do while (t < 2._R8P*(1._R8P - 1.e-14_R8P))
-      dt = min(0.4_R8P*sc*euler_dt(q, n, h, 1._R8P), 2._R8P - t)
+   sc = (h/0.1_R_P)**((SCHEMES(id)%order - 3._R_P)/3._R_P)
+   t = 0._R_P
+   do while (t < 2._R_P*(1._R_P - T_SLACK))
+      dt = min(0.4_R_P*sc*euler_dt(q, n, h, 1._R_P), 2._R_P - t)
       call euler_step(id, PATH_ROE, q, n, h, dt, BC_PERIODIC, ok)
       if (.not.ok) error stop 'seth_vv_roe: a smooth wave lost positivity'
       t = t + dt
    enddo
    do i=1, n
-      x = -1._R8P + (i - 0.5_R8P)*h
-      e(i) = q(1,i) - (1._R8P + 0.2_R8P*sin(PI*x))
+      x = -1._R_P + (i - 0.5_R_P)*h
+      e(i) = q(1,i) - (1._R_P + 0.2_R_P*sin(PI*x))
    enddo
    l1 = l1_norm(e, h) ; linf = maxval(abs(e))
    endsubroutine wave
 
    pure function order(e) result(o)
    !< Observed order on the finest pair whose finer error is above 1e-10 (as seth_vv_euler_order).
-   real(R8P), intent(in) :: e(:)
-   real(R8P)             :: o
+   real(R_P), intent(in) :: e(:)
+   real(R_P)             :: o
    integer(I4P)          :: j
-   o = -1._R8P
+   o = -1._R_P
    do j=size(e)-1, 1, -1
-      if (e(j+1) > 1.e-10_R8P) then
-         o = log(e(j)/e(j+1))/log(2._R8P) ; return
+      if (e(j+1) > ORDER_FLOOR_EULER) then
+         o = log(e(j)/e(j+1))/log(2._R_P) ; return
       endif
    enddo
    endfunction order

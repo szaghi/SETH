@@ -15,15 +15,16 @@ program seth_vv_euler_order
 !< least order 2; no limited face.
 !< Report mode: euler-order.dat (scheme N L1 Linf).
 use seth
+use seth_test_parameters, only : ORDER_FLOOR_EULER, T_SLACK
 use seth_test_schemes
 use seth_vv_euler
 use seth_vv_cases
 implicit none
-real(R8P), parameter      :: PI = acos(-1._R8P)
+real(R_P), parameter      :: PI = acos(-1._R_P)
 integer(I4P), allocatable :: ids(:)
 integer(I4P)              :: path, k, j, nl, n, u
-real(R8P), allocatable    :: e1(:), ei(:)
-real(R8P)                 :: o, need
+real(R_P), allocatable    :: e1(:), ei(:)
+real(R_P)                 :: o, need
 logical                   :: passed
 passed = .true.
 nl = merge(5, 4, vv_report())
@@ -41,11 +42,11 @@ do path=PATH_SPLIT, PATH_INTERP
          if (vv_report()) write(u, '(A,1X,I6,2ES24.15)') vv_label(ids(k)), n, e1(j), ei(j)
       enddo
       o = order(e1)
-      need = SCHEMES(ids(k))%order ; if (path == PATH_INTERP) need = min(need, 6._R8P)
+      need = SCHEMES(ids(k))%order ; if (path == PATH_INTERP) need = min(need, 6._R_P)
       print '(A18,2ES12.4,F8.2,A,F4.1)', vv_label(ids(k)), e1(nl), ei(nl), o, '  expected ', need
-      if (o < 2._R8P) call fail(vv_label(ids(k))//': below second order')
+      if (o < 2._R_P) call fail(vv_label(ids(k))//': below second order')
       if (SCHEMES(ids(k))%family == FAM_TENO .or. (SCHEMES(ids(k))%family == FAM_Z .and. SCHEMES(ids(k))%s >= 3)) then
-         if (o < need - 0.5_R8P) call fail(vv_label(ids(k))//': below its expected order')
+         if (o < need - 0.5_R_P) call fail(vv_label(ids(k))//': below its expected order')
       endif
    enddo
 enddo
@@ -56,27 +57,27 @@ print '(A)', 'seth_vv_euler_order: ok'
 contains
    subroutine wave(id, path, n, l1, linf)
    integer(I4P), intent(in)  :: id, path, n
-   real(R8P),    intent(out) :: l1, linf
-   real(R8P)                 :: q(3,1-NG:n+NG), h, t, dt, sc, e(n), x, o
+   real(R_P),    intent(out) :: l1, linf
+   real(R_P)                 :: q(3,1-NG:n+NG), h, t, dt, sc, e(n), x, o
    logical                   :: ok
    integer(I4P)              :: i
-   h = 2._R8P/n
+   h = 2._R_P/n
    do i=1, n
-      x = -1._R8P + (i - 0.5_R8P)*h
-      q(:,i) = prim2cons([1._R8P + 0.2_R8P*sin(PI*x), 1._R8P, 1._R8P])
+      x = -1._R_P + (i - 0.5_R_P)*h
+      q(:,i) = prim2cons([1._R_P + 0.2_R_P*sin(PI*x), 1._R_P, 1._R_P])
    enddo
-   o = SCHEMES(id)%order ; if (path == PATH_INTERP) o = min(o, 6._R8P)
-   sc = (h/0.1_R8P)**((o - 3._R8P)/3._R8P)
-   t = 0._R8P
-   do while (t < 2._R8P*(1._R8P - 1.e-14_R8P))
-      dt = min(0.4_R8P*sc*euler_dt(q, n, h, 1._R8P), 2._R8P - t)
+   o = SCHEMES(id)%order ; if (path == PATH_INTERP) o = min(o, 6._R_P)
+   sc = (h/0.1_R_P)**((o - 3._R_P)/3._R_P)
+   t = 0._R_P
+   do while (t < 2._R_P*(1._R_P - T_SLACK))
+      dt = min(0.4_R_P*sc*euler_dt(q, n, h, 1._R_P), 2._R_P - t)
       call euler_step(id, path, q, n, h, dt, BC_PERIODIC, ok)
       if (.not.ok) error stop 'seth_vv_euler_order: a smooth wave lost positivity'
       t = t + dt
    enddo
    do i=1, n
-      x = -1._R8P + (i - 0.5_R8P)*h
-      e(i) = q(1,i) - (1._R8P + 0.2_R8P*sin(PI*x))
+      x = -1._R_P + (i - 0.5_R_P)*h
+      e(i) = q(1,i) - (1._R_P + 0.2_R_P*sin(PI*x))
    enddo
    l1 = l1_norm(e, h) ; linf = maxval(abs(e))
    endsubroutine wave
@@ -84,13 +85,13 @@ contains
    pure function order(e) result(o)
    !< Observed order on the finest pair whose finer error is above 1e-10: below it the round-off accumulated over the
    !< tens of thousands of RK3 steps of the time-accurate dt (a plateau at 1e-12 .. 1e-11, measured) takes over.
-   real(R8P), intent(in) :: e(:)
-   real(R8P)             :: o
+   real(R_P), intent(in) :: e(:)
+   real(R_P)             :: o
    integer(I4P)          :: j
-   o = -1._R8P
+   o = -1._R_P
    do j=size(e)-1, 1, -1
-      if (e(j+1) > 1.e-10_R8P) then
-         o = log(e(j)/e(j+1))/log(2._R8P) ; return
+      if (e(j+1) > ORDER_FLOOR_EULER) then
+         o = log(e(j)/e(j+1))/log(2._R_P) ; return
       endif
    enddo
    endfunction order

@@ -33,6 +33,7 @@ program seth_vv_adr
 !< SSP-RK3, CFL 0.4) and its amplitude must never exceed the initial one: the band is not a growth of that mode.
 !< Report mode: adr-<scheme>.dat (theta, Re and Im of theta~, of theta~_lin).
 use seth
+use seth_test_parameters, only : TOL_ADR
 use seth_test_schemes
 use seth_weno_js_tables
 use seth_z_teno_tables
@@ -40,10 +41,10 @@ use seth_vv_cases, only : vv_report, vv_open, vv_schemes, vv_label
 use seth_vv_euler, only : PATH_SPLIT
 implicit none
 integer(I4P), parameter   :: N = 200_I4P
-real(R8P),    parameter   :: PI = acos(-1._R8P)
+real(R_P),    parameter   :: PI = acos(-1._R_P)
 integer(I4P), allocatable :: ids(:)
-real(R8P)                 :: c(-4:5), th, worst_teno, worst_low, maxim, thanti, gmax
-complex(R8P)              :: z, zl
+real(R_P)                 :: c(-4:5), th, worst_teno, worst_low, maxim, thanti, gmax
+complex(R_P)              :: z, zl
 integer(I4P)              :: k, nn, u
 logical                   :: passed, lin_dissipative
 
@@ -52,42 +53,42 @@ call vv_schemes(PATH_SPLIT, .not.vv_report(), ids)
 print '(A16,3A14)', 'scheme', 'TENO vs lin', 'low-k vs lin', 'max Im'
 do k=1, size(ids)
    call background(vv_label(ids(k)), c, lin_dissipative)
-   worst_teno = 0._R8P ; worst_low = 0._R8P ; maxim = -huge(1._R8P) ; thanti = huge(1._R8P)
+   worst_teno = 0._R_P ; worst_low = 0._R_P ; maxim = -huge(1._R_P) ; thanti = huge(1._R_P)
    if (vv_report()) call vv_open('adr-'//vv_label(ids(k))//'.dat', u, &
                                  'theta Re(theta~) Im(theta~) Re(theta~_lin) Im(theta~_lin) (N = 200, unit amplitude)')
    do nn=1, N/2-1
-      th = 2._R8P*PI*nn/N
+      th = 2._R_P*PI*nn/N
       z = adr(ids(k), th)
       zl = xit(c, th)
-      if (th <= PI/4._R8P) worst_teno = max(worst_teno, abs(z - zl))
-      if (th <= 0.3_R8P) worst_low = max(worst_low, abs(z - zl)/th)
+      if (th <= PI/4._R_P) worst_teno = max(worst_teno, abs(z - zl))
+      if (th <= 0.3_R_P) worst_low = max(worst_low, abs(z - zl)/th)
       maxim = max(maxim, aimag(z))
-      if (aimag(z) > 1.e-12_R8P) thanti = min(thanti, th)
-      if (vv_report()) write(u, '(5ES24.15)') th, real(z, R8P), aimag(z), real(zl, R8P), aimag(zl)
+      if (aimag(z) > TOL_ADR) thanti = min(thanti, th)
+      if (vv_report()) write(u, '(5ES24.15)') th, real(z, R_P), aimag(z), real(zl, R_P), aimag(zl)
    enddo
    if (vv_report()) close(u)
    print '(A16,3ES14.4)', vv_label(ids(k)), worst_teno, worst_low, maxim
    if (any(vv_label(ids(k)) == [character(16) :: 'teno5', 'teno6', 'teno5_opt', 'teno5_az', 'teno8']) .and. &
-       worst_teno > 1.e-12_R8P) &
+       worst_teno > TOL_ADR) &
       call fail(vv_label(ids(k))//': not its linear background for theta <= pi/4')
-   if (SCHEMES(ids(k))%s >= 3 .and. worst_low > 1.e-3_R8P) &
+   if (SCHEMES(ids(k))%s >= 3 .and. worst_low > 1.e-3_R_P) &
       call fail(vv_label(ids(k))//': far from its linear background at low wavenumbers')
    if (vv_label(ids(k)) == 'teno6') then
-      if (thanti < 0.4_R8P*PI .or. maxim > 1.e-3_R8P) call fail('teno6: anti-dissipation below 0.4 pi or above 1e-3')
+      if (thanti < 0.4_R_P*PI .or. maxim > 1.e-3_R_P) call fail('teno6: anti-dissipation below 0.4 pi or above 1e-3')
    elseif (vv_label(ids(k)) == 'teno8') then
-      if (thanti < 0.3_R8P*PI .or. maxim > 5.e-3_R8P) call fail('teno8: anti-dissipation below 0.3 pi or above 5e-3')
+      if (thanti < 0.3_R_P*PI .or. maxim > 5.e-3_R_P) call fail('teno8: anti-dissipation below 0.3 pi or above 5e-3')
    elseif (vv_label(ids(k)) == 'teno8_a') then
-      if (thanti < 0.3_R8P*PI .or. maxim > 1.2e-2_R8P) call fail('teno8_a: anti-dissipation below 0.3 pi or above 1.2e-2')
-   elseif (lin_dissipative .and. maxim > 1.e-12_R8P) then
+      if (thanti < 0.3_R_P*PI .or. maxim > 1.2e-2_R_P) call fail('teno8_a: anti-dissipation below 0.3 pi or above 1.2e-2')
+   elseif (lin_dissipative .and. maxim > TOL_ADR) then
       call fail(vv_label(ids(k))//': anti-dissipative')
    endif
-   if (maxim > 1.e-12_R8P) then ! (4) the band is not a growth
+   if (maxim > TOL_ADR) then ! (4) the band is not a growth
       do nn=1, N/2-1
-         th = 2._R8P*PI*nn/N
-         if (aimag(adr(ids(k), th)) <= 1.e-12_R8P) cycle
+         th = 2._R_P*PI*nn/N
+         if (aimag(adr(ids(k), th)) <= TOL_ADR) cycle
          gmax = growth(ids(k), nn)
          print '(A16,A,F6.3,A,F12.9)', vv_label(ids(k)), ': theta/pi ', th/PI, ', 4 periods, max amplitude ', gmax
-         if (gmax > 1._R8P + 1.e-12_R8P) call fail(vv_label(ids(k))//': a mode of the anti-dissipative band grows')
+         if (gmax > 1._R_P + TOL_ADR) call fail(vv_label(ids(k))//': a mode of the anti-dissipative band grows')
       enddo
    endif
 enddo
@@ -98,17 +99,17 @@ contains
    function growth(id, nm) result(amax)
    !< Largest amplitude of mode nm advected by u_t + u_x = 0 for 4 periods (periodic, SSP-RK3, CFL 0.4, left state).
    integer(I4P), intent(in) :: id, nm
-   real(R8P)                :: amax, u0(0:N-1), u1(0:N-1), u2(0:N-1), h, dt
+   real(R_P)                :: amax, u0(0:N-1), u1(0:N-1), u2(0:N-1), h, dt
    integer(I4P)             :: j, step
-   h = 1._R8P/N ; dt = 0.4_R8P*h
+   h = 1._R_P/N ; dt = 0.4_R_P*h
    do j=0, N-1
-      u0(j) = cos(2._R8P*PI*nm*j/N)
+      u0(j) = cos(2._R_P*PI*nm*j/N)
    enddo
    amax = maxval(abs(u0))
-   do step=1, nint(4._R8P/dt)
+   do step=1, nint(4._R_P/dt)
       u1 = u0 + dt*rhs(id, u0)
-      u2 = 0.75_R8P*u0 + 0.25_R8P*(u1 + dt*rhs(id, u1))
-      u0 = u0/3._R8P + (2._R8P/3._R8P)*(u2 + dt*rhs(id, u2))
+      u2 = 0.75_R_P*u0 + 0.25_R_P*(u1 + dt*rhs(id, u1))
+      u0 = u0/3._R_P + (2._R_P/3._R_P)*(u2 + dt*rhs(id, u2))
       amax = max(amax, maxval(abs(u0)))
    enddo
    endfunction growth
@@ -116,10 +117,10 @@ contains
    function rhs(id, w) result(r)
    !< -d/dx of the left-biased flux of u_t + u_x = 0 (periodic), scheme id.
    integer(I4P), intent(in) :: id
-   real(R8P),    intent(in) :: w(0:N-1)
-   real(R8P)                :: r(0:N-1), f(0:N-1), v(VLO:VHI), zero(VLO:VHI), rp, rm
+   real(R_P),    intent(in) :: w(0:N-1)
+   real(R_P)                :: r(0:N-1), f(0:N-1), v(VLO:VHI), zero(VLO:VHI), rp, rm
    integer(I4P)             :: jj, m
-   zero = 0._R8P
+   zero = 0._R_P
    do jj=0, N-1 ! face jj+1/2
       do m=VLO, VHI
          v(m) = w(modulo(jj+m, N))
@@ -135,14 +136,14 @@ contains
    function adr(id, th) result(z)
    !< theta~ of scheme id at theta by the single-mode procedure.
    integer(I4P), intent(in) :: id
-   real(R8P),    intent(in) :: th
-   complex(R8P)             :: z, g
-   real(R8P)                :: uu(0:N-1), f(0:N-1), v(VLO:VHI), zero(VLO:VHI), rp, rm
+   real(R_P),    intent(in) :: th
+   complex(R_P)             :: z, g
+   real(R_P)                :: uu(0:N-1), f(0:N-1), v(VLO:VHI), zero(VLO:VHI), rp, rm
    integer(I4P)             :: j, m
    do j=0, N-1
       uu(j) = cos(th*j)
    enddo
-   zero = 0._R8P
+   zero = 0._R_P
    do j=0, N-1 ! face j+1/2
       do m=VLO, VHI
          v(m) = uu(modulo(j+m, N))
@@ -150,18 +151,18 @@ contains
       call reconstruct(id, v, zero, rp, rm)
       f(j) = rp
    enddo
-   g = (0._R8P, 0._R8P)
+   g = (0._R_P, 0._R_P)
    do j=0, N-1
-      g = g + (f(j) - f(modulo(j-1, N)))*exp(cmplx(0._R8P, -th*j, R8P))
+      g = g + (f(j) - f(modulo(j-1, N)))*exp(cmplx(0._R_P, -th*j, R_P))
    enddo
-   g = g*2._R8P/N
-   z = cmplx(0._R8P, -1._R8P, R8P)*g
+   g = g*2._R_P/N
+   z = cmplx(0._R_P, -1._R_P, R_P)*g
    endfunction adr
 
    subroutine background(name, c, dissipative)
    !< Linear face coefficients of the scheme's background (optimal weights), and whether it is dissipative.
    character(*), intent(in)  :: name
-   real(R8P),    intent(out) :: c(-4:5)
+   real(R_P),    intent(out) :: c(-4:5)
    logical,      intent(out) :: dissipative
    dissipative = .true.
    select case(name)
@@ -196,10 +197,10 @@ contains
    subroutine js(s, a, p, c)
    !< Linear face coefficients of WENO-JS, the left-biased state (ADAM's row 2: P(2, cell j, stencil k) on cell k-j).
    integer(I4P), intent(in)  :: s
-   real(R8P),    intent(in)  :: a(1:2,0:s-1), p(1:2,0:s-1,0:s-1)
-   real(R8P),    intent(out) :: c(-4:5)
+   real(R_P),    intent(in)  :: a(1:2,0:s-1), p(1:2,0:s-1,0:s-1)
+   real(R_P),    intent(out) :: c(-4:5)
    integer(I4P)              :: kk, j
-   c = 0._R8P
+   c = 0._R_P
    do kk=0, s-1
       do j=0, s-1
          c(kk-j) = c(kk-j) + a(2,kk)*p(2,j,kk)
@@ -210,10 +211,10 @@ contains
    subroutine dsc(nc, maxw, clo, cw, cp, d, c)
    !< Linear face coefficients of a WENO-Z/TENO descriptor: sum_k d_k/sum d times candidate k.
    integer(I4P), intent(in)  :: nc, maxw, clo(0:nc-1), cw(0:nc-1)
-   real(R8P),    intent(in)  :: cp(0:maxw-1,0:nc-1), d(0:nc-1)
-   real(R8P),    intent(out) :: c(-4:5)
+   real(R_P),    intent(in)  :: cp(0:maxw-1,0:nc-1), d(0:nc-1)
+   real(R_P),    intent(out) :: c(-4:5)
    integer(I4P)              :: kk, j
-   c = 0._R8P
+   c = 0._R_P
    do kk=0, nc-1
       do j=0, cw(kk)-1
          c(clo(kk)+j) = c(clo(kk)+j) + d(kk)/sum(d)*cp(j,kk)
@@ -223,14 +224,14 @@ contains
 
    pure function xit(c, xi) result(z)
    !< Modified wavenumber of the finite-difference derivative with face coefficients c (seth_test_spectral).
-   real(R8P), intent(in) :: c(-4:5), xi
-   complex(R8P)          :: z, s
+   real(R_P), intent(in) :: c(-4:5), xi
+   complex(R_P)          :: z, s
    integer(I4P)          :: m
-   s = (0._R8P, 0._R8P)
+   s = (0._R_P, 0._R_P)
    do m=-4, 5
-      s = s + c(m)*exp(cmplx(0._R8P, m*xi, R8P))
+      s = s + c(m)*exp(cmplx(0._R_P, m*xi, R_P))
    enddo
-   z = cmplx(0._R8P, -1._R8P, R8P)*s*(1._R8P - exp(cmplx(0._R8P, -xi, R8P)))
+   z = cmplx(0._R_P, -1._R_P, R_P)*s*(1._R_P - exp(cmplx(0._R_P, -xi, R_P)))
    endfunction xit
 
    subroutine fail(what)

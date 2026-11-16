@@ -25,12 +25,13 @@ program seth_test_golden
 !< file identical (same build), and the previous files are kept.
 use, intrinsic :: iso_fortran_env, only : compiler_version, compiler_options
 use seth
+use seth_test_parameters, only : TOL_GOLDEN, TOL_GOLDEN_WR
 use seth_test_schemes
 implicit none
 character(*), parameter :: GOLDEN = 'src/tests/golden/seth_golden_v6.txt'
 integer(I4P), parameter :: NST = 64_I4P
-real(R8P),    parameter :: TOL = 1.e-13_R8P, TOL_WR = 1.e-9_R8P
-real(R8P)               :: vp(VLO:VHI,NST), vm(VLO:VHI,NST), r(4), g(4), mag, d, worst, worst_wr
+real(R_P),    parameter :: TOL = TOL_GOLDEN, TOL_WR = TOL_GOLDEN_WR
+real(R_P)               :: vp(VLO:VHI,NST), vm(VLO:VHI,NST), r(4), g(4), mag, d, worst, worst_wr
 integer(I4P)            :: id, p, k, u, n_values, n_bitwise, n_fail, ios, kk
 character(16)           :: name, gname
 character(256)          :: arg, path, line
@@ -64,7 +65,7 @@ if (write_mode) then
 endif
 open(newunit=u, file=GOLDEN, status='old', action='read', iostat=ios)
 if (ios /= 0) error stop 'seth_test_golden: cannot open '//GOLDEN//' (run from the repository root)'
-n_values = 0 ; n_bitwise = 0 ; n_fail = 0 ; worst = 0._R8P ; worst_wr = 0._R8P
+n_values = 0 ; n_bitwise = 0 ; n_fail = 0 ; worst = 0._R_P ; worst_wr = 0._R_P
 do
    read(u, '(A)', iostat=ios) line
    if (ios /= 0) exit
@@ -73,7 +74,7 @@ do
    id = scheme_index(gname)
    if (id < 1) then ; print '(A)', 'unknown scheme in the golden file: '//trim(gname) ; n_fail = n_fail + 1 ; cycle ; endif
    call evaluate(id, p, k, r)
-   mag = max(maxval(abs(vp(:,k))), maxval(abs(vm(:,k))), tiny(1._R8P))
+   mag = max(maxval(abs(vp(:,k))), maxval(abs(vm(:,k))), tiny(1._R_P))
    do kk=1, 4
       n_values = n_values + 1
       if (r(kk) == g(kk)) then
@@ -105,9 +106,9 @@ contains
    subroutine evaluate(id, p, k, r)
    !< rp, rm, wrp, wrm of scheme id (WENO-Z: exponent p) on stencil k.
    integer(I4P), intent(in)  :: id, p, k
-   real(R8P),    intent(out) :: r(4)
+   real(R_P),    intent(out) :: r(4)
    if (SCHEMES(id)%family == FAM_Z) then
-      call reconstruct(id, vp(:,k), vm(:,k), r(1), r(2), r(3), r(4), par=real(p, R8P))
+      call reconstruct(id, vp(:,k), vm(:,k), r(1), r(2), r(3), r(4), par=real(p, R_P))
    else
       call reconstruct(id, vp(:,k), vm(:,k), r(1), r(2), r(3), r(4))
    endif
@@ -134,44 +135,44 @@ contains
    !< NST deterministic stencil pairs, exact in binary: 16 smooth cubics with dyadic coefficients, 20 jumps (each cell
    !< boundary, two shapes; VLO: constants), 12 scaled (a cubic with a jump times 2^-498 .. 2^96, about 1e-150 .. 1e29),
    !< 16 rough (an integer LCG).
-   real(R8P), intent(out) :: vp(VLO:VHI,NST), vm(VLO:VHI,NST)
+   real(R_P), intent(out) :: vp(VLO:VHI,NST), vm(VLO:VHI,NST)
    integer(I4P)           :: k, m, j
    integer(I8P)           :: state
-   real(R8P)              :: sc
+   real(R_P)              :: sc
    k = 0
    do j=1, 16 ! smooth: cubics with dyadic coefficients (exact)
       k = k + 1
       do m=VLO, VHI
-         vp(m,k) = 1._R8P + (j/8._R8P)*m - (j/64._R8P)*m*m + (1._R8P/512._R8P)*m**3
-         vm(m,k) = -0.5_R8P + (j/16._R8P)*m + (j/128._R8P)*m*m - (j/1024._R8P)*m**3
+         vp(m,k) = 1._R_P + (j/8._R_P)*m - (j/64._R_P)*m*m + (1._R_P/512._R_P)*m**3
+         vm(m,k) = -0.5_R_P + (j/16._R_P)*m + (j/128._R_P)*m*m - (j/1024._R_P)*m**3
       enddo
    enddo
    do j=VLO, VHI ! jumps between cells j-1 and j, both orientations (j = VLO: the constant stencils)
       k = k + 1
       do m=VLO, VHI
-         vp(m,k) = merge(1._R8P, 0._R8P, m >= j)
-         vm(m,k) = merge(0._R8P, 2._R8P, m >= j)
+         vp(m,k) = merge(1._R_P, 0._R_P, m >= j)
+         vm(m,k) = merge(0._R_P, 2._R_P, m >= j)
       enddo
       k = k + 1
       do m=VLO, VHI
-         vp(m,k) = merge(-3._R8P, 0.5_R8P, m >= j)
-         vm(m,k) = merge(1._R8P, 1.25_R8P, m >= j)
+         vp(m,k) = merge(-3._R_P, 0.5_R_P, m >= j)
+         vm(m,k) = merge(1._R_P, 1.25_R_P, m >= j)
       enddo
    enddo
    do j=1, 12 ! scaled: a cubic with a jump, times 2^-498 .. 2^96 (exact)
       k = k + 1
-      sc = 2._R8P**(-498 + (j-1)*54)
+      sc = 2._R_P**(-498 + (j-1)*54)
       do m=VLO, VHI
-         vp(m,k) = sc*(0.25_R8P*m - 0.03125_R8P*m*m + merge(1._R8P, 0._R8P, m >= 1))
-         vm(m,k) = sc*(1._R8P - 0.125_R8P*m + 0.0078125_R8P*m**3 - merge(0.5_R8P, 0._R8P, m >= 0))
+         vp(m,k) = sc*(0.25_R_P*m - 0.03125_R_P*m*m + merge(1._R_P, 0._R_P, m >= 1))
+         vm(m,k) = sc*(1._R_P - 0.125_R_P*m + 0.0078125_R_P*m**3 - merge(0.5_R_P, 0._R_P, m >= 0))
       enddo
    enddo
    state = 20261115_I8P
    do j=1, 16 ! rough: a 31-bit LCG (Park-Miller), the same numbers on every compiler
       k = k + 1
       do m=VLO, VHI
-         state = mod(16807_I8P*state, 2147483647_I8P) ; vp(m,k) = real(state, R8P)/2147483647._R8P - 0.5_R8P
-         state = mod(16807_I8P*state, 2147483647_I8P) ; vm(m,k) = real(state, R8P)/2147483647._R8P - 0.3_R8P
+         state = mod(16807_I8P*state, 2147483647_I8P) ; vp(m,k) = real(state, R_P)/2147483647._R_P - 0.5_R_P
+         state = mod(16807_I8P*state, 2147483647_I8P) ; vm(m,k) = real(state, R_P)/2147483647._R_P - 0.3_R_P
       enddo
    enddo
    if (k /= NST) error stop 'stencils: count mismatch'

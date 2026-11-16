@@ -21,59 +21,60 @@ program seth_test_positivity
 !<
 !< Random numbers from a fixed, printed seed (SETH_TEST_SEED overrides it).
 use seth
+use seth_test_parameters, only : TOL_THETA
 use seth_test_rng, only : seed_rng
 implicit none
-real(R8P),    parameter :: G = 1.4_R8P, EPS = SETH_POSITIVITY_EPS
+real(R_P),    parameter :: G = 1.4_R_P, EPS = SETH_POSITIVITY_EPS
 integer(I4P), parameter :: NR = 20000_I4P
-real(R8P)               :: ql(5), qr(5), fh(5), fl(5), f(5), theta, lam, alpha, x, worst_comb, worst_opt, ref
+real(R_P)               :: ql(5), qr(5), fh(5), fl(5), f(5), theta, lam, alpha, x, worst_comb, worst_opt, ref
 integer(I4P)            :: nv, n_, nlim, nfull, failures
 logical                 :: passed
 
 passed = .true.
 call seed_rng(1006_I4P)
 do nv=3, 5
-   failures = 0 ; nlim = 0 ; nfull = 0 ; worst_comb = 0._R8P ; worst_opt = 0._R8P
+   failures = 0 ; nlim = 0 ; nfull = 0 ; worst_comb = 0._R_P ; worst_opt = 0._R_P
    do n_=1, NR
       call random_state(nv, ql(1:nv)) ; call random_state(nv, qr(1:nv))
       alpha = max(speed(nv, ql(1:nv)), speed(nv, qr(1:nv)))
-      lam = 1._R8P/alpha
-      fl(1:nv) = 0.5_R8P*(flux(nv, ql(1:nv)) + flux(nv, qr(1:nv))) - 0.5_R8P*alpha*(qr(1:nv) - ql(1:nv))
+      lam = 1._R_P/alpha
+      fl(1:nv) = 0.5_R_P*(flux(nv, ql(1:nv)) + flux(nv, qr(1:nv))) - 0.5_R_P*alpha*(qr(1:nv) - ql(1:nv))
       ! 6. the premise: the low-order flux is admissible under its CFL limit
-      if (.not.(adm(nv, ql(1:nv) - lam*fl(1:nv), 0._R8P, 0._R8P) .and. &
-                adm(nv, qr(1:nv) + lam*fl(1:nv), 0._R8P, 0._R8P))) &
+      if (.not.(adm(nv, ql(1:nv) - lam*fl(1:nv), 0._R_P, 0._R_P) .and. &
+                adm(nv, qr(1:nv) + lam*fl(1:nv), 0._R_P, 0._R_P))) &
          call fail('the Lax-Friedrichs flux is not admissible at CFL 1/2')
       ! 4. no perturbation: theta = 1 bitwise when f_high = f_low is admissible
       if (adm(nv, ql(1:nv) - lam*fl(1:nv), EPS, EPS) .and. &
           adm(nv, qr(1:nv) + lam*fl(1:nv), EPS, EPS)) then
          call seth_positivity_euler(nv, G, lam, EPS, EPS, ql(1:nv), qr(1:nv), fl(1:nv), fl(1:nv), f(1:nv), theta)
-         if (theta /= 1._R8P .or. any(f(1:nv) /= fl(1:nv))) call fail('theta /= 1 on an admissible flux')
+         if (theta /= 1._R_P .or. any(f(1:nv) /= fl(1:nv))) call fail('theta /= 1 on an admissible flux')
       else
          cycle ! the floors exclude this pair: the limiter has nothing admissible to blend towards
       endif
       ! the library's admissibility check agrees with the test's on the one-sided low-order states
-      x = 0._R8P
+      x = 0._R_P
       if (seth_euler_admissible(nv, G, ql(1:nv) - lam*fl(1:nv), EPS, EPS) .neqv. &
-          adm(nv, ql(1:nv) - lam*fl(1:nv), EPS, EPS)) x = 1._R8P
-      if (seth_euler_admissible(nv, G, qr(1:nv), EPS, EPS) .neqv. adm(nv, qr(1:nv), EPS, EPS)) x = 1._R8P
-      if (x > 0._R8P) call fail('seth_euler_admissible disagrees with the test')
+          adm(nv, ql(1:nv) - lam*fl(1:nv), EPS, EPS)) x = 1._R_P
+      if (seth_euler_admissible(nv, G, qr(1:nv), EPS, EPS) .neqv. adm(nv, qr(1:nv), EPS, EPS)) x = 1._R_P
+      if (x > 0._R_P) call fail('seth_euler_admissible disagrees with the test')
       ! a perturbed high-order flux
       call random_number(x)
-      fh(1:nv) = fl(1:nv) + (10._R8P**(4._R8P*x - 3._R8P))*perturbation(nv, ql(1:nv), qr(1:nv))
+      fh(1:nv) = fl(1:nv) + (10._R_P**(4._R_P*x - 3._R_P))*perturbation(nv, ql(1:nv), qr(1:nv))
       call seth_positivity_euler(nv, G, lam, EPS, EPS, ql(1:nv), qr(1:nv), fh(1:nv), fl(1:nv), f(1:nv), theta)
       ! 1.
-      if (.not.(theta >= 0._R8P .and. theta <= 1._R8P)) call fail('theta outside [0, 1]')
-      worst_comb = max(worst_comb, maxval(abs(f(1:nv) - (theta*fh(1:nv) + (1._R8P - theta)*fl(1:nv)))) / &
+      if (.not.(theta >= 0._R_P .and. theta <= 1._R_P)) call fail('theta outside [0, 1]')
+      worst_comb = max(worst_comb, maxval(abs(f(1:nv) - (theta*fh(1:nv) + (1._R_P - theta)*fl(1:nv)))) / &
                                    (maxval(abs(fh(1:nv))) + maxval(abs(fl(1:nv)))))
       ! 2.
       if (.not.(adm_ro(nv, ql(1:nv) - lam*f(1:nv), abs(ql(1:nv)) + abs(lam*f(1:nv))) .and. &
                 adm_ro(nv, qr(1:nv) + lam*f(1:nv), abs(qr(1:nv)) + abs(lam*f(1:nv))))) &
          call fail('a limited one-sided state is not admissible')
       ! 3.
-      if (theta < 1._R8P) then
+      if (theta < 1._R_P) then
          nlim = nlim + 1
          ref = bisection(nv, lam, ql(1:nv), qr(1:nv), fh(1:nv), fl(1:nv))
          worst_opt = max(worst_opt, ref - theta)
-         if (ref - theta > 1.e-9_R8P) call fail('theta not maximal')
+         if (ref - theta > TOL_THETA) call fail('theta not maximal')
       else
          nfull = nfull + 1
       endif
@@ -98,28 +99,28 @@ contains
    subroutine random_state(nv, q)
    !< rho, p log-uniform in [1e-8, 1], each velocity component uniform in [-10, 10].
    integer(I4P), intent(in)  :: nv
-   real(R8P),    intent(out) :: q(nv)
-   real(R8P)                 :: r(nv), rho, p
+   real(R_P),    intent(out) :: q(nv)
+   real(R_P)                 :: r(nv), rho, p
    call random_number(r)
-   rho = 10._R8P**(-8._R8P*r(1)) ; p = 10._R8P**(-8._R8P*r(nv))
+   rho = 10._R_P**(-8._R_P*r(1)) ; p = 10._R_P**(-8._R_P*r(nv))
    q(1) = rho
-   q(2:nv-1) = rho*(20._R8P*r(2:nv-1) - 10._R8P)
-   q(nv) = p/(G - 1._R8P) + 0.5_R8P*dot_product(q(2:nv-1), q(2:nv-1))/rho
+   q(2:nv-1) = rho*(20._R_P*r(2:nv-1) - 10._R_P)
+   q(nv) = p/(G - 1._R_P) + 0.5_R_P*dot_product(q(2:nv-1), q(2:nv-1))/rho
    endsubroutine random_state
 
    pure logical function adm(nv, q, er, ep) result(ok)
    !< The test's own admissibility check (independent of the library's seth_euler_admissible): rho >= er, p >= ep.
    integer(I4P), intent(in) :: nv
-   real(R8P),    intent(in) :: q(nv), er, ep
-   real(R8P)                :: ke
+   real(R_P),    intent(in) :: q(nv), er, ep
+   real(R_P)                :: ke
    integer(I4P)             :: k
    ok = .false.
    if (.not.(q(1) >= er)) return
-   ke = 0._R8P
+   ke = 0._R_P
    do k=2, nv-1
       ke = ke + q(k)*q(k)
    enddo
-   ok = (G - 1._R8P)*(q(nv) - 0.5_R8P*ke/q(1)) >= ep
+   ok = (G - 1._R_P)*(q(nv) - 0.5_R_P*ke/q(1)) >= ep
    endfunction adm
 
    pure logical function adm_ro(nv, q, mag) result(ok)
@@ -135,29 +136,29 @@ contains
    !< as it evaluates them; a floor below the round-off of the caller's states cannot be guaranteed by any limiter:
    !< the caller chooses eps_p above epsilon |q| (1 + |u|^2).
    integer(I4P), intent(in) :: nv
-   real(R8P),    intent(in) :: q(nv), mag(nv)
-   real(R8P)                :: ke, tol, d(nv)
+   real(R_P),    intent(in) :: q(nv), mag(nv)
+   real(R_P)                :: ke, tol, d(nv)
    integer(I4P)             :: k
    ok = .false.
-   d = 4._R8P*epsilon(1._R8P)*mag
+   d = 4._R_P*epsilon(1._R_P)*mag
    if (.not.(q(1) >= EPS - d(1))) return
-   ke = 0._R8P ; tol = d(nv)
+   ke = 0._R_P ; tol = d(nv)
    do k=2, nv-1
       ke = ke + q(k)*q(k)
       tol = tol + abs(q(k)/q(1))*d(k)
    enddo
-   ke = 0.5_R8P*ke/q(1)
-   tol = (G - 1._R8P)*(tol + ke/q(1)*d(1) + 4._R8P*epsilon(1._R8P)*(abs(q(nv)) + ke))
-   ok = (G - 1._R8P)*(q(nv) - ke) >= EPS - tol
+   ke = 0.5_R_P*ke/q(1)
+   tol = (G - 1._R_P)*(tol + ke/q(1)*d(1) + 4._R_P*epsilon(1._R_P)*(abs(q(nv)) + ke))
+   ok = (G - 1._R_P)*(q(nv) - ke) >= EPS - tol
    endfunction adm_ro
 
    pure function flux(nv, q) result(fx)
    !< The Euler flux normal to direction 1.
    integer(I4P), intent(in) :: nv
-   real(R8P),    intent(in) :: q(nv)
-   real(R8P)                :: fx(nv), u, p
+   real(R_P),    intent(in) :: q(nv)
+   real(R_P)                :: fx(nv), u, p
    u = q(2)/q(1)
-   p = (G - 1._R8P)*(q(nv) - 0.5_R8P*dot_product(q(2:nv-1), q(2:nv-1))/q(1))
+   p = (G - 1._R_P)*(q(nv) - 0.5_R_P*dot_product(q(2:nv-1), q(2:nv-1))/q(1))
    fx = u*q
    fx(2) = fx(2) + p
    fx(nv) = fx(nv) + p*u
@@ -165,34 +166,34 @@ contains
 
    pure function speed(nv, q) result(s)
    integer(I4P), intent(in) :: nv
-   real(R8P),    intent(in) :: q(nv)
-   real(R8P)                :: s, p
-   p = (G - 1._R8P)*(q(nv) - 0.5_R8P*dot_product(q(2:nv-1), q(2:nv-1))/q(1))
+   real(R_P),    intent(in) :: q(nv)
+   real(R_P)                :: s, p
+   p = (G - 1._R_P)*(q(nv) - 0.5_R_P*dot_product(q(2:nv-1), q(2:nv-1))/q(1))
    s = abs(q(2)/q(1)) + sqrt(G*p/q(1))
    endfunction speed
 
    function perturbation(nv, a, b) result(d)
    !< A random vector of the magnitude of the two states' fluxes.
    integer(I4P), intent(in) :: nv
-   real(R8P),    intent(in) :: a(nv), b(nv)
-   real(R8P)                :: d(nv), r(nv)
+   real(R_P),    intent(in) :: a(nv), b(nv)
+   real(R_P)                :: d(nv), r(nv)
    call random_number(r)
-   d = (2._R8P*r - 1._R8P)*(abs(flux(nv, a)) + abs(flux(nv, b)) + abs(a) + abs(b))
+   d = (2._R_P*r - 1._R_P)*(abs(flux(nv, a)) + abs(flux(nv, b)) + abs(a) + abs(b))
    endfunction perturbation
 
    function bisection(nv, lam, a, b, fh, fl) result(t)
    !< The largest admissible factor by 60 bisection steps on the exact condition (theta = 1 checked first).
    integer(I4P), intent(in) :: nv
-   real(R8P),    intent(in) :: lam, a(nv), b(nv), fh(nv), fl(nv)
-   real(R8P)                :: t, lo, hi, m, ff(nv)
+   real(R_P),    intent(in) :: lam, a(nv), b(nv), fh(nv), fl(nv)
+   real(R_P)                :: t, lo, hi, m, ff(nv)
    integer(I4P)             :: k
    ff = fh
    if (adm(nv, a - lam*ff, EPS, EPS) .and. adm(nv, b + lam*ff, EPS, EPS)) then
-      t = 1._R8P ; return
+      t = 1._R_P ; return
    endif
-   lo = 0._R8P ; hi = 1._R8P
+   lo = 0._R_P ; hi = 1._R_P
    do k=1, 60
-      m = 0.5_R8P*(lo + hi) ; ff = m*fh + (1._R8P - m)*fl
+      m = 0.5_R_P*(lo + hi) ; ff = m*fh + (1._R_P - m)*fl
       if (adm(nv, a - lam*ff, EPS, EPS) .and. &
           adm(nv, b + lam*ff, EPS, EPS)) then
          lo = m
@@ -211,14 +212,14 @@ contains
    do k=1, 2000
       call random_state(nv, ql(1:nv)) ; call random_state(nv, qr(1:nv))
       alpha = max(speed(nv, ql(1:nv)), speed(nv, qr(1:nv)))
-      lam = 10._R8P/alpha
-      fl(1:nv) = 0.5_R8P*(flux(nv, ql(1:nv)) + flux(nv, qr(1:nv))) - 0.5_R8P*alpha*(qr(1:nv) - ql(1:nv))
+      lam = 10._R_P/alpha
+      fl(1:nv) = 0.5_R_P*(flux(nv, ql(1:nv)) + flux(nv, qr(1:nv))) - 0.5_R_P*alpha*(qr(1:nv) - ql(1:nv))
       if (adm(nv, ql(1:nv) - lam*fl(1:nv), EPS, EPS) .and. &
           adm(nv, qr(1:nv) + lam*fl(1:nv), EPS, EPS)) cycle
       nfound = nfound + 1
-      fh(1:nv) = 2._R8P*fl(1:nv)
+      fh(1:nv) = 2._R_P*fl(1:nv)
       call seth_positivity_euler(nv, G, lam, EPS, EPS, ql(1:nv), qr(1:nv), fh(1:nv), fl(1:nv), f(1:nv), theta)
-      if (theta /= 0._R8P .or. any(f(1:nv) /= fl(1:nv))) call fail('inadmissible f_low: theta /= 0')
+      if (theta /= 0._R_P .or. any(f(1:nv) /= fl(1:nv))) call fail('inadmissible f_low: theta /= 0')
    enddo
    if (nfound == 0) call fail('no inadmissible low-order flux found at lam = 10/alpha')
    endsubroutine five
