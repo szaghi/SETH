@@ -2,9 +2,11 @@
 module seth
 !< SETH, Smoothness-weighted ENO, TENO and Hybrids: the library's entry point.
 !<
-!< `use seth` gives the working kinds and every scheme family. Each kernel reconstructs (or interpolates) the two
-!< states at one face from two stencils, its coefficients compile-time constants; see seth_weno_js.
-use penf, only : I4P, I8P, R4P, R8P
+!< `use seth` gives the working kinds (R_P, the kernels' kind, chosen at build time: seth_kind_parameters) and every
+!< scheme family. Each kernel reconstructs (or interpolates) the two states at one face from two stencils, its
+!< coefficients compile-time constants; see seth_weno_js.
+use penf, only : I4P, I8P, R4P, R8P, R_P
+use seth_kind_parameters
 use seth_descaling
 use seth_weno_js
 use seth_weno_js_tables
@@ -18,7 +20,7 @@ use seth_kep
 use seth_shock_sensors
 implicit none
 private
-public :: I4P, I8P, R4P, R8P
+public :: I4P, I8P, R4P, R8P, R_P
 public :: seth_weno_descaling, seth_weno_descaling_ai
 public :: SETH_WENO_JS_EPS
 public :: seth_weno1_js, seth_weno1_js_wr, seth_weno1_js_interp, seth_weno1_js_interp_wr

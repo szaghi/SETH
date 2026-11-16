@@ -27,8 +27,8 @@ NUMBER = re.compile(r'(\d+\.\d*|\d*\.\d+|\d+)')
 
 
 def rational(expr: str) -> Fraction:
-    """Exact value of an ADAM coefficient expression such as ``-7._R8P/6._R8P``."""
-    text = expr.replace('_R8P', '').replace(' ', '')
+    """Exact value of an ADAM coefficient expression such as ``-7._R8P/6._R8P`` (emitted as R_P)."""
+    text = expr.replace('_R8P', '').replace('_R_P', '').replace(' ', '')
     text = NUMBER.sub(lambda m: f'Fraction("{m.group(1)}")', text)
     return eval(text, {'Fraction': Fraction})  # noqa: S307 - input is our own source tree, digits and /-+ only
 
@@ -101,9 +101,9 @@ def fortran_array(name: str, shape: list[tuple[int, int]], values: list[str], do
     extents = ','.join(str(hi - lo + 1) for lo, hi in shape)
     rows = []
     for i in range(0, len(values), 4):
-        rows.append('      ' + ', '.join(f'{v:>18}' for v in values[i:i + 4]))
+        rows.append('      ' + ', '.join(f"{v.replace('_R8P', '_R_P'):>18}" for v in values[i:i + 4]))
     body = ', &\n'.join(rows)
-    return (f'real(R8P), parameter :: {name}({bounds}) = reshape([ & !< {doc}\n'
+    return (f'real(R_P), parameter :: {name}({bounds}) = reshape([ & !< {doc}\n'
             f'{body}], [{extents}])\n')
 
 
@@ -122,9 +122,9 @@ def main() -> None:
     for S in range(1, 6):
         order = 2 * S - 1
         if S == 1:  # initialize_upwind_S1 assigns the whole arrays to 1
-            rec = {'a': {(f, 0): '1._R8P' for f in (1, 2)},
-                   'p': {(f, 0, 0): '1._R8P' for f in (1, 2)},
-                   'd': {(0, 0, 0): '1._R8P'}}
+            rec = {'a': {(f, 0): '1._R_P' for f in (1, 2)},
+                   'p': {(f, 0, 0): '1._R_P' for f in (1, 2)},
+                   'd': {(0, 0, 0): '1._R_P'}}
         else:
             rec = parse(routine(source, f'initialize_upwind_S{S}'))
         itp = parse(routine(source, f'initialize_interpolation_S{S}'))
@@ -133,7 +133,7 @@ def main() -> None:
         r2, rs = range(1, 3), range(S)
         name = f'WENO{order}_JS'
         blocks.append(f'! WENO-{order} (S = {S})\n')
-        blocks.append(f'real(R8P), parameter :: {name}_D_SCALE = {scale}._R8P !< IS of unit-slope data (1: normalised)\n')
+        blocks.append(f'real(R_P), parameter :: {name}_D_SCALE = {scale}._R_P !< IS of unit-slope data (1: normalised)\n')
         blocks.append(fortran_array(f'{name}_A', [(1, 2), (0, S - 1)], ordered(rec['a'], [r2, rs]),
                                     'optimal weights (interface, candidate)'))
         blocks.append(fortran_array(f'{name}_P', [(1, 2), (0, S - 1), (0, S - 1)],
@@ -156,10 +156,10 @@ module seth_weno_js_tables
 !< P(interface, cell c, candidate k) multiplies the value of cell k-c. WENO<N>_JS_D_SCALE is the value of the
 !< smoothness indicators on unit-slope data: 1 up to WENO-5; WENO-7 and WENO-9 keep Balsara & Shu's (2000) integer
 !< forms, so the same regulariser eps acts relative to IS/scale (eps/scale in normalised terms).
-use penf, only : R8P
+use penf, only : R_P
 implicit none
 private
-public :: R8P
+public :: R_P
 '''
     names = []
     for S in range(1, 6):

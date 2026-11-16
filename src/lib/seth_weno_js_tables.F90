@@ -9,10 +9,10 @@ module seth_weno_js_tables
 !< P(interface, cell c, candidate k) multiplies the value of cell k-c. WENO<N>_JS_D_SCALE is the value of the
 !< smoothness indicators on unit-slope data: 1 up to WENO-5; WENO-7 and WENO-9 keep Balsara & Shu's (2000) integer
 !< forms, so the same regulariser eps acts relative to IS/scale (eps/scale in normalised terms).
-use penf, only : R8P
+use penf, only : R_P
 implicit none
 private
-public :: R8P
+public :: R_P
 public :: WENO1_JS_D_SCALE
 public :: WENO1_JS_A
 public :: WENO1_JS_P
@@ -46,205 +46,205 @@ public :: WENO9_JS_INTERP_P
 
 ! WENO-1 (S = 1)
 
-real(R8P), parameter :: WENO1_JS_D_SCALE = 1._R8P !< IS of unit-slope data (1: normalised)
+real(R_P), parameter :: WENO1_JS_D_SCALE = 1._R_P !< IS of unit-slope data (1: normalised)
 
-real(R8P), parameter :: WENO1_JS_A(1:2,0:0) = reshape([ & !< optimal weights (interface, candidate)
-                  1._R8P,             1._R8P], [2,1])
+real(R_P), parameter :: WENO1_JS_A(1:2,0:0) = reshape([ & !< optimal weights (interface, candidate)
+                  1._R_P,             1._R_P], [2,1])
 
-real(R8P), parameter :: WENO1_JS_P(1:2,0:0,0:0) = reshape([ & !< reconstruction coefficients (interface, cell, candidate)
-                  1._R8P,             1._R8P], [2,1,1])
+real(R_P), parameter :: WENO1_JS_P(1:2,0:0,0:0) = reshape([ & !< reconstruction coefficients (interface, cell, candidate)
+                  1._R_P,             1._R_P], [2,1,1])
 
-real(R8P), parameter :: WENO1_JS_D(0:0,0:0,0:0) = reshape([ & !< smoothness-indicator coefficients
-                  1._R8P], [1,1,1])
+real(R_P), parameter :: WENO1_JS_D(0:0,0:0,0:0) = reshape([ & !< smoothness-indicator coefficients
+                  1._R_P], [1,1,1])
 
-real(R8P), parameter :: WENO1_JS_INTERP_A(1:2,0:0) = reshape([ & !< interpolation optimal weights
-                  1._R8P,             1._R8P], [2,1])
+real(R_P), parameter :: WENO1_JS_INTERP_A(1:2,0:0) = reshape([ & !< interpolation optimal weights
+                  1._R_P,             1._R_P], [2,1])
 
-real(R8P), parameter :: WENO1_JS_INTERP_P(1:2,0:0,0:0) = reshape([ & !< interpolation coefficients
-                  1._R8P,             1._R8P], [2,1,1])
+real(R_P), parameter :: WENO1_JS_INTERP_P(1:2,0:0,0:0) = reshape([ & !< interpolation coefficients
+                  1._R_P,             1._R_P], [2,1,1])
 
 ! WENO-3 (S = 2)
 
-real(R8P), parameter :: WENO3_JS_D_SCALE = 1._R8P !< IS of unit-slope data (1: normalised)
+real(R_P), parameter :: WENO3_JS_D_SCALE = 1._R_P !< IS of unit-slope data (1: normalised)
 
-real(R8P), parameter :: WENO3_JS_A(1:2,0:1) = reshape([ & !< optimal weights (interface, candidate)
-           2._R8P/3._R8P,      1._R8P/3._R8P,      1._R8P/3._R8P,      2._R8P/3._R8P], [2,2])
+real(R_P), parameter :: WENO3_JS_A(1:2,0:1) = reshape([ & !< optimal weights (interface, candidate)
+           2._R_P/3._R_P,      1._R_P/3._R_P,      1._R_P/3._R_P,      2._R_P/3._R_P], [2,2])
 
-real(R8P), parameter :: WENO3_JS_P(1:2,0:1,0:1) = reshape([ & !< reconstruction coefficients (interface, cell, candidate)
-                 0.5_R8P,            1.5_R8P,            0.5_R8P,           -0.5_R8P, &
-                -0.5_R8P,            0.5_R8P,            1.5_R8P,            0.5_R8P], [2,2,2])
+real(R_P), parameter :: WENO3_JS_P(1:2,0:1,0:1) = reshape([ & !< reconstruction coefficients (interface, cell, candidate)
+                 0.5_R_P,            1.5_R_P,            0.5_R_P,           -0.5_R_P, &
+                -0.5_R_P,            0.5_R_P,            1.5_R_P,            0.5_R_P], [2,2,2])
 
-real(R8P), parameter :: WENO3_JS_D(0:1,0:1,0:1) = reshape([ & !< smoothness-indicator coefficients
-                  1._R8P,            -2._R8P,             0._R8P,             1._R8P, &
-                  1._R8P,            -2._R8P,             0._R8P,             1._R8P], [2,2,2])
+real(R_P), parameter :: WENO3_JS_D(0:1,0:1,0:1) = reshape([ & !< smoothness-indicator coefficients
+                  1._R_P,            -2._R_P,             0._R_P,             1._R_P, &
+                  1._R_P,            -2._R_P,             0._R_P,             1._R_P], [2,2,2])
 
-real(R8P), parameter :: WENO3_JS_INTERP_A(1:2,0:1) = reshape([ & !< interpolation optimal weights
-           3._R8P/4._R8P,      1._R8P/4._R8P,      1._R8P/4._R8P,      3._R8P/4._R8P], [2,2])
+real(R_P), parameter :: WENO3_JS_INTERP_A(1:2,0:1) = reshape([ & !< interpolation optimal weights
+           3._R_P/4._R_P,      1._R_P/4._R_P,      1._R_P/4._R_P,      3._R_P/4._R_P], [2,2])
 
-real(R8P), parameter :: WENO3_JS_INTERP_P(1:2,0:1,0:1) = reshape([ & !< interpolation coefficients
-           1._R8P/2._R8P,      3._R8P/2._R8P,      1._R8P/2._R8P,     -1._R8P/2._R8P, &
-          -1._R8P/2._R8P,      1._R8P/2._R8P,      3._R8P/2._R8P,      1._R8P/2._R8P], [2,2,2])
+real(R_P), parameter :: WENO3_JS_INTERP_P(1:2,0:1,0:1) = reshape([ & !< interpolation coefficients
+           1._R_P/2._R_P,      3._R_P/2._R_P,      1._R_P/2._R_P,     -1._R_P/2._R_P, &
+          -1._R_P/2._R_P,      1._R_P/2._R_P,      3._R_P/2._R_P,      1._R_P/2._R_P], [2,2,2])
 
 ! WENO-5 (S = 3)
 
-real(R8P), parameter :: WENO5_JS_D_SCALE = 1._R8P !< IS of unit-slope data (1: normalised)
+real(R_P), parameter :: WENO5_JS_D_SCALE = 1._R_P !< IS of unit-slope data (1: normalised)
 
-real(R8P), parameter :: WENO5_JS_A(1:2,0:2) = reshape([ & !< optimal weights (interface, candidate)
-                 0.3_R8P,            0.1_R8P,            0.6_R8P,            0.6_R8P, &
-                 0.1_R8P,            0.3_R8P], [2,3])
+real(R_P), parameter :: WENO5_JS_A(1:2,0:2) = reshape([ & !< optimal weights (interface, candidate)
+                 0.3_R_P,            0.1_R_P,            0.6_R_P,            0.6_R_P, &
+                 0.1_R_P,            0.3_R_P], [2,3])
 
-real(R8P), parameter :: WENO5_JS_P(1:2,0:2,0:2) = reshape([ & !< reconstruction coefficients (interface, cell, candidate)
-           1._R8P/3._R8P,     11._R8P/6._R8P,      5._R8P/6._R8P,     -7._R8P/6._R8P, &
-          -1._R8P/6._R8P,      1._R8P/3._R8P,     -1._R8P/6._R8P,      1._R8P/3._R8P, &
-           5._R8P/6._R8P,      5._R8P/6._R8P,      1._R8P/3._R8P,     -1._R8P/6._R8P, &
-           1._R8P/3._R8P,     -1._R8P/6._R8P,     -7._R8P/6._R8P,      5._R8P/6._R8P, &
-          11._R8P/6._R8P,      1._R8P/3._R8P], [2,3,3])
+real(R_P), parameter :: WENO5_JS_P(1:2,0:2,0:2) = reshape([ & !< reconstruction coefficients (interface, cell, candidate)
+           1._R_P/3._R_P,     11._R_P/6._R_P,      5._R_P/6._R_P,     -7._R_P/6._R_P, &
+          -1._R_P/6._R_P,      1._R_P/3._R_P,     -1._R_P/6._R_P,      1._R_P/3._R_P, &
+           5._R_P/6._R_P,      5._R_P/6._R_P,      1._R_P/3._R_P,     -1._R_P/6._R_P, &
+           1._R_P/3._R_P,     -1._R_P/6._R_P,     -7._R_P/6._R_P,      5._R_P/6._R_P, &
+          11._R_P/6._R_P,      1._R_P/3._R_P], [2,3,3])
 
-real(R8P), parameter :: WENO5_JS_D(0:2,0:2,0:2) = reshape([ & !< smoothness-indicator coefficients
-          10._R8P/3._R8P,    -31._R8P/3._R8P,     11._R8P/3._R8P,             0._R8P, &
-          25._R8P/3._R8P,    -19._R8P/3._R8P,             0._R8P,             0._R8P, &
-           4._R8P/3._R8P,      4._R8P/3._R8P,    -13._R8P/3._R8P,      5._R8P/3._R8P, &
-                  0._R8P,     13._R8P/3._R8P,    -13._R8P/3._R8P,             0._R8P, &
-                  0._R8P,      4._R8P/3._R8P,      4._R8P/3._R8P,    -19._R8P/3._R8P, &
-          11._R8P/3._R8P,             0._R8P,     25._R8P/3._R8P,    -31._R8P/3._R8P, &
-                  0._R8P,             0._R8P,     10._R8P/3._R8P], [3,3,3])
+real(R_P), parameter :: WENO5_JS_D(0:2,0:2,0:2) = reshape([ & !< smoothness-indicator coefficients
+          10._R_P/3._R_P,    -31._R_P/3._R_P,     11._R_P/3._R_P,             0._R_P, &
+          25._R_P/3._R_P,    -19._R_P/3._R_P,             0._R_P,             0._R_P, &
+           4._R_P/3._R_P,      4._R_P/3._R_P,    -13._R_P/3._R_P,      5._R_P/3._R_P, &
+                  0._R_P,     13._R_P/3._R_P,    -13._R_P/3._R_P,             0._R_P, &
+                  0._R_P,      4._R_P/3._R_P,      4._R_P/3._R_P,    -19._R_P/3._R_P, &
+          11._R_P/3._R_P,             0._R_P,     25._R_P/3._R_P,    -31._R_P/3._R_P, &
+                  0._R_P,             0._R_P,     10._R_P/3._R_P], [3,3,3])
 
-real(R8P), parameter :: WENO5_JS_INTERP_A(1:2,0:2) = reshape([ & !< interpolation optimal weights
-          5._R8P/16._R8P,     1._R8P/16._R8P,      5._R8P/8._R8P,      5._R8P/8._R8P, &
-          1._R8P/16._R8P,     5._R8P/16._R8P], [2,3])
+real(R_P), parameter :: WENO5_JS_INTERP_A(1:2,0:2) = reshape([ & !< interpolation optimal weights
+          5._R_P/16._R_P,     1._R_P/16._R_P,      5._R_P/8._R_P,      5._R_P/8._R_P, &
+          1._R_P/16._R_P,     5._R_P/16._R_P], [2,3])
 
-real(R8P), parameter :: WENO5_JS_INTERP_P(1:2,0:2,0:2) = reshape([ & !< interpolation coefficients
-           3._R8P/8._R8P,     15._R8P/8._R8P,      3._R8P/4._R8P,     -5._R8P/4._R8P, &
-          -1._R8P/8._R8P,      3._R8P/8._R8P,     -1._R8P/8._R8P,      3._R8P/8._R8P, &
-           3._R8P/4._R8P,      3._R8P/4._R8P,      3._R8P/8._R8P,     -1._R8P/8._R8P, &
-           3._R8P/8._R8P,     -1._R8P/8._R8P,     -5._R8P/4._R8P,      3._R8P/4._R8P, &
-          15._R8P/8._R8P,      3._R8P/8._R8P], [2,3,3])
+real(R_P), parameter :: WENO5_JS_INTERP_P(1:2,0:2,0:2) = reshape([ & !< interpolation coefficients
+           3._R_P/8._R_P,     15._R_P/8._R_P,      3._R_P/4._R_P,     -5._R_P/4._R_P, &
+          -1._R_P/8._R_P,      3._R_P/8._R_P,     -1._R_P/8._R_P,      3._R_P/8._R_P, &
+           3._R_P/4._R_P,      3._R_P/4._R_P,      3._R_P/8._R_P,     -1._R_P/8._R_P, &
+           3._R_P/8._R_P,     -1._R_P/8._R_P,     -5._R_P/4._R_P,      3._R_P/4._R_P, &
+          15._R_P/8._R_P,      3._R_P/8._R_P], [2,3,3])
 
 ! WENO-7 (S = 4)
 
-real(R8P), parameter :: WENO7_JS_D_SCALE = 240._R8P !< IS of unit-slope data (1: normalised)
+real(R_P), parameter :: WENO7_JS_D_SCALE = 240._R_P !< IS of unit-slope data (1: normalised)
 
-real(R8P), parameter :: WENO7_JS_A(1:2,0:3) = reshape([ & !< optimal weights (interface, candidate)
-          4._R8P/35._R8P,     1._R8P/35._R8P,    18._R8P/35._R8P,    12._R8P/35._R8P, &
-         12._R8P/35._R8P,    18._R8P/35._R8P,     1._R8P/35._R8P,     4._R8P/35._R8P], [2,4])
+real(R_P), parameter :: WENO7_JS_A(1:2,0:3) = reshape([ & !< optimal weights (interface, candidate)
+          4._R_P/35._R_P,     1._R_P/35._R_P,    18._R_P/35._R_P,    12._R_P/35._R_P, &
+         12._R_P/35._R_P,    18._R_P/35._R_P,     1._R_P/35._R_P,     4._R_P/35._R_P], [2,4])
 
-real(R8P), parameter :: WENO7_JS_P(1:2,0:3,0:3) = reshape([ & !< reconstruction coefficients (interface, cell, candidate)
-           1._R8P/4._R8P,    25._R8P/12._R8P,    13._R8P/12._R8P,   -23._R8P/12._R8P, &
-        -5._R8P /12._R8P,    13._R8P/12._R8P,    1._R8P /12._R8P,     -1._R8P/4._R8P, &
-         -1._R8P/12._R8P,      1._R8P/4._R8P,     7._R8P/12._R8P,    13._R8P/12._R8P, &
-          7._R8P/12._R8P,    -5._R8P/12._R8P,   -1._R8P /12._R8P,     1._R8P/12._R8P, &
-          1._R8P/12._R8P,    -1._R8P/12._R8P,    -5._R8P/12._R8P,    7._R8P /12._R8P, &
-         13._R8P/12._R8P,     7._R8P/12._R8P,     1._R8P /4._R8P,    -1._R8P/12._R8P, &
-          -1._R8P/4._R8P,     1._R8P/12._R8P,    13._R8P/12._R8P,   -5._R8P /12._R8P, &
-        -23._R8P/12._R8P,    13._R8P/12._R8P,    25._R8P/12._R8P,      1._R8P/4._R8P], [2,4,4])
+real(R_P), parameter :: WENO7_JS_P(1:2,0:3,0:3) = reshape([ & !< reconstruction coefficients (interface, cell, candidate)
+           1._R_P/4._R_P,    25._R_P/12._R_P,    13._R_P/12._R_P,   -23._R_P/12._R_P, &
+        -5._R_P /12._R_P,    13._R_P/12._R_P,    1._R_P /12._R_P,     -1._R_P/4._R_P, &
+         -1._R_P/12._R_P,      1._R_P/4._R_P,     7._R_P/12._R_P,    13._R_P/12._R_P, &
+          7._R_P/12._R_P,    -5._R_P/12._R_P,   -1._R_P /12._R_P,     1._R_P/12._R_P, &
+          1._R_P/12._R_P,    -1._R_P/12._R_P,    -5._R_P/12._R_P,    7._R_P /12._R_P, &
+         13._R_P/12._R_P,     7._R_P/12._R_P,     1._R_P /4._R_P,    -1._R_P/12._R_P, &
+          -1._R_P/4._R_P,     1._R_P/12._R_P,    13._R_P/12._R_P,   -5._R_P /12._R_P, &
+        -23._R_P/12._R_P,    13._R_P/12._R_P,    25._R_P/12._R_P,      1._R_P/4._R_P], [2,4,4])
 
-real(R8P), parameter :: WENO7_JS_D(0:3,0:3,0:3) = reshape([ & !< smoothness-indicator coefficients
-               2107._R8P,         -9402._R8P,          7042._R8P,         -1854._R8P, &
-                  0._R8P,         11003._R8P,        -17246._R8P,          4642._R8P, &
-                  0._R8P,             0._R8P,          7043._R8P,         -3882._R8P, &
-                  0._R8P,             0._R8P,             0._R8P,           547._R8P, &
-                547._R8P,         -2522._R8P,          1922._R8P,          -494._R8P, &
-                  0._R8P,          3443._R8P,         -5966._R8P,          1602._R8P, &
-                  0._R8P,             0._R8P,          2843._R8P,         -1642._R8P, &
-                  0._R8P,             0._R8P,             0._R8P,           267._R8P, &
-                267._R8P,         -1642._R8P,          1602._R8P,          -494._R8P, &
-                  0._R8P,          2843._R8P,         -5966._R8P,          1922._R8P, &
-                  0._R8P,             0._R8P,          3443._R8P,         -2522._R8P, &
-                  0._R8P,             0._R8P,             0._R8P,           547._R8P, &
-                547._R8P,         -3882._R8P,          4642._R8P,         -1854._R8P, &
-                  0._R8P,          7043._R8P,        -17246._R8P,          7042._R8P, &
-                  0._R8P,             0._R8P,         11003._R8P,         -9402._R8P, &
-                  0._R8P,             0._R8P,             0._R8P,          2107._R8P], [4,4,4])
+real(R_P), parameter :: WENO7_JS_D(0:3,0:3,0:3) = reshape([ & !< smoothness-indicator coefficients
+               2107._R_P,         -9402._R_P,          7042._R_P,         -1854._R_P, &
+                  0._R_P,         11003._R_P,        -17246._R_P,          4642._R_P, &
+                  0._R_P,             0._R_P,          7043._R_P,         -3882._R_P, &
+                  0._R_P,             0._R_P,             0._R_P,           547._R_P, &
+                547._R_P,         -2522._R_P,          1922._R_P,          -494._R_P, &
+                  0._R_P,          3443._R_P,         -5966._R_P,          1602._R_P, &
+                  0._R_P,             0._R_P,          2843._R_P,         -1642._R_P, &
+                  0._R_P,             0._R_P,             0._R_P,           267._R_P, &
+                267._R_P,         -1642._R_P,          1602._R_P,          -494._R_P, &
+                  0._R_P,          2843._R_P,         -5966._R_P,          1922._R_P, &
+                  0._R_P,             0._R_P,          3443._R_P,         -2522._R_P, &
+                  0._R_P,             0._R_P,             0._R_P,           547._R_P, &
+                547._R_P,         -3882._R_P,          4642._R_P,         -1854._R_P, &
+                  0._R_P,          7043._R_P,        -17246._R_P,          7042._R_P, &
+                  0._R_P,             0._R_P,         11003._R_P,         -9402._R_P, &
+                  0._R_P,             0._R_P,             0._R_P,          2107._R_P], [4,4,4])
 
-real(R8P), parameter :: WENO7_JS_INTERP_A(1:2,0:3) = reshape([ & !< interpolation optimal weights
-          7._R8P/64._R8P,     1._R8P/64._R8P,    35._R8P/64._R8P,    21._R8P/64._R8P, &
-         21._R8P/64._R8P,    35._R8P/64._R8P,     1._R8P/64._R8P,     7._R8P/64._R8P], [2,4])
+real(R_P), parameter :: WENO7_JS_INTERP_A(1:2,0:3) = reshape([ & !< interpolation optimal weights
+          7._R_P/64._R_P,     1._R_P/64._R_P,    35._R_P/64._R_P,    21._R_P/64._R_P, &
+         21._R_P/64._R_P,    35._R_P/64._R_P,     1._R_P/64._R_P,     7._R_P/64._R_P], [2,4])
 
-real(R8P), parameter :: WENO7_JS_INTERP_P(1:2,0:3,0:3) = reshape([ & !< interpolation coefficients
-          5._R8P/16._R8P,    35._R8P/16._R8P,    15._R8P/16._R8P,   -35._R8P/16._R8P, &
-         -5._R8P/16._R8P,    21._R8P/16._R8P,     1._R8P/16._R8P,    -5._R8P/16._R8P, &
-         -1._R8P/16._R8P,     5._R8P/16._R8P,     9._R8P/16._R8P,    15._R8P/16._R8P, &
-          9._R8P/16._R8P,    -5._R8P/16._R8P,    -1._R8P/16._R8P,     1._R8P/16._R8P, &
-          1._R8P/16._R8P,    -1._R8P/16._R8P,    -5._R8P/16._R8P,     9._R8P/16._R8P, &
-         15._R8P/16._R8P,     9._R8P/16._R8P,     5._R8P/16._R8P,    -1._R8P/16._R8P, &
-         -5._R8P/16._R8P,     1._R8P/16._R8P,    21._R8P/16._R8P,    -5._R8P/16._R8P, &
-        -35._R8P/16._R8P,    15._R8P/16._R8P,    35._R8P/16._R8P,     5._R8P/16._R8P], [2,4,4])
+real(R_P), parameter :: WENO7_JS_INTERP_P(1:2,0:3,0:3) = reshape([ & !< interpolation coefficients
+          5._R_P/16._R_P,    35._R_P/16._R_P,    15._R_P/16._R_P,   -35._R_P/16._R_P, &
+         -5._R_P/16._R_P,    21._R_P/16._R_P,     1._R_P/16._R_P,    -5._R_P/16._R_P, &
+         -1._R_P/16._R_P,     5._R_P/16._R_P,     9._R_P/16._R_P,    15._R_P/16._R_P, &
+          9._R_P/16._R_P,    -5._R_P/16._R_P,    -1._R_P/16._R_P,     1._R_P/16._R_P, &
+          1._R_P/16._R_P,    -1._R_P/16._R_P,    -5._R_P/16._R_P,     9._R_P/16._R_P, &
+         15._R_P/16._R_P,     9._R_P/16._R_P,     5._R_P/16._R_P,    -1._R_P/16._R_P, &
+         -5._R_P/16._R_P,     1._R_P/16._R_P,    21._R_P/16._R_P,    -5._R_P/16._R_P, &
+        -35._R_P/16._R_P,    15._R_P/16._R_P,    35._R_P/16._R_P,     5._R_P/16._R_P], [2,4,4])
 
 ! WENO-9 (S = 5)
 
-real(R8P), parameter :: WENO9_JS_D_SCALE = 5040._R8P !< IS of unit-slope data (1: normalised)
+real(R_P), parameter :: WENO9_JS_D_SCALE = 5040._R_P !< IS of unit-slope data (1: normalised)
 
-real(R8P), parameter :: WENO9_JS_A(1:2,0:4) = reshape([ & !< optimal weights (interface, candidate)
-         5._R8P/126._R8P,    1._R8P/126._R8P,    20._R8P/63._R8P,    10._R8P/63._R8P, &
-         10._R8P/21._R8P,    10._R8P/21._R8P,    10._R8P/63._R8P,    20._R8P/63._R8P, &
-         1._R8P/126._R8P,    5._R8P/126._R8P], [2,5])
+real(R_P), parameter :: WENO9_JS_A(1:2,0:4) = reshape([ & !< optimal weights (interface, candidate)
+         5._R_P/126._R_P,    1._R_P/126._R_P,    20._R_P/63._R_P,    10._R_P/63._R_P, &
+         10._R_P/21._R_P,    10._R_P/21._R_P,    10._R_P/63._R_P,    20._R_P/63._R_P, &
+         1._R_P/126._R_P,    5._R_P/126._R_P], [2,5])
 
-real(R8P), parameter :: WENO9_JS_P(1:2,0:4,0:4) = reshape([ & !< reconstruction coefficients (interface, cell, candidate)
-           1._R8P/5._R8P,   137._R8P/60._R8P,    77._R8P/60._R8P,  -163._R8P/60._R8P, &
-        -43._R8P/60._R8P,   137._R8P/60._R8P,    17._R8P/60._R8P,   -21._R8P/20._R8P, &
-         -1._R8P/20._R8P,      1._R8P/5._R8P,    -1._R8P/20._R8P,      1._R8P/5._R8P, &
-          9._R8P/20._R8P,    77._R8P/60._R8P,    47._R8P/60._R8P,   -43._R8P/60._R8P, &
-        -13._R8P/60._R8P,    17._R8P/60._R8P,     1._R8P/30._R8P,    -1._R8P/20._R8P, &
-          1._R8P/30._R8P,    -1._R8P/20._R8P,   -13._R8P/60._R8P,     9._R8P/20._R8P, &
-         47._R8P/60._R8P,    47._R8P/60._R8P,     9._R8P/20._R8P,   -13._R8P/60._R8P, &
-         -1._R8P/20._R8P,     1._R8P/30._R8P,    -1._R8P/20._R8P,     1._R8P/30._R8P, &
-         17._R8P/60._R8P,   -13._R8P/60._R8P,   -43._R8P/60._R8P,    47._R8P/60._R8P, &
-         77._R8P/60._R8P,     9._R8P/20._R8P,      1._R8P/5._R8P,    -1._R8P/20._R8P, &
-           1._R8P/5._R8P,    -1._R8P/20._R8P,   -21._R8P/20._R8P,    17._R8P/60._R8P, &
-        137._R8P/60._R8P,   -43._R8P/60._R8P,  -163._R8P/60._R8P,    77._R8P/60._R8P, &
-        137._R8P/60._R8P,      1._R8P/5._R8P], [2,5,5])
+real(R_P), parameter :: WENO9_JS_P(1:2,0:4,0:4) = reshape([ & !< reconstruction coefficients (interface, cell, candidate)
+           1._R_P/5._R_P,   137._R_P/60._R_P,    77._R_P/60._R_P,  -163._R_P/60._R_P, &
+        -43._R_P/60._R_P,   137._R_P/60._R_P,    17._R_P/60._R_P,   -21._R_P/20._R_P, &
+         -1._R_P/20._R_P,      1._R_P/5._R_P,    -1._R_P/20._R_P,      1._R_P/5._R_P, &
+          9._R_P/20._R_P,    77._R_P/60._R_P,    47._R_P/60._R_P,   -43._R_P/60._R_P, &
+        -13._R_P/60._R_P,    17._R_P/60._R_P,     1._R_P/30._R_P,    -1._R_P/20._R_P, &
+          1._R_P/30._R_P,    -1._R_P/20._R_P,   -13._R_P/60._R_P,     9._R_P/20._R_P, &
+         47._R_P/60._R_P,    47._R_P/60._R_P,     9._R_P/20._R_P,   -13._R_P/60._R_P, &
+         -1._R_P/20._R_P,     1._R_P/30._R_P,    -1._R_P/20._R_P,     1._R_P/30._R_P, &
+         17._R_P/60._R_P,   -13._R_P/60._R_P,   -43._R_P/60._R_P,    47._R_P/60._R_P, &
+         77._R_P/60._R_P,     9._R_P/20._R_P,      1._R_P/5._R_P,    -1._R_P/20._R_P, &
+           1._R_P/5._R_P,    -1._R_P/20._R_P,   -21._R_P/20._R_P,    17._R_P/60._R_P, &
+        137._R_P/60._R_P,   -43._R_P/60._R_P,  -163._R_P/60._R_P,    77._R_P/60._R_P, &
+        137._R_P/60._R_P,      1._R_P/5._R_P], [2,5,5])
 
-real(R8P), parameter :: WENO9_JS_D(0:4,0:4,0:4) = reshape([ & !< smoothness-indicator coefficients
-             107918._R8P,       -649501._R8P,        758823._R8P,       -411487._R8P, &
-              86329._R8P,             0._R8P,       1020563._R8P,      -2462076._R8P, &
-            1358458._R8P,       -288007._R8P,             0._R8P,             0._R8P, &
-            1521393._R8P,      -1704396._R8P,        364863._R8P,             0._R8P, &
-                  0._R8P,             0._R8P,        482963._R8P,       -208501._R8P, &
-                  0._R8P,             0._R8P,             0._R8P,             0._R8P, &
-              22658._R8P,         22658._R8P,       -140251._R8P,        165153._R8P, &
-             -88297._R8P,         18079._R8P,             0._R8P,        242723._R8P, &
-            -611976._R8P,        337018._R8P,        -70237._R8P,             0._R8P, &
-                  0._R8P,        406293._R8P,       -464976._R8P,         99213._R8P, &
-                  0._R8P,             0._R8P,             0._R8P,        138563._R8P, &
-             -60871._R8P,             0._R8P,             0._R8P,             0._R8P, &
-                  0._R8P,          6908._R8P,          6908._R8P,        -51001._R8P, &
-              67923._R8P,        -38947._R8P,          8209._R8P,             0._R8P, &
-             104963._R8P,       -299076._R8P,        179098._R8P,        -38947._R8P, &
-                  0._R8P,             0._R8P,        231153._R8P,       -299076._R8P, &
-              67923._R8P,             0._R8P,             0._R8P,             0._R8P, &
-             104963._R8P,        -51001._R8P,             0._R8P,             0._R8P, &
-                  0._R8P,             0._R8P,          6908._R8P,          6908._R8P, &
-             -60871._R8P,         99213._R8P,        -70237._R8P,         18079._R8P, &
-                  0._R8P,        138563._R8P,       -464976._R8P,        337018._R8P, &
-             -88297._R8P,             0._R8P,             0._R8P,        406293._R8P, &
-            -611976._R8P,        165153._R8P,             0._R8P,             0._R8P, &
-                  0._R8P,        242723._R8P,       -140251._R8P,             0._R8P, &
-                  0._R8P,             0._R8P,             0._R8P,         22658._R8P, &
-              22658._R8P,       -208501._R8P,        364863._R8P,       -288007._R8P, &
-              86329._R8P,             0._R8P,        482963._R8P,      -1704396._R8P, &
-            1358458._R8P,       -411487._R8P,             0._R8P,             0._R8P, &
-            1521393._R8P,      -2462076._R8P,        758823._R8P,             0._R8P, &
-                  0._R8P,             0._R8P,       1020563._R8P,       -649501._R8P, &
-                  0._R8P,             0._R8P,             0._R8P,             0._R8P, &
-             107918._R8P], [5,5,5])
+real(R_P), parameter :: WENO9_JS_D(0:4,0:4,0:4) = reshape([ & !< smoothness-indicator coefficients
+             107918._R_P,       -649501._R_P,        758823._R_P,       -411487._R_P, &
+              86329._R_P,             0._R_P,       1020563._R_P,      -2462076._R_P, &
+            1358458._R_P,       -288007._R_P,             0._R_P,             0._R_P, &
+            1521393._R_P,      -1704396._R_P,        364863._R_P,             0._R_P, &
+                  0._R_P,             0._R_P,        482963._R_P,       -208501._R_P, &
+                  0._R_P,             0._R_P,             0._R_P,             0._R_P, &
+              22658._R_P,         22658._R_P,       -140251._R_P,        165153._R_P, &
+             -88297._R_P,         18079._R_P,             0._R_P,        242723._R_P, &
+            -611976._R_P,        337018._R_P,        -70237._R_P,             0._R_P, &
+                  0._R_P,        406293._R_P,       -464976._R_P,         99213._R_P, &
+                  0._R_P,             0._R_P,             0._R_P,        138563._R_P, &
+             -60871._R_P,             0._R_P,             0._R_P,             0._R_P, &
+                  0._R_P,          6908._R_P,          6908._R_P,        -51001._R_P, &
+              67923._R_P,        -38947._R_P,          8209._R_P,             0._R_P, &
+             104963._R_P,       -299076._R_P,        179098._R_P,        -38947._R_P, &
+                  0._R_P,             0._R_P,        231153._R_P,       -299076._R_P, &
+              67923._R_P,             0._R_P,             0._R_P,             0._R_P, &
+             104963._R_P,        -51001._R_P,             0._R_P,             0._R_P, &
+                  0._R_P,             0._R_P,          6908._R_P,          6908._R_P, &
+             -60871._R_P,         99213._R_P,        -70237._R_P,         18079._R_P, &
+                  0._R_P,        138563._R_P,       -464976._R_P,        337018._R_P, &
+             -88297._R_P,             0._R_P,             0._R_P,        406293._R_P, &
+            -611976._R_P,        165153._R_P,             0._R_P,             0._R_P, &
+                  0._R_P,        242723._R_P,       -140251._R_P,             0._R_P, &
+                  0._R_P,             0._R_P,             0._R_P,         22658._R_P, &
+              22658._R_P,       -208501._R_P,        364863._R_P,       -288007._R_P, &
+              86329._R_P,             0._R_P,        482963._R_P,      -1704396._R_P, &
+            1358458._R_P,       -411487._R_P,             0._R_P,             0._R_P, &
+            1521393._R_P,      -2462076._R_P,        758823._R_P,             0._R_P, &
+                  0._R_P,             0._R_P,       1020563._R_P,       -649501._R_P, &
+                  0._R_P,             0._R_P,             0._R_P,             0._R_P, &
+             107918._R_P], [5,5,5])
 
-real(R8P), parameter :: WENO9_JS_INTERP_A(1:2,0:4) = reshape([ & !< interpolation optimal weights
-         9._R8P/256._R8P,    1._R8P/256._R8P,    21._R8P/64._R8P,     9._R8P/64._R8P, &
-        63._R8P/128._R8P,   63._R8P/128._R8P,     9._R8P/64._R8P,    21._R8P/64._R8P, &
-         1._R8P/256._R8P,    9._R8P/256._R8P], [2,5])
+real(R_P), parameter :: WENO9_JS_INTERP_A(1:2,0:4) = reshape([ & !< interpolation optimal weights
+         9._R_P/256._R_P,    1._R_P/256._R_P,    21._R_P/64._R_P,     9._R_P/64._R_P, &
+        63._R_P/128._R_P,   63._R_P/128._R_P,     9._R_P/64._R_P,    21._R_P/64._R_P, &
+         1._R_P/256._R_P,    9._R_P/256._R_P], [2,5])
 
-real(R8P), parameter :: WENO9_JS_INTERP_P(1:2,0:4,0:4) = reshape([ & !< interpolation coefficients
-        35._R8P/128._R8P,  315._R8P/128._R8P,    35._R8P/32._R8P,  -105._R8P/32._R8P, &
-        -35._R8P/64._R8P,   189._R8P/64._R8P,     7._R8P/32._R8P,   -45._R8P/32._R8P, &
-        -5._R8P/128._R8P,   35._R8P/128._R8P,   -5._R8P/128._R8P,   35._R8P/128._R8P, &
-         15._R8P/32._R8P,    35._R8P/32._R8P,    45._R8P/64._R8P,   -35._R8P/64._R8P, &
-         -5._R8P/32._R8P,     7._R8P/32._R8P,    3._R8P/128._R8P,   -5._R8P/128._R8P, &
-         3._R8P/128._R8P,   -5._R8P/128._R8P,    -5._R8P/32._R8P,    15._R8P/32._R8P, &
-         45._R8P/64._R8P,    45._R8P/64._R8P,    15._R8P/32._R8P,    -5._R8P/32._R8P, &
-        -5._R8P/128._R8P,    3._R8P/128._R8P,   -5._R8P/128._R8P,    3._R8P/128._R8P, &
-          7._R8P/32._R8P,    -5._R8P/32._R8P,   -35._R8P/64._R8P,    45._R8P/64._R8P, &
-         35._R8P/32._R8P,    15._R8P/32._R8P,   35._R8P/128._R8P,   -5._R8P/128._R8P, &
-        35._R8P/128._R8P,   -5._R8P/128._R8P,   -45._R8P/32._R8P,     7._R8P/32._R8P, &
-        189._R8P/64._R8P,   -35._R8P/64._R8P,  -105._R8P/32._R8P,    35._R8P/32._R8P, &
-       315._R8P/128._R8P,   35._R8P/128._R8P], [2,5,5])
+real(R_P), parameter :: WENO9_JS_INTERP_P(1:2,0:4,0:4) = reshape([ & !< interpolation coefficients
+        35._R_P/128._R_P,  315._R_P/128._R_P,    35._R_P/32._R_P,  -105._R_P/32._R_P, &
+        -35._R_P/64._R_P,   189._R_P/64._R_P,     7._R_P/32._R_P,   -45._R_P/32._R_P, &
+        -5._R_P/128._R_P,   35._R_P/128._R_P,   -5._R_P/128._R_P,   35._R_P/128._R_P, &
+         15._R_P/32._R_P,    35._R_P/32._R_P,    45._R_P/64._R_P,   -35._R_P/64._R_P, &
+         -5._R_P/32._R_P,     7._R_P/32._R_P,    3._R_P/128._R_P,   -5._R_P/128._R_P, &
+         3._R_P/128._R_P,   -5._R_P/128._R_P,    -5._R_P/32._R_P,    15._R_P/32._R_P, &
+         45._R_P/64._R_P,    45._R_P/64._R_P,    15._R_P/32._R_P,    -5._R_P/32._R_P, &
+        -5._R_P/128._R_P,    3._R_P/128._R_P,   -5._R_P/128._R_P,    3._R_P/128._R_P, &
+          7._R_P/32._R_P,    -5._R_P/32._R_P,   -35._R_P/64._R_P,    45._R_P/64._R_P, &
+         35._R_P/32._R_P,    15._R_P/32._R_P,   35._R_P/128._R_P,   -5._R_P/128._R_P, &
+        35._R_P/128._R_P,   -5._R_P/128._R_P,   -45._R_P/32._R_P,     7._R_P/32._R_P, &
+        189._R_P/64._R_P,   -35._R_P/64._R_P,  -105._R_P/32._R_P,    35._R_P/32._R_P, &
+       315._R_P/128._R_P,   35._R_P/128._R_P], [2,5,5])
 endmodule seth_weno_js_tables

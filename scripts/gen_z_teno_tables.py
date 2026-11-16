@@ -202,15 +202,15 @@ TABLE1 = [[Fr(-1, 6), Fr(5, 6), Fr(2, 6)], [Fr(2, 6), Fr(5, 6), Fr(-1, 6)], [Fr(
           [Fr(12, 60), Fr(77, 60), Fr(-43, 60), Fr(17, 60), Fr(-3, 60)]]
 TENO8_CELLS = TENO_CELLS + [[-3, -2, -1, 0], [0, 1, 2, 3, 4]]  # Fu, Hu & Adams 2016, Table 1, k = 0..5
 # TENO6-opt of Fu, Hu & Adams 2016, Table 5 (llm-wiki weno-teno targeted-eno.md, high-order-capturing teno.md)
-TENO6_OPT_D = ['0.462_R8P', '0.3_R8P', '0.054_R8P', '0.184_R8P']
+TENO6_OPT_D = ['0.462_R_P', '0.3_R_P', '0.054_R_P', '0.184_R_P']
 # The optimised backgrounds of Fu, Hu & Adams 2016, section 4, Eq. (31): eta g1 + (1 - eta) g2, two sub-schemes of
 # order K-1 on the K-point stencil: Eq. (32) for K = 5 (eta = 0.2: TENO5-opt), Eq. (33) for K = 6 (eta = 0.54:
 # TENO6-opt). Cells by offset (i -> 0), coefficients as printed.
 # The eight-point TENO of Liang & Fu 2024b (Comput. Phys. Commun. 302:109236), section 3.2: its sixth-order background,
 # the face coefficients of Eq. (46) and the linear weights printed after it (16 digits, from a numerical optimisation:
 # quoted, and checked below against Eq. (46), Fu et al.'s Table 1 candidates and the order)
-TENO8_D = ['0.4130855804023061_R8P', '0.2193140179474727_R8P', '0.06459052081827904_R8P', '0.1439236310125986_R8P',
-           '0.02746675592227204_R8P', '0.1316194938970745_R8P']
+TENO8_D = ['0.4130855804023061_R_P', '0.2193140179474727_R_P', '0.06459052081827904_R_P', '0.1439236310125986_R_P',
+           '0.02746675592227204_R_P', '0.1316194938970745_R_P']
 TENO8_EQ46 = [Fr('-0.006866688980568011'), Fr('0.05128582585522106'), Fr('-0.1968478198727312'),
               Fr('0.6552858258552222'), Fr('0.6452858258552218'), Fr('-0.1908478198727314'),
               Fr('0.04928582585522098'), Fr('-0.006580974694853729')]  # f_{i-3} .. f_{i+4}
@@ -226,7 +226,7 @@ OPT_SUBSCHEMES = {
         [-1, 0, 1, 2, 3], [Fr(-3, 60), Fr(27, 60), Fr(47, 60), Fr(-13, 60), Fr(2, 60)]),
 }
 # the optimised weights of the NENO6 paper (arXiv:2207.08500, section 2.2), a later and different optimisation
-TENO6_NENO6_D = ['0.4294317718960898_R8P', '0.1727270875843552_R8P', '0.0855682281039113_R8P', '0.312272912415645_R8P']
+TENO6_NENO6_D = ['0.4294317718960898_R_P', '0.1727270875843552_R_P', '0.0855682281039113_R_P', '0.312272912415645_R_P']
 
 SCHEMES = {
     # name: (candidate cells, tau coefficients on the candidates, global stencil or None, global coefficient,
@@ -356,7 +356,7 @@ def run_checks(adam_source: str) -> None:
         if face_coefficients(c1) != g1 or face_coefficients(c2) != g2:
             check_fail(f'K={k}: the sub-schemes of Fu et al. Eq. (32)/(33) are not the reconstructions of their cells')
     for k, eta, cands, want in ((5, Fr(1, 5), TENO_CELLS[:3], [Fr(55, 100), Fr(40, 100), Fr(5, 100)]),
-                                (6, Fr(54, 100), TENO_CELLS, [Fr(w.replace('_R8P', '')) for w in TENO6_OPT_D])):
+                                (6, Fr(54, 100), TENO_CELLS, [Fr(w.replace('_R_P', '')) for w in TENO6_OPT_D])):
         got = opt_weights(cands, k, eta)
         print(f'  K={k}, eta={eta}: optimised weights {[str(x) for x in got]}')
         if got != want:
@@ -398,7 +398,7 @@ def run_checks(adam_source: str) -> None:
     d, order = max_order_weights(TENO8_CELLS, 'TENO8 max-order')
     if d != [Fr(30, 70), Fr(18, 70), Fr(4, 70), Fr(12, 70), Fr(1, 70), Fr(5, 70)] or order != 8:
         check_fail(f'TENO8 max-order weights {d} (order {order}) differ from Fu et al. Table 2, K = 8')
-    d8 = [Fr(w.replace('_R8P', '')) for w in TENO8_D]
+    d8 = [Fr(w.replace('_R_P', '')) for w in TENO8_D]
     if abs(float(sum(d8)) - 1) > 1e-14:  # printed to 16 digits: they sum to 1 + 2.9e-15
         check_fail(f'TENO8 weights sum to {float(sum(d8))!r}')
     face = {m: Fr(0) for m in range(-3, 5)}
@@ -418,7 +418,7 @@ def run_checks(adam_source: str) -> None:
     for label, wq, want, cl in (('TENO6-opt', TENO6_OPT_D, 5, TENO_CELLS), ('TENO6-NENO6', TENO6_NENO6_D, 4, TENO_CELLS),
                                 ('TENO5-opt', opt_weights(TENO_CELLS[:3], 5, Fr(1, 5)), 4, TENO_CELLS[:3]),
                                 ('TENO8 (Liang & Fu)', TENO8_D, 6, TENO8_CELLS)):
-        dq = [Fr(w.replace('_R8P', '')) if isinstance(w, str) else w for w in wq]
+        dq = [Fr(w.replace('_R_P', '')) if isinstance(w, str) else w for w in wq]
         coefs = [face_coefficients(c) for c in cl]
         got = 0
         for n in range(8):
@@ -478,11 +478,11 @@ def fstr(x) -> str:
     if abs(x.numerator) >= 2 ** 53 or x.denominator >= 2 ** 53:
         # not a ratio of exactly representable integers (the LDL factors of the 6-point indicator): the correctly
         # rounded double, 17 significant digits (round-trips exactly)
-        return f'{float(x):.16e}_R8P'
-    return f'{x.numerator}._R8P' if x.denominator == 1 else f'{x.numerator}._R8P/{x.denominator}._R8P'
+        return f'{float(x):.16e}_R_P'
+    return f'{x.numerator}._R_P' if x.denominator == 1 else f'{x.numerator}._R_P/{x.denominator}._R_P'
 
 
-def farray(name: str, bounds: str, extents: str, values: list[str], doc: str, kind: str = 'real(R8P)') -> str:
+def farray(name: str, bounds: str, extents: str, values: list[str], doc: str, kind: str = 'real(R_P)') -> str:
     rows, row = [], []
     for v in values:  # pack the values by length: free-form lines stay within 132 columns
         if row and len('      ' + ', '.join(row + [v]) + ', &') > 120:
@@ -523,7 +523,7 @@ def emit(name: str) -> tuple[str, list[str]]:
     scalar('LO', 'integer(I4P)', f'{lo}_I4P', 'first cell of the stencil arrays (bounds LO:1-LO)')
     scalar('UMAX', 'integer(I4P)', f'{umax}_I4P', 'last cell any candidate reads (left bias)')
     scalar('MAXW', 'integer(I4P)', f'{maxw}_I4P', 'widest candidate')
-    scalar('TG', 'real(R8P)', fstr(tg), 'coefficient of the global indicator in tau (0: none)')
+    scalar('TG', 'real(R_P)', fstr(tg), 'coefficient of the global indicator in tau (0: none)')
     out.append(f'integer(I4P), parameter :: {name}_CLO(0:{nc - 1}) = [{", ".join(f"{min(c)}_I4P" for c in cands)}]'
                ' !< first cell of each candidate\n')
     out.append(f'integer(I4P), parameter :: {name}_CW(0:{nc - 1}) = [{", ".join(f"{len(c)}_I4P" for c in cands)}]'
@@ -586,7 +586,7 @@ def linear_row(scheme: str, interp: bool) -> tuple[int, int, list]:
     if wts == 'max':
         d = max_order_weights(cands, scheme, interp=interp)[0]
     else:
-        d = [Fr(w.replace('_R8P', '')) for w in wts]
+        d = [Fr(w.replace('_R_P', '')) for w in wts]
     d = [x / sum(d) for x in d]  # what the TENO kernel computes, d_k / sum d (TENO8's printed weights sum to 1 + 2.9e-15)
     lo, hi = min(min(c) for c in cands), max(max(c) for c in cands)
     row = {m: Fr(0) for m in range(lo, hi + 1)}
@@ -608,7 +608,7 @@ def emit_linear(name: str) -> tuple[str, list[str]]:
            f'integer(I4P), parameter :: {name}_LO = {lo}_I4P !< first cell\n',
            f'integer(I4P), parameter :: {name}_HI = {hi}_I4P !< last cell\n',
            farray(f'{name}_C', f'{lo}:{hi}', f'{hi - lo + 1}',
-                  [fstr(v) if exact else f'{float(v):.16e}_R8P' for v in vals], 'face coefficient of each cell')]
+                  [fstr(v) if exact else f'{float(v):.16e}_R_P' for v in vals], 'face coefficient of each cell')]
     return ''.join(txt), [f'{name}_LO', f'{name}_HI', f'{name}_C']
 
 
@@ -634,7 +634,7 @@ module seth_z_teno_tables
 !< definitions in notes/m2-sources.md and cross-checked (candidates exact, TENO Table 1, ADAM's WENO-5/7/9 indicators,
 !< max-order weights, tau orders, ADAM's interpolation tables). Cells by offset from the face i+1/2 (cell 0 left of
 !< it); left-biased stencils. The _INTERP_ arrays interpolate from the point values at the cell centres.
-use penf, only : I4P, R8P
+use penf, only : I4P, R_P
 implicit none
 private
 '''

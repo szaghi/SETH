@@ -28,22 +28,22 @@ module seth_mp
 !< the right state mirrored internally); rp, rm: the states, bounded in place. alpha = SETH_MP_ALPHA = 4, Suresh &
 !< Huynh's value for Runge-Kutta stepping (CFL <= 1/(1 + alpha) = 0.2 for the monotonicity proof). Pure,
 !< `acc routine seq`, `omp declare target`.
-use penf, only : I4P, R8P
+use penf, only : I4P, R_P
 implicit none
 private
 public :: SETH_MP_ALPHA
 public :: seth_mp_bound
 
-real(R8P), parameter :: SETH_MP_ALPHA = 4._R8P !< alpha of Suresh & Huynh 1997 for Runge-Kutta stepping (section 2).
+real(R_P), parameter :: SETH_MP_ALPHA = 4._R_P !< alpha of Suresh & Huynh 1997 for Runge-Kutta stepping (section 2).
 
 contains
    pure subroutine seth_mp_bound(vp, vm, alpha, rp, rm)
    !< Bound the two states of a face by the monotonicity-preserving interval of Suresh & Huynh.
-   real(R8P), intent(in)    :: vp(-2:3) !< Values reconstructed with a left bias.
-   real(R8P), intent(in)    :: vm(-2:3) !< Values reconstructed with a right bias.
-   real(R8P), intent(in)    :: alpha    !< Upper-limit factor (SETH_MP_ALPHA).
-   real(R8P), intent(inout) :: rp       !< Left state at the face, from vp: bounded.
-   real(R8P), intent(inout) :: rm       !< Right state at the face, from vm: bounded.
+   real(R_P), intent(in)    :: vp(-2:3) !< Values reconstructed with a left bias.
+   real(R_P), intent(in)    :: vm(-2:3) !< Values reconstructed with a right bias.
+   real(R_P), intent(in)    :: alpha    !< Upper-limit factor (SETH_MP_ALPHA).
+   real(R_P), intent(inout) :: rp       !< Left state at the face, from vp: bounded.
+   real(R_P), intent(inout) :: rm       !< Right state at the face, from vm: bounded.
    !$acc routine seq
    !$omp declare target
 
@@ -53,24 +53,24 @@ contains
 
    pure subroutine seth_mp_side(a, b, c, d, e, alpha, v)
    !< The interval from v_{j-2} .. v_{j+2} = a .. e, and the median of v with its ends.
-   real(R8P), intent(in)    :: a, b, c, d, e !< v_{j-2}, v_{j-1}, v_j, v_{j+1}, v_{j+2}.
-   real(R8P), intent(in)    :: alpha         !< Upper-limit factor.
-   real(R8P), intent(inout) :: v             !< The state, bounded.
-   real(R8P)                :: dm, d0, dp    !< Second differences at j-1, j, j+1.
-   real(R8P)                :: m4p, m4m      !< dM4 at j+1/2 and j-1/2.
-   real(R8P)                :: ul, md, lc    !< v_UL, v_MD, v_LC.
-   real(R8P)                :: vmin, vmax    !< The interval.
+   real(R_P), intent(in)    :: a, b, c, d, e !< v_{j-2}, v_{j-1}, v_j, v_{j+1}, v_{j+2}.
+   real(R_P), intent(in)    :: alpha         !< Upper-limit factor.
+   real(R_P), intent(inout) :: v             !< The state, bounded.
+   real(R_P)                :: dm, d0, dp    !< Second differences at j-1, j, j+1.
+   real(R_P)                :: m4p, m4m      !< dM4 at j+1/2 and j-1/2.
+   real(R_P)                :: ul, md, lc    !< v_UL, v_MD, v_LC.
+   real(R_P)                :: vmin, vmax    !< The interval.
    !$acc routine seq
    !$omp declare target
 
-   dm = a - 2._R8P*b + c
-   d0 = b - 2._R8P*c + d
-   dp = c - 2._R8P*d + e
-   m4p = minmod4(4._R8P*d0 - dp, 4._R8P*dp - d0, d0, dp)
-   m4m = minmod4(4._R8P*d0 - dm, 4._R8P*dm - d0, d0, dm)
+   dm = a - 2._R_P*b + c
+   d0 = b - 2._R_P*c + d
+   dp = c - 2._R_P*d + e
+   m4p = minmod4(4._R_P*d0 - dp, 4._R_P*dp - d0, d0, dp)
+   m4m = minmod4(4._R_P*d0 - dm, 4._R_P*dm - d0, d0, dm)
    ul = c + alpha*(c - b)
-   md = 0.5_R8P*(c + d) - 0.5_R8P*m4p
-   lc = c + 0.5_R8P*(c - b) + (4._R8P/3._R8P)*m4m
+   md = 0.5_R_P*(c + d) - 0.5_R_P*m4p
+   lc = c + 0.5_R_P*(c - b) + (4._R_P/3._R_P)*m4m
    vmin = max(min(c, d, md), min(c, ul, lc))
    vmax = min(max(c, d, md), max(c, ul, lc))
    v = max(vmin, min(v, vmax)) ! the median of v, vmin, vmax (vmin <= c <= vmax: both intervals contain c)
@@ -78,12 +78,12 @@ contains
 
    pure function minmod4(w, x, y, z) result(r)
    !< minmod of four numbers: the one of least magnitude if all have one sign, else 0 (Suresh & Huynh, Eq. (2.6)).
-   real(R8P), intent(in) :: w, x, y, z
-   real(R8P)             :: r
+   real(R_P), intent(in) :: w, x, y, z
+   real(R_P)             :: r
    !$acc routine seq
    !$omp declare target
 
-   r = 0.125_R8P*(sign(1._R8P, w) + sign(1._R8P, x))*abs((sign(1._R8P, w) + sign(1._R8P, y)) &
-       *(sign(1._R8P, w) + sign(1._R8P, z)))*min(abs(w), abs(x), abs(y), abs(z))
+   r = 0.125_R_P*(sign(1._R_P, w) + sign(1._R_P, x))*abs((sign(1._R_P, w) + sign(1._R_P, y)) &
+       *(sign(1._R_P, w) + sign(1._R_P, z)))*min(abs(w), abs(x), abs(y), abs(z))
    endfunction minmod4
 endmodule seth_mp

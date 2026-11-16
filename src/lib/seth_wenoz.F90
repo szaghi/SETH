@@ -12,7 +12,7 @@ module seth_wenoz
 !< `rp`/`rm` the left/right states at the face. Sources and derivations: notes/m2-sources.md.
 !< The `_interp` kernels take point values (at the cell centres) instead of cell averages: other face coefficients
 !< and linear weights, the same indicators and tau (notes/interpolation-plan.md).
-use penf, only : I4P, R8P
+use penf, only : I4P, R_P
 use seth_z_teno_tables
 implicit none
 private
@@ -31,10 +31,10 @@ contains
    integer(I4P), parameter :: NC = WENOZ3_NC, LO = WENOZ3_LO, UMAX = WENOZ3_UMAX, MAXW = WENOZ3_MAXW
    integer(I4P), parameter :: CLO(0:NC-1) = WENOZ3_CLO, CW(0:NC-1) = WENOZ3_CW
    integer(I4P), parameter :: GLO = WENOZ3_GLO, GW = WENOZ3_GW
-   real(R8P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ3_P
-   real(R8P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ3_L, CDQ(0:MAXW-1,0:NC-1) = WENOZ3_DQ
-   real(R8P),    parameter :: D(0:NC-1) = WENOZ3_D, TC(0:NC-1) = WENOZ3_TC, TG = WENOZ3_TG
-   real(R8P),    parameter :: CLG(0:GW-1,0:GW-1) = WENOZ3_LG, CDG(0:GW-1) = WENOZ3_DG
+   real(R_P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ3_P
+   real(R_P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ3_L, CDQ(0:MAXW-1,0:NC-1) = WENOZ3_DQ
+   real(R_P),    parameter :: D(0:NC-1) = WENOZ3_D, TC(0:NC-1) = WENOZ3_TC, TG = WENOZ3_TG
+   real(R_P),    parameter :: CLG(0:GW-1,0:GW-1) = WENOZ3_LG, CDG(0:GW-1) = WENOZ3_DG
 #include "seth_z_teno_body.INC"
    endsubroutine seth_wenoz3
 
@@ -43,10 +43,10 @@ contains
    integer(I4P), parameter :: NC = WENOZ3_NC, LO = WENOZ3_LO, UMAX = WENOZ3_UMAX, MAXW = WENOZ3_MAXW
    integer(I4P), parameter :: CLO(0:NC-1) = WENOZ3_CLO, CW(0:NC-1) = WENOZ3_CW
    integer(I4P), parameter :: GLO = WENOZ3_GLO, GW = WENOZ3_GW
-   real(R8P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ3_INTERP_P
-   real(R8P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ3_L, CDQ(0:MAXW-1,0:NC-1) = WENOZ3_DQ
-   real(R8P),    parameter :: D(0:NC-1) = WENOZ3_INTERP_D, TC(0:NC-1) = WENOZ3_TC, TG = WENOZ3_TG
-   real(R8P),    parameter :: CLG(0:GW-1,0:GW-1) = WENOZ3_LG, CDG(0:GW-1) = WENOZ3_DG
+   real(R_P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ3_INTERP_P
+   real(R_P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ3_L, CDQ(0:MAXW-1,0:NC-1) = WENOZ3_DQ
+   real(R_P),    parameter :: D(0:NC-1) = WENOZ3_INTERP_D, TC(0:NC-1) = WENOZ3_TC, TG = WENOZ3_TG
+   real(R_P),    parameter :: CLG(0:GW-1,0:GW-1) = WENOZ3_LG, CDG(0:GW-1) = WENOZ3_DG
 #include "seth_z_teno_body.INC"
    endsubroutine seth_wenoz3_interp
 
@@ -55,10 +55,10 @@ contains
    integer(I4P), parameter :: NC = WENOZ5_NC, LO = WENOZ5_LO, UMAX = WENOZ5_UMAX, MAXW = WENOZ5_MAXW
    integer(I4P), parameter :: CLO(0:NC-1) = WENOZ5_CLO, CW(0:NC-1) = WENOZ5_CW
    integer(I4P), parameter :: GLO = WENOZ5_GLO, GW = WENOZ5_GW
-   real(R8P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ5_P
-   real(R8P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ5_L, CDQ(0:MAXW-1,0:NC-1) = WENOZ5_DQ
-   real(R8P),    parameter :: D(0:NC-1) = WENOZ5_D, TC(0:NC-1) = WENOZ5_TC, TG = WENOZ5_TG
-   real(R8P),    parameter :: CLG(0:GW-1,0:GW-1) = WENOZ5_LG, CDG(0:GW-1) = WENOZ5_DG
+   real(R_P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ5_P
+   real(R_P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ5_L, CDQ(0:MAXW-1,0:NC-1) = WENOZ5_DQ
+   real(R_P),    parameter :: D(0:NC-1) = WENOZ5_D, TC(0:NC-1) = WENOZ5_TC, TG = WENOZ5_TG
+   real(R_P),    parameter :: CLG(0:GW-1,0:GW-1) = WENOZ5_LG, CDG(0:GW-1) = WENOZ5_DG
 #include "seth_z_teno_body.INC"
    endsubroutine seth_wenoz5
 
@@ -67,10 +67,10 @@ contains
    integer(I4P), parameter :: NC = WENOZ5_NC, LO = WENOZ5_LO, UMAX = WENOZ5_UMAX, MAXW = WENOZ5_MAXW
    integer(I4P), parameter :: CLO(0:NC-1) = WENOZ5_CLO, CW(0:NC-1) = WENOZ5_CW
    integer(I4P), parameter :: GLO = WENOZ5_GLO, GW = WENOZ5_GW
-   real(R8P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ5_INTERP_P
-   real(R8P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ5_L, CDQ(0:MAXW-1,0:NC-1) = WENOZ5_DQ
-   real(R8P),    parameter :: D(0:NC-1) = WENOZ5_INTERP_D, TC(0:NC-1) = WENOZ5_TC, TG = WENOZ5_TG
-   real(R8P),    parameter :: CLG(0:GW-1,0:GW-1) = WENOZ5_LG, CDG(0:GW-1) = WENOZ5_DG
+   real(R_P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ5_INTERP_P
+   real(R_P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ5_L, CDQ(0:MAXW-1,0:NC-1) = WENOZ5_DQ
+   real(R_P),    parameter :: D(0:NC-1) = WENOZ5_INTERP_D, TC(0:NC-1) = WENOZ5_TC, TG = WENOZ5_TG
+   real(R_P),    parameter :: CLG(0:GW-1,0:GW-1) = WENOZ5_LG, CDG(0:GW-1) = WENOZ5_DG
 #include "seth_z_teno_body.INC"
    endsubroutine seth_wenoz5_interp
 
@@ -79,10 +79,10 @@ contains
    integer(I4P), parameter :: NC = WENOZ7_NC, LO = WENOZ7_LO, UMAX = WENOZ7_UMAX, MAXW = WENOZ7_MAXW
    integer(I4P), parameter :: CLO(0:NC-1) = WENOZ7_CLO, CW(0:NC-1) = WENOZ7_CW
    integer(I4P), parameter :: GLO = WENOZ7_GLO, GW = WENOZ7_GW
-   real(R8P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ7_P
-   real(R8P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ7_L, CDQ(0:MAXW-1,0:NC-1) = WENOZ7_DQ
-   real(R8P),    parameter :: D(0:NC-1) = WENOZ7_D, TC(0:NC-1) = WENOZ7_TC, TG = WENOZ7_TG
-   real(R8P),    parameter :: CLG(0:GW-1,0:GW-1) = WENOZ7_LG, CDG(0:GW-1) = WENOZ7_DG
+   real(R_P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ7_P
+   real(R_P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ7_L, CDQ(0:MAXW-1,0:NC-1) = WENOZ7_DQ
+   real(R_P),    parameter :: D(0:NC-1) = WENOZ7_D, TC(0:NC-1) = WENOZ7_TC, TG = WENOZ7_TG
+   real(R_P),    parameter :: CLG(0:GW-1,0:GW-1) = WENOZ7_LG, CDG(0:GW-1) = WENOZ7_DG
 #include "seth_z_teno_body.INC"
    endsubroutine seth_wenoz7
 
@@ -91,10 +91,10 @@ contains
    integer(I4P), parameter :: NC = WENOZ7_NC, LO = WENOZ7_LO, UMAX = WENOZ7_UMAX, MAXW = WENOZ7_MAXW
    integer(I4P), parameter :: CLO(0:NC-1) = WENOZ7_CLO, CW(0:NC-1) = WENOZ7_CW
    integer(I4P), parameter :: GLO = WENOZ7_GLO, GW = WENOZ7_GW
-   real(R8P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ7_INTERP_P
-   real(R8P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ7_L, CDQ(0:MAXW-1,0:NC-1) = WENOZ7_DQ
-   real(R8P),    parameter :: D(0:NC-1) = WENOZ7_INTERP_D, TC(0:NC-1) = WENOZ7_TC, TG = WENOZ7_TG
-   real(R8P),    parameter :: CLG(0:GW-1,0:GW-1) = WENOZ7_LG, CDG(0:GW-1) = WENOZ7_DG
+   real(R_P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ7_INTERP_P
+   real(R_P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ7_L, CDQ(0:MAXW-1,0:NC-1) = WENOZ7_DQ
+   real(R_P),    parameter :: D(0:NC-1) = WENOZ7_INTERP_D, TC(0:NC-1) = WENOZ7_TC, TG = WENOZ7_TG
+   real(R_P),    parameter :: CLG(0:GW-1,0:GW-1) = WENOZ7_LG, CDG(0:GW-1) = WENOZ7_DG
 #include "seth_z_teno_body.INC"
    endsubroutine seth_wenoz7_interp
 
@@ -103,10 +103,10 @@ contains
    integer(I4P), parameter :: NC = WENOZ9_NC, LO = WENOZ9_LO, UMAX = WENOZ9_UMAX, MAXW = WENOZ9_MAXW
    integer(I4P), parameter :: CLO(0:NC-1) = WENOZ9_CLO, CW(0:NC-1) = WENOZ9_CW
    integer(I4P), parameter :: GLO = WENOZ9_GLO, GW = WENOZ9_GW
-   real(R8P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ9_P
-   real(R8P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ9_L, CDQ(0:MAXW-1,0:NC-1) = WENOZ9_DQ
-   real(R8P),    parameter :: D(0:NC-1) = WENOZ9_D, TC(0:NC-1) = WENOZ9_TC, TG = WENOZ9_TG
-   real(R8P),    parameter :: CLG(0:GW-1,0:GW-1) = WENOZ9_LG, CDG(0:GW-1) = WENOZ9_DG
+   real(R_P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ9_P
+   real(R_P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ9_L, CDQ(0:MAXW-1,0:NC-1) = WENOZ9_DQ
+   real(R_P),    parameter :: D(0:NC-1) = WENOZ9_D, TC(0:NC-1) = WENOZ9_TC, TG = WENOZ9_TG
+   real(R_P),    parameter :: CLG(0:GW-1,0:GW-1) = WENOZ9_LG, CDG(0:GW-1) = WENOZ9_DG
 #include "seth_z_teno_body.INC"
    endsubroutine seth_wenoz9
 
@@ -115,10 +115,10 @@ contains
    integer(I4P), parameter :: NC = WENOZ9_NC, LO = WENOZ9_LO, UMAX = WENOZ9_UMAX, MAXW = WENOZ9_MAXW
    integer(I4P), parameter :: CLO(0:NC-1) = WENOZ9_CLO, CW(0:NC-1) = WENOZ9_CW
    integer(I4P), parameter :: GLO = WENOZ9_GLO, GW = WENOZ9_GW
-   real(R8P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ9_INTERP_P
-   real(R8P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ9_L, CDQ(0:MAXW-1,0:NC-1) = WENOZ9_DQ
-   real(R8P),    parameter :: D(0:NC-1) = WENOZ9_INTERP_D, TC(0:NC-1) = WENOZ9_TC, TG = WENOZ9_TG
-   real(R8P),    parameter :: CLG(0:GW-1,0:GW-1) = WENOZ9_LG, CDG(0:GW-1) = WENOZ9_DG
+   real(R_P),    parameter :: CP(0:MAXW-1,0:NC-1) = WENOZ9_INTERP_P
+   real(R_P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = WENOZ9_L, CDQ(0:MAXW-1,0:NC-1) = WENOZ9_DQ
+   real(R_P),    parameter :: D(0:NC-1) = WENOZ9_INTERP_D, TC(0:NC-1) = WENOZ9_TC, TG = WENOZ9_TG
+   real(R_P),    parameter :: CLG(0:GW-1,0:GW-1) = WENOZ9_LG, CDG(0:GW-1) = WENOZ9_DG
 #include "seth_z_teno_body.INC"
    endsubroutine seth_wenoz9_interp
 

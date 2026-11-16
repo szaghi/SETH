@@ -18,44 +18,44 @@
    !
    ! Cells by offset from the face i+1/2 (cell 0 left of it). The left state is the left-biased reconstruction of vp;
    ! the right state is the same reconstruction of the mirrored right-biased values, st(m) = vm(1-m).
-   real(R8P),    intent(in)  :: vp(LO:1-LO) !< Values reconstructed with a left bias.
-   real(R8P),    intent(in)  :: vm(LO:1-LO) !< Values reconstructed with a right bias.
-   real(R8P),    intent(in)  :: eps         !< Regulariser of the smoothness indicators.
+   real(R_P),    intent(in)  :: vp(LO:1-LO) !< Values reconstructed with a left bias.
+   real(R_P),    intent(in)  :: vm(LO:1-LO) !< Values reconstructed with a right bias.
+   real(R_P),    intent(in)  :: eps         !< Regulariser of the smoothness indicators.
 #ifdef SETH_TENO
 #ifdef SETH_TENO_A
-   real(R8P),    intent(in)  :: cr          !< Threshold C_r of the discontinuity sensor.
-   real(R8P),    intent(in)  :: xi          !< Regulariser scale xi of the sensor (e = 0.9 cr/(1-0.9 cr) xi^2).
-   real(R8P),    intent(in)  :: a1, a2      !< Cutoff exponents: C_T from 10^-a1 (smooth) to 10^-(a1-a2) (jump).
-   real(R8P),    intent(in)  :: rmu         !< Inverse descaler of the sensor's regulariser (1: the papers' form).
-   real(R8P)                 :: ct          !< Cutoff C_T of this state, from the sensor.
-   real(R8P)                 :: da, db, eta, etamin, epss, mm, gg !< Sensor work.
-   real(R8P),    parameter   :: POW10(0:20) = [1.e0_R8P, 1.e-1_R8P, 1.e-2_R8P, 1.e-3_R8P, 1.e-4_R8P, 1.e-5_R8P, &
-                                               1.e-6_R8P, 1.e-7_R8P, 1.e-8_R8P, 1.e-9_R8P, 1.e-10_R8P, 1.e-11_R8P, &
-                                               1.e-12_R8P, 1.e-13_R8P, 1.e-14_R8P, 1.e-15_R8P, 1.e-16_R8P, &
-                                               1.e-17_R8P, 1.e-18_R8P, 1.e-19_R8P, 1.e-20_R8P] !< 10^-k, k = 0..20.
+   real(R_P),    intent(in)  :: cr          !< Threshold C_r of the discontinuity sensor.
+   real(R_P),    intent(in)  :: xi          !< Regulariser scale xi of the sensor (e = 0.9 cr/(1-0.9 cr) xi^2).
+   real(R_P),    intent(in)  :: a1, a2      !< Cutoff exponents: C_T from 10^-a1 (smooth) to 10^-(a1-a2) (jump).
+   real(R_P),    intent(in)  :: rmu         !< Inverse descaler of the sensor's regulariser (1: the papers' form).
+   real(R_P)                 :: ct          !< Cutoff C_T of this state, from the sensor.
+   real(R_P)                 :: da, db, eta, etamin, epss, mm, gg !< Sensor work.
+   real(R_P),    parameter   :: POW10(0:20) = [1.e0_R_P, 1.e-1_R_P, 1.e-2_R_P, 1.e-3_R_P, 1.e-4_R_P, 1.e-5_R_P, &
+                                               1.e-6_R_P, 1.e-7_R_P, 1.e-8_R_P, 1.e-9_R_P, 1.e-10_R_P, 1.e-11_R_P, &
+                                               1.e-12_R_P, 1.e-13_R_P, 1.e-14_R_P, 1.e-15_R_P, 1.e-16_R_P, &
+                                               1.e-17_R_P, 1.e-18_R_P, 1.e-19_R_P, 1.e-20_R_P] !< 10^-k, k = 0..20.
 #else
-   real(R8P),    intent(in)  :: ct          !< Cutoff C_T of the normalised smoothness measures.
+   real(R_P),    intent(in)  :: ct          !< Cutoff C_T of the normalised smoothness measures.
 #endif
 #ifdef SETH_TENO_AZ
-   real(R8P),    intent(in)  :: rmu         !< Inverse descaler of tau in the adaptive cutoff (1: Tang 2024).
+   real(R_P),    intent(in)  :: rmu         !< Inverse descaler of tau in the adaptive cutoff (1: Tang 2024).
 #endif
 #else
    integer(I4P), intent(in)  :: p           !< Exponent of tau/beta in the weights (1 or 2).
 #endif
-   real(R8P),    intent(out) :: rp          !< Left state at the face, from vp.
-   real(R8P),    intent(out) :: rm          !< Right state at the face, from vm.
-   real(R8P)                 :: st(LO:UMAX) !< Stencil of the current side, left-biased.
-   real(R8P)                 :: q(0:NC-1)   !< Candidate face values.
-   real(R8P)                 :: beta(0:NC-1)!< Candidate smoothness indicators.
-   real(R8P)                 :: wgt(0:NC-1) !< Weights.
-   real(R8P)                 :: r(1:2)      !< States (1 left, 2 right).
-   real(R8P)                 :: tau         !< Global smoothness measure.
-   real(R8P)                 :: betag       !< Global indicator (TENO6).
-   real(R8P)                 :: x, wsum     !< Work.
-   real(R8P)                 :: lsum        !< One term of an indicator, before squaring.
+   real(R_P),    intent(out) :: rp          !< Left state at the face, from vp.
+   real(R_P),    intent(out) :: rm          !< Right state at the face, from vm.
+   real(R_P)                 :: st(LO:UMAX) !< Stencil of the current side, left-biased.
+   real(R_P)                 :: q(0:NC-1)   !< Candidate face values.
+   real(R_P)                 :: beta(0:NC-1)!< Candidate smoothness indicators.
+   real(R_P)                 :: wgt(0:NC-1) !< Weights.
+   real(R_P)                 :: r(1:2)      !< States (1 left, 2 right).
+   real(R_P)                 :: tau         !< Global smoothness measure.
+   real(R_P)                 :: betag       !< Global indicator (TENO6).
+   real(R_P)                 :: x, wsum     !< Work.
+   real(R_P)                 :: lsum        !< One term of an indicator, before squaring.
 #ifdef SETH_TENO
-   real(R8P)                 :: g(0:NC-1)   !< C + tau/(beta + eps), then its normalised q-th power.
-   real(R8P)                 :: gmax        !< Largest g.
+   real(R_P)                 :: g(0:NC-1)   !< C + tau/(beta + eps), then its normalised q-th power.
+   real(R_P)                 :: gmax        !< Largest g.
 #endif
    integer(I4P)              :: side, k, a, i, m
    !$acc routine seq
@@ -73,26 +73,26 @@
       endif
 #ifdef SETH_TENO_A
       ! the cutoff of this state, from the first differences at the nodes -1..AHI
-      epss = (0.9_R8P*cr/(1._R8P - 0.9_R8P*cr))*(xi/rmu)**2
-      etamin = 1._R8P
+      epss = (0.9_R_P*cr/(1._R_P - 0.9_R_P*cr))*(xi/rmu)**2
+      etamin = 1._R_P
       do m=-1, AHI
          da = st(m+1) - st(m) ; db = st(m) - st(m-1)
-         eta = (abs(2._R8P*da*db) + epss)/(da*da + db*db + epss)
+         eta = (abs(2._R_P*da*db) + epss)/(da*da + db*db + epss)
          etamin = min(etamin, eta)
       enddo
-      mm = 1._R8P - min(1._R8P, etamin/cr)
-      gg = (1._R8P - mm)**4*(1._R8P + 4._R8P*mm)
-      ct = POW10(min(max(int(a1 - a2*(1._R8P - gg)), 0), 20))
+      mm = 1._R_P - min(1._R_P, etamin/cr)
+      gg = (1._R_P - mm)**4*(1._R_P + 4._R_P*mm)
+      ct = POW10(min(max(int(a1 - a2*(1._R_P - gg)), 0), 20))
 #endif
       ! candidates
       do k=0, NC-1
-         q(k) = 0._R8P
+         q(k) = 0._R_P
          do a=0, CW(k)-1
             q(k) = q(k) + CP(a,k)*st(CLO(k)+a)
          enddo
-         beta(k) = 0._R8P
+         beta(k) = 0._R_P
          do i=0, CW(k)-1
-            lsum = 0._R8P
+            lsum = 0._R_P
             do a=i, CW(k)-1
                lsum = lsum + CL(a,i,k)*st(CLO(k)+a)
             enddo
@@ -100,14 +100,14 @@
          enddo
       enddo
       ! global smoothness measure
-      tau = 0._R8P
+      tau = 0._R_P
       do k=0, NC-1
          tau = tau + TC(k)*beta(k)
       enddo
-      if (TG /= 0._R8P) then ! a constant: folds
-         betag = 0._R8P
+      if (TG /= 0._R_P) then ! a constant: folds
+         betag = 0._R_P
          do i=0, GW-1
-            lsum = 0._R8P
+            lsum = 0._R_P
             do a=i, GW-1
                lsum = lsum + CLG(a,i)*st(GLO+a)
             enddo
@@ -119,20 +119,20 @@
 #ifdef SETH_TENO
       ! chi_k = gamma_k / sum gamma, gamma_k = g_k**6, evaluated as (g_k/g_max)**6 / sum (g/g_max)**6: the same chi,
       ! without the overflow of g**6 when tau/beta is large (a big jump on piecewise-constant data)
-      gmax = 0._R8P
+      gmax = 0._R_P
       do k=0, NC-1
-         g(k) = 1._R8P + tau/(beta(k) + eps)
+         g(k) = 1._R_P + tau/(beta(k) + eps)
          gmax = max(gmax, g(k))
       enddo
-      x = 0._R8P
+      x = 0._R_P
       do k=0, NC-1
          g(k) = g(k)/gmax
          g(k) = (g(k)*g(k))*(g(k)*g(k))*(g(k)*g(k))
          x = x + g(k)
       enddo
-      wsum = 0._R8P
+      wsum = 0._R_P
       do k=0, NC-1
-         wgt(k) = 0._R8P
+         wgt(k) = 0._R_P
 #ifdef SETH_TENO_AZ
          if (g(k)/x >= min(ct, (tau*rmu)*rmu)) wgt(k) = D(k)
 #else
@@ -141,7 +141,7 @@
          wsum = wsum + wgt(k)
       enddo
 #else
-      wsum = 0._R8P
+      wsum = 0._R_P
       do k=0, NC-1
          x = tau/(beta(k) + eps)
          select case(p)
@@ -151,11 +151,11 @@
          case default
             x = x**p
          endselect
-         wgt(k) = D(k)*(1._R8P + x)
+         wgt(k) = D(k)*(1._R_P + x)
          wsum = wsum + wgt(k)
       enddo
 #endif
-      r(side) = 0._R8P
+      r(side) = 0._R_P
       do k=0, NC-1
          r(side) = r(side) + (wgt(k)/wsum)*q(k)
       enddo

@@ -15,7 +15,7 @@ module seth_descaling
 !< swamps the indicators). Each bias over its own stencil (left: vp(1-S:S-1), right: vm(2-S:S)), the two averaged; mu
 !< floored at 64 eps mean|v| and tiny, so that exactly constant data (where the weights do not matter) cannot send the
 !< indicators' round-off times rmu^2 to overflow. Scaling by 2^k is exact, so the result stays bitwise scale invariant.
-use penf, only : I4P, R8P
+use penf, only : I4P, R_P
 implicit none
 private
 public :: seth_weno_descaling
@@ -25,50 +25,50 @@ contains
    pure function seth_weno_descaling(S, sigma, vp, vm) result(rmu)
    !< Inverse descaler `1/mu` of the smoothness indicators of one face, from its own stencils.
    integer(I4P), intent(in) :: S         !< Candidates of the scheme (WENO-(2S-1)).
-   real(R8P),    intent(in) :: sigma     !< Descaler switch: 0 Jiang-Shu, 1 scale-invariant.
-   real(R8P),    intent(in) :: vp(1-S:S) !< Values reconstructed with a left bias.
-   real(R8P),    intent(in) :: vm(1-S:S) !< Values reconstructed with a right bias.
-   real(R8P)                :: rmu       !< Inverse of the descaler.
-   real(R8P)                :: mu        !< Descaler.
+   real(R_P),    intent(in) :: sigma     !< Descaler switch: 0 Jiang-Shu, 1 scale-invariant.
+   real(R_P),    intent(in) :: vp(1-S:S) !< Values reconstructed with a left bias.
+   real(R_P),    intent(in) :: vm(1-S:S) !< Values reconstructed with a right bias.
+   real(R_P)                :: rmu       !< Inverse of the descaler.
+   real(R_P)                :: mu        !< Descaler.
    integer(I4P)             :: m         !< Counter.
    !$acc routine seq
    !$omp declare target
 
-   mu = 0._R8P
+   mu = 0._R_P
    do m=1-S, S-1
       mu = mu + abs(vm(m+1)) ! ADAM's row 1 (vm shifted one cell)
       mu = mu + abs(vp(m))   ! ADAM's row 2
    enddo
-   mu = max(mu/real(2*(2*S-1), R8P), tiny(1._R8P))
-   rmu = sigma*(1._R8P/mu) + (1._R8P - sigma)
+   mu = max(mu/real(2*(2*S-1), R_P), tiny(1._R_P))
+   rmu = sigma*(1._R_P/mu) + (1._R_P - sigma)
    endfunction seth_weno_descaling
 
    pure function seth_weno_descaling_ai(S, vp, vm) result(rmu)
    !< Inverse affine-invariant descaler `1/mu`, mu = the mean deviation from the mean of each bias's stencil (Wang & Don).
    integer(I4P), intent(in) :: S         !< Candidates of the scheme (WENO-(2S-1)).
-   real(R8P),    intent(in) :: vp(1-S:S) !< Values reconstructed with a left bias.
-   real(R8P),    intent(in) :: vm(1-S:S) !< Values reconstructed with a right bias.
-   real(R8P)                :: rmu       !< Inverse of the descaler.
-   real(R8P)                :: avp, avm  !< Means of the two stencils.
-   real(R8P)                :: mu, mabs  !< Descaler; mean |v|, for the floor.
+   real(R_P),    intent(in) :: vp(1-S:S) !< Values reconstructed with a left bias.
+   real(R_P),    intent(in) :: vm(1-S:S) !< Values reconstructed with a right bias.
+   real(R_P)                :: rmu       !< Inverse of the descaler.
+   real(R_P)                :: avp, avm  !< Means of the two stencils.
+   real(R_P)                :: mu, mabs  !< Descaler; mean |v|, for the floor.
    integer(I4P)             :: m         !< Counter.
    !$acc routine seq
    !$omp declare target
 
-   avp = 0._R8P ; avm = 0._R8P ; mabs = 0._R8P
+   avp = 0._R_P ; avm = 0._R_P ; mabs = 0._R_P
    do m=1-S, S-1
       avp = avp + vp(m)
       avm = avm + vm(m+1)
       mabs = mabs + abs(vp(m)) + abs(vm(m+1))
    enddo
-   avp = avp/real(2*S-1, R8P) ; avm = avm/real(2*S-1, R8P)
-   mu = 0._R8P
+   avp = avp/real(2*S-1, R_P) ; avm = avm/real(2*S-1, R_P)
+   mu = 0._R_P
    do m=1-S, S-1
       mu = mu + abs(vp(m) - avp) + abs(vm(m+1) - avm)
    enddo
-   mu = mu/real(2*(2*S-1), R8P)
-   mabs = mabs/real(2*(2*S-1), R8P)
-   mu = max(mu, 64._R8P*epsilon(1._R8P)*mabs, tiny(1._R8P))
-   rmu = 1._R8P/mu
+   mu = mu/real(2*(2*S-1), R_P)
+   mabs = mabs/real(2*(2*S-1), R_P)
+   mu = max(mu, 64._R_P*epsilon(1._R_P)*mabs, tiny(1._R_P))
+   rmu = 1._R_P/mu
    endfunction seth_weno_descaling_ai
 endmodule seth_descaling
