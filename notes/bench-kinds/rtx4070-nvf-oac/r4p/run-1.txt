@@ -1,0 +1,40 @@
+faces: 16777216, timed passes: 20 per variant, R_P of 32 bits
+SETH  weno5_js                 : device vs host, max scaled difference  0.00E+00, faces beyond 64 ulps 0 of 65536
+SETH  weno7_js                 : device vs host, max scaled difference  0.00E+00, faces beyond 64 ulps 0 of 65536
+SETH  wenoz5 (p=1)             : device vs host, max scaled difference  0.00E+00, faces beyond 64 ulps 0 of 65536
+SETH  teno6                    : device vs host, max scaled difference  0.00E+00, faces beyond 64 ulps 0 of 65536
+SETH  teno5                    : device vs host, max scaled difference  0.00E+00, faces beyond 64 ulps 0 of 65536
+SETH  teno5_opt                : device vs host, max scaled difference  0.00E+00, faces beyond 64 ulps 0 of 65536
+SETH  teno5_az                 : device vs host, max scaled difference  0.00E+00, faces beyond 64 ulps 0 of 65536
+SETH  teno8                    : device vs host, max scaled difference  1.64E-07, faces beyond 64 ulps 0 of 65536
+SETH  teno5_a                  : device vs host, max scaled difference  0.00E+00, faces beyond 64 ulps 0 of 65536
+SETH  teno8_a                  : device vs host, max scaled difference  1.64E-07, faces beyond 64 ulps 0 of 65536
+SETH  weno5_js + descaling     : device vs host, max scaled difference  2.43E-07, faces beyond 64 ulps 0 of 65536
+SETH  weno5_js + descaling_ai  : device vs host, max scaled difference  1.11E-07, faces beyond 64 ulps 0 of 65536
+SETH  weno5_js + mp_bound      : device vs host, max scaled difference  0.00E+00, faces beyond 64 ulps 0 of 65536
+SETH  linear5                  : device vs host, max scaled difference  0.00E+00, faces beyond 64 ulps 0 of 65536
+SETH  linear7                  : device vs host, max scaled difference  0.00E+00, faces beyond 64 ulps 0 of 65536
+SETH  sensor_lcr               : device vs host, max scaled difference  0.00E+00, faces beyond 64 ulps 0 of 65536
+SETH  hybrid lcr+linear5/wenoz5: device vs host, max scaled difference  0.00E+00, faces beyond 64 ulps 0 of 65536
+SETH  keep_pe6                 : device vs host, max scaled difference  6.13E-06, faces beyond 64 ulps 0 of 65536
+
+                        variant    median ms       min ms      ns/face
+SETH  weno5_js                         1.918        1.885        0.114
+SETH  weno7_js                         2.207        2.174        0.132
+SETH  wenoz5 (p=1)                     5.875        5.837        0.350
+SETH  teno6                            7.830        7.787        0.467
+SETH  teno5                            5.527        5.504        0.329
+SETH  teno5_opt                        5.483        5.441        0.327
+SETH  teno5_az                         5.600        5.569        0.334
+SETH  teno8                           13.101       13.032        0.781
+SETH  teno5_a                          6.692        6.656        0.399
+SETH  teno8_a                         13.587       13.532        0.810
+SETH  weno5_js + descaling             2.272        2.235        0.135
+SETH  weno5_js + descaling_ai          2.558        2.520        0.152
+SETH  weno5_js + mp_bound              2.172        2.142        0.129
+SETH  linear5                          1.748        1.717        0.104
+SETH  linear7                          1.765        1.729        0.105
+SETH  sensor_lcr                       1.894        1.855        0.113
+SETH  hybrid lcr+linear5/wenoz5        2.179        2.161        0.130
+SETH  keep_pe6                         4.893        4.857        0.292
+seth_bench_kinds: checks ok

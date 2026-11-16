@@ -36,6 +36,7 @@ modes = static-gnu shared-gnu
         tests-intel tests-intel-debug
         bench-nvf-oac bench-nvf bench-gnu
         bench-arrays-nvf-oac bench-arrays-nvf bench-arrays-gnu
+        bench-kinds-nvf-oac bench-kinds-gnu
         static-gnu-r4 shared-gnu-r4 static-nvf-r4 shared-nvf-r4 static-intel-r4 shared-intel-r4
         tests-gnu-r4 tests-gnu-debug-r4 tests-nvf-r4 tests-nvf-oac-r4 tests-intel-r4
         bench-nvf-oac-r4 bench-gnu-r4
@@ -162,6 +163,21 @@ template  = template-bench template-gnu template-release
 target    = src/bench/seth_bench_device_arrays.F90
 output    = seth_bench_device_arrays
 
+# src/bench/seth_bench_kinds.F90: SETH's kernels in R_P, the R8P side of the R4P/R8P comparison (bench-*-r4: R4P side)
+[bench-kinds-nvf-oac]
+help      = Benchmark of SETH's kernels in R_P (R8P), nvfortran, OpenACC on the GPU of compute capability $GPU_CC
+template  = template-bench template-nvf template-release
+target    = src/bench/seth_bench_kinds.F90
+output    = seth_bench_kinds
+cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel
+lflags    = -acc -gpu=$GPU_CC
+
+[bench-kinds-gnu]
+help      = Benchmark of SETH's kernels in R_P (R8P), gfortran, one CPU core
+template  = template-bench template-gnu template-release
+target    = src/bench/seth_bench_kinds.F90
+output    = seth_bench_kinds
+
 # ── single precision (R4P): PENF's R_P chosen by -D_R_P_IS_R4P for SETH and PENF alike (roadmap issue #4, 6.2) ──
 # Own build directories and library name, so that an R4P build never mixes with the R8P one. Until phase 2 of 6.2
 # defines the R4P literal set, these builds stop at the #error of src/lib/seth_kind_parameters.F90.
@@ -227,14 +243,18 @@ help      = Tests, ifx, optimised, single precision (R_P = R4P)
 template  = template-r4-tests template-tests template-intel-release template-intel
 
 [bench-nvf-oac-r4]
-help      = Benchmark, nvfortran, OpenACC on the GPU of compute capability $GPU_CC, single precision (R_P = R4P)
+help      = Benchmark of SETH's kernels in R_P (R4P), nvfortran, OpenACC on the GPU of compute capability $GPU_CC
 template  = template-r4-bench template-bench template-nvf template-release
+target    = src/bench/seth_bench_kinds.F90
+output    = seth_bench_kinds
 cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel
 lflags    = -acc -gpu=$GPU_CC
 
 [bench-gnu-r4]
-help      = Benchmark, gfortran, one CPU core, single precision (R_P = R4P)
+help      = Benchmark of SETH's kernels in R_P (R4P), gfortran, one CPU core
 template  = template-r4-bench template-bench template-gnu template-release
+target    = src/bench/seth_bench_kinds.F90
+output    = seth_bench_kinds
 
 # ── templates: left wins when a mode lists several, so the role template (lib, tests) comes first ──
 [template-base]

@@ -1,0 +1,5 @@
+Mon Nov 16 01:52:55 PM CET 2026
+ 13:52:55 up 11 days, 10:01,  1 user,  load average: 3.95, 4.03, 3.75
+index, name, utilization.gpu [%], memory.used [MiB], clocks.current.sm [MHz]
+0, NVIDIA GeForce RTX 4070, 5 %, 2278 MiB, 210 MHz
+1, NVIDIA GeForce RTX 4070, 0 %, 0 MiB, 210 MHz
