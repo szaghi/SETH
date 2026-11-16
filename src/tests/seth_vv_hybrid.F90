@@ -18,8 +18,9 @@ program seth_vv_hybrid
 !<    cells), for TENO5, WENO-Z5 and TENO6, pure, HYB_COST and HYB_KEP. Printed: L1(rho), the fraction of faces
 !<    flagged, positivity, the ratio to the pure scheme. Asserted: HYB_COST within 5 % of the pure scheme's L1 on Sod
 !<    and Lax for TENO5 and WENO-Z5; HYB_KEP positive. The plan's specification asked the 5 % for every scheme and case:
-!<    it fails for TENO6 (Lax 1.054, Shu-Osher 1.81 in report mode), printed, not asserted (the sensor leaves the
-!<    post-shock entropy waves to TENO6's nearly central background).
+!<    it fails for TENO6 on Lax (1.054; Shu-Osher 1.044 in report mode), printed, not asserted. Shu-Osher's left end
+!<    is a fixed supersonic inflow (BC_INFLOW): with a transmissive one the central branches drift the inflow state
+!<    (1.81, and up to 2.6 for HYB_KEP, times the pure error before the fix).
 !< Report mode: hybrid-summary.dat (case scheme mode L1 flagged-fraction positive) and hybrid-smooth.dat.
 use seth
 use seth_test_parameters, only : EULER_FLOOR_N2, ORDERS_AT_FLOOR_OK, TOL_CONSERVATION, T_SLACK
@@ -88,7 +89,7 @@ do k=1, 3
       call record('lax')
       ! Shu-Osher
       nflagged = 0 ; nhybfaces = 0
-      call reference_problem('hyb-shu-osher', init_shu_osher, -5._R_P, 5._R_P, BC_TRANSMISSIVE, 1.8_R_P, 0.5_R_P, &
+      call reference_problem('hyb-shu-osher', init_shu_osher, -5._R_P, 5._R_P, BC_INFLOW, 1.8_R_P, 0.5_R_P, &
                              400, merge(16, 4, vv_report())*400, 3_I4P, ids, PATH_SPLIT, l1, pos, files=.false., &
                              qref_in=qref)
       call record('shu-osher')
@@ -136,7 +137,7 @@ contains
    elseif (mo == 2) then
       print '(A,F7.3)', '   cost hybrid / pure scheme: ', l1(1)/l1pure(ic)
       ! asserted for the fifth-order upwind backgrounds on Sod and Lax; TENO6 and Shu-Osher printed (the plan's 5 %
-      ! fails for TENO6: Lax 1.054, Shu-Osher 1.81 against the 16x reference)
+      ! fails for TENO6 on Lax: 1.054; Shu-Osher 1.044 against the 16x reference)
       if (ic < 3 .and. k < 3 .and. .not.(l1(1) <= 1.05_R_P*l1pure(ic))) then
          print '(A)', '   ^ the cost hybrid is more than 5% off the pure scheme' ; passed = .false.
       endif

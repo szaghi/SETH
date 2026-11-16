@@ -390,14 +390,14 @@ the central–WENO and central–TENO hybrids of the turbulence literature.
   `seth_sensor_lcr` (Li, Chen & Ren 2022) and `seth_sensor_tau` (Wan & Xia 2022), each on the six values around a
   face, returning $s \in [0, 1]$ with $s = 1$ where the published test says smooth. On a sine they judge smooth up to
   $k = 0.64$, $0.04$, $2.07$ and $1.36$ ([H1](/verification/hybrids/sensors): the paper's 0.64 and 2.06 reproduced).
-  Measured further on H1: Li, Chen & Ren's never flags a critical point, and is the most selective in flows, so
-  selective that TENO6's cost hybrid on Shu–Osher sends the entropy waves to the nearly central background (1.81
-  times the pure scheme's $L_1$), where Fu's detector gives 1.04 and Wan & Xia's 1.00; none is scale invariant by
-  itself, and $r_\mu = 1/(\max f - \min f)$ over the field makes all four so. **Recommended** (from these
-  one-dimensional measurements, published thresholds, nothing tuned; turbulent flows may revise it): Li, Chen & Ren's
-  sensor for an upwind background (TENO5, WENO-Z5's linear scheme); Fu's TENO detector, or Wan & Xia's, for a nearly
-  non-dissipative one (TENO6; by extension TENO8 and a central flux, not measured); never Ren's (it flags extrema at
-  every resolution); and always $r_\mu = 1/(\max f - \min f)$, one reduction over the field;
+  Measured further on H1: Li, Chen & Ren's never flags a critical point, and is the most selective in flows: 6 % of
+  Shu–Osher's faces nonlinear, where TENO6's cost hybrid stays within 1.044 of the pure scheme's $L_1$ (Fu's detector
+  1.020 at 14 %, Wan & Xia's 1.006 at 27 %; TENO5's upwind background within 1.01 with these three); none is scale
+  invariant by itself, and $r_\mu = 1/(\max f - \min f)$ over the field makes all four so. **Recommended** (from
+  these one-dimensional measurements, published thresholds, nothing tuned; turbulent flows may revise it): Li, Chen &
+  Ren's sensor, for an upwind or a nearly non-dissipative background (TENO6; by extension TENO8 and a central flux,
+  not measured); Wan & Xia's where the last few per cent of accuracy on a nearly non-dissipative background is worth
+  four times the nonlinear faces; never Ren's (it flags extrema at every resolution); and always $r_\mu = 1/(\max f - \min f)$, one reduction over the field;
 - **the cost**, measured at kernel level on the RTX 4070: a sensor 0.30 ns per face, a linear kernel 0.095, WENO-Z5
   0.985. A hybrid that calls the sensor on both biases and the linear kernel where both say smooth costs 0.67 on a
   mostly smooth field, and breaks even with WENO-Z5 at about 30% of faces flagged (60% with one sensor call per face,

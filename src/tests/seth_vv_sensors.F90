@@ -3,8 +3,9 @@ program seth_vv_sensors
 !< SETH verification: the four sensors in flows with shocks, as diagnostics and as the switch of a cost hybrid.
 !<
 !< Roadmap issue #4, Phase 5, item (d). Two flows of the 1-D Euler harness (seth_vv_euler, splitting path):
-!< Shu-Osher (400 cells on [-5, 5], t = 1.8, transmissive) and the Woodward-Colella blast waves (400 cells, t = 0.038,
-!< reflecting walls, the positivity limiter on), against WENO5-JS on 4 times the cells (16 in the report mode).
+!< Shu-Osher (400 cells on [-5, 5], t = 1.8, the left end a fixed supersonic inflow, BC_INFLOW) and the
+!< Woodward-Colella blast waves (400 cells, t = 0.038, reflecting walls, the positivity limiter on), against WENO5-JS
+!< on 4 times the cells (16 in the report mode).
 !<
 !< 1. Diagnostic: the pure TENO5 run, 60 frames; at each frame every sensor reads the density of every face (as the
 !<    harness's hybrid does: cells i-2..i+3, normalised by max(|rho|, 1), the published thresholds, no dilation).
@@ -18,7 +19,7 @@ program seth_vv_sensors
 !< static tests predict on Shu-Osher (Ren's flags the most, then Fu's TENO detector, then Li, Chen & Ren's).
 !< Report: sensors-flows.dat (case scheme sensor L1 ratio flagged-fraction positive).
 use seth
-use seth_test_parameters, only : SENSOR_FLOW_EXEMPT, SENSOR_FLOW_RATIO
+use seth_test_parameters, only : SENSOR_FLOW_RATIO
 use seth_test_schemes
 use seth_vv_euler
 use seth_vv_cases
@@ -31,7 +32,7 @@ integer(I4P)             :: us
 logical                  :: passed
 passed = .true.
 if (vv_report()) call vv_open('sensors-flows.dat', us, 'case scheme sensor L1(rho) ratio-to-pure flagged-fraction positive')
-call study('shu-osher', init_shu_osher, -5._R_P, 5._R_P, BC_TRANSMISSIVE, 1.8_R_P, .false.)
+call study('shu-osher', init_shu_osher, -5._R_P, 5._R_P, BC_INFLOW, 1.8_R_P, .false.)
 call study('blast', init_blast, 0._R_P, 1._R_P, BC_REFLECTIVE, 0.038_R_P, .true.)
 hybrid = HYB_NONE ; hyb_sensor = SENS_LCR ; limiter = .false.
 if (vv_report()) close(us)
@@ -117,8 +118,7 @@ contains
          if (vv_report()) write(us, '(A,1X,A,1X,A,ES24.15,2F10.5,1X,L1)') name, trim(BASES(ib)), trim(SNAMES(is)), &
                                                                           l1(1), l1(1)/l1p, frac, pos(1)
          if (.not.pos(1)) call fail(name//' '//trim(BASES(ib))//' '//trim(SNAMES(is))//': lost positivity')
-         if (pos(1) .and. l1(1) > SENSOR_FLOW_RATIO*l1p .and. &
-             name//' '//trim(BASES(ib))//' '//trim(SNAMES(is)) /= SENSOR_FLOW_EXEMPT) &
+         if (pos(1) .and. l1(1) > SENSOR_FLOW_RATIO*l1p) &
             call fail(name//' '//trim(BASES(ib))//' '//trim(SNAMES(is))//': L1 above the bound times the pure scheme')
       enddo
    enddo

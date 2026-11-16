@@ -8,7 +8,7 @@
 | shu-osher | TENO5 | cost | 0.1702 | 1.010 | 5.1 % | yes |
 | sod | TENO5 | kep | 0.002711 | 0.993 | 11.3 % | yes |
 | lax | TENO5 | kep | 0.009495 | 1.032 | 11.3 % | yes |
-| shu-osher | TENO5 | kep | 0.4384 | 2.603 | 5.7 % | yes |
+| shu-osher | TENO5 | kep | 0.1539 | 0.914 | 5.6 % | yes |
 | sod | WENO-Z5 | pure | 0.002828 | 1.000 | 0.0 % | yes |
 | lax | WENO-Z5 | pure | 0.009325 | 1.000 | 0.0 % | yes |
 | shu-osher | WENO-Z5 | pure | 0.1904 | 1.000 | 0.0 % | yes |
@@ -17,13 +17,13 @@
 | shu-osher | WENO-Z5 | cost | 0.1825 | 0.958 | 5.1 % | yes |
 | sod | WENO-Z5 | kep | 0.002807 | 0.993 | 11.0 % | yes |
 | lax | WENO-Z5 | kep | 0.009311 | 0.999 | 11.4 % | yes |
-| shu-osher | WENO-Z5 | kep | 0.2707 | 1.422 | 5.2 % | yes |
+| shu-osher | WENO-Z5 | kep | 0.165 | 0.867 | 5.2 % | yes |
 | sod | TENO6 | pure | 0.002336 | 1.000 | 0.0 % | yes |
 | lax | TENO6 | pure | 0.007946 | 1.000 | 0.0 % | yes |
 | shu-osher | TENO6 | pure | 0.153 | 1.000 | 0.0 % | yes |
 | sod | TENO6 | cost | 0.002372 | 1.015 | 11.4 % | yes |
 | lax | TENO6 | cost | 0.008379 | 1.054 | 11.1 % | yes |
-| shu-osher | TENO6 | cost | 0.277 | 1.810 | 6.2 % | yes |
+| shu-osher | TENO6 | cost | 0.1597 | 1.044 | 6.2 % | yes |
 | sod | TENO6 | kep | 0.002385 | 1.021 | 11.2 % | yes |
 | lax | TENO6 | kep | 0.008327 | 1.048 | 11.1 % | yes |
-| shu-osher | TENO6 | kep | 0.3233 | 2.113 | 6.4 % | yes |
+| shu-osher | TENO6 | kep | 0.1639 | 1.071 | 6.4 % | yes |

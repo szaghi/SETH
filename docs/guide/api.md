@@ -34,9 +34,7 @@ Two more things hold in R4P only, both measured by the test suite:
 
 The test suite passes in R4P (`fobis build --mode tests-gnu-r4 && bash scripts/run_tests.sh --exe-dir exe-r4`, 33
 programs: the comparisons with ADAM are R8P only) on gfortran, nvfortran and ifx, against expectations measured in R4P
-([test programs](/verification/unit-tests#single-precision)). One case is not held to its bound: TENO6 with the LCR
-sensor as a cost hybrid on Shu–Osher has 3 to 9 times the L1 error of pure TENO6 in R4P, depending on the compiler
-(2.1 in R8P), an instability not analysed yet ([issue #4](https://github.com/szaghi/SETH/issues/4), 6.2).
+([test programs](/verification/unit-tests#single-precision)), every case held to its bound.
 
 ## WENO-JS
 

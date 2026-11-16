@@ -36,8 +36,11 @@ module seth_vv_euler
 !< counted in `nlimited`: the cases assert that the limiter never acts on smooth flows, and report how often each
 !< scheme needs it on the stress tests.
 !<
-!< Boundaries: periodic, transmissive (zeroth-order extrapolation) or reflecting walls. Time: SSP-RK3 (Shu & Osher
-!< 1988).
+!< Boundaries: periodic, transmissive (zeroth-order extrapolation), reflecting walls, or inflow (BC_INFLOW: the left
+!< ghost cells keep the state euler_run gave them, the first cell's initial state; the right end transmissive). A
+!< supersonic inflow needs BC_INFLOW under a central flux: the central stencil reads cells downstream, and a
+!< transmissive end copies what reaches the first cell into the inflow state, which then drifts (Shu-Osher's cost
+!< hybrid of TENO6: from round-off to 0.1-0.15 in density by t = 1.8). Time: SSP-RK3 (Shu & Osher 1988).
 !<
 !< Hybrids (PATH_SPLIT only; roadmap issue #4, steps 3.4 and 4.3), set by the module variable `hybrid`: the density of
 !< cells i-2..i+3 feeds the sensor `hyb_sensor` (default seth_sensor_lcr, Li, Chen & Ren 2022; or seth_sensor_teno,
@@ -55,7 +58,7 @@ use seth
 use seth_test_schemes, only : reconstruct, VLO, VHI, SCHEMES
 implicit none
 private
-public :: GAMMA, NG, PATH_SPLIT, PATH_INTERP, PATH_ROE, BC_PERIODIC, BC_TRANSMISSIVE, BC_REFLECTIVE
+public :: GAMMA, NG, PATH_SPLIT, PATH_INTERP, PATH_ROE, BC_PERIODIC, BC_TRANSMISSIVE, BC_REFLECTIVE, BC_INFLOW
 public :: prim2cons, cons2prim, euler_dt, euler_step, nfallback, corrections, limiter, nlimited, positive_state
 public :: roe_fix, nsonic
 public :: SENS_TENO, SENS_REN, SENS_LCR, SENS_TAU, hyb_sensor
@@ -64,7 +67,7 @@ public :: HYB_NONE, HYB_COST, HYB_KEP, HYB_LEFT_KEP, HYB_RANDOM, hybrid, hyb_buf
 real(R_P),    parameter :: GAMMA = 1.4_R_P
 integer(I4P), parameter :: NG = 5_I4P
 integer(I4P), parameter :: PATH_SPLIT = 1, PATH_INTERP = 2, PATH_ROE = 3
-integer(I4P), parameter :: BC_PERIODIC = 1, BC_TRANSMISSIVE = 2, BC_REFLECTIVE = 3
+integer(I4P), parameter :: BC_PERIODIC = 1, BC_TRANSMISSIVE = 2, BC_REFLECTIVE = 3, BC_INFLOW = 4
 ! f'' h^2 and f'''' h^4 at the face from the node fluxes of cells -2..3 (exact rationals)
 real(R_P), parameter :: C2(-2:3) = [-5._R_P/48._R_P, 13._R_P/16._R_P, -17._R_P/24._R_P, -17._R_P/24._R_P, &
                                     13._R_P/16._R_P, -5._R_P/48._R_P]
@@ -162,6 +165,8 @@ contains
       case(BC_REFLECTIVE)
          q(:,1-g) = q(:,g) ; q(2,1-g) = -q(2,g)
          q(:,n+g) = q(:,n+1-g) ; q(2,n+g) = -q(2,n+1-g)
+      case(BC_INFLOW) ! the left ghosts are left as they are
+         q(:,n+g) = q(:,n)
       endselect
    enddo
    endsubroutine ghosts

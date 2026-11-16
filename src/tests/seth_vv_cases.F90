@@ -83,6 +83,11 @@ contains
    do i=1, n
       q(:,i) = prim2cons(w0(:,i))
    enddo
+   if (bc == BC_INFLOW) then ! the inflow state, held by the left ghost cells for the whole run
+      do i=1-NG, 0
+         q(:,i) = q(:,1)
+      enddo
+   endif
    t = 0._R_P ; positive = .true. ; kf = 1
    do while (t < tend*(1._R_P - T_SLACK))
       dt = euler_dt(q, n, h, cfl)

@@ -26,7 +26,7 @@ public :: BIG_JUMP, ROBUST_EXP_MIN, ROBUST_EXP_MAX, ROBUST_EXP_MAX_JS
 public :: ORDERS_AT_FLOOR_OK, CONV_FLOOR_OP, CONV_ORDER_LOSS, INTERP_FLOOR, INTERP_CP_ORDER_LOSS, CP2_AZ_TANG
 public :: HENRICK_TOL, POINT_FLOOR, POINT_ORDER_LOSS, MP_NG, SPECTRAL_FLOOR, SPECTRAL_SLOPE_LOSS
 public :: TAU_FLOOR, TAU_ORDER_LOSS, CENTRAL_FLOOR_N, BURGERS_FLOOR_N, EULER_FLOOR_N2
-public :: POS_RANGE_EXP, SMALL_STEP, AI_STEP_TOL, SENSOR_SCALES, SENSOR_FLOW_RATIO, SENSOR_FLOW_EXEMPT
+public :: POS_RANGE_EXP, SMALL_STEP, AI_STEP_TOL, SENSOR_SCALES, SENSOR_FLOW_RATIO
 public :: TOL_BOUNDS, TOL_THETA, TOL_PROPERTIES, TOL_X, TOL_ANTIDISSIPATION, TOL_TABLES, TOL_ADR, TOL_CONSERVATION
 
 #if defined _R_P_IS_R4P
@@ -125,12 +125,7 @@ real(R_P), parameter :: SENSOR_SCALES(5) = [1.e-3_R_P, 1.e-2_R_P, 1._R_P, 1.e3_R
                                              !< a = 1e-6 leaves f below R4P's resolution, and 1e-5, 1e-4 (13 ulps)
                                              !< still change the range-normalised decisions (measured); 1e-3 does not.
 real(R_P), parameter :: SENSOR_FLOW_RATIO = 3._R_P !< seth_vv_sensors: a cost hybrid's L1 at most 3 times the pure
-                                             !< scheme's, as in R8P, but for the case below.
-character(*), parameter :: SENSOR_FLOW_EXEMPT = 'shu-osher teno6 lcr' !< seth_vv_sensors: not held to the bound in R4P
-                                             !< (printed): its L1 is 3.1 (gfortran), 4.3 (nvfortran), 9.3 (ifx)
-                                             !< times the pure scheme's, 2.1 in R8P, the flagged fraction alike: an
-                                             !< R4P instability of that hybrid, compiler-dependent, not analysed
-                                             !< (left to the owner). Every other case keeps the bound 3.
+                                             !< scheme's, as in R8P.
 ! regularisers and steps
 real(R_P), parameter :: EPS_ZT           = 1.e-30_R_P !< As SETH_TENO_EPS in R4P: 1e-40 is not a normal R4P number.
 real(R_P), parameter :: EPS_FIELD_SENSOR = 1.e-8_R_P  !< As in R8P: it only keeps 0/0 out of the sensor (it is added to
@@ -215,7 +210,6 @@ real(R_P), parameter :: AI_STEP_TOL = 1.e-3_R_P !< seth_test_properties: the aff
 real(R_P), parameter :: SENSOR_SCALES(5) = [1.e-6_R_P, 1.e-3_R_P, 1._R_P, 1.e3_R_P, 1.e6_R_P] !< seth_test_sensors: the
                                               !< scales a of a f + b.
 real(R_P), parameter :: SENSOR_FLOW_RATIO = 3._R_P !< seth_vv_sensors: a cost hybrid's L1 at most 3 times the pure scheme's.
-character(*), parameter :: SENSOR_FLOW_EXEMPT = '' !< seth_vv_sensors: every case held to the bound.
 ! regularisers and steps
 real(R_P), parameter :: EPS_ZT           = 1.e-40_R_P !< eps of WENO-Z and TENO in the tests, the papers' value.
 real(R_P), parameter :: EPS_FIELD_SENSOR = 1.e-8_R_P  !< Ducros' regulariser of the field sensors, before /h^2.

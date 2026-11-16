@@ -34,7 +34,7 @@ Every kernel returns $s \in [0, 1]$, $s = 1$ exactly where the published binary 
 
 | Critical points | $\cos(\pi x)$ (order 1) and $\sin^3(\pi x)$ (order 2) around $x = 0$, $m = 2 \dots 1024$ cells per unit length; is any of the five faces nearest the point flagged? | `seth_test_sensors` |
 | Scaled data | test 2 as $a f + b$, $a = 10^{-6} \dots 10^{6}$, $b = 0, 100$; three normalisations: none ($r_\mu = 1$), the paper's per-stencil $1/\max(\lvert v\rvert, 1)$, the field's range $1/(\max f - \min f)$; the fraction of faces whose decision changes | |
-| Flows | Shu–Osher and the Woodward–Colella blast, 400 cells, the [1-D harness](../shocks/sod#models-and-numerics) (blast with the positivity limiter), against WENO5-JS on 16 times the cells; the sensors on the density as the harness's hybrid reads it; the cost hybrid (`HYB_COST`: the linear background where the sensor, dilated by two faces, says smooth) of TENO5 and TENO6 driven by each | [`seth_vv_sensors.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_vv_sensors.F90) |
+| Flows | Shu–Osher (its left end a fixed supersonic inflow) and the Woodward–Colella blast, 400 cells, the [1-D harness](../shocks/sod#models-and-numerics) (blast with the positivity limiter), against WENO5-JS on 16 times the cells; the sensors on the density as the harness's hybrid reads it; the cost hybrid (`HYB_COST`: the linear background where the sensor, dilated by two faces, says smooth) of TENO5 and TENO6 driven by each | [`seth_vv_sensors.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_vv_sensors.F90) |
 | Ducros | sampled 2-D fields, $N \times N$ on $[-1, 1]^2$: the stencil sensors on the density along $x$ and $y$ (a cell flagged when a face of it is), against `seth_ducros` and `seth_ducros_compression` on the central-difference velocity gradient with ADAM's policy (threshold 0.2, $\varepsilon = 10^{-8}(c/h)^2$, no density-jump override) | [`seth_test_sensor_fields.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_test_sensor_fields.F90) |
 
 ## Program
@@ -108,14 +108,18 @@ Averaged over the 60 frames, the fraction of faces flagged on Shu–Osher is 4.1
   unaffected, and makes an offset matter: unit data on a mean of 100 change 36 % of the TENO detector's decisions.
   Normalising by the field's range ($r_\mu = 1/(\max f - \min f)$, a reduction the caller computes once) makes every
   sensor invariant to scale and offset (asserted).
-- **In the flows, the sensor decides whether TENO6's cost hybrid works.** With Li, Chen & Ren's sensor, the most
-  selective, TENO6's hybrid is 1.81 times the pure scheme's $L_1$ on Shu–Osher: the post-shock entropy waves pass as
-  smooth and go to TENO6's nearly central background ([H3](./harness)). With Fu's TENO detector it is 1.04, with Wan &
-  Xia's 1.00, at 14 % and 28 % of the faces nonlinear instead of 6 %. TENO5's upwind background tolerates every sensor
-  (0.995–1.07), and on the blast every hybrid is within 0.94–1.11 of its pure scheme. Selectivity and safety pull
-  apart: the sensor that flags least is the one that can starve a nearly non-dissipative background. The guide's
-  recommendation follows from it ([Schemes](/guide/schemes#hybrids)): Li, Chen & Ren's for an upwind background,
-  Fu's TENO detector or Wan & Xia's for a nearly non-dissipative one, never Ren's, always the range normalisation.
+- **In the flows, every sensor drives both cost hybrids to within 7 % of the pure scheme on Shu–Osher.** TENO6's
+  hybrid is 1.044 times the pure scheme's $L_1$ with Li, Chen & Ren's sensor, the most selective (6 % of the faces
+  nonlinear), 1.020 with Fu's TENO detector (14 %), 1.006 with Wan & Xia's (27 %), 1.031 with Ren's (17 %); TENO5's
+  upwind background 0.995–1.07; on the blast every hybrid is within 0.93–1.11 of its pure scheme. Selectivity costs
+  a little accuracy on a nearly non-dissipative background (4 % for TENO6 with Li, Chen & Ren's, nothing measurable
+  for TENO5), not a factor. An earlier version of this page reported 1.81 for TENO6 with Li, Chen & Ren's and blamed
+  the entropy waves; it was the harness's boundary: a transmissive end at Shu–Osher's supersonic inflow lets the
+  central background, which reads cells downstream, drift the inflow state (0.1–0.15 in density by $t = 1.8$, from
+  round-off), which the upwind pure schemes damp. With the inflow held fixed the excess is gone, in R8P and R4P
+  alike ([H3](./harness)). The guide's recommendation ([Schemes](/guide/schemes#hybrids)): Li, Chen & Ren's for the
+  fewest nonlinear faces, Wan & Xia's when the last per cent of accuracy matters more than cost, never Ren's (it
+  flags extrema), always the range normalisation.
 - **Ducros sees what the velocity says, and only that.** It never flags the Taylor–Green vortex at any resolution
   (the discrete divergence vanishes); there Fu's and Wan & Xia's detectors flag the under-resolved field ($N \le 16$
   and $N = 8$), Li, Chen & Ren's flags nothing at any $N$, and Ren's flags the extrema at every $N$. A shock inside a vortex escapes it once the vorticity exceeds twice the shock's
