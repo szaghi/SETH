@@ -25,6 +25,10 @@
    real(R_P)              :: w(1:2,0:S-1)   !< Weights.
    real(R_P)              :: r(1:2)         !< Reconstructed states, ADAM's rows.
    real(R_P)              :: b, bp          !< Denominator base and its power.
+#ifdef _R_P_IS_R4P
+   real(R_P)              :: bb(1:2,0:S-1)  !< |eps + IS rmu^2| (R4P weights).
+   real(R_P)              :: bmin(1:2)      !< Its smallest value per state.
+#endif
    integer(I4P)           :: m, s1, s2, s3, f
    !$acc routine seq
    !$omp declare target
@@ -55,9 +59,25 @@
    enddo
    ! weights: the power written out as ADAM's host does (WEXP is a constant: the branch folds)
    al_tot = 0._R_P
+#ifdef _R_P_IS_R4P
+   ! R4P: al_k = WA_k (bmin/b_k)**WEXP, the R8P weights times the common bmin**WEXP: every factor in [0, 1], where
+   ! 1/b**WEXP overflows R4P (3.4e38) once IS rmu^2 passes about 1e19 (data of about 1e9 without a descaler); |b|, as the
+   ! even power of the R8P branch has it, floored at tiny so that a b rounded to 0 does not divide by 0
+   do f=1, 2
+      bmin(f) = huge(1._R_P)
+      do s1=0, S-1
+         bb(f,s1) = max(abs(eps + is(f,s1)*rmu*rmu), tiny(1._R_P))
+         bmin(f) = min(bmin(f), bb(f,s1))
+      enddo
+   enddo
+   do s1=0, S-1
+      do f=1, 2
+         b = bmin(f)/bb(f,s1)
+#else
    do s1=0, S-1
       do f=1, 2
          b = eps + is(f,s1)*rmu*rmu
+#endif
          select case(WEXP)
          case(1)
             bp = b
@@ -70,7 +90,11 @@
          case default
             bp = b**WEXP
          endselect
+#ifdef _R_P_IS_R4P
+         al(f,s1) = WA(f,s1)*bp ; al_tot(f) = al_tot(f) + al(f,s1)
+#else
          al(f,s1) = WA(f,s1)*(1._R_P/bp) ; al_tot(f) = al_tot(f) + al(f,s1)
+#endif
       enddo
    enddo
    do s1=0, S-1

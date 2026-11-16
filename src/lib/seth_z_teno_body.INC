@@ -54,6 +54,10 @@
    real(R_P)                 :: betag       !< Global indicator (TENO6).
    real(R_P)                 :: x, wsum     !< Work.
    real(R_P)                 :: lsum        !< One term of an indicator, before squaring.
+#ifdef _R_P_IS_R4P
+   real(R_P)                 :: aa          !< min beta + eps (R4P weights).
+   real(R_P)                 :: ww, vv      !< The two shares of the R4P weights (ww + vv = 1).
+#endif
 #ifdef SETH_TENO
    real(R_P)                 :: g(0:NC-1)   !< C + tau/(beta + eps), then its normalised q-th power.
    real(R_P)                 :: gmax        !< Largest g.
@@ -120,11 +124,26 @@
 #ifdef SETH_TENO
       ! chi_k = gamma_k / sum gamma, gamma_k = g_k**6, evaluated as (g_k/g_max)**6 / sum (g/g_max)**6: the same chi,
       ! without the overflow of g**6 when tau/beta is large (a big jump on piecewise-constant data)
+#ifdef _R_P_IS_R4P
+      ! R4P: g_k/g_max itself, (1 - v) + v a/b_k with a = min beta + eps, b_k = beta_k + eps, v = tau/(a + tau): the
+      ! ratio (1 + tau/b_k)/(1 + tau/a) of the R8P branch, every term in [0, 1], no tau/(beta + eps) (it overflows R4P,
+      ! 3.4e38, on a jump next to flat data: tau of order 1 over eps); gmax = 1, so the loop below keeps it
+      aa = beta(0) + eps
+      do k=1, NC-1
+         aa = min(aa, beta(k) + eps)
+      enddo
+      ww = aa/(aa + tau) ; vv = tau/(aa + tau)
+      do k=0, NC-1
+         g(k) = ww + vv*(aa/(beta(k) + eps))
+      enddo
+      gmax = 1._R_P
+#else
       gmax = 0._R_P
       do k=0, NC-1
          g(k) = 1._R_P + tau/(beta(k) + eps)
          gmax = max(gmax, g(k))
       enddo
+#endif
       x = 0._R_P
       do k=0, NC-1
          g(k) = g(k)/gmax
@@ -142,6 +161,45 @@
          wsum = wsum + wgt(k)
       enddo
 #else
+#ifdef _R_P_IS_R4P
+      ! R4P: D_k (W + V u_k**p), u_k = a/b_k, W = 1/(1 + r**p), V = r**p/(1 + r**p), r = tau/a (a, b_k as above): the
+      ! R8P weights D_k (1 + (tau/b_k)**p) divided by the common 1 + r**p, every factor in [0, 1]; r or 1/r, whichever
+      ! is at most 1, so that nothing overflows
+      aa = beta(0) + eps
+      do k=1, NC-1
+         aa = min(aa, beta(k) + eps)
+      enddo
+      if (tau <= aa) then
+         x = tau/aa
+      else
+         x = aa/tau
+      endif
+      select case(p)
+      case(1)
+      case(2)
+         x = x*x
+      case default
+         x = x**p
+      endselect
+      if (tau <= aa) then
+         ww = 1._R_P/(1._R_P + x) ; vv = x/(1._R_P + x)
+      else
+         ww = x/(1._R_P + x) ; vv = 1._R_P/(1._R_P + x)
+      endif
+      wsum = 0._R_P
+      do k=0, NC-1
+         x = aa/(beta(k) + eps)
+         select case(p)
+         case(1)
+         case(2)
+            x = x*x
+         case default
+            x = x**p
+         endselect
+         wgt(k) = D(k)*(ww + vv*x)
+         wsum = wsum + wgt(k)
+      enddo
+#else
       wsum = 0._R_P
       do k=0, NC-1
          x = tau/(beta(k) + eps)
@@ -155,6 +213,7 @@
          wgt(k) = D(k)*(1._R_P + x)
          wsum = wsum + wgt(k)
       enddo
+#endif
 #endif
       r(side) = 0._R_P
       do k=0, NC-1
