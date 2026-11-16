@@ -40,3 +40,8 @@ which cite the paper; the provenance of every formula is in `notes/m2-sources.md
   method for compressible gas dynamics and turbulence simulation. *Comput. Phys. Commun.* 302:109236 — TENO8's
   background: the face coefficients (Eq. (46)), the linear weights, $\tau_8$ (read in the paper).
 - Hong, Z., Ye, Z., Ye, K. (2022). *J. Comput. Phys.* — $C_T = 10^{-7}$ for TENO6 and TENO8 (read in the paper).
+- Fu, L. (2021). Very-high-order TENO schemes with adaptive accuracy order and adaptive dissipation control. *Comput.
+  Methods Appl. Mech. Engrg.* — the adaptive cutoff, Eqs. (17)–(19) (read in the paper).
+- Li, Y., Chen, C., Ren, Y.-X. (2022). A class of high-order finite difference schemes with minimized dispersion and
+  adaptive dissipation for solving compressible flows. *J. Comput. Phys.* 448:110770 — Ren's sensor at critical points
+  (§3.2) (read in the paper).

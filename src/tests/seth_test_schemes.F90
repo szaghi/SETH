@@ -28,7 +28,7 @@ type :: scheme_t
    logical       :: interp = .false. !< Interpolation from point values (otherwise reconstruction from averages).
 endtype scheme_t
 
-integer(I4P), parameter :: NSCHEMES = 27_I4P
+integer(I4P), parameter :: NSCHEMES = 29_I4P
 type(scheme_t), parameter :: SCHEMES(NSCHEMES) = [ &
    scheme_t('weno1_js',        FAM_JS,        1, 1._R8P, 1.e-6_R8P,  1._R8P), &
    scheme_t('weno3_js',        FAM_JS,        2, 3._R8P, 1.e-6_R8P,  1._R8P), &
@@ -51,6 +51,8 @@ type(scheme_t), parameter :: SCHEMES(NSCHEMES) = [ &
    scheme_t('teno6_opt',       FAM_TENO,      3, 5._R8P, 1.e-40_R8P, SETH_TENO6_OPT_CT), &
    scheme_t('teno6_neno6',     FAM_TENO,      3, 4._R8P, 1.e-40_R8P, SETH_TENO6_NENO6_CT), &
    scheme_t('teno8',           FAM_TENO,      4, 6._R8P, 1.e-40_R8P, SETH_TENO8_CT), &
+   scheme_t('teno5_a',         FAM_TENO,      3, 5._R8P, 1.e-40_R8P, SETH_TENO5_A_CR), &
+   scheme_t('teno8_a',         FAM_TENO,      4, 6._R8P, 1.e-40_R8P, SETH_TENO8_A_CR), &
    scheme_t('wenoz3_interp',   FAM_Z,         2, 3._R8P, 1.e-40_R8P, 1._R8P, .true.), &
    scheme_t('wenoz5_interp',   FAM_Z,         3, 5._R8P, 1.e-40_R8P, 1._R8P, .true.), &
    scheme_t('wenoz7_interp',   FAM_Z,         4, 7._R8P, 1.e-40_R8P, 1._R8P, .true.), &
@@ -140,6 +142,10 @@ contains
       call seth_teno5_az(vp(-2:3), vm(-2:3), e, q, 1._R8P, rp, rm) ! Tang's form (rmu = 1): not scale invariant
    case('teno8')
       call seth_teno8(vp(-3:4), vm(-3:4), e, q, rp, rm)
+   case('teno5_a') ! the adaptive cutoff, the papers' parameters (par: C_r)
+      call seth_teno5_a(vp(-2:3), vm(-2:3), e, q, SETH_TENO5_A_XI, SETH_TENO5_A_A1, SETH_TENO5_A_A2, 1._R8P, rp, rm)
+   case('teno8_a')
+      call seth_teno8_a(vp(-3:4), vm(-3:4), e, q, SETH_TENO8_A_XI, SETH_TENO8_A_A1, SETH_TENO8_A_A2, 1._R8P, rp, rm)
    case default
       error stop 'reconstruct: unknown scheme'
    endselect

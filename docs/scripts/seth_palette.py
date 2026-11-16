@@ -34,7 +34,7 @@ SCHEME_STYLE = {
     'weno1_js': ('0.62', '.'), 'weno3_js': ('0.38', 'v'),
     'weno5_js': (BLUE, 'o'), 'weno7_js': ('#4f8fcf', 'o'), 'weno9_js': ('#8db6e0', 'o'),
     'wenoz3': ('#2f5004', 'v'), 'wenoz5': (MOEGI, 's'), 'wenoz7': ('#76a52a', 's'), 'wenoz9': ('#a5c76a', 's'),
-    'teno5': (PLUM, '^'), 'teno5_opt': ('#b77fb4', '^'), 'teno5_az': ('#5e2f6e', 'v'), 'teno6': (UMBER, 'D'), 'teno6_opt': ('#d29a5a', 'D'), 'teno6_neno6': ('#6e420e', 'D'), 'teno8': ('#3d2508', 'P'),
+    'teno5': (PLUM, '^'), 'teno5_opt': ('#b77fb4', '^'), 'teno5_az': ('#5e2f6e', 'v'), 'teno6': (UMBER, 'D'), 'teno6_opt': ('#d29a5a', 'D'), 'teno6_neno6': ('#6e420e', 'D'), 'teno8': ('#3d2508', 'P'), 'teno5_a': ('#c25da8', 'X'), 'teno8_a': ('#7a4a12', 'X'),
 }
 
 # the same for the dark twins, drawn by the scripts themselves (figure_theme keeps any stroke above 3:1, so it would
@@ -43,7 +43,7 @@ SCHEME_STYLE_DARK = {
     'weno1_js': ('0.62', '.'), 'weno3_js': ('0.38', 'v'),
     'weno5_js': (BLUE_D, 'o'), 'weno7_js': ('#6aa8e6', 'o'), 'weno9_js': ('#9cc6f0', 'o'),
     'wenoz3': ('#4c7d12', 'v'), 'wenoz5': (MOEGI_D, 's'), 'wenoz7': ('#8fc23e', 's'), 'wenoz9': ('#b5d77a', 's'),
-    'teno5': (PLUM_D, '^'), 'teno5_opt': ('#d0a3cd', '^'), 'teno5_az': ('#8a4f9e', 'v'), 'teno6': (UMBER_D, 'D'), 'teno6_opt': ('#dba264', 'D'), 'teno6_neno6': ('#9a5c1c', 'D'), 'teno8': ('#e0a868', 'P'),
+    'teno5': (PLUM_D, '^'), 'teno5_opt': ('#d0a3cd', '^'), 'teno5_az': ('#8a4f9e', 'v'), 'teno6': (UMBER_D, 'D'), 'teno6_opt': ('#dba264', 'D'), 'teno6_neno6': ('#9a5c1c', 'D'), 'teno8': ('#e0a868', 'P'), 'teno5_a': ('#de8cc8', 'X'), 'teno8_a': ('#c99050', 'X'),
 }
 
 # the two biased stencils of the Conventions page: vp / the left state, vm / the right state

@@ -15,6 +15,7 @@ program seth_test_teno
 !< 4. A step of height 1e30: the states are finite and in [0, 1e30] to round-off (gamma = g**6 alone would
 !<    overflow).
 !< 5. vm(m) = vp(1-m) gives rm == rp bitwise.
+!< 6. TENO5-A and TENO8-A with a2 = 0 equal TENO5 at C_T = 1e-5 and TENO8 at 1e-7 bitwise (the cutoff 10^-floor(a1)).
 use seth
 use seth_test_rng, only : seed_rng
 use seth_z_teno_tables
@@ -119,6 +120,28 @@ do sc=1, NSC
    enddo
 enddo
 if (vv_report()) close(ur)
+! 6. the adaptive cutoff with a2 = 0 is the fixed cutoff 10^-floor(a1), bitwise (TENO5-A against TENO5 at 1e-5,
+!    TENO8-A against TENO8 at 1e-7), on smooth, rough and stepped stencils
+block
+real(R8P)    :: w8(-3:4), z8(-3:4), r1, r2, s1, s2
+integer(I4P) :: nd
+nd = 0
+do n_=1, 3000
+   do m=-3, 4
+      call random_number(x)
+      w8(m) = merge(x, merge(1._R8P, 0._R8P, m >= mod(n_, 7) - 3), mod(n_, 3) /= 0)
+      call random_number(x) ; z8(m) = x
+   enddo
+   call seth_teno5_a(w8(-2:3), z8(-2:3), SETH_TENO_EPS, SETH_TENO5_A_CR, SETH_TENO5_A_XI, 5._R8P, 0._R8P, 1._R8P, r1, r2)
+   call seth_teno5(w8(-2:3), z8(-2:3), SETH_TENO_EPS, 1.e-5_R8P, s1, s2)
+   if (r1 /= s1 .or. r2 /= s2) nd = nd + 1
+   call seth_teno8_a(w8, z8, SETH_TENO_EPS, SETH_TENO8_A_CR, SETH_TENO8_A_XI, 7._R8P, 0._R8P, 1._R8P, r1, r2)
+   call seth_teno8(w8, z8, SETH_TENO_EPS, 1.e-7_R8P, s1, s2)
+   if (r1 /= s1 .or. r2 /= s2) nd = nd + 1
+enddo
+print '(A,I0)', 'adaptive cutoff with a2 = 0 against the fixed cutoff, differences: ', nd
+if (nd > 0) passed = .false.
+endblock
 if (.not.passed) error stop 'TENO test failed'
 print '(A)', 'seth_test_teno: ok'
 

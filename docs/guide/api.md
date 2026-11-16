@@ -42,6 +42,8 @@ call seth_teno6      (vp, vm, eps, ct, rp, rm)
 call seth_teno6_opt  (vp, vm, eps, ct, rp, rm)
 call seth_teno6_neno6(vp, vm, eps, ct, rp, rm)
 call seth_teno8     (vp, vm, eps, ct, rp, rm)   ! vp, vm(-3:4)
+call seth_teno5_a   (vp, vm, eps, cr, xi, a1, a2, rmu, rp, rm) ! adaptive cutoff; SETH_TENO5_A_CR, _XI, _A1, _A2
+call seth_teno8_a   (vp, vm, eps, cr, xi, a1, a2, rmu, rp, rm) ! vp, vm(-3:4); SETH_TENO8_A_*
 call seth_teno5_interp(vp, vm, eps, ct, rp, rm)   ! interpolation from point values at the cell centres
 call seth_teno6_interp(vp, vm, eps, ct, rp, rm)
 ```

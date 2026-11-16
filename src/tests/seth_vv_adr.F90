@@ -25,7 +25,10 @@ program seth_vv_adr
 !< wavelength (about 4 h) are what TENO6 leaves undamped behind the Burgers shock (seth_vv_burgers). TENO8 (Liang & Fu's
 !< background, whose linear scheme is dissipative everywhere) is measured anti-dissipative too, Im up to 3.2e-3 in
 !< theta/pi = 0.36 .. 0.45 where its cutoff starts to act, more for smaller C_T (2.2e-3 at 1e-5, 9.6e-3 at 1e-10):
-!< its band must lie beyond 0.3 pi and stay below 5e-3. (4) The ADR is one evaluation of the operator on one mode; for
+!< its band must lie beyond 0.3 pi and stay below 5e-3. TENO8-A, whose adaptive cutoff reaches 1e-10 on these waves
+!< (Liang & Fu 2024b), measures Im up to 9.6e-3 in theta/pi = 0.38 .. 0.51: beyond 0.3 pi, below 1.2e-2. TENO5-A has the
+!< ADR of TENO5 exactly: Ren's sensor reads the crests of a unit wave as discontinuities (eta -> 0) and keeps
+!< C_T = 1e-5 there. (4) The ADR is one evaluation of the operator on one mode; for
 !< every scheme with an anti-dissipative band, each mode of the band is advected for 4 periods (u_t + u_x = 0,
 !< SSP-RK3, CFL 0.4) and its amplitude must never exceed the initial one: the band is not a growth of that mode.
 !< Report mode: adr-<scheme>.dat (theta, Re and Im of theta~, of theta~_lin).
@@ -73,6 +76,8 @@ do k=1, size(ids)
       if (thanti < 0.4_R8P*PI .or. maxim > 1.e-3_R8P) call fail('teno6: anti-dissipation below 0.4 pi or above 1e-3')
    elseif (vv_label(ids(k)) == 'teno8') then
       if (thanti < 0.3_R8P*PI .or. maxim > 5.e-3_R8P) call fail('teno8: anti-dissipation below 0.3 pi or above 5e-3')
+   elseif (vv_label(ids(k)) == 'teno8_a') then
+      if (thanti < 0.3_R8P*PI .or. maxim > 1.2e-2_R8P) call fail('teno8_a: anti-dissipation below 0.3 pi or above 1.2e-2')
    elseif (lin_dissipative .and. maxim > 1.e-12_R8P) then
       call fail(vv_label(ids(k))//': anti-dissipative')
    endif
@@ -182,6 +187,8 @@ contains
       call dsc(TENO5_AZ_NC, TENO5_AZ_MAXW, TENO5_AZ_CLO, TENO5_AZ_CW, TENO5_AZ_P, TENO5_AZ_D, c)
    case('teno8')
       call dsc(TENO8_NC, TENO8_MAXW, TENO8_CLO, TENO8_CW, TENO8_P, TENO8_D, c)
+   case('teno5_a') ; call dsc(TENO5_NC, TENO5_MAXW, TENO5_CLO, TENO5_CW, TENO5_P, TENO5_D, c)
+   case('teno8_a') ; call dsc(TENO8_NC, TENO8_MAXW, TENO8_CLO, TENO8_CW, TENO8_P, TENO8_D, c)
    case default ; error stop 'background: unknown scheme'
    end select
    endsubroutine background

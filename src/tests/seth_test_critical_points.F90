@@ -79,6 +79,8 @@ do id=1, NSCHEMES
       case('teno5_opt') ; lo = 3.5_R8P
       case('teno5_az')  ; lo = 4.5_R8P
       case('teno8')     ; lo = 5.5_R8P
+      case('teno5_a')   ; lo = 4.5_R8P
+      case('teno8_a')   ; lo = 5.5_R8P
       endselect
       if (any(o1 < lo) .or. any(o1 > hi)) then
          print '(A,2ES10.2)', '   ^ first-order critical point outside the literature range: ', lo, hi

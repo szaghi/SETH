@@ -11,6 +11,10 @@
    ! cutoff adaptive as in Tang 2024, Eq. (20): min(C_T, tau), zero where the data is smooth (tau -> 0). tau has the
    ! dimension of the data squared, so the kernel takes the inverse descaler rmu and compares tau rmu^2 (rmu = 1: Tang's
    ! form; rmu = 1/|data|: scale invariant), evaluated as (tau rmu) rmu so that zero data (rmu huge) gives 0, not NaN.
+   ! SETH_TENO_A (with SETH_TENO) computes the cutoff from the data instead of taking it (Fu, Hu & Adams 2018, as
+   ! written by Fu 2021, Eqs. (17)-(19), and Liang & Fu 2024b, Eqs. (47)-(49)): eta_j = (|2 Da Db| + e)/(Da^2 + Db^2 + e)
+   ! at the nodes j = -1..AHI, e = 0.9 cr/(1 - 0.9 cr) (xi/rmu)^2, m = 1 - min(1, min_j eta_j / cr),
+   ! g = (1 - m)^4 (1 + 4 m), C_T = 10^-floor(a1 - a2 (1 - g)). The kernel declares AHI (1 or 2: the nodes of the min).
    !
    ! Cells by offset from the face i+1/2 (cell 0 left of it). The left state is the left-biased reconstruction of vp;
    ! the right state is the same reconstruction of the mirrored right-biased values, st(m) = vm(1-m).
@@ -18,7 +22,20 @@
    real(R8P),    intent(in)  :: vm(LO:1-LO) !< Values reconstructed with a right bias.
    real(R8P),    intent(in)  :: eps         !< Regulariser of the smoothness indicators.
 #ifdef SETH_TENO
+#ifdef SETH_TENO_A
+   real(R8P),    intent(in)  :: cr          !< Threshold C_r of the discontinuity sensor.
+   real(R8P),    intent(in)  :: xi          !< Regulariser scale xi of the sensor (e = 0.9 cr/(1-0.9 cr) xi^2).
+   real(R8P),    intent(in)  :: a1, a2      !< Cutoff exponents: C_T from 10^-a1 (smooth) to 10^-(a1-a2) (jump).
+   real(R8P),    intent(in)  :: rmu         !< Inverse descaler of the sensor's regulariser (1: the papers' form).
+   real(R8P)                 :: ct          !< Cutoff C_T of this state, from the sensor.
+   real(R8P)                 :: da, db, eta, etamin, epss, mm, gg !< Sensor work.
+   real(R8P),    parameter   :: POW10(0:20) = [1.e0_R8P, 1.e-1_R8P, 1.e-2_R8P, 1.e-3_R8P, 1.e-4_R8P, 1.e-5_R8P, &
+                                               1.e-6_R8P, 1.e-7_R8P, 1.e-8_R8P, 1.e-9_R8P, 1.e-10_R8P, 1.e-11_R8P, &
+                                               1.e-12_R8P, 1.e-13_R8P, 1.e-14_R8P, 1.e-15_R8P, 1.e-16_R8P, &
+                                               1.e-17_R8P, 1.e-18_R8P, 1.e-19_R8P, 1.e-20_R8P] !< 10^-k, k = 0..20.
+#else
    real(R8P),    intent(in)  :: ct          !< Cutoff C_T of the normalised smoothness measures.
+#endif
 #ifdef SETH_TENO_AZ
    real(R8P),    intent(in)  :: rmu         !< Inverse descaler of tau in the adaptive cutoff (1: Tang 2024).
 #endif
@@ -54,6 +71,19 @@
             st(m) = vm(1-m)
          enddo
       endif
+#ifdef SETH_TENO_A
+      ! the cutoff of this state, from the first differences at the nodes -1..AHI
+      epss = (0.9_R8P*cr/(1._R8P - 0.9_R8P*cr))*(xi/rmu)**2
+      etamin = 1._R8P
+      do m=-1, AHI
+         da = st(m+1) - st(m) ; db = st(m) - st(m-1)
+         eta = (abs(2._R8P*da*db) + epss)/(da*da + db*db + epss)
+         etamin = min(etamin, eta)
+      enddo
+      mm = 1._R8P - min(1._R8P, etamin/cr)
+      gg = (1._R8P - mm)**4*(1._R8P + 4._R8P*mm)
+      ct = POW10(min(max(int(a1 - a2*(1._R8P - gg)), 0), 20))
+#endif
       ! candidates
       do k=0, NC-1
          q(k) = 0._R8P

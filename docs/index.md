@@ -33,7 +33,7 @@ features:
       width: 44
       height: 44
     title: Every scheme, one kernel each
-    details: WENO-JS 1/3/5/7/9, WENO-Z 3/5/7/9, TENO5, TENO5-opt, TENO5-AZ, TENO6, TENO6-opt, NENO6 and TENO8, for reconstruction from cell averages and interpolation from point values, optionally returning the weights ratios.
+    details: WENO-JS 1/3/5/7/9, WENO-Z 3/5/7/9, TENO5, TENO5-opt, TENO5-AZ, TENO5-A, TENO6, TENO6-opt, NENO6, TENO8 and TENO8-A, for reconstruction from cell averages and interpolation from point values, optionally returning the weights ratios.
     link: /guide/schemes
     linkText: Schemes
   - icon:

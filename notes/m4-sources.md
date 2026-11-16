@@ -56,3 +56,16 @@ Liang, T., Fu, L. (2024b). *Comput. Phys. Commun.* 302:109236. Fu, Hu & Adams (2
 
 Measured, not in any paper read: the nonlinear ADR of TENO8 is anti-dissipative (3.2e-3) at theta/pi 0.36-0.45 for
 C_T = 1e-7, and no mode of that band grows when advected.
+
+## TENO5-A, TENO8-A (step 2.3)
+
+| Item | Status | Where |
+|---|---|---|
+| m = 1 - min(1, eta_{i+1/2}/C_r), eta_j = (abs(2 Df_{j+1/2} Df_{j-1/2}) + e)/(Df_{j+1/2}^2 + Df_{j-1/2}^2 + e) | quoted | Fu 2021, Eqs. (17)-(18); Tang 2024, Eqs. (15)-(16); Liang & Fu 2024b, Eqs. (47)-(48) |
+| g(m) = (1 - m)^4 (1 + 4 m), beta = a1 - a2 (1 - g), C_T = 10^-floor(beta) | quoted (Tang prints 10^floor(beta): the sign slip noted by the llm-wiki; Fu 2021 and Liang & Fu print the minus) | Fu 2021, Eq. (19); Liang & Fu, Eq. (49) |
+| e = 0.9 C_r/(1 - 0.9 C_r) xi^2 | quoted | Tang 2024, Eq. (16); Liang & Fu, Eq. (48) |
+| TENO5-A: C_r = 0.24, xi = 1e-3, a1 = 10, a2 = 5, min over j-1..j+1 | quoted | Tang 2024, after Eq. (16) |
+| TENO8-A: C_r = 0.23, xi (their e_0) = 1e-3, a1 = 10.5, a2 = 3.5, min over i-1..i+2 | quoted | Liang & Fu 2024b, Eqs. (47)-(49) |
+| Fu 2021's own set (C_r = 0.265, e = 1e-40, a1 = 14, a2 = 6.4) | quoted, not used (it is for the 8/10-point TENO-AA) | Fu 2021, after Eq. (19) |
+
+Not in the papers: the rmu argument (xi/rmu), for a scale-invariant sensor.

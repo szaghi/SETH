@@ -42,6 +42,8 @@ MUTANTS = [
     ('teno5-az-cutoff', 'src/lib/seth_z_teno_body.INC', 'min(ct, (tau*rmu)*rmu)', 'min(ct, (tau*rmu)*rmu)', 'ct'),
     ('teno8-linear-weight', 'src/lib/seth_z_teno_tables.F90', 'TENO8_D(0:5)', '0.4130855804023061_R8P', '0.4131855804023061_R8P'),
     ('teno8-tau', 'src/lib/seth_z_teno_tables.F90', 'TENO8_TC(0:5)', '-2._R8P/3._R8P', '-0.6_R8P'),
+    ('teno-a-sensor-min', 'src/lib/seth_z_teno_body.INC', 'etamin = min(etamin, eta)', 'etamin = min(etamin, eta)', 'etamin = max(etamin, eta)'),
+    ('teno-a-exponent', 'src/lib/seth_z_teno_body.INC', 'ct = POW10(', 'a1 - a2*(1._R8P - gg)', 'a1 - a2*gg'),
     ('teno5-opt-linear-weight', 'src/lib/seth_z_teno_tables.F90', 'TENO5_OPT_D(0:2)', '11._R8P/20._R8P', '0.5501_R8P'),
     ('teno6-tau', 'src/lib/seth_z_teno_tables.F90', 'TENO6_TC(0:3)', '-2._R8P/3._R8P', '-0.6_R8P'),
     ('teno6-indicator-pivot', 'src/lib/seth_z_teno_tables.F90', 'TENO6_DQ(0:3,0:3)', '4._R8P/3._R8P', '1.4_R8P'),

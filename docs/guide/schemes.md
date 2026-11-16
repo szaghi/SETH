@@ -199,7 +199,7 @@ Mach reflection for $r > 4$ (llm-wiki high-order-capturing-schemes `methods/weno
 one-dimensional, so that claim is neither confirmed nor refuted here. The orders of $\tau$ are measured exactly by the table generator (Castro et al.'s
 $\tau_7 = \lvert\beta_0-\beta_1-\beta_2+\beta_3\rvert$ is $O(h^6)$, as Li et al. 2022 state).
 
-## TENO: TENO5, TENO5-opt, TENO5-AZ, TENO6, TENO6-opt, TENO6-NENO6, TENO8
+## TENO: TENO5, TENO5-opt, TENO5-AZ, TENO5-A, TENO6, TENO6-opt, TENO6-NENO6, TENO8, TENO8-A
 
 TENO (Fu, Hu & Adams 2016) changes two things. Its candidates have **incremental widths**: three-cell candidates
 around the face and, for TENO6, a fourth one of four cells that reaches downwind, so that the full stencil can carry
@@ -274,6 +274,37 @@ more so for smaller $C_T$ ($2.2\cdot10^{-3}$ at $10^{-5}$, $9.6\cdot10^{-3}$ at 
 dissipation does not reach that band. Advected for four periods, no mode of the band grows (its amplitude never
 exceeds the initial one): the positive ADR is a one-step measure, not a growth, for TENO6 and TENO8 alike.
 
+**TENO5-A and TENO8-A: the cutoff from a sensor.** Fu, Hu & Adams (2018) let the cutoff follow the local
+smoothness (Fu 2021, Eqs. (17)–(19); Liang & Fu 2024b, Eqs. (47)–(49)):
+
+$$ \eta_j = \frac{\lvert 2\Delta_{j+1/2}\Delta_{j-1/2}\rvert + e}{\Delta_{j+1/2}^2 + \Delta_{j-1/2}^2 + e},\quad
+   m = 1 - \min\!\Big(1, \frac{\min_j \eta_j}{C_r}\Big),\quad g = (1-m)^4 (1 + 4m),\quad
+   C_T = 10^{-\lfloor a_1 - a_2 (1 - g) \rfloor}, $$
+
+$\Delta_{j+1/2} = f_{j+1} - f_j$, $e = \frac{0.9 C_r}{1 - 0.9 C_r}\,\xi^2$, the minimum over the nodes $i-1 \dots i+1$
+(TENO5-A) or $i-1 \dots i+2$ (TENO8-A). Smooth monotone data has $\eta \to 1$, $m = 0$ and the smallest cutoff
+$10^{-a_1}$; a jump has $\eta \to 0$, $m = 1$ and $10^{-(a_1 - a_2)}$.
+
+| Kernel | Background | $C_r$, $\xi$, $a_1$, $a_2$ | $C_T$ range | Source |
+|---|---|---|---|---|
+| `seth_teno5_a` | TENO5 | 0.24, $10^{-3}$, 10, 5 | $10^{-10}$ … $10^{-5}$ | Tang 2024, Eqs. (15)–(16) (TENO-A) |
+| `seth_teno8_a` | TENO8 | 0.23, $10^{-3}$, 10.5, 3.5 | $10^{-10}$ … $10^{-7}$ | Liang & Fu 2024b, Eqs. (47)–(49) |
+
+With $a_2 = 0$ either kernel is the fixed-cutoff one at $10^{-\lfloor a_1 \rfloor}$, bitwise (asserted). What SETH
+measures:
+
+- **The sensor reads extrema as jumps.** At a crest one difference vanishes and $\eta \to 0$, so on a sine wave
+  TENO5-A keeps $C_T = 10^{-5}$ and its [ADR](/verification/spectral/adr) is TENO5's to the last digit; at a
+  second-order critical point it falls to second order like TENO5. Li, Chen & Ren (2022) make the same observation
+  of Ren's sensor.
+- **TENO8-A keeps sixth order at a second-order critical point** (TENO8: 2), its eight-point stencil and four-node
+  minimum leaving the cutoff at its smallest there; and its ADR is anti-dissipative like TENO8's, more so (Im up to
+  $9.6\cdot10^{-3}$ at $\vartheta/\pi = 0.38$–$0.51$, the band of a $10^{-10}$ cutoff); no mode of that band grows.
+- **Not scale invariant:** $e$ is absolute. Both kernels take an `rmu` (as TENO5-AZ) that scales $\xi$ by the data's
+  magnitude; `rmu = 1` is the papers' form and what the verification runs.
+- **Cost** (RTX 4070): TENO5-A 1.41 times TENO5, over the budget of 1.25 set before coding (three divisions and a
+  power per state on a kernel that does little else); TENO8-A 1.16 times TENO8.
+
 "TENO6-opt" denotes different weights in different papers; SETH's is the founding paper's. Lowering $C_T$ keeps more
 candidates (less dissipation, less robustness); the defaults are the papers'.
 
@@ -326,7 +357,7 @@ What exists is the pieces:
 |---|---|---|---|---|
 | WENO-JS | `seth_weno{1,3,5,7,9}_js` (+ `_wr`, `_interp`, `_interp_wr`) | $S = 1..5$, width $S$ | $2S-1$ | `rmu` |
 | WENO-Z | `seth_wenoz{3,5,7,9}` (+ `_interp`) | $S = 2..5$, width $S$ | $2S-1$ | `p` |
-| TENO | `seth_teno5`, `seth_teno6` (+ `_interp`), `seth_teno5_opt`, `seth_teno5_az`, `seth_teno6_opt`, `seth_teno6_neno6`, `seth_teno8` | 3 to 6, incremental | 5, 6, 8-point 6 (5-opt 4, 6-opt 5, NENO6 4) | `ct` (TENO5-AZ: `ct`, `rmu`) |
+| TENO | `seth_teno5`, `seth_teno6` (+ `_interp`), `seth_teno5_opt`, `seth_teno5_az`, `seth_teno6_opt`, `seth_teno6_neno6`, `seth_teno8`, `seth_teno5_a`, `seth_teno8_a` | 3 to 6, incremental | 5, 6, 8-point 6 (5-opt 4, 6-opt 5, NENO6 4) | `ct` (TENO5-AZ: `ct`, `rmu`; -A: `cr`, `xi`, `a1`, `a2`, `rmu`) |
 | positivity | `seth_positivity_euler`, `seth_euler_admissible` | | | |
 
 Arguments and constants: [API](/guide/api). Stencil layout: [Conventions](/guide/conventions).

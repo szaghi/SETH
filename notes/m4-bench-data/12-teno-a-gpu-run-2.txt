@@ -1,0 +1,32 @@
+faces: 16777216, timed passes: 20 per variant
+SETH  weno5_js                 : device vs host SETH, max scaled difference  0.00E+00
+ADAM  generic S=3              : vs SETH weno5_js, max scaled difference  0.00E+00
+ADAM  width s3                 : vs SETH weno5_js, max scaled difference  0.00E+00
+SETH  weno7_js                 : device vs host SETH, max scaled difference  0.00E+00
+ADAM  generic S=4              : vs SETH weno7_js, max scaled difference  0.00E+00
+ADAM  width s4                 : vs SETH weno7_js, max scaled difference  0.00E+00
+SETH  wenoz5 (p=1)             : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno6 (C_T=1e-7)         : device vs host SETH, max scaled difference  4.44E-16
+SETH  teno5 (C_T=1e-5)         : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno5_opt (C_T=1e-5)     : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno5_az (C_T=1e-5)      : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno8 (C_T=1e-7)         : device vs host SETH, max scaled difference  5.42E-16
+SETH  teno5_a                  : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno8_a                  : device vs host SETH, max scaled difference  5.42E-16
+
+                        variant    median ms       min ms      ns/face vs ADAM gen.
+SETH  weno5_js                        16.527       16.492        0.985         1.42
+ADAM  generic S=3                     23.533       23.457        1.403         1.00
+ADAM  width s3                        21.687       21.654        1.293         1.09
+SETH  weno7_js                        30.139       30.090        1.796         1.34
+ADAM  generic S=4                     40.269       40.205        2.400         1.00
+ADAM  width s4                        37.885       37.845        2.258         1.06
+SETH  wenoz5 (p=1)                    16.451       16.419        0.981         1.43
+SETH  teno6 (C_T=1e-7)                39.882       39.836        2.377         1.01
+SETH  teno5 (C_T=1e-5)                24.075       24.025        1.435         1.67
+SETH  teno5_opt (C_T=1e-5)            24.072       24.018        1.435         1.67
+SETH  teno5_az (C_T=1e-5)             24.518       24.489        1.461         1.64
+SETH  teno8 (C_T=1e-7)                66.715       66.640        3.977         0.60
+SETH  teno5_a                         33.972       33.935        2.025         1.19
+SETH  teno8_a                         77.585       77.484        4.624         0.52
+seth_bench_weno: checks ok
