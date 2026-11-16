@@ -32,5 +32,7 @@
 | TENO6-NENO6 | 4.00 | 4.00 | 4 |
 | TENO5 interp. | 5.02 | 4.98 | 5 |
 | TENO6 interp. | 6.00 | 6.00 | 6 |
+| TENO5-opt | 4.01 | 3.99 | 4 |
+| TENO5-AZ | 5.02 | 4.98 | 5 |
 
 Observed on the finest pair of $h$ above round-off; asserted $\ge$ design $- 0.5$.

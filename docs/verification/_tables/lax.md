@@ -22,5 +22,10 @@
 | WENO-Z9 interp. | 0.007544 | 0.001017 | 0.85 | yes | 0 |
 | TENO5 interp. | 0.007874 | 0.001127 | 0.84 | yes | 0 |
 | TENO6 interp. | 0.007281 | 0.00104 | 0.77 | yes | 0 |
+| TENO5-opt | 0.008997 | 0.001289 | 0.86 | yes | 0 |
+| TENO5-AZ | 0.009022 | 0.001363 | 0.86 | yes | 0 |
+| TENO8 | 0.007308 | 0.001024 | 0.71 | yes | 0 |
+| TENO5-A | 0.009123 | 0.001609 | 0.76 | yes | 0 |
+| TENO8-A | 0.006995 | 0.001298 | 0.73 | yes | 0 |
 
 $L_1$ with the positivity limiter on (it is inactive where the last column is 0).
