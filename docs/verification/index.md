@@ -150,6 +150,24 @@ baseline, the device, and the suite's own ability to catch defects. [Group page]
 
 </div>
 
+## What SETH verifies, and what ADAM verifies
+
+SETH's harness is one-dimensional: it can verify a kernel, not a turbulent flow. The Ducros sensor, which reads the
+vorticity, is inactive in one dimension, and a hybrid that looks good on Sod and Shu–Osher can still fail in
+turbulence. The split:
+
+| Verified in SETH | Verified in ADAM (FLUME, ADAM issue 119) |
+|---|---|
+| the kernels' coefficients, orders, properties and equivalence with ADAM's code; host = device | the solver around them: Taylor–Green at $Re = 1600$, the channel, the boundary layer, shock/boundary-layer interaction |
+| the identities and orders of the central fluxes (KEEP-PE); the sensors on analytic fields and on one-dimensional flows | the sensors and their thresholds in turbulence, against Ducros, with the flagged fraction and the flow statistics |
+| the junction of a central and an upwind flux (J1) and conservation under random switching (J3), [H3](./hybrids/harness) | the calibration of a hybrid's threshold |
+| the cost of each kernel and of a composite, at kernel level ([Performance](/guide/performance)) | the cost of a hybrid in the solver |
+
+SETH claims only what its cases show: a statement about turbulence is ADAM's to make, on ADAM's flows. One finding
+from reading ADAM belongs to ADAM, not to SETH: FLUME computes the WENO flux on every face and then overwrites the
+smooth ones with the central flux (`overwrite_central_fluxes_dev`), a dissipation hybrid with no cost saving.
+Skipping the WENO flux where the central one is used is a change of ADAM.
+
 ## Running it
 
 The suite runs on gfortran 16.2, nvfortran 26.9 and ifx 2026.2, debug and optimised, and on the GPU:
