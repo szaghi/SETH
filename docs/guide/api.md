@@ -8,9 +8,20 @@ arrays are explicit-shape with the scheme's bounds; every kernel is `pure subrou
 R4P with the `*-r4` build modes (`-D_R_P_IS_R4P`, which PENF and SETH must both see; a build where they disagree stops
 with a division by zero in a constant expression). One precision per build: no generic interfaces, the kernels are
 compiled once for that kind. The literals whose meaning depends on the kind (regularisers, back-off steps) live in
-`seth_kind_parameters`, one set per kind. The R4P set is not defined yet (roadmap
-[issue #4](https://github.com/szaghi/SETH/issues/4), 6.2): the `*-r4` builds stop with a message saying so; with
-gfortran they stop earlier, in PENF, until its character-length fix for R4P lands.
+`seth_kind_parameters`, one set per kind. In R4P, `SETH_TENO_EPS` is $10^{-30}$ (the papers' $10^{-40}$ is below the
+smallest normal R4P number, and a GPU flushes it to zero): pass it as `eps` to WENO-Z and TENO in either kind.
+
+The R4P build computes the WENO-JS, WENO-Z and TENO weights as ratios to the smallest indicator: the same weights,
+with every factor at most 1. The R8P forms overflow R4P's range (3.4e38): $(\tau/\varepsilon)^2$ on a unit step
+(WENO-Z with $p = 2$), or $1/\beta^q$ of WENO-JS ($q$ = 2 to 4 with the order) once the data passes about $10^4$
+(WENO9) to $10^9$ (WENO3). Two limits remain, both of
+R4P itself:
+
+- the indicators are quadratic in the data, so a jump above about $10^{19}$ inside a stencil overflows them;
+- the expanded WENO-JS indicator cancels to about $10^{-7} v^2$, so data with a large mean needs the descaler `rmu`.
+
+The R4P kernels are not yet verified by the test suite (roadmap [issue #4](https://github.com/szaghi/SETH/issues/4),
+6.2, phase 3).
 
 ## WENO-JS
 
