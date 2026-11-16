@@ -1,8 +1,16 @@
 # API
 
-`use seth` gives every kernel, the constants and the kinds `I4P`, `I8P`, `R4P`, `R8P` (from PENF). All arrays are
-explicit-shape with the scheme's bounds; every kernel is `pure subroutine`, `!$acc routine seq`,
+`use seth` gives every kernel, the constants and the kinds `I4P`, `I8P`, `R4P`, `R8P` and `R_P` (from PENF). All
+arrays are explicit-shape with the scheme's bounds; every kernel is `pure subroutine`, `!$acc routine seq`,
 `!$omp declare target`.
+
+**Kind.** Every real argument is `real(R_P)`, PENF's working kind, fixed when the library is built: R8P by default,
+R4P with the `*-r4` build modes (`-D_R_P_IS_R4P`, which PENF and SETH must both see; a build where they disagree stops
+with a division by zero in a constant expression). One precision per build: no generic interfaces, the kernels are
+compiled once for that kind. The literals whose meaning depends on the kind (regularisers, back-off steps) live in
+`seth_kind_parameters`, one set per kind. The R4P set is not defined yet (roadmap
+[issue #4](https://github.com/szaghi/SETH/issues/4), 6.2): the `*-r4` builds stop with a message saying so; with
+gfortran they stop earlier, in PENF, until its character-length fix for R4P lands.
 
 ## WENO-JS
 
@@ -15,11 +23,11 @@ call seth_weno<N>_js_interp_wr(vp, vm, eps, rmu, rp, rm, wrp, wrm)
 
 | Dummy | Type | Meaning |
 |---|---|---|
-| `vp`, `vm` | `real(R8P), intent(in) :: v(1-S:S)` | left-/right-biased stencils, $S = (N+1)/2$ |
-| `eps` | `real(R8P), intent(in)` | regulariser; `SETH_WENO_JS_EPS` = $10^{-6}$ (ADAM's) |
-| `rmu` | `real(R8P), intent(in)` | inverse descaler: `1` (Jiang–Shu), `seth_weno_descaling(...)` or `seth_weno_descaling_ai(...)` |
-| `rp`, `rm` | `real(R8P), intent(out)` | left and right states at the face |
-| `wrp`, `wrm` | `real(R8P), intent(out)` | weights ratios $\min_k \omega_k/d_k \in [0,1]$: 1 on smooth data, toward 0 near a jump |
+| `vp`, `vm` | `real(R_P), intent(in) :: v(1-S:S)` | left-/right-biased stencils, $S = (N+1)/2$ |
+| `eps` | `real(R_P), intent(in)` | regulariser; `SETH_WENO_JS_EPS` = $10^{-6}$ (ADAM's) |
+| `rmu` | `real(R_P), intent(in)` | inverse descaler: `1` (Jiang–Shu), `seth_weno_descaling(...)` or `seth_weno_descaling_ai(...)` |
+| `rp`, `rm` | `real(R_P), intent(out)` | left and right states at the face |
+| `wrp`, `wrm` | `real(R_P), intent(out)` | weights ratios $\min_k \omega_k/d_k \in [0,1]$: 1 on smooth data, toward 0 near a jump |
 
 ```fortran
 rmu = seth_weno_descaling(S, sigma, vp, vm)   ! sigma = 0: rmu = 1 exactly; sigma = 1: 1/mean|v|

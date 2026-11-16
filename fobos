@@ -36,6 +36,9 @@ modes = static-gnu shared-gnu
         tests-intel tests-intel-debug
         bench-nvf-oac bench-nvf bench-gnu
         bench-arrays-nvf-oac bench-arrays-nvf bench-arrays-gnu
+        static-gnu-r4 shared-gnu-r4 static-nvf-r4 shared-nvf-r4 static-intel-r4 shared-intel-r4
+        tests-gnu-r4 tests-gnu-debug-r4 tests-nvf-r4 tests-nvf-oac-r4 tests-intel-r4
+        bench-nvf-oac-r4 bench-gnu-r4
 
 [common-variables]
 $EXDIRS = PENF/src/tests/ PENF/src/third_party/ PENF/scripts/ PENF/docs/
@@ -159,6 +162,80 @@ template  = template-bench template-gnu template-release
 target    = src/bench/seth_bench_device_arrays.F90
 output    = seth_bench_device_arrays
 
+# ── single precision (R4P): PENF's R_P chosen by -D_R_P_IS_R4P for SETH and PENF alike (roadmap issue #4, 6.2) ──
+# Own build directories and library name, so that an R4P build never mixes with the R8P one. Until phase 2 of 6.2
+# defines the R4P literal set, these builds stop at the #error of src/lib/seth_kind_parameters.F90.
+[static-gnu-r4]
+help      = Static library, gfortran, optimised, single precision (R_P = R4P)
+template  = template-r4 template-lib-static template-gnu template-release
+build_dir = lib/gnu/static-r4/
+output    = libseth_r4.a
+
+[shared-gnu-r4]
+help      = Shared library, gfortran, optimised, single precision (R_P = R4P)
+template  = template-r4 template-lib-shared template-gnu template-release
+cflags    = -c -fPIC $STD_GNU
+build_dir = lib/gnu/shared-r4/
+output    = libseth_r4.so
+
+[static-nvf-r4]
+help      = Static library, nvfortran, optimised, single precision (R_P = R4P)
+template  = template-r4 template-lib-static template-nvf template-release
+build_dir = lib/nvf/static-r4/
+output    = libseth_r4.a
+
+[shared-nvf-r4]
+help      = Shared library, nvfortran, optimised, single precision (R_P = R4P)
+template  = template-r4 template-lib-shared template-nvf template-release
+cflags    = -c -fPIC
+build_dir = lib/nvf/shared-r4/
+output    = libseth_r4.so
+
+[static-intel-r4]
+help      = Static library, ifx, optimised, single precision (R_P = R4P)
+template  = template-r4 template-lib-static template-intel-release template-intel
+build_dir = lib/intel/static-r4/
+output    = libseth_r4.a
+
+[shared-intel-r4]
+help      = Shared library, ifx, single precision (R_P = R4P)
+template  = template-r4 template-lib-shared template-intel
+cflags    = -c -fPIC -O3 $STD_INT
+build_dir = lib/intel/shared-r4/
+output    = libseth_r4.so
+
+[tests-gnu-r4]
+help      = Tests, gfortran, optimised, single precision (R_P = R4P)
+template  = template-r4-tests template-tests template-gnu template-release
+
+[tests-gnu-debug-r4]
+help      = Tests, gfortran, all checks on, single precision (R_P = R4P)
+template  = template-r4-tests template-tests template-gnu template-debug
+
+[tests-nvf-r4]
+help      = Tests, nvfortran, optimised, CPU, single precision (R_P = R4P)
+template  = template-r4-tests template-tests template-nvf template-release
+
+[tests-nvf-oac-r4]
+help      = Tests, nvfortran, OpenACC on the GPU of compute capability $GPU_CC, single precision (R_P = R4P)
+template  = template-r4-tests template-tests template-nvf template-release
+cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel
+lflags    = -acc -gpu=$GPU_CC
+
+[tests-intel-r4]
+help      = Tests, ifx, optimised, single precision (R_P = R4P)
+template  = template-r4-tests template-tests template-intel-release template-intel
+
+[bench-nvf-oac-r4]
+help      = Benchmark, nvfortran, OpenACC on the GPU of compute capability $GPU_CC, single precision (R_P = R4P)
+template  = template-r4-bench template-bench template-nvf template-release
+cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel
+lflags    = -acc -gpu=$GPU_CC
+
+[bench-gnu-r4]
+help      = Benchmark, gfortran, one CPU core, single precision (R_P = R4P)
+template  = template-r4-bench template-bench template-gnu template-release
+
 # ── templates: left wins when a mode lists several, so the role template (lib, tests) comes first ──
 [template-base]
 src             = src/lib/
@@ -210,6 +287,17 @@ src       = src/lib/ src/bench/ src/tests/
 build_dir = exe-bench/
 target    = src/bench/seth_bench_weno.F90
 output    = seth_bench_weno
+
+[template-r4]
+preproc = -D_R_P_IS_R4P
+
+[template-r4-tests]
+template  = template-r4
+build_dir = exe-r4/
+
+[template-r4-bench]
+template  = template-r4
+build_dir = exe-bench-r4/
 
 [template-tests]
 src       = src/lib/ src/tests/

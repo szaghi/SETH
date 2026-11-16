@@ -75,9 +75,9 @@ The two states at the face i+1/2, from the values around it (cells by offset fro
 
 ```fortran
 use seth
-real(R8P) :: vp(-2:3), vm(-2:3), rp, rm
+real(R_P) :: vp(-2:3), vm(-2:3), rp, rm
 
-call seth_weno5_js(vp, vm, SETH_WENO_JS_EPS, 1._R8P, rp, rm)   ! WENO-JS 5: rp left, rm right
+call seth_weno5_js(vp, vm, SETH_WENO_JS_EPS, 1._R_P, rp, rm)   ! WENO-JS 5: rp left, rm right
 call seth_teno5(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, rp, rm)  ! TENO5
 ```
 

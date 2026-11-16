@@ -2,12 +2,12 @@
 
 ```fortran
 use seth
-real(R8P) :: vp(-2:3), vm(-2:3), rp, rm
+real(R_P) :: vp(-2:3), vm(-2:3), rp, rm
 
 ! the values around the face i+1/2, cells by offset from it (cell 0 left, cell 1 right):
 ! vp reconstructed with a left bias (e.g. f+), vm with a right bias (e.g. f-); the same array for both to get the
 ! two states of one field
-call seth_weno5_js(vp, vm, SETH_WENO_JS_EPS, 1._R8P, rp, rm)   ! rp: left state, rm: right state
+call seth_weno5_js(vp, vm, SETH_WENO_JS_EPS, 1._R_P, rp, rm)   ! rp: left state, rm: right state
 ```
 
 The WENO-JS kernels take `(vp, vm, eps, rmu, rp, rm)`, with bounds `1-S:S` for WENO-(2S-1); the other families
@@ -24,7 +24,7 @@ replace `rmu` by their own parameter:
 - **No tables, no setup:** the coefficients are compile-time constants, so a kernel needs nothing on the device.
   Every kernel is `pure`, `!$acc routine seq` and `!$omp declare target`: call it from inside your own loops.
 - **`rmu`** is the inverse descaler of the smoothness indicators: `1` for the Jiang-Shu weights, or
-  `seth_weno_descaling(S, 1._R8P, vp, vm)` for scale-invariant weights (Don et al. 2022), or a magnitude of your own.
+  `seth_weno_descaling(S, 1._R_P, vp, vm)` for scale-invariant weights (Don et al. 2022), or a magnitude of your own.
 - **`eps`**: `SETH_WENO_JS_EPS` is ADAM's value. WENO-7 and WENO-9 keep Balsara & Shu's integer smoothness
   indicators (`WENO7_JS_D_SCALE = 240`, `WENO9_JS_D_SCALE = 5040`), so the same `eps` is relatively smaller there.
 

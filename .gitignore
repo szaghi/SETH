@@ -6,6 +6,8 @@
 # build products of the fobos modes
 /exe/
 /exe-bench/
+/exe-r4/
+/exe-bench-r4/
 /lib/
 /obj/
 /mod/
