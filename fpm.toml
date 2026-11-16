@@ -161,3 +161,8 @@ main = "seth_test_positivity.F90"
 name = "seth_test_mp"
 source-dir = "src/tests"
 main = "seth_test_mp.F90"
+
+[[test]]
+name = "seth_test_linear"
+source-dir = "src/tests"
+main = "seth_test_linear.F90"

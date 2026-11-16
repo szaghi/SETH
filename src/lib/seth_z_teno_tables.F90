@@ -197,6 +197,39 @@ public :: TENO6_NENO6_GLO
 public :: TENO6_NENO6_GW
 public :: TENO6_NENO6_LG
 public :: TENO6_NENO6_DG
+public :: LIN3_LO
+public :: LIN3_HI
+public :: LIN3_C
+public :: LIN5_LO
+public :: LIN5_HI
+public :: LIN5_C
+public :: LIN7_LO
+public :: LIN7_HI
+public :: LIN7_C
+public :: LIN9_LO
+public :: LIN9_HI
+public :: LIN9_C
+public :: LIN3_INTERP_LO
+public :: LIN3_INTERP_HI
+public :: LIN3_INTERP_C
+public :: LIN5_INTERP_LO
+public :: LIN5_INTERP_HI
+public :: LIN5_INTERP_C
+public :: LIN7_INTERP_LO
+public :: LIN7_INTERP_HI
+public :: LIN7_INTERP_C
+public :: LIN9_INTERP_LO
+public :: LIN9_INTERP_HI
+public :: LIN9_INTERP_C
+public :: LIN6_LO
+public :: LIN6_HI
+public :: LIN6_C
+public :: LIN6_INTERP_LO
+public :: LIN6_INTERP_HI
+public :: LIN6_INTERP_C
+public :: LIN8_LO
+public :: LIN8_HI
+public :: LIN8_C
 
 ! WENO-Z3: tau_3 = |beta_0 - beta_1|
 integer(I4P), parameter :: WENOZ3_NC = 2_I4P !< candidate stencils
@@ -641,4 +674,76 @@ real(R8P), parameter :: TENO6_NENO6_LG(0:5,0:5) = reshape([ & !< global indicato
 real(R8P), parameter :: TENO6_NENO6_DG(0:5) = reshape([ & !< global indicator pivots
       90593._R8P/40320._R8P, 13266742327._R8P/3652709760._R8P, 2535830006332177._R8P/601779431952720._R8P, &
       1.0316113515772065e+00_R8P, 3.8978122273068759e-02_R8P, 0._R8P], [6])
+
+! LIN3: the linear background of WENOZ3, reconstruction from cell averages; cells -1..1
+integer(I4P), parameter :: LIN3_LO = -1_I4P !< first cell
+integer(I4P), parameter :: LIN3_HI = 1_I4P !< last cell
+real(R8P), parameter :: LIN3_C(-1:1) = reshape([ & !< face coefficient of each cell
+      -1._R8P/6._R8P, 5._R8P/6._R8P, 1._R8P/3._R8P], [3])
+
+! LIN5: the linear background of WENOZ5, reconstruction from cell averages; cells -2..2
+integer(I4P), parameter :: LIN5_LO = -2_I4P !< first cell
+integer(I4P), parameter :: LIN5_HI = 2_I4P !< last cell
+real(R8P), parameter :: LIN5_C(-2:2) = reshape([ & !< face coefficient of each cell
+      1._R8P/30._R8P, -13._R8P/60._R8P, 47._R8P/60._R8P, 9._R8P/20._R8P, -1._R8P/20._R8P], [5])
+
+! LIN7: the linear background of WENOZ7, reconstruction from cell averages; cells -3..3
+integer(I4P), parameter :: LIN7_LO = -3_I4P !< first cell
+integer(I4P), parameter :: LIN7_HI = 3_I4P !< last cell
+real(R8P), parameter :: LIN7_C(-3:3) = reshape([ & !< face coefficient of each cell
+      -1._R8P/140._R8P, 5._R8P/84._R8P, -101._R8P/420._R8P, 319._R8P/420._R8P, 107._R8P/210._R8P, -19._R8P/210._R8P, &
+      1._R8P/105._R8P], [7])
+
+! LIN9: the linear background of WENOZ9, reconstruction from cell averages; cells -4..4
+integer(I4P), parameter :: LIN9_LO = -4_I4P !< first cell
+integer(I4P), parameter :: LIN9_HI = 4_I4P !< last cell
+real(R8P), parameter :: LIN9_C(-4:4) = reshape([ & !< face coefficient of each cell
+      1._R8P/630._R8P, -41._R8P/2520._R8P, 199._R8P/2520._R8P, -641._R8P/2520._R8P, 1879._R8P/2520._R8P, &
+      275._R8P/504._R8P, -61._R8P/504._R8P, 11._R8P/504._R8P, -1._R8P/504._R8P], [9])
+
+! LIN3_INTERP: the linear background of WENOZ3, interpolation from point values; cells -1..1
+integer(I4P), parameter :: LIN3_INTERP_LO = -1_I4P !< first cell
+integer(I4P), parameter :: LIN3_INTERP_HI = 1_I4P !< last cell
+real(R8P), parameter :: LIN3_INTERP_C(-1:1) = reshape([ & !< face coefficient of each cell
+      -1._R8P/8._R8P, 3._R8P/4._R8P, 3._R8P/8._R8P], [3])
+
+! LIN5_INTERP: the linear background of WENOZ5, interpolation from point values; cells -2..2
+integer(I4P), parameter :: LIN5_INTERP_LO = -2_I4P !< first cell
+integer(I4P), parameter :: LIN5_INTERP_HI = 2_I4P !< last cell
+real(R8P), parameter :: LIN5_INTERP_C(-2:2) = reshape([ & !< face coefficient of each cell
+      3._R8P/128._R8P, -5._R8P/32._R8P, 45._R8P/64._R8P, 15._R8P/32._R8P, -5._R8P/128._R8P], [5])
+
+! LIN7_INTERP: the linear background of WENOZ7, interpolation from point values; cells -3..3
+integer(I4P), parameter :: LIN7_INTERP_LO = -3_I4P !< first cell
+integer(I4P), parameter :: LIN7_INTERP_HI = 3_I4P !< last cell
+real(R8P), parameter :: LIN7_INTERP_C(-3:3) = reshape([ & !< face coefficient of each cell
+      -5._R8P/1024._R8P, 21._R8P/512._R8P, -175._R8P/1024._R8P, 175._R8P/256._R8P, 525._R8P/1024._R8P, &
+      -35._R8P/512._R8P, 7._R8P/1024._R8P], [7])
+
+! LIN9_INTERP: the linear background of WENOZ9, interpolation from point values; cells -4..4
+integer(I4P), parameter :: LIN9_INTERP_LO = -4_I4P !< first cell
+integer(I4P), parameter :: LIN9_INTERP_HI = 4_I4P !< last cell
+real(R8P), parameter :: LIN9_INTERP_C(-4:4) = reshape([ & !< face coefficient of each cell
+      35._R8P/32768._R8P, -45._R8P/4096._R8P, 441._R8P/8192._R8P, -735._R8P/4096._R8P, 11025._R8P/16384._R8P, &
+      2205._R8P/4096._R8P, -735._R8P/8192._R8P, 63._R8P/4096._R8P, -45._R8P/32768._R8P], [9])
+
+! LIN6: the linear background of TENO6, reconstruction from cell averages; cells -2..3
+integer(I4P), parameter :: LIN6_LO = -2_I4P !< first cell
+integer(I4P), parameter :: LIN6_HI = 3_I4P !< last cell
+real(R8P), parameter :: LIN6_C(-2:3) = reshape([ & !< face coefficient of each cell
+      1._R8P/60._R8P, -2._R8P/15._R8P, 37._R8P/60._R8P, 37._R8P/60._R8P, -2._R8P/15._R8P, 1._R8P/60._R8P], [6])
+
+! LIN6_INTERP: the linear background of TENO6, interpolation from point values; cells -2..3
+integer(I4P), parameter :: LIN6_INTERP_LO = -2_I4P !< first cell
+integer(I4P), parameter :: LIN6_INTERP_HI = 3_I4P !< last cell
+real(R8P), parameter :: LIN6_INTERP_C(-2:3) = reshape([ & !< face coefficient of each cell
+      3._R8P/256._R8P, -25._R8P/256._R8P, 75._R8P/128._R8P, 75._R8P/128._R8P, -25._R8P/256._R8P, 3._R8P/256._R8P], [6])
+
+! LIN8: the linear background of TENO8, reconstruction from cell averages; cells -3..4
+integer(I4P), parameter :: LIN8_LO = -3_I4P !< first cell
+integer(I4P), parameter :: LIN8_HI = 4_I4P !< last cell
+real(R8P), parameter :: LIN8_C(-3:4) = reshape([ & !< face coefficient of each cell
+      -6.8666889805679898e-03_R8P, 5.1285825855220901e-02_R8P, -1.9684781987273073e-01_R8P, &
+      6.5528582585522022e-01_R8P, 6.4528582585522143e-01_R8P, -1.9084781987273103e-01_R8P, 4.9285825855220844e-02_R8P, &
+      -6.5809746948537057e-03_R8P], [8])
 endmodule seth_z_teno_tables

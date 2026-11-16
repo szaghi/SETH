@@ -1,0 +1,42 @@
+faces: 16777216, timed passes: 20 per variant
+SETH  weno5_js                 : device vs host SETH, max scaled difference  0.00E+00
+ADAM  generic S=3              : vs SETH weno5_js, max scaled difference  0.00E+00
+ADAM  width s3                 : vs SETH weno5_js, max scaled difference  0.00E+00
+SETH  weno7_js                 : device vs host SETH, max scaled difference  0.00E+00
+ADAM  generic S=4              : vs SETH weno7_js, max scaled difference  0.00E+00
+ADAM  width s4                 : vs SETH weno7_js, max scaled difference  0.00E+00
+SETH  wenoz5 (p=1)             : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno6 (C_T=1e-7)         : device vs host SETH, max scaled difference  4.44E-16
+SETH  teno5 (C_T=1e-5)         : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno5_opt (C_T=1e-5)     : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno5_az (C_T=1e-5)      : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno8 (C_T=1e-7)         : device vs host SETH, max scaled difference  5.42E-16
+SETH  teno5_a                  : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno8_a                  : device vs host SETH, max scaled difference  5.42E-16
+SETH  weno5_js + descaling     : device vs host SETH, max scaled difference  5.47E-16
+SETH  weno5_js + descaling_ai  : device vs host SETH, max scaled difference  4.56E-16
+SETH  weno5_js + mp_bound      : device vs host SETH, max scaled difference  0.00E+00
+SETH  linear5                  : device vs host SETH, max scaled difference  2.62E-16
+SETH  linear7                  : device vs host SETH, max scaled difference  4.34E-16
+
+                        variant    median ms       min ms      ns/face vs ADAM gen.
+SETH  weno5_js                        16.652       16.598        0.993         1.42
+ADAM  generic S=3                     23.608       23.571        1.407         1.00
+ADAM  width s3                        21.748       21.717        1.296         1.09
+SETH  weno7_js                        30.174       30.133        1.799         1.34
+ADAM  generic S=4                     40.351       40.278        2.405         1.00
+ADAM  width s4                        37.965       37.900        2.263         1.06
+SETH  wenoz5 (p=1)                    16.522       16.442        0.985         1.43
+SETH  teno6 (C_T=1e-7)                39.902       39.845        2.378         1.01
+SETH  teno5 (C_T=1e-5)                24.125       24.089        1.438         1.67
+SETH  teno5_opt (C_T=1e-5)            24.130       24.074        1.438         1.67
+SETH  teno5_az (C_T=1e-5)             24.562       24.533        1.464         1.64
+SETH  teno8 (C_T=1e-7)                67.183       67.143        4.004         0.60
+SETH  teno5_a                         34.015       33.977        2.027         1.19
+SETH  teno8_a                         77.895       77.819        4.643         0.52
+SETH  weno5_js + descaling            18.562       18.526        1.106         2.17
+SETH  weno5_js + descaling_ai         22.446       22.407        1.338         1.80
+SETH  weno5_js + mp_bound             23.720       23.699        1.414         1.70
+SETH  linear5                          1.599        1.563        0.095        25.23
+SETH  linear7                          2.005        1.972        0.120        20.12
+seth_bench_weno: checks ok

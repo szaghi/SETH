@@ -572,6 +572,46 @@ def emit(name: str) -> tuple[str, list[str]]:
     return ''.join(out), names
 
 
+# The linear backgrounds as single face-coefficient rows (cells LO..UMAX of the left-biased stencil): the smooth branch
+# of a hybrid. name: (scheme, interp)
+LINEARS = {'LIN3': ('WENOZ3', False), 'LIN5': ('WENOZ5', False), 'LIN7': ('WENOZ7', False), 'LIN9': ('WENOZ9', False),
+           'LIN3_INTERP': ('WENOZ3', True), 'LIN5_INTERP': ('WENOZ5', True), 'LIN7_INTERP': ('WENOZ7', True),
+           'LIN9_INTERP': ('WENOZ9', True), 'LIN6': ('TENO6', False), 'LIN6_INTERP': ('TENO6', True),
+           'LIN8': ('TENO8', False)}
+
+
+def linear_row(scheme: str, interp: bool) -> tuple[int, int, list]:
+    """sum_k d_k q_k collapsed to one row c(lo..hi); exact unless the weights are quoted decimals (TENO8: float)."""
+    cands, _tc, _g, _tg, wts, _f, _n, _doc = SCHEMES[scheme]
+    if wts == 'max':
+        d = max_order_weights(cands, scheme, interp=interp)[0]
+    else:
+        d = [Fr(w.replace('_R8P', '')) for w in wts]
+    d = [x / sum(d) for x in d]  # what the TENO kernel computes, d_k / sum d (TENO8's printed weights sum to 1 + 2.9e-15)
+    lo, hi = min(min(c) for c in cands), max(max(c) for c in cands)
+    row = {m: Fr(0) for m in range(lo, hi + 1)}
+    for k, c in enumerate(cands):
+        for coef, m in zip((pv_face_coefficients if interp else face_coefficients)(c), c):
+            row[m] += d[k] * coef
+    vals = [row[m] for m in range(lo, hi + 1)]
+    if sum(vals) != 1 and abs(float(sum(vals)) - 1) > 1e-14:
+        check_fail(f'{scheme} linear row does not sum to 1')
+    return lo, hi, vals
+
+
+def emit_linear(name: str) -> tuple[str, list[str]]:
+    scheme, interp = LINEARS[name]
+    lo, hi, vals = linear_row(scheme, interp)
+    kind = 'interpolation from point values' if interp else 'reconstruction from cell averages'
+    exact = all(isinstance(v, Fr) and v.denominator < 2 ** 53 for v in vals) and SCHEMES[scheme][4] == 'max'
+    txt = [f'! {name}: the linear background of {scheme}, {kind}; cells {lo}..{hi}\n',
+           f'integer(I4P), parameter :: {name}_LO = {lo}_I4P !< first cell\n',
+           f'integer(I4P), parameter :: {name}_HI = {hi}_I4P !< last cell\n',
+           farray(f'{name}_C', f'{lo}:{hi}', f'{hi - lo + 1}',
+                  [fstr(v) if exact else f'{float(v):.16e}_R8P' for v in vals], 'face coefficient of each cell')]
+    return ''.join(txt), [f'{name}_LO', f'{name}_HI', f'{name}_C']
+
+
 def main() -> None:
     adam = Path(sys.argv[1]).read_text()
     out_path = Path(sys.argv[2])
@@ -580,6 +620,10 @@ def main() -> None:
     blocks, names = [], []
     for n in SCHEMES:
         b, ns = emit(n)
+        blocks.append(b)
+        names += ns
+    for n in LINEARS:
+        b, ns = emit_linear(n)
         blocks.append(b)
         names += ns
     header = '''!< SETH, WENO-Z and TENO scheme descriptors (generated: do not edit).

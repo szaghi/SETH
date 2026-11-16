@@ -14,7 +14,8 @@ program seth_bench_weno
 !<        acc routine); in an OpenACC build they are skipped
 !< 11.. SETH kernels added after v0.1.0, each against its cost budget (roadmap issue #4, gate PERF1): 11 seth_teno5,
 !<      12 seth_teno5_opt, 13 seth_teno5_az (rmu = 1), 14 seth_teno8, 15 seth_teno5_a, 16 seth_teno8_a,
-!<      17 seth_weno5_js with seth_weno_descaling, 18 with seth_weno_descaling_ai, 19 seth_weno5_js + seth_mp_bound
+!<      17 seth_weno5_js with seth_weno_descaling, 18 with seth_weno_descaling_ai, 19 seth_weno5_js + seth_mp_bound,
+!<      20 seth_linear5, 21 seth_linear7
 !<
 !< ADAM's variants pack ADAM's rows as FLUME does (v(2,m) = fp(i+m), v(1,m) = fm(i+m+1)). Built with -acc the loops run
 !< on the device (timed with !$acc wait + system_clock); without, on one CPU core. Each variant: 2 warm-up passes, then
@@ -30,7 +31,7 @@ use adam_fnl_weno_width_kernels, only : weno_reconstruct_upwind_s3_dev, weno_rec
 use seth_adam_reference,         only : weno_reconstruct_upwind
 implicit none
 integer(I4P), parameter :: NG = 4_I4P         !< Ghost cells (WENO-7 reads i-3..i+4).
-integer(I4P), parameter :: NV = 19_I4P        !< Variants.
+integer(I4P), parameter :: NV = 21_I4P        !< Variants.
 integer(I4P), parameter :: SAMPLE = 65536_I4P !< Faces checked against the host.
 real(R8P),    parameter :: TOL = 64._R8P*epsilon(1._R8P)
 character(31), parameter :: NAMES(NV) = [character(31) :: 'SETH  weno5_js', 'ADAM  generic S=3', 'ADAM  width s3', &
@@ -41,7 +42,7 @@ character(31), parameter :: NAMES(NV) = [character(31) :: 'SETH  weno5_js', 'ADA
                                          'SETH  teno5_az (C_T=1e-5)', 'SETH  teno8 (C_T=1e-7)', &
                                          'SETH  teno5_a', 'SETH  teno8_a', &
                                          'SETH  weno5_js + descaling', 'SETH  weno5_js + descaling_ai', &
-                                         'SETH  weno5_js + mp_bound']
+                                         'SETH  weno5_js + mp_bound', 'SETH  linear5', 'SETH  linear7']
 real(R8P), allocatable :: fp(:), fm(:), rp(:), rm(:), rp5(:), rm5(:), rp7(:), rm7(:)
 real(R8P), allocatable :: a3(:,:,:), p3(:,:,:,:), d3(:,:,:,:), a4(:,:,:), p4(:,:,:,:), d4(:,:,:,:)
 real(R8P), allocatable :: times(:)
@@ -254,6 +255,22 @@ contains
          call seth_weno5_js(vp5, vm5, SETH_WENO_JS_EPS, 1._R8P, rp(i), rm(i))
          call seth_mp_bound(vp5, vm5, SETH_MP_ALPHA, rp(i), rm(i))
       enddo
+   case(20)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm) private(vp5, vm5)
+      do i=1, n
+         do m=-2, 3
+            vp5(m) = fp(i+m) ; vm5(m) = fm(i+m)
+         enddo
+         call seth_linear5(vp5, vm5, rp(i), rm(i))
+      enddo
+   case(21)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm) private(vp7, vm7)
+      do i=1, n
+         do m=-3, 4
+            vp7(m) = fp(i+m) ; vm7(m) = fm(i+m)
+         enddo
+         call seth_linear7(vp7, vm7, rp(i), rm(i))
+      enddo
    case(9)
       do i=1, n
          do m=-2, 2
@@ -305,6 +322,8 @@ contains
          case(18) ; call seth_weno5_js(vp5, vm5, SETH_WENO_JS_EPS, seth_weno_descaling_ai(3_I4P, vp5, vm5), hp, hm)
          case(19) ; call seth_weno5_js(vp5, vm5, SETH_WENO_JS_EPS, 1._R8P, hp, hm)
                      call seth_mp_bound(vp5, vm5, SETH_MP_ALPHA, hp, hm)
+         case(20) ; call seth_linear5(vp5, vm5, hp, hm)
+         case(21) ; call seth_linear7(vp7, vm7, hp, hm)
          case(16) ; call seth_teno8_a(vp7, vm7, SETH_TENO_EPS, SETH_TENO8_A_CR, SETH_TENO8_A_XI, SETH_TENO8_A_A1, &
                                       SETH_TENO8_A_A2, 1._R8P, hp, hm)
          endselect

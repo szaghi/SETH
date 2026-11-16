@@ -375,11 +375,17 @@ since the linear branch needs no weights and, for systems, no characteristic dec
 sensor and its threshold. Examples are Pirozzoli's (2002) compact–WENO hybrid, switched on density differences, and
 the central–WENO and central–TENO hybrids of the turbulence literature.
 
-**In SETH, today.** No hybrid kernel yet: the "H" of the name is the target of the design, not a released feature.
-What exists is the pieces:
+**In SETH, today.** The pieces of a hybrid, not yet a hybrid of its own (roadmap: issue #4, Phase 3):
 
+- **the linear kernels**, the smooth branch: `seth_linear3/5/7/9` and their `_interp` twins (the upwind backgrounds of
+  WENO-(2S-1)), `seth_linear6[_interp]` (TENO6's) and `seth_linear8` (TENO8's), each the background $\sum_k d_k q_k$
+  collapsed by the table generator to one row of face coefficients. They equal TENO5, TENO6, TENO8 and the TENO5/6
+  interpolations on smooth data to $4.4\cdot10^{-16}$ of the data, reach their design orders, and cost one dot product
+  per state: 0.095 ns per face for `seth_linear5` on the RTX 4070, a tenth of WENO5-JS. A linear background is not a
+  central scheme: the upwind ones keep their dissipation; the gain is the cost of the weights and, for systems, of the
+  characteristic projection the caller can skip where the sensor says smooth;
 - the linear weights and candidate coefficients of every scheme, as named constants (`seth_weno_js_tables`,
-  `seth_z_teno_tables`), from which a linear branch is a few lines;
+  `seth_z_teno_tables`);
 - the weights ratios of the `_wr` kernels, $\min_k \omega_k/d_k$, a sensor already computed by the nonlinear branch;
 - TENO itself, whose cutoff returns the linear scheme exactly on smooth data: a hybrid inside the weights, with the
   scale-separated $\chi_k$ as its sensor.

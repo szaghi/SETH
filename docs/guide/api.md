@@ -55,6 +55,16 @@ The interpolation kernels take the same arguments as the reconstruction ones; TE
 `eps = SETH_TENO_EPS` ($10^{-40}$); `ct` the cutoff: `SETH_TENO5_CT`, `SETH_TENO5_OPT_CT`, `SETH_TENO5_AZ_CT` (the ceiling of the adaptive one), `SETH_TENO6_CT`, `SETH_TENO6_OPT_CT`,
 `SETH_TENO6_NENO6_CT`, `SETH_TENO8_CT` (see [Schemes](./schemes)).
 
+## Linear kernels
+
+```fortran
+call seth_linear<N>       (vp, vm, rp, rm)   ! N = 3, 5, 7, 9 (WENO backgrounds), 6 (TENO6), 8 (TENO8, bounds -3:4)
+call seth_linear<N>_interp(vp, vm, rp, rm)   ! N = 3, 5, 7, 9, 6: from point values
+```
+
+The linear background of a scheme, one row of face coefficients (`LIN<N>_C` in `seth_z_teno_tables`): the smooth
+branch of a hybrid. Bounds as the scheme's (`1-S:S`; TENO6 and linear6 `-2:3`).
+
 ## Monotonicity-preserving bound
 
 ```fortran
