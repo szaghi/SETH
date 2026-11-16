@@ -384,6 +384,16 @@ the central–WENO and central–TENO hybrids of the turbulence literature.
   per state: 0.095 ns per face for `seth_linear5` on the RTX 4070, a tenth of WENO5-JS. A linear background is not a
   central scheme: the upwind ones keep their dissipation; the gain is the cost of the weights and, for systems, of the
   characteristic projection the caller can skip where the sensor says smooth;
+- **the sensors**, the switch: `seth_sensor_teno` (Fu's TENO-based detector), `seth_sensor_ren` (Ren et al.),
+  `seth_sensor_lcr` (Li, Chen & Ren 2022) and `seth_sensor_tau` (Wan & Xia 2022), each on the six values around a
+  face, returning $s \in [0, 1]$ with $s = 1$ where the published test says smooth. On a sine they judge smooth up to
+  $k = 0.64$, $0.04$, $2.07$ and $1.36$ ([H1](/verification/hybrids/sensors): the paper's 0.64 and 2.06 reproduced);
+- **the cost**, measured at kernel level on the RTX 4070: a sensor 0.30 ns per face, a linear kernel 0.095, WENO-Z5
+  0.985. A hybrid that calls the sensor on both biases and the linear kernel where both say smooth costs 0.67 on a
+  mostly smooth field, and breaks even with WENO-Z5 at about 30% of faces flagged (60% with one sensor call per face,
+  as a finite-volume caller with `vp = vm` needs). On a GPU a warp with one flagged face runs both branches. The
+  larger saving of a hybrid, the characteristic projection skipped where smooth, is the caller's and is not measured
+  here;
 - the linear weights and candidate coefficients of every scheme, as named constants (`seth_weno_js_tables`,
   `seth_z_teno_tables`);
 - the weights ratios of the `_wr` kernels, $\min_k \omega_k/d_k$, a sensor already computed by the nonlinear branch;

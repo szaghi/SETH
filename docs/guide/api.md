@@ -65,6 +65,19 @@ call seth_linear<N>_interp(vp, vm, rp, rm)   ! N = 3, 5, 7, 9, 6: from point val
 The linear background of a scheme, one row of face coefficients (`LIN<N>_C` in `seth_z_teno_tables`): the smooth
 branch of a hybrid. Bounds as the scheme's (`1-S:S`; TENO6 and linear6 `-2:3`).
 
+## Sensors
+
+```fortran
+call seth_sensor_teno(v, rmu, thr, s)   ! v(-2:3); thr = SETH_SENSOR_TENO_CT  (5e-4)
+call seth_sensor_ren (v, rmu, thr, s)   !          thr = SETH_SENSOR_REN_PSIC (0.3)
+call seth_sensor_lcr (v, rmu, thr, s)   !          thr = SETH_SENSOR_LCR_PSIC (0.4)
+call seth_sensor_tau (v, rmu, thr, s)   !          thr = SETH_SENSOR_TAU_ETA  (0.5)
+```
+
+`s` in $[0, 1]$, `s = 1` where the published binary test says smooth (the linear branch may be used); below 1 the
+published continuous form, usable as a blending weight. `rmu` multiplies the data (1, or Li, Chen & Ren's
+`1/max(maxval(abs(v)), 1)`): the regularisers are absolute. See [H1](/verification/hybrids/sensors).
+
 ## Monotonicity-preserving bound
 
 ```fortran

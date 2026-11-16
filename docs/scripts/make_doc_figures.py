@@ -377,6 +377,36 @@ class Figures:
         fig.tight_layout()
         self.save(fig, 'adr')
 
+    def sensors(self) -> None:
+        if not self.has('sensors-k.dat', 'sensors-b.dat'):
+            return
+        names = ['TENO-based (Fu)', 'Ren et al.', 'Li, Chen & Ren', 'Wan & Xia']
+        colours = [style('teno6')[0], style('weno5_js')[0], style('wenoz5')[0], style('teno5')[0]]
+        k = self.load('sensors-k.dat')
+        b = self.load('sensors-b.dat')
+        fig, axs = plt.subplots(1, 2, figsize=(12, 4))
+        for i, (n, c) in enumerate(zip(names, colours)):
+            axs[0].plot(k[:, 0], k[:, i + 1], '-', color=c, lw=1.0, label=n)
+            axs[1].plot(b[:, 0], 1.0 - b[:, i + 2] + 1.25 * i, '-', color=c, lw=0.9, label=n)
+        for x, txt in ((0.64, '0.64'), (2.06, '2.06')):
+            axs[0].axvline(x, color='0.5', lw=0.6, ls=':')
+            axs[0].text(x, 0.05, txt, fontsize=7, color='0.4')
+        axs[0].set_title('sine of wavenumber $k$, 192 points: fraction of faces judged smooth', fontsize=10)
+        axs[0].set_xlabel('$k$')
+        axs[0].set_ylim(-0.02, 1.05)
+        ax2 = axs[1].twinx()
+        ax2.plot(b[:, 0], b[:, 1], '-', color='0.55', lw=0.7)
+        ax2.set_ylabel('$f$', color='0.45')
+        axs[1].set_title('Li, Chen & Ren test (b): $1 - s$ per sensor (offset), and the data (grey)', fontsize=10)
+        axs[1].set_xlabel('$x$')
+        axs[1].set_yticks([])
+        axs[1].legend(fontsize=6, loc='upper left')
+        for ax in axs:
+            ax.grid(alpha=0.3)
+        axs[0].legend(fontsize=7)
+        fig.tight_layout()
+        self.save(fig, 'sensors')
+
     # ---------------------------------------------------------------------------------------- unit-test reports
     def spectral(self) -> None:
         names = [p.name[9:-4] for p in sorted(self.data.glob('spectral-*.dat'))]
@@ -505,6 +535,7 @@ def main() -> int:
         'euler-order': f.euler_order,
         'advection': f.advection,
         'adr': f.adr,
+        'sensors': f.sensors,
         'spectral': f.spectral,
         'order-tables': f.order_tables,
         'critical-tables': f.critical_tables,

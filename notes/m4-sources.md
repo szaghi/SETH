@@ -97,3 +97,17 @@ Suresh, A., Huynh, H.T. (1997). *J. Comput. Phys.* 136:83.
 | v_min, v_max: the intersection of I[v_j, v_{j+1}, v_MD] and I[v_j, v_UL, v_LC]; v <- median(v, v_min, v_max) | quoted | Eqs. (2.24)-(2.26) |
 | alpha = 4 for Runge-Kutta, CFL <= 1/(1 + alpha) | quoted | section 2, after Eq. (2.10) |
 | skip test with tolerance 1e-10 | quoted; not used (the median is applied everywhere, same result where the test would skip) | Eq. (2.30) |
+
+## Sensors (steps 3.2, 3.3)
+
+Li, Y., Chen, C., Ren, Y.-X. (2022). *J. Comput. Phys.* 448:110770, §3.2. Wan, Y., Xia, Y. (2022), §3.
+
+| Item | Status | Where |
+|---|---|---|
+| Ren's psi_j = (2ab + e)/(a^2 + b^2 + e), a = abs(f_j - f_{j-1}), b = abs(f_j - f_{j+1}), e = 0.9 psi_c/(1 - 0.9 psi_c) xi^2, xi = 1e-3, psi_c = 0.3, sigma = min(1, psi/psi_c), min over j-1..j+2 | quoted | Eqs. (48)-(53) |
+| Fu's detector: four stencils, gamma_k = 1/(beta_k + 1e-4)^6, chi normalised, smooth iff every chi_k > 5e-4; beta_3 on {i+1..i+3}: 1/4 (5 f_{i+1} - 8 f_{i+2} + 3 f_{i+3})^2 + 13/12 (...)^2 | quoted; the four indicators equal the generator's exact Jiang-Shu forms on cell i (checked) | Eqs. (43), (55)-(57) |
+| Li, Chen & Ren's: a, b with the second differences added, min over j, j+1, xi = 1e-2, psi_c = 0.4 | quoted | Eq. (60) |
+| Normalisation by max(abs(f_max), 1) | quoted; the tests pass it as rmu | Eq. (61) |
+| Fig. 9: Fu correct for k < 0.64, the new detector up to k = 2.06; Ren's and Harten's fail at very low k | quoted; reproduced: 0.64, 2.07, 0.04 | §3.2 |
+| Test (b): sin(12 pi x) - 2 / sin(24 pi x + pi/2) + 2 | quoted | §2.2 |
+| Wan & Xia: eta = tau_5/(e + mean beta), e = 1e-6; smooth eta <= 1/2, non-smooth eta >= 1, M(eta) = 2 - 2 eta between | quoted | §3, Eq. (3.14) |

@@ -49,3 +49,5 @@ which cite the paper; the provenance of every formula is in `notes/m2-sources.md
   affine-invariant descaler (Eqs. (9)–(14), Remark 2) (read in the paper).
 - Suresh, A., Huynh, H.T. (1997). Accurate monotonicity-preserving schemes with Runge–Kutta time stepping. *J.
   Comput. Phys.* 136:83 — the monotonicity-preserving bound (Eqs. (2.8)–(2.30)), $\alpha = 4$ (read in the paper).
+- Wan, Y., Xia, Y. (2022). *J. Comput. Phys.* — the detector $\eta = \tau_5/(\varepsilon + \bar\beta)$ and its three
+  regions (§3, Eqs. (3.14)–(3.15)) (read in the paper).

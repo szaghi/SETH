@@ -34,7 +34,7 @@
 <td><b>🛡️ Positivity near vacuum</b><br><sub><code>seth_positivity_euler</code>, the flux limiter of Hu, Adams &amp; Shu (2013) for the Euler equations in 1-D to 3-D: the blending factor in closed form, the largest that keeps density and pressure above their floors, on the host and on the GPU. <a href="https://szaghi.github.io/SETH/guide/api#positivity-limiter">Positivity limiter</a></sub></td>
 </tr>
 <tr>
-<td><b>🔬 Verification you can read</b><br><sub>Twenty-eight programs, also the test suite: orders at a point, at critical points and over whole domains, invariances, golden values, Sod, Lax, 123, Shu–Osher and the blast wave in a 1-D Euler harness, Burgers against its exact solution, spectral properties; figures and animations on every case page. <a href="https://szaghi.github.io/SETH/verification/">Verification</a></sub></td>
+<td><b>🔬 Verification you can read</b><br><sub>Twenty-nine programs, also the test suite: orders at a point, at critical points and over whole domains, invariances, golden values, Sod, Lax, 123, Shu–Osher and the blast wave in a 1-D Euler harness, Burgers against its exact solution, spectral properties; figures and animations on every case page. <a href="https://szaghi.github.io/SETH/verification/">Verification</a></sub></td>
 <td><b>🧰 Three compilers, CPU and GPU</b><br><sub>gfortran, nvfortran and ifx, debug and optimised, plus the OpenACC build on the GPU; built with FoBiS or fpm. A mutation run catches 25 of 25 planted defects. <a href="https://szaghi.github.io/SETH/guide/installation">Installation</a> · <a href="https://szaghi.github.io/SETH/verification/contracts/mutation">Mutation testing</a></sub></td>
 </tr>
 </table>
@@ -52,7 +52,7 @@
 git clone https://github.com/szaghi/SETH && cd SETH
 fobis fetch                                                   # PENF, into src/third_party/
 fobis build --mode static-gnu                                 # lib/gnu/static/libseth.a
-fobis build --mode tests-gnu && bash scripts/run_tests.sh     # the 28 verification programs
+fobis build --mode tests-gnu && bash scripts/run_tests.sh     # the 29 verification programs
 ```
 
 as a FoBiS dependency, in the `fobos` of your project (then `fobis fetch && fobis build`):

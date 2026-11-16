@@ -3,7 +3,7 @@
 Every capability of SETH is backed by a verification case: a Fortran program in `src/tests/` that runs the kernels
 and asserts the result against something it shares no code with, such as an exact solution, a fine reference, a
 published number, a theorem or ADAM's own code. The same programs are the test suite (`bash scripts/run_tests.sh`
-runs all 28, on six compiler builds and on the GPU), and with `SETH_VV_DIR` set they run every scheme on the report
+runs all 29, on six compiler builds and on the GPU), and with `SETH_VV_DIR` set they run every scheme on the report
 grids and write the data from which these pages are drawn (`scripts/run_vv.sh`). The figures are real SETH results
 and can be regenerated after any change of the kernels.
 
@@ -105,6 +105,16 @@ scheme. [Group page](./spectral/).
 [![Linear spectra](/verification/spectral.png)<strong>Linear backgrounds</strong><span>no anti-dissipation, error slope $o + 1$, the resolution of Martín et al. (2006)</span><em>physics</em>](./spectral/linear-spectra)
 
 [![ADR](/verification/adr.png)<strong>Approximate dispersion relation</strong><span>Pirozzoli's procedure on every nonlinear scheme: TENO equals its linear scheme where resolved</span><em>physics</em>](./spectral/adr)
+
+</div>
+
+## Hybrids
+
+The pieces of a hybrid scheme: the sensors that choose the linear branch. [Group page](./hybrids/).
+
+<div class="seth-gallery seth-catalog">
+
+[![Sensors](/verification/sensors.png)<strong>Sensors</strong><span>four published sensors on Li, Chen & Ren's static tests: their wavenumbers 0.64 and 2.06 reproduced</span><em>physics</em>](./hybrids/sensors)
 
 </div>
 

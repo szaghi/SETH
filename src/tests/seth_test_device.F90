@@ -2,7 +2,7 @@
 program seth_test_device
 !< SETH test: every kernel executed on the device (OpenACC) agrees with the same kernel on the host.
 !<
-!< Each of the 44 cases runs one kernel inside `!$acc parallel loop` over N deterministic stencils (smooth cubics,
+!< Each of the 46 cases runs one kernel inside `!$acc parallel loop` over N deterministic stencils (smooth cubics,
 !< jumps, an integer LCG), then the same loop on the host, and compares: states within 1e-13 of the stencil's
 !< magnitude, weights ratios within 1e-9 (the device and the host compile the kernel separately and may contract
 !< multiply-adds differently; the tolerances are those of seth_test_golden, for the same reasons). One case calls
@@ -13,7 +13,7 @@ program seth_test_device
 use seth
 implicit none
 integer(I4P), parameter :: N = 4096_I4P
-integer(I4P), parameter :: NK = 44_I4P
+integer(I4P), parameter :: NK = 46_I4P
 character(26), parameter :: NAMES(NK) = [ &
    'seth_weno1_js             ', &
    'seth_weno1_js_wr          ', &
@@ -58,7 +58,9 @@ character(26), parameter :: NAMES(NK) = [ &
    'seth_weno5_js+descaling_ai', &
    'seth_weno9_js+mp_bound    ', &
    'seth_linear5              ', &
-   'seth_linear8              ']
+   'seth_linear8              ', &
+   'seth_sensor_teno          ', &
+   'seth_sensor_lcr           ']
 real(R8P)               :: v(-4:5,N), w(-4:5,N), rp(N), rm(N), wrp(N), wrm(N), hp(N), hm(N), hwp(N), hwm(N)
 real(R8P)               :: mag, ds, dw, worst_s, worst_w
 integer(I4P)            :: k, i, nbit, nfail
@@ -785,6 +787,42 @@ do k=1, NK
       do i=1, N
          a = v(-3:4,i) ; b = w(-3:4,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
          call seth_linear8(a, b, rp(i), rm(i))
+      enddo
+      endblock
+   case(45) ! seth_sensor_teno: the sensor value in rp, rm = rp
+      block
+      real(R8P) :: a(-2:3), b(-2:3), rmu
+      rmu = 1._R8P
+      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      do i=1, N
+         a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
+         call seth_sensor_teno(a, 1._R8P/max(maxval(abs(a)), 1._R8P), SETH_SENSOR_TENO_CT, rp(i))
+         rm(i) = rp(i)
+      enddo
+      hp = rp ; hm = rm ; hwp = wrp ; hwm = wrm
+
+      do i=1, N
+         a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
+         call seth_sensor_teno(a, 1._R8P/max(maxval(abs(a)), 1._R8P), SETH_SENSOR_TENO_CT, rp(i))
+         rm(i) = rp(i)
+      enddo
+      endblock
+   case(46) ! seth_sensor_lcr: the sensor value in rp, rm = rp
+      block
+      real(R8P) :: a(-2:3), b(-2:3), rmu
+      rmu = 1._R8P
+      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      do i=1, N
+         a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
+         call seth_sensor_lcr(a, 1._R8P/max(maxval(abs(a)), 1._R8P), SETH_SENSOR_LCR_PSIC, rp(i))
+         rm(i) = rp(i)
+      enddo
+      hp = rp ; hm = rm ; hwp = wrp ; hwm = wrm
+
+      do i=1, N
+         a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
+         call seth_sensor_lcr(a, 1._R8P/max(maxval(abs(a)), 1._R8P), SETH_SENSOR_LCR_PSIC, rp(i))
+         rm(i) = rp(i)
       enddo
       endblock
    endselect

@@ -15,7 +15,8 @@ program seth_bench_weno
 !< 11.. SETH kernels added after v0.1.0, each against its cost budget (roadmap issue #4, gate PERF1): 11 seth_teno5,
 !<      12 seth_teno5_opt, 13 seth_teno5_az (rmu = 1), 14 seth_teno8, 15 seth_teno5_a, 16 seth_teno8_a,
 !<      17 seth_weno5_js with seth_weno_descaling, 18 with seth_weno_descaling_ai, 19 seth_weno5_js + seth_mp_bound,
-!<      20 seth_linear5, 21 seth_linear7
+!<      20 seth_linear5, 21 seth_linear7, 22 seth_sensor_lcr alone (s stored in rp, rm), 23 the cost hybrid of WENO-Z5:
+!<      seth_sensor_lcr, then seth_linear5 where s = 1 and seth_wenoz5 elsewhere (the flagged fraction of this field)
 !<
 !< ADAM's variants pack ADAM's rows as FLUME does (v(2,m) = fp(i+m), v(1,m) = fm(i+m+1)). Built with -acc the loops run
 !< on the device (timed with !$acc wait + system_clock); without, on one CPU core. Each variant: 2 warm-up passes, then
@@ -31,7 +32,7 @@ use adam_fnl_weno_width_kernels, only : weno_reconstruct_upwind_s3_dev, weno_rec
 use seth_adam_reference,         only : weno_reconstruct_upwind
 implicit none
 integer(I4P), parameter :: NG = 4_I4P         !< Ghost cells (WENO-7 reads i-3..i+4).
-integer(I4P), parameter :: NV = 21_I4P        !< Variants.
+integer(I4P), parameter :: NV = 23_I4P        !< Variants.
 integer(I4P), parameter :: SAMPLE = 65536_I4P !< Faces checked against the host.
 real(R8P),    parameter :: TOL = 64._R8P*epsilon(1._R8P)
 character(31), parameter :: NAMES(NV) = [character(31) :: 'SETH  weno5_js', 'ADAM  generic S=3', 'ADAM  width s3', &
@@ -42,7 +43,8 @@ character(31), parameter :: NAMES(NV) = [character(31) :: 'SETH  weno5_js', 'ADA
                                          'SETH  teno5_az (C_T=1e-5)', 'SETH  teno8 (C_T=1e-7)', &
                                          'SETH  teno5_a', 'SETH  teno8_a', &
                                          'SETH  weno5_js + descaling', 'SETH  weno5_js + descaling_ai', &
-                                         'SETH  weno5_js + mp_bound', 'SETH  linear5', 'SETH  linear7']
+                                         'SETH  weno5_js + mp_bound', 'SETH  linear5', 'SETH  linear7', &
+                                         'SETH  sensor_lcr', 'SETH  hybrid lcr+linear5/wenoz5']
 real(R8P), allocatable :: fp(:), fm(:), rp(:), rm(:), rp5(:), rm5(:), rp7(:), rm7(:)
 real(R8P), allocatable :: a3(:,:,:), p3(:,:,:,:), d3(:,:,:,:), a4(:,:,:), p4(:,:,:,:), d4(:,:,:,:)
 real(R8P), allocatable :: times(:)
@@ -271,6 +273,23 @@ contains
          enddo
          call seth_linear7(vp7, vm7, rp(i), rm(i))
       enddo
+   case(22)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm) private(vp5, vm5)
+      do i=1, n
+         do m=-2, 3
+            vp5(m) = fp(i+m)
+         enddo
+         call seth_sensor_lcr(vp5, 1._R8P, SETH_SENSOR_LCR_PSIC, rp(i))
+         rm(i) = rp(i)
+      enddo
+   case(23)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm) private(vp5, vm5)
+      do i=1, n
+         do m=-2, 3
+            vp5(m) = fp(i+m) ; vm5(m) = fm(i+m)
+         enddo
+         call hybrid5(vp5, vm5, rp(i), rm(i))
+      enddo
    case(9)
       do i=1, n
          do m=-2, 2
@@ -324,6 +343,8 @@ contains
                      call seth_mp_bound(vp5, vm5, SETH_MP_ALPHA, hp, hm)
          case(20) ; call seth_linear5(vp5, vm5, hp, hm)
          case(21) ; call seth_linear7(vp7, vm7, hp, hm)
+         case(22) ; call seth_sensor_lcr(vp5, 1._R8P, SETH_SENSOR_LCR_PSIC, hp) ; hm = hp
+         case(23) ; call hybrid5(vp5, vm5, hp, hm)
          case(16) ; call seth_teno8_a(vp7, vm7, SETH_TENO_EPS, SETH_TENO8_A_CR, SETH_TENO8_A_XI, SETH_TENO8_A_A1, &
                                       SETH_TENO8_A_A2, 1._R8P, hp, hm)
          endselect
@@ -346,6 +367,21 @@ contains
    endselect
    if (diff > TOL) passed = .false.
    endsubroutine check
+
+   pure subroutine hybrid5(vp5, vm5, rp, rm)
+   !< The cost hybrid of WENO-Z5 (p = 1): the linear background where seth_sensor_lcr says smooth on both biases.
+   real(R8P), intent(in)  :: vp5(-2:3), vm5(-2:3)
+   real(R8P), intent(out) :: rp, rm
+   real(R8P)              :: sp, sm
+   !$acc routine seq
+   call seth_sensor_lcr(vp5, 1._R8P, SETH_SENSOR_LCR_PSIC, sp)
+   call seth_sensor_lcr(vm5, 1._R8P, SETH_SENSOR_LCR_PSIC, sm)
+   if (sp >= 1._R8P .and. sm >= 1._R8P) then
+      call seth_linear5(vp5, vm5, rp, rm)
+   else
+      call seth_wenoz5(vp5, vm5, 1.e-40_R8P, 1_I4P, rp, rm)
+   endif
+   endsubroutine hybrid5
 
    subroutine sort(x)
    !< Insertion sort (a few tens of values).

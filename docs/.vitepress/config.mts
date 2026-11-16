@@ -69,6 +69,10 @@ export default withMermaid({
           { text: 'F1 Linear backgrounds',     link: '/verification/spectral/linear-spectra' },
           { text: 'F2 Dispersion relation',    link: '/verification/spectral/adr' },
         ] },
+        { text: 'Hybrids', collapsed: false, items: [
+          { text: 'Overview',                  link: '/verification/hybrids/' },
+          { text: 'H1 Sensors',                link: '/verification/hybrids/sensors' },
+        ] },
         { text: 'Contracts', collapsed: false, items: [
           { text: 'Overview',                  link: '/verification/contracts/' },
           { text: 'C1 Equivalence with ADAM',  link: '/verification/contracts/adam-equivalence' },

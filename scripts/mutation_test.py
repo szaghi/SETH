@@ -39,6 +39,8 @@ MUTANTS = [
     ('mp-curvature', 'src/lib/seth_mp.F90', 'lc = c + 0.5_R8P*(c - b)', '(4._R8P/3._R8P)*m4m', '(1._R8P/3._R8P)*m4m'),
     ('mp-median', 'src/lib/seth_mp.F90', 'v = max(vmin, min(v, vmax))', 'v = max(vmin, min(v, vmax))', 'v = min(v, vmax)'),
     ('linear5-row', 'src/lib/seth_z_teno_tables.F90', 'LIN5_C(-2:2)', '47._R8P/60._R8P', '0.7834_R8P'),
+    ('sensor-lcr-second-difference', 'src/lib/seth_sensors.F90', 'a = abs(rmu*(v(j) - v(j-1))) + abs(', 'abs(rmu*(v(j) - 2._R8P*v(j-1) + v(j-2)))', '0._R8P*v(j-2)'),
+    ('sensor-teno-power', 'src/lib/seth_sensors.F90', 'g(k) = (g(k)*g(k))*(g(k)*g(k))*(g(k)*g(k))', 'g(k) = (g(k)*g(k))*(g(k)*g(k))*(g(k)*g(k))', 'g(k) = (g(k)*g(k))*(g(k)*g(k))'),
     ('descaling', 'src/lib/seth_descaling.F90', 'mu = mu + abs(vp(m))', 'mu = mu + abs(vp(m))',
      'mu = mu + abs(vp(m+1))'),
     ('teno6-linear-weight', 'src/lib/seth_z_teno_tables.F90', 'TENO6_D(0:3)', '9._R8P/20._R8P', '0.451_R8P'),

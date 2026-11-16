@@ -13,6 +13,7 @@ use seth_teno
 use seth_positivity
 use seth_mp
 use seth_linear
+use seth_sensors
 implicit none
 private
 public :: I4P, I8P, R4P, R8P
@@ -33,6 +34,8 @@ public :: SETH_TENO6_NENO6_CT, SETH_TENO8_CT
 public :: SETH_TENO5_A_CR, SETH_TENO5_A_XI, SETH_TENO5_A_A1, SETH_TENO5_A_A2
 public :: SETH_TENO8_A_CR, SETH_TENO8_A_XI, SETH_TENO8_A_A1, SETH_TENO8_A_A2
 public :: SETH_MP_ALPHA, seth_mp_bound
+public :: SETH_SENSOR_TENO_CT, SETH_SENSOR_REN_PSIC, SETH_SENSOR_LCR_PSIC, SETH_SENSOR_TAU_ETA
+public :: seth_sensor_teno, seth_sensor_ren, seth_sensor_lcr, seth_sensor_tau
 public :: seth_linear3, seth_linear5, seth_linear7, seth_linear9, seth_linear6, seth_linear8
 public :: seth_linear3_interp, seth_linear5_interp, seth_linear7_interp, seth_linear9_interp, seth_linear6_interp
 public :: SETH_POSITIVITY_EPS, SETH_POSITIVITY_NV_MAX, seth_positivity_euler, seth_euler_admissible
