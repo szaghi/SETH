@@ -32,6 +32,10 @@ python3 scripts/mutation_test.py --mode tests-gnu
 2026-11-15, the final run with all 26 programs: **25 of 25 mutants killed** (`notes/mutation-run-2026-11-15-device-arrays.txt`, after the limiter lost its automatic arrays; before it
 `notes/mutation-run-2026-11-15-positivity.txt`;
 the earlier run of the 21 kernel mutants: `notes/mutation-run-2026-11-15-final.txt`).
+2026-11-16, the centred WENO: **6 of 6 new mutants killed** (`notes/mutation-run-2026-11-16-weno-c.txt`): the three
+central rows, the blend's `max`, its descaler, its first pair. Two candidates were left out as equivalent mutants:
+the mirrored state's cells in reverse order, and the central row read unmirrored (the row is symmetric, and the
+blend does not see the swap).
 Each line of the record names the tests that caught the mutant. The interpolation mutants are caught by the golden,
 interpolation, tables, TENO, WENO-Z and properties tests, and now also by the nonlinear cases (Sod, Lax, 123,
 Shu–Osher, blast, Euler order): a kernel wired to the wrong tables changes every downstream result. The four positivity-limiter

@@ -42,7 +42,8 @@ DPI = 110
 STYLE = dict(SCHEME_STYLE)  # swapped for SCHEME_STYLE_DARK while the dark twins are drawn (main)
 LABEL = {'weno1_js': 'WENO1-JS', 'weno3_js': 'WENO3-JS', 'weno5_js': 'WENO5-JS', 'weno7_js': 'WENO7-JS', 'weno9_js': 'WENO9-JS',
          'wenoz3': 'WENO-Z3', 'wenoz5': 'WENO-Z5', 'wenoz7': 'WENO-Z7', 'wenoz9': 'WENO-Z9', 'teno5': 'TENO5',
-         'teno6': 'TENO6', 'teno6_opt': 'TENO6-opt', 'teno6_neno6': 'TENO6-NENO6', 'teno5_opt': 'TENO5-opt', 'teno5_az': 'TENO5-AZ', 'teno8': 'TENO8', 'teno5_a': 'TENO5-A', 'teno8_a': 'TENO8-A'}
+         'teno6': 'TENO6', 'teno6_opt': 'TENO6-opt', 'teno6_neno6': 'TENO6-NENO6', 'teno5_opt': 'TENO5-opt', 'teno5_az': 'TENO5-AZ', 'teno8': 'TENO8', 'teno5_a': 'TENO5-A', 'teno8_a': 'TENO8-A',
+         'weno4_c': 'WENO4-C', 'weno6_c': 'WENO6-C', 'weno8_c': 'WENO8-C'}
 
 
 def base(s: str) -> str:
@@ -569,6 +570,23 @@ class Figures:
                      f'{float(r[3]):.2f}' if float(r[3]) > 0 else '—'] for r in self.rows('convergence-orders.dat')]
             self.table('convergence-orders', ['scheme', 'operator order', 'RK3 advection order'], body)
 
+    def weno_c(self) -> None:
+        """A5: the centred WENO's orders, its step overshoot against its upwind part, its equivalence with ADAM."""
+        if (self.data / 'weno-c-orders.dat').exists():
+            body = [[label(r[0]), 'left' if r[1] == '+' else 'right', f'{float(r[2]):.2f}', fmt(float(r[3]))]
+                    for r in self.rows('weno-c-orders.dat')]
+            self.table('weno-c-orders', ['scheme', 'state', 'observed order', 'error, finest grid'], body)
+        if (self.data / 'weno-c-step.dat').exists():
+            body = [[label(r[0]), fmt(float(r[1])), fmt(float(r[2]))] for r in self.rows('weno-c-step.dat')]
+            self.table('weno-c-step', ['scheme', 'worst overshoot, unit step', 'its upwind WENO-JS'], body)
+        if (self.data / 'weno-c-adam.dat').exists():
+            body = [[label(f'weno{2 * int(r[0])}_c'), fmt(float(r[1])), fmt(float(r[2])), f'{int(r[3])} of {int(r[4])}',
+                     fmt(float(r[5]))] for r in self.rows('weno-c-adam.dat')]
+            self.table('weno-c-adam', ['scheme', 'against ADAM with D1 fixed, both states',
+                                       'against ADAM as it is, right state', 'left state different',
+                                       'largest left difference'], body,
+                       'Differences relative to the stencil\'s magnitude; random stencils at magnitudes 1e-6..1e6.')
+
     def convergence(self, name: str, file: str, title: str, ylabel: str) -> None:
         if not self.has(file):
             return
@@ -627,6 +645,7 @@ def main() -> int:
         'spectral': f.spectral,
         'order-tables': f.order_tables,
         'critical-tables': f.critical_tables,
+        'weno-c': f.weno_c,
         'convergence': lambda: f.convergence('convergence', 'convergence.dat',
                                              'whole-domain operator error, Henrick field (critical points included)',
                                              '$L_\\infty(D - u\')$'),

@@ -18,16 +18,19 @@ use seth_test_rng, only : seed_rng
 use seth_weno_js_tables
 use seth_z_teno_tables, only : CEN4_C, CEN6_C, CEN8_C
 use seth_adam_reference, only : weno_reconstruct_centered, weno_reconstruct_centered_d1fix
+use seth_vv_cases, only : vv_report, vv_open
 implicit none
 integer(I4P), parameter :: N = 20000_I4P !< Random stencils per scheme.
 real(R8P),    parameter :: TOL = 64._R8P*epsilon(1._R8P)
 real(R8P), allocatable  :: a(:,:,:), p(:,:,:,:), d(:,:,:,:), c(:,:), v(:,:), vp(:), vm(:)
 real(R8P)               :: vr(2), vr0(2), rp, rm, x, scale, diff, diff_right, diff_left_max, vmax
 integer(I4P)            :: S, n_, m, nleft
+integer                 :: ur
 logical                 :: passed
 
 passed = .true.
 call seed_rng(1012_I4P)
+if (vv_report()) call vv_open('weno-c-adam.dat', ur, 'S vs-d1fix right-vs-adam left-differs n max-left-difference')
 do S=2, 4
    call tables(S)
    if (allocated(v)) deallocate(v, vp, vm)
@@ -58,8 +61,10 @@ do S=2, 4
    enddo
    print '(A,I0,A,ES9.2,A,ES9.2,A,I0,A,I0,A,ES9.2,A)', 'S=', S, ': vs D1-fixed ', diff, '; vs ADAM as is: right ', &
          diff_right, ', left differs on ', nleft, ' of ', N, ' (max ', diff_left_max, ')'
+   if (vv_report()) write(ur, '(I2,2ES12.4,2I7,ES12.4)') S, diff, diff_right, nleft, N, diff_left_max
    if (diff > TOL .or. diff_right > TOL .or. nleft == 0) passed = .false.
 enddo
+if (vv_report()) close(ur)
 if (.not.passed) error stop 'SETH centred WENO differs from ADAM (D1 fixed) beyond round-off'
 print '(A)', 'seth_test_weno_c_adam: ok'
 

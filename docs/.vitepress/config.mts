@@ -53,6 +53,7 @@ export default withMermaid({
           { text: 'A2 Critical points',          link: '/verification/accuracy/critical-points' },
           { text: 'A3 Whole-domain convergence', link: '/verification/accuracy/convergence' },
           { text: 'A4 Euler order of accuracy',  link: '/verification/accuracy/euler-order' },
+          { text: 'A5 Centred WENO',             link: '/verification/accuracy/centred-weno' },
         ] },
         { text: 'Shock capturing', collapsed: false, items: [
           { text: 'Overview',                  link: '/verification/shocks/' },

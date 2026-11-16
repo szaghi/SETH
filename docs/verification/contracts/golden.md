@@ -15,7 +15,7 @@ bound, passes them. The golden test pins the values themselves.
 |---|---|
 | Kernels | every scheme of the registry (WENO-Z also with $p = 2$), both states, and the weights ratios of WENO-JS |
 | Stencils | 64, exact in binary (no libm, no random-number generator): 16 smooth cubics with dyadic coefficients, 20 jumps (every cell boundary, two shapes), 12 scaled ($2^{-498} … 2^{96}$), 16 rough from an integer LCG |
-| File | `src/tests/golden/seth_golden_v6.txt`, 9472 values, written once by the gfortran debug build (its compiler and options in the header) |
+| File | `src/tests/golden/seth_golden_v7.txt`, 10240 values (R8P; `seth_golden_r4_v2.txt` in R4P), written once by a gfortran build (its compiler and options in the header) |
 | Tolerance | states: $10^{-13}$ of the stencil's magnitude; weights ratios: $10^{-9}$ (they read the weights themselves, which move by about $w\,\delta IS/(\varepsilon + IS)$ when the indicators round differently) |
 | Rule | a golden file is never edited; a deliberate change of results gets a new file and the test's default path |
 
@@ -33,6 +33,10 @@ Measured on 2026-11-15 (the final gate of the night):
 ## Findings
 
 - v2 (2026-11-15) adds the six WENO-Z and TENO interpolations. Its lines for the schemes of v1 are identical to v1's,
-  character for character, checked when v2 was written with the same build; v1 is kept.
+  character for character, checked when v2 was written with the same build; v1 is kept. v3 to v6 add TENO5-opt,
+  TENO5-AZ, TENO8, TENO5-A and TENO8-A the same way.
+- v7 (2026-11-16) adds the centred WENO4/6/8-C, written by the optimised gfortran build: v6's 2368 lines, written by
+  the debug build, are its first lines character for character, so the two builds agree bitwise on every older
+  value. R4P: `seth_golden_r4_v2.txt` adds them to `seth_golden_r4_v1.txt` the same way.
 - The inputs are exact in binary: an earlier version built them with libm and differed between gfortran -O0 and -O3
   before any kernel ran.

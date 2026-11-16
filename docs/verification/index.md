@@ -3,7 +3,7 @@
 Every capability of SETH is backed by a verification case: a Fortran program in `src/tests/` that runs the kernels
 and asserts the result against something it shares no code with, such as an exact solution, a fine reference, a
 published number, a theorem or ADAM's own code. The same programs are the test suite (`bash scripts/run_tests.sh`
-runs all 34, on six compiler builds and on the GPU), and with `SETH_VV_DIR` set they run every scheme on the report
+runs all 37, on six compiler builds and on the GPU), and with `SETH_VV_DIR` set they run every scheme on the report
 grids and write the data from which these pages are drawn (`scripts/run_vv.sh`). The figures are real SETH results
 and can be regenerated after any change of the kernels.
 
@@ -43,7 +43,7 @@ card says what kind of check it is:
 The findings that change how the kernels should be used, each documented on its page:
 
 - The higher-order interpolations need a positivity safeguard near vacuum, and every interpolation on strong blast
-  waves; on the Woodward–Colella blast so do WENO9-JS and the WENO-Z (but Z3) and TENO reconstructions
+  waves; on the Woodward–Colella blast so do WENO9-JS, WENO8-C and the WENO-Z (but Z3) and TENO reconstructions
   ([S3](./shocks/test123), [S5](./shocks/blast)). SETH provides one: `seth_positivity_euler`, the flux limiter of
   Hu, Adams & Shu ([API](/guide/api#positivity-limiter), [C7](./contracts/positivity)). The flux matters as much as
   the scheme: with Roe's flux splitting with entropy fix instead of global Lax–Friedrichs, WENO-Z5, TENO5-opt, TENO6,
@@ -57,6 +57,8 @@ The findings that change how the kernels should be used, each documented on its 
   ([S6](./shocks/burgers)).
 - TENO6 is anti-dissipative in a narrow band near $\vartheta \approx 0.47\pi$ and leaves grid-scale packets behind a
   shock undamped ([F2](./spectral/adr), [S6](./shocks/burgers)).
+- The centred WENO6-C and WENO8-C leave such packets too, without any anti-dissipation, and WENO8-C is not ENO for a
+  jump in its two outer cells ([A5](./accuracy/centred-weno), [S6](./shocks/burgers)).
 
 ## Accuracy
 
@@ -72,6 +74,8 @@ interpolations, and inside a complete Euler solver. [Group page](./accuracy/).
 [![Whole-domain convergence](/verification/convergence.png)<strong>Whole-domain convergence</strong><span>$L_\infty$ over every node of Henrick's field, operator and interpolation, critical points included</span><em>physics</em>](./accuracy/convergence)
 
 [![Euler order of accuracy](/verification/euler-order.png)<strong>Euler: order of accuracy</strong><span>a density wave through the complete 1-D Euler solver, both paths, the limiter inactive</span><em>physics</em>](./accuracy/euler-order)
+
+[<strong>Centred WENO</strong><span>orders 4, 6, 8; as ENO as its upwind part but in WENO8-C's outer cells; ADAM's scheme with D1 fixed</span><em>physics, contract</em>](./accuracy/centred-weno)
 
 </div>
 

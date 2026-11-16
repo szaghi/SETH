@@ -1,6 +1,6 @@
 # Test programs
 
-`fobis build --mode tests-gnu && bash scripts/run_tests.sh` runs 35 programs (`fpm test` the same set). Every one
+`fobis build --mode tests-gnu && bash scripts/run_tests.sh` runs 37 programs (`fpm test` the same set). Every one
 exits non-zero on a violated assertion. They pass with gfortran 16.2, nvfortran 26.9 and ifx 2026.2, debug (all
 checks and floating-point traps on) and optimised, and in the OpenACC build on the GPU. Random stencils come from a
 fixed, printed seed (`SETH_TEST_SEED` overrides it), so a failure reproduces.
@@ -10,8 +10,8 @@ fixed, printed seed (`SETH_TEST_SEED` overrides it), so a failure reproduces.
 The tests compute in the library's kind `R_P`. Their kind-sensitive literals (tolerances, regularisers, data
 magnitudes) live in `src/tests/seth_test_parameters.F90`, one set per kind, and `scripts/check_literals.py` fails on
 any left in a program. The R4P build (`fobis build --mode tests-gnu-r4 && bash scripts/run_tests.sh --exe-dir exe-r4`)
-leaves out the two comparisons with ADAM, which are R8P only, has its own golden file
-(`src/tests/golden/seth_golden_r4_v1.txt`), and passes its 33 programs on gfortran, nvfortran and ifx and in the
+leaves out the three comparisons with ADAM, which are R8P only, has its own golden file
+(`src/tests/golden/seth_golden_r4_v2.txt`), and passes its 34 programs on gfortran, nvfortran and ifx and in the
 OpenACC build on the GPU. Its expectations are measured in R4P, the worst of the three compilers plus 5 %, each with
 its derivation next to it; the R8P set keeps every test as it was. What R4P changes:
 
@@ -40,6 +40,8 @@ its derivation next to it; the R8P set keeps every test as it was. What R4P chan
 | `seth_test_weno_js_eno` | WENO-JS across a unit step at every cell boundary | [C2](./contracts/properties) |
 | `seth_test_wenoz` | WENO-Z order, ENO, mirror; reconstruction and interpolation | [A1](./accuracy/order-of-accuracy), [C2](./contracts/properties) |
 | `seth_test_teno` | TENO order, linear scheme on smooth data, cutoff, large jump, mirror; reconstruction and interpolation | [A1](./accuracy/order-of-accuracy), [C2](./contracts/properties) |
+| `seth_test_weno_c` | centred WENO order 4, 6, 8, mirror, constants, large jump, a unit step against its upwind WENO-JS | [A5](./accuracy/centred-weno) |
+| `seth_test_weno_c_adam` | the centred WENO equal to ADAM's routine with D1 fixed, and ADAM's as it is different on the left state (R8P only) | [A5](./accuracy/centred-weno) |
 | `seth_test_properties` | exactness, constants, translation, mirror, scaling, robustness, on every scheme | [C2](./contracts/properties) |
 | `seth_vv_hybrid` | hybrids in the 1-D Euler harness: the sensor quiet on a smooth wave, the central/TENO5 junction at fifth order, conservation with random switching, Sod/Lax/Shu–Osher against the pure schemes | [H3](./hybrids/harness) |
 | `seth_vv_roe` | the Roe flux path with entropy fix of the 1-D Euler harness: design order on a smooth wave (the fix silent), Sod and Lax, the transonic rarefaction with and without the fix, the 123 problem; the blast waves at Fu et al.'s cutoffs without the limiter ([issue #5](https://github.com/szaghi/SETH/issues/5)) | [S5](./shocks/blast#the-flux-issue-5) |

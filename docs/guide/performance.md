@@ -60,11 +60,20 @@ kernel the cost budget of the roadmap (issue #4) was set against, on the GPU.
 | `seth_sensor_lcr` | 0.298 | 15.9 | — | — | — |
 | sensor + `seth_linear5` | 0.393 | 18.2 | 0.40 | WENO-Z5 | 0.6 |
 | `seth_keep_pe6` | 0.777 | 31.8 | 1.00 | ADAM's `compute_kep_flux` | 1.0 |
+| `seth_weno4_c` | 0.783 | 13.9 | **1.66** | WENO3-JS (0.473, 8.1) | 1.4 |
+| `seth_weno6_c` | 1.316 | 27.5 | **1.33** | WENO5-JS | 1.3 |
+| `seth_weno8_c` | 2.151 | 39.7 | 1.20 | WENO7-JS | 1.25 |
 
 Bold: over the budget set before coding, a finding rather than an edit of the budget. On one CPU core the picture
 differs: the adaptive cutoff of TENO5-A costs nothing measurable (80.0 against 79.5) while it costs 41% on the GPU,
 whose FP64 rate (1/64 of FP32 on this card) makes every division count; the data-centre GPU was not measured. The
 old kernels did not slow down (`bench_compare.py`: ok on both machines).
+
+The centred WENO (2026-11-16, four GPU runs and three CPU runs, `notes/m4-bench-data/30-weno-c-*`): its blend adds a
+near-constant 0.31–0.35 ns per face on the GPU (a central dot product and two FP64 divisions per state), so the
+budget set as a ratio is missed by the two cheapest kernels, WENO4-C most; on one core the ratios are 1.71 (WENO4-C),
+1.13 and 1.09 with gfortran, 1.09, 1.12 and 1.04 with nvfortran. The old kernels did not slow down
+(`bench_compare.py`: ok on both machines).
 
 ## Single precision
 

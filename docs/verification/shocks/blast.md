@@ -57,8 +57,8 @@ peaks of the collision.*
 
 ## Findings
 
-- **Without the limiter only WENO3/5/7-JS and WENO-Z3 on the splitting path stay positive** (WENO5-JS asserted);
-  WENO9-JS, the higher-order WENO-Z, every TENO and every interpolation lose positivity. WENO-Z5, TENO5 and TENO6
+- **Without the limiter only WENO3/5/7-JS, WENO-Z3 and WENO4/6-C on the splitting path stay positive** (WENO5-JS
+  asserted); WENO9-JS, the higher-order WENO-Z, WENO8-C, every TENO and every interpolation lose positivity. WENO-Z5, TENO5 and TENO6
   lose it in the low-pressure gap before the collision. WENO-Z7 fails within the first three
   steps, next to the initial 1000 : 0.01 jump. WENO-Z9 runs with $p = 2$ ([Burgers](./burgers)) and loses
   positivity too; with $p = 1$ it undershot that jump by 0.6% of its height after one step, enough to drive the
@@ -98,7 +98,8 @@ $L_1$, the transonic rarefaction of Toro's test 1 resolved with the fix and brok
 (error 4–13 times larger).
 
 Same case and grid as above (N = 400 against 6400 cells), every reconstruction; positive without the limiter at CFL
-0.5 (the Roe path also at Fu et al.'s 0.6, with the same outcome for every scheme), then with the limiter:
+0.5 (the Roe path also at Fu et al.'s 0.6, with the same outcome for every scheme but WENO6-C, positive at 0.5
+only), then with the limiter:
 
 | Scheme | positive, GLF | positive, Roe | limited faces, GLF | limited faces, Roe | $L_1(\rho)$, GLF | $L_1(\rho)$, Roe |
 |---|---|---|---|---|---|---|
@@ -119,11 +120,15 @@ Same case and grid as above (N = 400 against 6400 cells), every reconstruction; 
 | TENO8 | **no** | yes | 418 | 2 | 0.0568 | 0.0463 |
 | TENO5-A | **no** | **no** | 1930 | 21 | 0.0865 | 0.0527 |
 | TENO8-A | **no** | **no** | 760 | 3 | 0.0557 | 0.0429 |
+| WENO4-C | yes | yes | 0 | 0 | 0.1904 | 0.1178 |
+| WENO6-C | yes | yes | 1 | 3 | 0.1190 | 0.0754 |
+| WENO8-C | **no** | **no** | 4 | 1623 | 0.1013 | 0.0703 |
 
 - **The answer is: largely, not entirely.** With the Roe flux, WENO-Z5, TENO6 at Fu et al.'s $C_T = 10^{-7}$, TENO5-opt,
   TENO6-opt, TENO6-NENO6 and TENO8 need no safeguard; TENO5 at their $C_T = 10^{-5}$ still loses positivity (36
   limited faces instead of 515), and so do TENO5-AZ, TENO5-A, TENO8-A, WENO-Z7/9 and WENO9-JS. The Roe flux is not
-  uniformly more robust: WENO7-JS, positive with GLF, is not with it. $L_1$ falls by 14–40% on every scheme: the
+  uniformly more robust: WENO7-JS, positive with GLF, is not with it, and WENO8-C needs 1623 limited faces with it
+  against 4 with GLF ([centred WENO](../accuracy/centred-weno)). $L_1$ falls by 14–40% on every scheme: the
   global splitting dissipates everywhere at the rate of the largest wave speed of the domain (that of the 1000 : 0.01
   jump), the Roe flux at the local one.
 - **What does it** (one-off variants of the harness on the quick schemes, recorded in the note): the entropy fix plays

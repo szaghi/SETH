@@ -17,6 +17,9 @@
 | TENO8 | 0.05682 | **no** | 418 |
 | TENO5-A | 0.08653 | **no** | 1930 |
 | TENO8-A | 0.05566 | **no** | 760 |
+| WENO4-C | 0.1904 | yes | 0 |
+| WENO6-C | 0.119 | yes | 1 |
+| WENO8-C | 0.1013 | **no** | 4 |
 | WENO3-JS interp. | 0.1256 | **no** | 5494 |
 | WENO5-JS interp. | 0.07447 | **no** | 5933 |
 | WENO7-JS interp. | 0.06314 | **no** | 6186 |

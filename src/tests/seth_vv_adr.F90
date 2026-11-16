@@ -190,6 +190,9 @@ contains
       call dsc(TENO8_NC, TENO8_MAXW, TENO8_CLO, TENO8_CW, TENO8_P, TENO8_D, c)
    case('teno5_a') ; call dsc(TENO5_NC, TENO5_MAXW, TENO5_CLO, TENO5_CW, TENO5_P, TENO5_D, c)
    case('teno8_a') ; call dsc(TENO8_NC, TENO8_MAXW, TENO8_CLO, TENO8_CW, TENO8_P, TENO8_D, c)
+   case('weno4_c') ; c = 0._R_P ; c(CEN4_LO:CEN4_HI) = CEN4_C ; dissipative = .false. ! the central row (phi -> 0)
+   case('weno6_c') ; c = 0._R_P ; c(CEN6_LO:CEN6_HI) = CEN6_C ; dissipative = .false.
+   case('weno8_c') ; c = 0._R_P ; c(CEN8_LO:CEN8_HI) = CEN8_C ; dissipative = .false.
    case default ; error stop 'background: unknown scheme'
    end select
    endsubroutine background

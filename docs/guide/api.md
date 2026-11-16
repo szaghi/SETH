@@ -66,6 +66,17 @@ call seth_wenoz<N>       (vp, vm, eps, p, rp, rm)   ! N = 3, 5, 7, 9; vp, vm(1-S
 call seth_wenoz<N>_interp(vp, vm, eps, p, rp, rm)   ! the same from point values at the cell centres
 ```
 
+## Centred WENO
+
+```fortran
+call seth_weno4_c(vp, vm, eps, rmu, rp, rm)   ! vp, vm(-1:2); WENO3-JS blended with the 4th-order central row
+call seth_weno6_c(vp, vm, eps, rmu, rp, rm)   ! vp, vm(-2:3); WENO5-JS, 6th order
+call seth_weno8_c(vp, vm, eps, rmu, rp, rm)   ! vp, vm(-3:4); WENO7-JS, 8th order
+```
+
+`eps` > 0 (`SETH_WENO_JS_EPS`) and `rmu` (1, or `seth_weno_descaling`) as for WENO-JS: both go to the upwind weights
+and to the blend's indicators. WENO8-C is not ENO for a jump in its two outer cells ([Schemes](/guide/schemes#centred-weno-weno4-6-8-c)).
+
 ## TENO
 
 ```fortran

@@ -26,16 +26,22 @@ use seth_test_parameters, only : BIG_JUMP, CENTRED_ORDER_LOSS, ORDERS_AT_FLOOR_O
 use seth_test_rng, only : seed_rng
 use seth_test_functions, only : gfun, gavg
 use seth_z_teno_tables, only : CEN8_C
+use seth_vv_cases, only : vv_report, vv_open
 implicit none
 real(R_P),    parameter :: XF = 0.3_R_P
 integer(I4P), parameter :: NH = 6_I4P
 real(R_P)               :: vp(-4:5), vm(-4:5), rp, rm, up, um, h, err(2,NH), order, floor_, worst, worst_up, x, d
 integer(I4P)            :: s, j, m, side, jump, n_
+integer                 :: uo, us
 logical                 :: passed
 
 passed = .true.
 call seed_rng(1011_I4P)
 floor_ = POINT_FLOOR*epsilon(1._R_P)
+if (vv_report()) then
+   call vv_open('weno-c-orders.dat', uo, 'scheme state observed-order error-finest')
+   call vv_open('weno-c-step.dat', us, 'scheme worst-overshoot upwind-worst-overshoot')
+endif
 do s=2, 4
    ! 1. order
    do j=1, NH
@@ -56,6 +62,8 @@ do s=2, 4
       enddo
       print '(A,I0,A,A,A,F6.2,A,6ES9.2)', 'WENO', 2*s, '-C state=', merge('+', '-', side == 1), ' order=', order, &
             ' errors', err(side,:)
+      if (vv_report()) write(uo, '(A,I0,A,1X,A1,F8.3,ES12.4)') 'weno', 2*s, '_c', merge('+', '-', side == 1), order, &
+                                                               err(side,NH)
       if (order < 2*s - 0.3_R_P - CENTRED_ORDER_LOSS .and. .not.(ORDERS_AT_FLOOR_OK .and. order < 0._R_P)) &
          call fail('order below 2S - 0.3')
    enddo
@@ -104,8 +112,10 @@ do s=2, 4
       enddo
    enddo
    print '(A,I0,A,ES9.2,A,ES9.2)', 'WENO', 2*s, '-C worst overshoot ', worst, ', its upwind WENO-JS ', worst_up
+   if (vv_report()) write(us, '(A,I0,A,2ES12.4)') 'weno', 2*s, '_c', worst, worst_up
    if (worst > worst_up + 1.e-3_R_P + merge(abs(CEN8_C(4)), 0._R_P, s == 4)) call fail('overshoot above the bound')
 enddo
+if (vv_report()) then ; close(uo) ; close(us) ; endif
 if (.not.passed) error stop 'centred WENO test failed'
 print '(A)', 'seth_test_weno_c: ok'
 

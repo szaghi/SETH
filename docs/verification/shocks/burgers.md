@@ -69,6 +69,14 @@ after the shock at $N = 80$.*
   shock with an upstream group velocity, and TENO6 does not damp them. The [ADR](../spectral/adr) shows why: TENO6 is
   anti-dissipative in a narrow band near $\vartheta/\pi \approx 0.47$, a wavelength of about $4h$, where its cutoff
   starts to act.
+- **WENO6-C and WENO8-C leave a packet of the same kind**, sign-alternating, upstream of the shock: at 80 cells
+  $1.9\cdot10^{-5}$ and $1.8\cdot10^{-4}$ at most, against $1.0\cdot10^{-5}$ for WENO7-JS. Their smooth-region error
+  then converges at first order or below on the finest pairs ($2.6\cdot10^{-6}$ and $3.6\cdot10^{-6}$ at 640 cells,
+  against $10^{-10}$ and $3\cdot10^{-12}$ for WENO5-JS and WENO7-JS, their upwind parts), where before the shock both
+  converge at 5 to 8. The ADR does not explain it: neither is anti-dissipative ([ADR](../spectral/adr)). A hypothesis, not
+  tested: the blend's detector reads the smooth background, $\phi$ stays small, and a small grid-scale packet riding
+  on that background meets the central row, which does not dissipate. WENO4-C stays at WENO3-JS's level
+  ($6\cdot10^{-7}$).
 - The overshoot after the shock stays below $10^{-4}$ for most schemes and below $10^{-2}$ for all but one (asserted).
   WENO-Z7 reaches $6\cdot10^{-3}$, WENO-Z9 $9\cdot10^{-4}$.
 - **TENO5-AZ overshoots behind the shock**: $3.0\cdot10^{-2}$ at 160 cells, $3.5\cdot10^{-2}$ at 320,

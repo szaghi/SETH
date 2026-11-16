@@ -123,3 +123,23 @@ Li, Y., Chen, C., Ren, Y.-X. (2022). *J. Comput. Phys.* 448:110770, §3.2. Wan, 
 | Liang & Fu's eight-point a_l (0.8441336457279522, -0.2441336457279522, 0.0570096576929319, -0.006723831837710873) | quoted; order 6 measured | Liang & Fu 2024b, after Eq. (46) |
 | Ducros phi = theta^2/(theta^2 + omega^2 + eps) | from ADAM's compute_ducros (W), equal to it bitwise with the override off | |
 | De Vanna's psi = max(-div u/sqrt(div^2 u + rot^2 u + eps), 0), eps = (u_inf/delta_0)^2 | quoted | De Vanna et al. 2023a, Eq. (9) |
+
+## Centred WENO (6.3)
+
+ADAM's `weno_reconstruct_centered` (`adam_weno_object.F90`, added in ADAM commit 8a56ff17, 2025-10-20, "add new WENO
+schemes (untested)"); no paper is cited in ADAM's code or documentation, and none was found.
+
+| Item | Status | Where |
+|---|---|---|
+| The upwind part: WENO-JS of order 2S-1 on its candidates | quoted (Jiang & Shu 1996, as for `seth_weno*_js`) | — |
+| The central rows on cells 1-S..S: (-1, 7, 7, -1)/12, (1, -8, 37, 37, -8, 1)/60, (-3, 29, -139, 533, 533, -139, 29, -3)/840 | derived: the reconstruction of order 2S from the cell averages (`scripts/gen_z_teno_tables.py`, check 7), equal to ADAM's `initialize_centered_S2..4` | ADAM |
+| The blend r = r_c + phi (r_up - r_c), phi = max over k of abs(I_{k+1} - I_k)/(I_{k+1} + I_k), I_k = (v_k - v_{k-1})^2 + eps on cells -1..2 | unsourced: ADAM's own construction, ported as it is | ADAM l.1016-1023 |
+| phi in terms of Ren's ratio: with a, b two consecutive differences and eps = 0, abs(b^2 - a^2)/(a^2 + b^2) = sqrt(1 - psi^2), psi = 2 abs(ab)/(a^2 + b^2), Ren et al.'s smoothness ratio (Li, Chen & Ren 2022, Eqs. (48)-(53)) | derived here (an identity: the two squares sum to 1) | — |
+| D1: ADAM's left-state weights computed on the unshifted cells | found by the audit (`notes/adam-weno-audit.md`); fixed by construction (the upwind part is `seth_weno*_js`); confirmed by `seth_test_weno_c_adam` | ADAM l.1001-1007 |
+| The descaler in the blend's indicators, I_k = (rmu dv)^2 + eps | SETH's choice (rmu = 1 is ADAM's arithmetic) | — |
+
+Measured: orders 4.00/4.07, 6.03/6.00, 7.99/8.19 at a point (`seth_test_weno_c`); at first-order critical points
+1, 3, 5 and at second-order ones 2, 2, 4 (`seth_test_critical_points`), the rates of the upwind WENO-JS, because phi
+is O(1) where a difference vanishes; WENO8-C overshoots 1/280 at a step in its outer cells (-3, 4), which the blend's
+detector (cells -1..2) does not read. ADAM's S = 1 (`weno-c-2`, documented as second order) never reaches the blend
+and is WENO1: not ported.

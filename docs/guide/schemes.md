@@ -319,6 +319,52 @@ measures:
 "TENO6-opt" denotes different weights in different papers; SETH's is the founding paper's. Lowering $C_T$ keeps more
 candidates (less dissipation, less robustness); the defaults are the papers'.
 
+## Centred WENO: WENO4/6/8-C
+
+ADAM's centred WENO (`WENO_C_4/6/8`), ported with its defect D1 fixed. With $S$ candidates, on the big stencil of
+cells $i+1-S..i+S$ around the face, it blends two reconstructions of the same face value:
+
+$$
+u^-_{i+1/2} = r_c + \phi\,(r_{\rm up} - r_c),\qquad
+\phi = \max_{k=1,2} \frac{\lvert I_k - I_{k-1}\rvert}{I_k + I_{k-1}},\qquad
+I_k = \big(r_\mu (\bar u_{i+k} - \bar u_{i+k-1})\big)^2 + \varepsilon,\ k = 0, 1, 2,
+$$
+
+with $r_{\rm up}$ the WENO-JS of order $2S-1$ (`seth_weno{3,5,7}_js`, on its own left-biased cells) and $r_c$ the
+central reconstruction of order $2S$ on all $2S$ cells:
+
+| Kernel | $S$ | Upwind part | Central row (cells $i+1-S..i+S$) | Order |
+|---|---|---|---|---|
+| `seth_weno4_c` | 2 | WENO3-JS | $\frac1{12}(-1, 7, 7, -1)$ | 4 |
+| `seth_weno6_c` | 3 | WENO5-JS | $\frac1{60}(1, -8, 37, 37, -8, 1)$ | 6 |
+| `seth_weno8_c` | 4 | WENO7-JS | $\frac1{840}(-3, 29, -139, 533, 533, -139, 29, -3)$ | 8 |
+
+On smooth data $\phi = O(h)$ and the error is $O(h^{2S})$: measured 4.00, 6.03, 7.99 at a point
+([test programs](/verification/unit-tests)). Where a difference of the cells $i-1..i+2$ vanishes (a critical
+point), $\phi = O(1)$ and the state is the upwind one: the orders there are WENO-JS's, 1, 3, 5 at first-order
+critical points. The right state is the same on the mirrored stencil. $r_\mu$ (`rmu`) is the descaler of the
+upwind weights and of the $I_k$ alike: $r_\mu = 1$ is ADAM's arithmetic. $\varepsilon > 0$ (`eps`,
+`SETH_WENO_JS_EPS`) regularises both.
+
+What it is, and what it is not:
+
+- **D1 fixed.** ADAM computes the left state's weights on the unshifted cells, one cell off (the audit's D1). SETH's
+  upwind part is its WENO-JS kernel, which takes the face-offset stencil, so the fix is by construction;
+  `seth_test_weno_c_adam` shows SETH equal to ADAM's routine with that one line corrected (to $6\cdot10^{-16}$ of the
+  data), and ADAM's as it is different on the left state for most random stencils.
+- **The detector reads cells $i-1..i+2$ for every $S$.** WENO8-C's outer cells $i-3$ and $i+4$ are outside it: a step
+  there leaves $\phi = 0$, and the central row's edge coefficient $-\tfrac3{840}$ passes, an overshoot of $\tfrac1{280}$
+  of the jump. WENO6-C's edge coefficient $\tfrac1{60}$ is positive: a precursor of the jump inside the data's
+  range, not an overshoot.
+- **Behind a shock, smooth regions converge slowly.** After the Burgers shock forms, WENO6-C and WENO8-C leave a
+  grid-scale packet upstream of it, and their smooth-region error converges at first order or below, about
+  $3\cdot10^{-6}$ at 640 cells where their upwind parts reach $10^{-10}$ and below
+  ([S6](/verification/shocks/burgers)). WENO8-C also loses positivity on the blast wave
+  ([S5](/verification/shocks/blast)).
+- **No paper.** The blend is ADAM's own construction; its pair term is $\sqrt{1-\psi^2}$ of Ren et al.'s smoothness
+  ratio $\psi = 2\lvert ab\rvert/(a^2+b^2)$ (for $\varepsilon = 0$, an identity): a continuous form of the switch of the
+  hybrid schemes ([Hybrids](#hybrids)). ADAM's $S = 1$ (`weno-c-2`) never reaches the blend and is WENO1: not ported.
+
 ## Interpolation with WENO-Z and TENO
 
 `seth_wenoz<N>_interp` and `seth_teno<5|6>_interp` interpolate the face value from point values at the cell centres,
@@ -426,6 +472,7 @@ the central–WENO and central–TENO hybrids of the turbulence literature.
 | WENO-JS | `seth_weno{1,3,5,7,9}_js` (+ `_wr`, `_interp`, `_interp_wr`) | $S = 1..5$, width $S$ | $2S-1$ | `rmu` |
 | WENO-Z | `seth_wenoz{3,5,7,9}` (+ `_interp`) | $S = 2..5$, width $S$ | $2S-1$ | `p` |
 | TENO | `seth_teno5`, `seth_teno6` (+ `_interp`), `seth_teno5_opt`, `seth_teno5_az`, `seth_teno6_opt`, `seth_teno6_neno6`, `seth_teno8`, `seth_teno5_a`, `seth_teno8_a` | 3 to 6, incremental | 5, 6, 8-point 6 (5-opt 4, 6-opt 5, NENO6 4) | `ct` (TENO5-AZ: `ct`, `rmu`; -A: `cr`, `xi`, `a1`, `a2`, `rmu`) |
+| centred WENO | `seth_weno{4,6,8}_c` | WENO-JS ($S = 2..4$) blended with the central row on $2S$ cells | $2S$ | `eps`, `rmu` |
 | positivity | `seth_positivity_euler`, `seth_euler_admissible` | | | |
 
 Arguments and constants: [API](/guide/api). Stencil layout: [Conventions](/guide/conventions).
