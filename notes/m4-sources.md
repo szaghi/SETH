@@ -38,3 +38,21 @@ Tang, S. (2024). *Comput. Phys. Commun.* 299:109158.
 Not in the paper: the `rmu` argument. The cutoff compares a pure number with tau, which has the dimension of the data
 squared; SETH multiplies tau by rmu^2 (rmu = 1: Tang's form). Measured: the descaled form is bitwise scale invariant
 and loses the critical-point property (order 2 at n_cp = 2).
+
+## TENO8 (step 2.4)
+
+Liang, T., Fu, L. (2024b). *Comput. Phys. Commun.* 302:109236. Fu, Hu & Adams (2016), Tables 1-2. Hong, Ye & Ye
+(2022), *J. Comput. Phys.*
+
+| Item | Status | Where |
+|---|---|---|
+| Candidates S0..S5, widths 3, 3, 3, 4, 4, 5 on i-3..i+4, and their face coefficients | quoted and derived (generator: equal) | Fu 2016, Table 1, Eq. (21) |
+| Max-order weights (30, 18, 4, 12, 1, 5)/70 | derived; equal to Table 2, K = 8 | Fu 2016, Table 2 |
+| tau_K = abs(beta_K - (beta_1 + beta_2 + 4 beta_0)/6), O(dx^6) | quoted | Liang & Fu, Eq. (15) |
+| tau_8 written out over 62270208000 | quoted; the eight f_{i+4} terms equal the generator's exact beta_8 | after Eq. (15) |
+| Background face coefficients (16 digits) | quoted; the weights reproduce them within 1.6e-15 | Eq. (46) |
+| Linear weights d_0..d_5 (16 digits; they sum to 1 + 2.9e-15) | quoted; order 6 checked to 1e-12 | after Eq. (46) |
+| C_T = 1e-7 for TENO8 | quoted | Hong et al. 2022, section 4 ("C_T = 10^-7 is adopted for TENO6 and TENO8") |
+
+Measured, not in any paper read: the nonlinear ADR of TENO8 is anti-dissipative (3.2e-3) at theta/pi 0.36-0.45 for
+C_T = 1e-7, and no mode of that band grows when advected.

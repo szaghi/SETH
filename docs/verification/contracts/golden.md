@@ -15,7 +15,7 @@ bound, passes them. The golden test pins the values themselves.
 |---|---|
 | Kernels | every scheme of the registry (WENO-Z also with $p = 2$), both states, and the weights ratios of WENO-JS |
 | Stencils | 64, exact in binary (no libm, no random-number generator): 16 smooth cubics with dyadic coefficients, 20 jumps (every cell boundary, two shapes), 12 scaled ($2^{-498} … 2^{96}$), 16 rough from an integer LCG |
-| File | `src/tests/golden/seth_golden_v4.txt`, 8704 values, written once by the gfortran debug build (its compiler and options in the header) |
+| File | `src/tests/golden/seth_golden_v5.txt`, 8960 values, written once by the gfortran debug build (its compiler and options in the header) |
 | Tolerance | states: $10^{-13}$ of the stencil's magnitude; weights ratios: $10^{-9}$ (they read the weights themselves, which move by about $w\,\delta IS/(\varepsilon + IS)$ when the indicators round differently) |
 | Rule | a golden file is never edited; a deliberate change of results gets a new file and the test's default path |
 

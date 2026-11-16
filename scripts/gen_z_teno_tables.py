@@ -206,6 +206,19 @@ TENO6_OPT_D = ['0.462_R8P', '0.3_R8P', '0.054_R8P', '0.184_R8P']
 # The optimised backgrounds of Fu, Hu & Adams 2016, section 4, Eq. (31): eta g1 + (1 - eta) g2, two sub-schemes of
 # order K-1 on the K-point stencil: Eq. (32) for K = 5 (eta = 0.2: TENO5-opt), Eq. (33) for K = 6 (eta = 0.54:
 # TENO6-opt). Cells by offset (i -> 0), coefficients as printed.
+# The eight-point TENO of Liang & Fu 2024b (Comput. Phys. Commun. 302:109236), section 3.2: its sixth-order background,
+# the face coefficients of Eq. (46) and the linear weights printed after it (16 digits, from a numerical optimisation:
+# quoted, and checked below against Eq. (46), Fu et al.'s Table 1 candidates and the order)
+TENO8_D = ['0.4130855804023061_R8P', '0.2193140179474727_R8P', '0.06459052081827904_R8P', '0.1439236310125986_R8P',
+           '0.02746675592227204_R8P', '0.1316194938970745_R8P']
+TENO8_EQ46 = [Fr('-0.006866688980568011'), Fr('0.05128582585522106'), Fr('-0.1968478198727312'),
+              Fr('0.6552858258552222'), Fr('0.6452858258552218'), Fr('-0.1908478198727314'),
+              Fr('0.04928582585522098'), Fr('-0.006580974694853729')]  # f_{i-3} .. f_{i+4}
+# tau_8 = |beta_8 - (beta_1 + beta_2 + 4 beta_0)/6| as printed after Eq. (15), over 62270208000: the terms with f_{i+4},
+# which only beta_8 contains (f_{i+4} f_{i+4}, f_{i+3} f_{i+4}, f_{i+2} f_{i+4}, f_{i+1} f_{i+4}, f_i f_{i+4},
+# f_{i-1} f_{i+4}, f_{i-2} f_{i+4}, f_{i-3} f_{i+4})
+TAU8_PRINTED = {(4, 4): 75349098471, (3, 4): -1078504915264, (2, 4): 3263178215782, (1, 4): -5401061230160,
+                (0, 4): 5274436892970, (-1, 4): -3038037798592, (-2, 4): 956371298594, (-3, 4): -127080660272}
 OPT_SUBSCHEMES = {
     5: ([-2, -1, 0, 1], [Fr(1, 12), Fr(-5, 12), Fr(13, 12), Fr(3, 12)],
         [-1, 0, 1, 2], [Fr(-1, 12), Fr(7, 12), Fr(7, 12), Fr(-1, 12)]),
@@ -234,6 +247,8 @@ SCHEMES = {
     # downwind), i.e. |beta_S2 + beta_S1 - 2 beta_S0| in TENO labels; the cutoff min(C_T, tau) is the kernel's
     'TENO5_AZ': (TENO_CELLS[:3], [-2, 1, 1], None, 0, 'max', 'teno', 4,
                  'TENO5-AZ (Tang 2024): tau = |beta_1 + beta_2 - 2 beta_0| (TENO labels), cutoff min(C_T, tau)'),
+    'TENO8': (TENO8_CELLS, [Fr(-4, 6), Fr(-1, 6), Fr(-1, 6), 0, 0, 0], list(range(-3, 5)), 1, TENO8_D, 'teno', 6,
+              'TENO8: eight-point TENO with the sixth-order background of Liang & Fu 2024b'),
     'TENO6_OPT': (TENO_CELLS, [Fr(-4, 6), Fr(-1, 6), Fr(-1, 6), 0], list(range(-2, 4)), 1, TENO6_OPT_D, 'teno', 6,
                   'TENO6-opt: TENO6 with the optimised linear weights of Fu, Hu & Adams 2016 (5th order)'),
     'TENO6_NENO6': (TENO_CELLS, [Fr(-4, 6), Fr(-1, 6), Fr(-1, 6), 0], list(range(-2, 4)), 1, TENO6_NENO6_D, 'teno', 6,
@@ -378,8 +393,31 @@ def run_checks(adam_source: str) -> None:
         if d != [_js.rational(a[2, k]) for k in range(S)] or order != 2 * S - 1:
             check_fail(f'WENO S={S}: derived linear weights {d} differ from ADAM\'s')
     # the order of the quoted optimised TENO6 weights: Fu's lose one order, NENO6's two
+    # the eight-point TENO: Fu et al.'s max-order weights (Table 2, K = 8), then Liang & Fu's background (Eq. (46)), its
+    # weights (sum, order, face coefficients) and tau_8 (the printed f_{i+4} terms, exact)
+    d, order = max_order_weights(TENO8_CELLS, 'TENO8 max-order')
+    if d != [Fr(30, 70), Fr(18, 70), Fr(4, 70), Fr(12, 70), Fr(1, 70), Fr(5, 70)] or order != 8:
+        check_fail(f'TENO8 max-order weights {d} (order {order}) differ from Fu et al. Table 2, K = 8')
+    d8 = [Fr(w.replace('_R8P', '')) for w in TENO8_D]
+    if abs(float(sum(d8)) - 1) > 1e-14:  # printed to 16 digits: they sum to 1 + 2.9e-15
+        check_fail(f'TENO8 weights sum to {float(sum(d8))!r}')
+    face = {m: Fr(0) for m in range(-3, 5)}
+    for k, cells in enumerate(TENO8_CELLS):
+        for c, m in zip(face_coefficients(cells), cells):
+            face[m] += d8[k] * c
+    worst = max(abs(float(face[m] - e)) for m, e in zip(range(-3, 5), TENO8_EQ46))
+    print(f'  TENO8: face coefficients vs Liang & Fu Eq. (46): max difference {worst:.2e}')
+    if worst > 2e-15:
+        check_fail(f'TENO8: the weights do not reproduce Eq. (46) ({worst:.2e})')
+    gmat = indicator(list(range(-3, 5)))
+    for (a, b), num in TAU8_PRINTED.items():
+        mine = gmat[a + 3][b + 3] * (1 if a == b else 2)
+        if mine != Fr(num, 62270208000):
+            check_fail(f'TENO8: beta_8 coefficient of f_{a} f_{b} is {mine}, Liang & Fu print {num}/62270208000')
+    print('  TENO8: beta_8 equals the printed tau_8 on the eight f_{i+4} terms (exact)')
     for label, wq, want, cl in (('TENO6-opt', TENO6_OPT_D, 5, TENO_CELLS), ('TENO6-NENO6', TENO6_NENO6_D, 4, TENO_CELLS),
-                                ('TENO5-opt', opt_weights(TENO_CELLS[:3], 5, Fr(1, 5)), 4, TENO_CELLS[:3])):
+                                ('TENO5-opt', opt_weights(TENO_CELLS[:3], 5, Fr(1, 5)), 4, TENO_CELLS[:3]),
+                                ('TENO8 (Liang & Fu)', TENO8_D, 6, TENO8_CELLS)):
         dq = [Fr(w.replace('_R8P', '')) if isinstance(w, str) else w for w in wq]
         coefs = [face_coefficients(c) for c in cl]
         got = 0

@@ -36,3 +36,7 @@ which cite the paper; the provenance of every formula is in `notes/m2-sources.md
   TENO5-AZ: $\tau$ and the adaptive cutoff (Eqs. (19)–(20)) (read in the paper).
 - Zhang et al. (2024b). *J. Comput. Phys.* doi:10.1016/j.jcp.2024.112793 — TENO6 orders at critical points (via
   llm-wiki).
+- Liang, T., Fu, L. (2024b). A new high-order shock-capturing TENO scheme combined with skew-symmetric-splitting
+  method for compressible gas dynamics and turbulence simulation. *Comput. Phys. Commun.* 302:109236 — TENO8's
+  background: the face coefficients (Eq. (46)), the linear weights, $\tau_8$ (read in the paper).
+- Hong, Z., Ye, Z., Ye, K. (2022). *J. Comput. Phys.* — $C_T = 10^{-7}$ for TENO6 and TENO8 (read in the paper).

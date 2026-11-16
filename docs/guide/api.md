@@ -41,6 +41,7 @@ call seth_teno5_az   (vp, vm, eps, ct, rmu, rp, rm) ! ct = lambda_d; rmu = 1 (Ta
 call seth_teno6      (vp, vm, eps, ct, rp, rm)
 call seth_teno6_opt  (vp, vm, eps, ct, rp, rm)
 call seth_teno6_neno6(vp, vm, eps, ct, rp, rm)
+call seth_teno8     (vp, vm, eps, ct, rp, rm)   ! vp, vm(-3:4)
 call seth_teno5_interp(vp, vm, eps, ct, rp, rm)   ! interpolation from point values at the cell centres
 call seth_teno6_interp(vp, vm, eps, ct, rp, rm)
 ```
@@ -49,7 +50,7 @@ The interpolation kernels take the same arguments as the reconstruction ones; TE
 (their weights are tuned for the reconstruction).
 
 `eps = SETH_TENO_EPS` ($10^{-40}$); `ct` the cutoff: `SETH_TENO5_CT`, `SETH_TENO5_OPT_CT`, `SETH_TENO5_AZ_CT` (the ceiling of the adaptive one), `SETH_TENO6_CT`, `SETH_TENO6_OPT_CT`,
-`SETH_TENO6_NENO6_CT` (see [Schemes](./schemes)).
+`SETH_TENO6_NENO6_CT`, `SETH_TENO8_CT` (see [Schemes](./schemes)).
 
 ## Positivity limiter
 

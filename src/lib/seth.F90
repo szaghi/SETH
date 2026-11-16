@@ -23,9 +23,10 @@ public :: seth_weno7_js, seth_weno7_js_wr, seth_weno7_js_interp, seth_weno7_js_i
 public :: seth_weno9_js, seth_weno9_js_wr, seth_weno9_js_interp, seth_weno9_js_interp_wr
 public :: seth_wenoz3, seth_wenoz5, seth_wenoz7, seth_wenoz9
 public :: seth_wenoz3_interp, seth_wenoz5_interp, seth_wenoz7_interp, seth_wenoz9_interp
-public :: seth_teno5, seth_teno5_opt, seth_teno5_az, seth_teno6, seth_teno6_opt, seth_teno6_neno6
+public :: seth_teno5, seth_teno5_opt, seth_teno5_az, seth_teno6, seth_teno6_opt, seth_teno6_neno6, seth_teno8
 public :: seth_teno5_interp, seth_teno6_interp
-public :: SETH_TENO_EPS, SETH_TENO5_CT, SETH_TENO5_OPT_CT, SETH_TENO5_AZ_CT, SETH_TENO6_CT, SETH_TENO6_OPT_CT, SETH_TENO6_NENO6_CT
+public :: SETH_TENO_EPS, SETH_TENO5_CT, SETH_TENO5_OPT_CT, SETH_TENO5_AZ_CT, SETH_TENO6_CT, SETH_TENO6_OPT_CT
+public :: SETH_TENO6_NENO6_CT, SETH_TENO8_CT
 public :: SETH_POSITIVITY_EPS, SETH_POSITIVITY_NV_MAX, seth_positivity_euler, seth_euler_admissible
 public :: WENO1_JS_D_SCALE, WENO3_JS_D_SCALE, WENO5_JS_D_SCALE, WENO7_JS_D_SCALE, WENO9_JS_D_SCALE
 endmodule seth

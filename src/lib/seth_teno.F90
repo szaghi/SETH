@@ -1,6 +1,6 @@
-!< SETH, TENO kernels: TENO5, TENO5-opt, TENO5-AZ, TENO6, TENO6-opt, TENO6-NENO6; TENO5/6 interpolation.
+!< SETH, TENO kernels: TENO5, TENO5-opt, TENO5-AZ, TENO6, TENO6-opt, TENO6-NENO6, TENO8; TENO5/6 interpolation.
 module seth_teno
-!< SETH, TENO kernels: TENO5, TENO5-opt, TENO5-AZ, TENO6, TENO6-opt, TENO6-NENO6; TENO5/6 interpolation.
+!< SETH, TENO kernels: TENO5, TENO5-opt, TENO5-AZ, TENO6, TENO6-opt, TENO6-NENO6, TENO8; TENO5/6 interpolation.
 !<
 !< Targeted ENO (Fu, Hu & Adams 2016, as restated by Li, Fu & Adams 2020): candidate stencils of incremental width, the
 !< smoothness measures gamma_k = (1 + tau/(beta_k + eps))**6 normalised and cut at C_T, the linear weights of the kept
@@ -20,7 +20,7 @@ use seth_z_teno_tables
 implicit none
 private
 public :: SETH_TENO_EPS, SETH_TENO5_CT, SETH_TENO6_CT, SETH_TENO6_OPT_CT, SETH_TENO6_NENO6_CT
-public :: SETH_TENO5_OPT_CT, SETH_TENO5_AZ_CT
+public :: SETH_TENO5_OPT_CT, SETH_TENO5_AZ_CT, SETH_TENO8_CT
 public :: seth_teno5
 public :: seth_teno5_interp
 public :: seth_teno5_opt
@@ -29,12 +29,14 @@ public :: seth_teno6
 public :: seth_teno6_interp
 public :: seth_teno6_opt
 public :: seth_teno6_neno6
+public :: seth_teno8
 
 real(R8P), parameter :: SETH_TENO_EPS     = 1.e-40_R8P !< eps of the TENO papers (Li, Fu & Adams 2020, eq. 9).
 real(R8P), parameter :: SETH_TENO5_CT       = 1.e-5_R8P !< C_T of TENO5 (Fu, Hu & Adams 2016, Table 5).
 real(R8P), parameter :: SETH_TENO6_CT       = 1.e-7_R8P !< C_T of TENO6 (Fu, Hu & Adams 2016, Table 5).
 real(R8P), parameter :: SETH_TENO5_OPT_CT   = 1.e-5_R8P !< C_T of TENO5-opt (Fu, Hu & Adams 2016, Table 5).
 real(R8P), parameter :: SETH_TENO5_AZ_CT    = 1.e-5_R8P !< lambda_d of TENO5-AZ, the cutoff's ceiling (Tang 2024, Eq. 20).
+real(R8P), parameter :: SETH_TENO8_CT       = 1.e-7_R8P !< C_T of TENO8 (Hong, Ye & Ye 2022; Fu et al. 2016's 6-point value).
 real(R8P), parameter :: SETH_TENO6_OPT_CT   = 1.e-7_R8P !< C_T of TENO6-opt (Fu, Hu & Adams 2016, Table 5).
 real(R8P), parameter :: SETH_TENO6_NENO6_CT = 1.e-6_R8P !< C_T used with the NENO6 weights (NENO6 paper, section 2.2).
 
@@ -153,5 +155,20 @@ contains
 #include "seth_z_teno_body.INC"
 #undef SETH_TENO
    endsubroutine seth_teno6_neno6
+
+   pure subroutine seth_teno8(vp, vm, eps, ct, rp, rm)
+   !< TENO8: candidates S0..S5 (3,3,3,4,4,5 points, cells -3..4), tau_8 = |beta_8 - (beta_1 + beta_2 + 4 beta_0)/6|, the
+   !< sixth-order background of Liang & Fu 2024b (Eq. 46); vp, vm(-3:4); SETH_TENO8_CT.
+   integer(I4P), parameter :: NC = TENO8_NC, LO = TENO8_LO, UMAX = TENO8_UMAX, MAXW = TENO8_MAXW
+   integer(I4P), parameter :: CLO(0:NC-1) = TENO8_CLO, CW(0:NC-1) = TENO8_CW
+   integer(I4P), parameter :: GLO = TENO8_GLO, GW = TENO8_GW
+   real(R8P),    parameter :: CP(0:MAXW-1,0:NC-1) = TENO8_P
+   real(R8P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = TENO8_L, CDQ(0:MAXW-1,0:NC-1) = TENO8_DQ
+   real(R8P),    parameter :: D(0:NC-1) = TENO8_D, TC(0:NC-1) = TENO8_TC, TG = TENO8_TG
+   real(R8P),    parameter :: CLG(0:GW-1,0:GW-1) = TENO8_LG, CDG(0:GW-1) = TENO8_DG
+#define SETH_TENO
+#include "seth_z_teno_body.INC"
+#undef SETH_TENO
+   endsubroutine seth_teno8
 
 endmodule seth_teno

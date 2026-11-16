@@ -199,7 +199,7 @@ Mach reflection for $r > 4$ (llm-wiki high-order-capturing-schemes `methods/weno
 one-dimensional, so that claim is neither confirmed nor refuted here. The orders of $\tau$ are measured exactly by the table generator (Castro et al.'s
 $\tau_7 = \lvert\beta_0-\beta_1-\beta_2+\beta_3\rvert$ is $O(h^6)$, as Li et al. 2022 state).
 
-## TENO: TENO5, TENO5-opt, TENO5-AZ, TENO6, TENO6-opt, TENO6-NENO6
+## TENO: TENO5, TENO5-opt, TENO5-AZ, TENO6, TENO6-opt, TENO6-NENO6, TENO8
 
 TENO (Fu, Hu & Adams 2016) changes two things. Its candidates have **incremental widths**: three-cell candidates
 around the face and, for TENO6, a fourth one of four cells that reaches downwind, so that the full stencil can carry
@@ -230,6 +230,7 @@ $g = 1 + \tau/(\beta+\varepsilon)$: the same values, without the overflow of $\g
 | `seth_teno6` | 0.45, 0.3, 0.05, 0.2 | 6 | `SETH_TENO6_CT` = $10^{-7}$ | Fu et al. 2016, Table 5 |
 | `seth_teno6_opt` | 0.462, 0.3, 0.054, 0.184 | 5 | `SETH_TENO6_OPT_CT` = $10^{-7}$ | Fu et al. 2016, Table 5 |
 | `seth_teno6_neno6` | 0.42943, 0.17273, 0.08557, 0.31227 | 4 | `SETH_TENO6_NENO6_CT` = $10^{-6}$ | the NENO6 paper |
+| `seth_teno8` | 0.41309, 0.21931, 0.06459, 0.14392, 0.02747, 0.13162 | 6 | `SETH_TENO8_CT` = $10^{-7}$ | Liang & Fu 2024b; $C_T$: Hong et al. 2022 |
 
 **The optimised weights.** Fu et al. (2016, §4, Eq. (31)) build the background of order $K-1$ as
 $\eta\, g^{(1)} + (1-\eta)\, g^{(2)}$, two schemes of order $K-1$ on the $K$-point stencil: for $K = 5$ the upwind
@@ -255,6 +256,23 @@ scheme, which is what the verification runs (it is asserted not scale invariant,
 `rmu = seth_weno_descaling(3, 1, vp, vm)` makes it bitwise invariant under scaling by powers of 2, and also takes the
 property away, since $\tau/|v|^2$ does not vanish at a critical point: order 2 at a second-order one, measured. No
 choice of `rmu` keeps both.
+
+**TENO8: eight points, a sixth-order dissipative background.** Six candidates on the cells $i-3 \dots i+4$: the
+three of TENO5, $S_3 = \{i, \dots, i+3\}$, $S_4 = \{i-3, \dots, i\}$ and $S_5 = \{i, \dots, i+4\}$ (Fu et al.
+2016, Table 1), every one of them with an end at $x_i$ and at least one upwind point; $\tau_8 = \lvert\beta_8 -
+\tfrac16(\beta_1 + \beta_2 + 4\beta_0)\rvert$, $O(h^6)$, with $\beta_8$ on the whole stencil. The linear weights
+are Liang & Fu's (2024b, §3.2): a sixth-order scheme whose dispersion is optimised and whose dissipation is an
+explicit eighth-order term ($b_0 = 0.01$), dissipative at every wavenumber (measured: Im $\tilde\xi \le 5\cdot10^{-17}$,
+resolution 0.547 against 0.42 for WENO7-JS). The weights are printed to 16 digits from a numerical optimisation;
+the generator checks that they reproduce the paper's face coefficients (Eq. (46)) within $1.6\cdot10^{-15}$, that
+the linear scheme is sixth order, that its own $\beta_8$ equals the paper's printed $\tau_8$ term by term, and that
+the max-order weights of these candidates are Fu et al.'s $(30, 18, 4, 12, 1, 5)/70$ (Table 2).
+
+Its nonlinear scheme is **not** free of the anti-dissipation of TENO6: the [ADR](/verification/spectral/adr) is
+positive, up to $3.2\cdot10^{-3}$, for $\vartheta/\pi = 0.36$–$0.45$, where the cutoff starts to drop candidates, and
+more so for smaller $C_T$ ($2.2\cdot10^{-3}$ at $10^{-5}$, $9.6\cdot10^{-3}$ at $10^{-10}$). The background's
+dissipation does not reach that band. Advected for four periods, no mode of the band grows (its amplitude never
+exceeds the initial one): the positive ADR is a one-step measure, not a growth, for TENO6 and TENO8 alike.
 
 "TENO6-opt" denotes different weights in different papers; SETH's is the founding paper's. Lowering $C_T$ keeps more
 candidates (less dissipation, less robustness); the defaults are the papers'.
@@ -308,7 +326,7 @@ What exists is the pieces:
 |---|---|---|---|---|
 | WENO-JS | `seth_weno{1,3,5,7,9}_js` (+ `_wr`, `_interp`, `_interp_wr`) | $S = 1..5$, width $S$ | $2S-1$ | `rmu` |
 | WENO-Z | `seth_wenoz{3,5,7,9}` (+ `_interp`) | $S = 2..5$, width $S$ | $2S-1$ | `p` |
-| TENO | `seth_teno5`, `seth_teno6` (+ `_interp`), `seth_teno5_opt`, `seth_teno5_az`, `seth_teno6_opt`, `seth_teno6_neno6` | 3 or 4, incremental | 5, 6 (5-opt 4, 6-opt 5, NENO6 4) | `ct` (TENO5-AZ: `ct`, `rmu`) |
+| TENO | `seth_teno5`, `seth_teno6` (+ `_interp`), `seth_teno5_opt`, `seth_teno5_az`, `seth_teno6_opt`, `seth_teno6_neno6`, `seth_teno8` | 3 to 6, incremental | 5, 6, 8-point 6 (5-opt 4, 6-opt 5, NENO6 4) | `ct` (TENO5-AZ: `ct`, `rmu`) |
 | positivity | `seth_positivity_euler`, `seth_euler_admissible` | | | |
 
 Arguments and constants: [API](/guide/api). Stencil layout: [Conventions](/guide/conventions).

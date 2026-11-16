@@ -26,7 +26,7 @@
 <div>
 <table>
 <tr>
-<td><b>🧮 Every scheme, one kernel each</b><br><sub>WENO-JS 1/3/5/7/9, WENO-Z 3/5/7/9, TENO5, TENO5-opt, TENO5-AZ, TENO6, TENO6-opt and NENO6, for reconstruction from cell averages and interpolation from point values, optionally returning the weights ratios. <a href="https://szaghi.github.io/SETH/guide/schemes">Schemes</a> · <a href="https://szaghi.github.io/SETH/guide/api">API</a></sub></td>
+<td><b>🧮 Every scheme, one kernel each</b><br><sub>WENO-JS 1/3/5/7/9, WENO-Z 3/5/7/9, TENO5, TENO5-opt, TENO5-AZ, TENO6, TENO6-opt, NENO6 and TENO8, for reconstruction from cell averages and interpolation from point values, optionally returning the weights ratios. <a href="https://szaghi.github.io/SETH/guide/schemes">Schemes</a> · <a href="https://szaghi.github.io/SETH/guide/api">API</a></sub></td>
 <td><b>⚡ Called from inside your loops</b><br><sub>Every kernel is <code>pure</code>, <code>!$acc routine seq</code> and <code>!$omp declare target</code>; the coefficients are compile-time constants, so nothing is set up or copied to the device. On an RTX 4070 the WENO-5/7 kernels run 1.26–1.31× faster than ADAM's. <a href="https://szaghi.github.io/SETH/guide/performance">Performance</a></sub></td>
 </tr>
 <tr>

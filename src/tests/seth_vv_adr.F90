@@ -22,7 +22,12 @@ program seth_vv_adr
 !< Im theta~ <= 1e-12, except for TENO6, whose ADR is measured anti-dissipative (Im up to 2e-4) in a narrow band
 !< theta/pi = 0.46 .. 0.49 where its cutoff starts to act (it departs from its linear background at theta/pi = 0.46):
 !< for TENO6 the anti-dissipative band must lie beyond theta = 0.4 pi and stay below 1e-3. Grid-scale packets of that
-!< wavelength (about 4 h) are what TENO6 leaves undamped behind the Burgers shock (seth_vv_burgers).
+!< wavelength (about 4 h) are what TENO6 leaves undamped behind the Burgers shock (seth_vv_burgers). TENO8 (Liang & Fu's
+!< background, whose linear scheme is dissipative everywhere) is measured anti-dissipative too, Im up to 3.2e-3 in
+!< theta/pi = 0.36 .. 0.45 where its cutoff starts to act, more for smaller C_T (2.2e-3 at 1e-5, 9.6e-3 at 1e-10):
+!< its band must lie beyond 0.3 pi and stay below 5e-3. (4) The ADR is one evaluation of the operator on one mode; for
+!< every scheme with an anti-dissipative band, each mode of the band is advected for 4 periods (u_t + u_x = 0,
+!< SSP-RK3, CFL 0.4) and its amplitude must never exceed the initial one: the band is not a growth of that mode.
 !< Report mode: adr-<scheme>.dat (theta, Re and Im of theta~, of theta~_lin).
 use seth
 use seth_test_schemes
@@ -34,7 +39,7 @@ implicit none
 integer(I4P), parameter   :: N = 200_I4P
 real(R8P),    parameter   :: PI = acos(-1._R8P)
 integer(I4P), allocatable :: ids(:)
-real(R8P)                 :: c(-4:5), th, worst_teno, worst_low, maxim, thanti
+real(R8P)                 :: c(-4:5), th, worst_teno, worst_low, maxim, thanti, gmax
 complex(R8P)              :: z, zl
 integer(I4P)              :: k, nn, u
 logical                   :: passed, lin_dissipative
@@ -59,20 +64,69 @@ do k=1, size(ids)
    enddo
    if (vv_report()) close(u)
    print '(A16,3ES14.4)', vv_label(ids(k)), worst_teno, worst_low, maxim
-   if (any(vv_label(ids(k)) == [character(16) :: 'teno5', 'teno6']) .and. worst_teno > 1.e-12_R8P) &
+   if (any(vv_label(ids(k)) == [character(16) :: 'teno5', 'teno6', 'teno5_opt', 'teno5_az', 'teno8']) .and. &
+       worst_teno > 1.e-12_R8P) &
       call fail(vv_label(ids(k))//': not its linear background for theta <= pi/4')
    if (SCHEMES(ids(k))%s >= 3 .and. worst_low > 1.e-3_R8P) &
       call fail(vv_label(ids(k))//': far from its linear background at low wavenumbers')
    if (vv_label(ids(k)) == 'teno6') then
       if (thanti < 0.4_R8P*PI .or. maxim > 1.e-3_R8P) call fail('teno6: anti-dissipation below 0.4 pi or above 1e-3')
+   elseif (vv_label(ids(k)) == 'teno8') then
+      if (thanti < 0.3_R8P*PI .or. maxim > 5.e-3_R8P) call fail('teno8: anti-dissipation below 0.3 pi or above 5e-3')
    elseif (lin_dissipative .and. maxim > 1.e-12_R8P) then
       call fail(vv_label(ids(k))//': anti-dissipative')
+   endif
+   if (maxim > 1.e-12_R8P) then ! (4) the band is not a growth
+      do nn=1, N/2-1
+         th = 2._R8P*PI*nn/N
+         if (aimag(adr(ids(k), th)) <= 1.e-12_R8P) cycle
+         gmax = growth(ids(k), nn)
+         print '(A16,A,F6.3,A,F12.9)', vv_label(ids(k)), ': theta/pi ', th/PI, ', 4 periods, max amplitude ', gmax
+         if (gmax > 1._R8P + 1.e-12_R8P) call fail(vv_label(ids(k))//': a mode of the anti-dissipative band grows')
+      enddo
    endif
 enddo
 if (.not.passed) error stop 'ADR verification failed'
 print '(A)', 'seth_vv_adr: ok'
 
 contains
+   function growth(id, nm) result(amax)
+   !< Largest amplitude of mode nm advected by u_t + u_x = 0 for 4 periods (periodic, SSP-RK3, CFL 0.4, left state).
+   integer(I4P), intent(in) :: id, nm
+   real(R8P)                :: amax, u0(0:N-1), u1(0:N-1), u2(0:N-1), h, dt
+   integer(I4P)             :: j, step
+   h = 1._R8P/N ; dt = 0.4_R8P*h
+   do j=0, N-1
+      u0(j) = cos(2._R8P*PI*nm*j/N)
+   enddo
+   amax = maxval(abs(u0))
+   do step=1, nint(4._R8P/dt)
+      u1 = u0 + dt*rhs(id, u0)
+      u2 = 0.75_R8P*u0 + 0.25_R8P*(u1 + dt*rhs(id, u1))
+      u0 = u0/3._R8P + (2._R8P/3._R8P)*(u2 + dt*rhs(id, u2))
+      amax = max(amax, maxval(abs(u0)))
+   enddo
+   endfunction growth
+
+   function rhs(id, w) result(r)
+   !< -d/dx of the left-biased flux of u_t + u_x = 0 (periodic), scheme id.
+   integer(I4P), intent(in) :: id
+   real(R8P),    intent(in) :: w(0:N-1)
+   real(R8P)                :: r(0:N-1), f(0:N-1), v(VLO:VHI), zero(VLO:VHI), rp, rm
+   integer(I4P)             :: jj, m
+   zero = 0._R8P
+   do jj=0, N-1 ! face jj+1/2
+      do m=VLO, VHI
+         v(m) = w(modulo(jj+m, N))
+      enddo
+      call reconstruct(id, v, zero, rp, rm)
+      f(jj) = rp
+   enddo
+   do jj=0, N-1
+      r(jj) = -(f(jj) - f(modulo(jj-1, N)))*N
+   enddo
+   endfunction rhs
+
    function adr(id, th) result(z)
    !< theta~ of scheme id at theta by the single-mode procedure.
    integer(I4P), intent(in) :: id
@@ -126,6 +180,8 @@ contains
       call dsc(TENO5_OPT_NC, TENO5_OPT_MAXW, TENO5_OPT_CLO, TENO5_OPT_CW, TENO5_OPT_P, TENO5_OPT_D, c)
    case('teno5_az')
       call dsc(TENO5_AZ_NC, TENO5_AZ_MAXW, TENO5_AZ_CLO, TENO5_AZ_CW, TENO5_AZ_P, TENO5_AZ_D, c)
+   case('teno8')
+      call dsc(TENO8_NC, TENO8_MAXW, TENO8_CLO, TENO8_CW, TENO8_P, TENO8_D, c)
    case default ; error stop 'background: unknown scheme'
    end select
    endsubroutine background
