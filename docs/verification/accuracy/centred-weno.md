@@ -62,8 +62,9 @@ Against ADAM:
   a step in WENO8-C's cells $i-3$ or $i+4$ leaves $\phi = 0$, and the central row's edge coefficient passes: an
   overshoot of $\tfrac1{280} = 3.6\cdot10^{-3}$ of the jump (the frozen bound, the upwind scheme's overshoot plus
   $10^{-3}$, was raised by $\tfrac1{280}$ for $S = 4$ when this was measured). WENO6-C's edge coefficient is
-  $+\tfrac1{60}$: a precursor of the jump inside the data's range. Widening the detector would change ADAM's scheme:
-  left to the owner.
+  $+\tfrac1{60}$: a precursor of the jump inside the data's range. The scheme is kept as ported (decided 2026-11-16):
+  WENO8-C is for smooth data; near discontinuities, use it with the positivity limiter or not at all
+  ([S5](../shocks/blast)).
 - **In the flows** (report mode, the same harness as every scheme): on Sod, Lax, Shu–Osher and the blast wave the
   $L_1(\rho)$ of each centred WENO lies between that of its upwind WENO-JS and that of the next WENO-JS order; on the
   123 problem too, except WENO8-C, 1% above WENO7-JS. WENO4-C and WENO6-C stay positive on the blast
