@@ -1,0 +1,26 @@
+faces: 16777216, timed passes: 20 per variant
+SETH  weno5_js                 : device vs host SETH, max scaled difference  0.00E+00
+ADAM  generic S=3              : vs SETH weno5_js, max scaled difference  0.00E+00
+ADAM  width s3                 : vs SETH weno5_js, max scaled difference  0.00E+00
+SETH  weno7_js                 : device vs host SETH, max scaled difference  0.00E+00
+ADAM  generic S=4              : vs SETH weno7_js, max scaled difference  0.00E+00
+ADAM  width s4                 : vs SETH weno7_js, max scaled difference  0.00E+00
+SETH  wenoz5 (p=1)             : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno6 (C_T=1e-7)         : device vs host SETH, max scaled difference  4.44E-16
+SETH  teno5 (C_T=1e-5)         : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno5_opt (C_T=1e-5)     : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno5_az (C_T=1e-5)      : device vs host SETH, max scaled difference  0.00E+00
+
+                        variant    median ms       min ms      ns/face vs ADAM gen.
+SETH  weno5_js                        16.518       16.480        0.985         1.42
+ADAM  generic S=3                     23.448       23.397        1.398         1.00
+ADAM  width s3                        21.593       21.552        1.287         1.09
+SETH  weno7_js                        29.985       29.970        1.787         1.34
+ADAM  generic S=4                     40.231       40.042        2.398         1.00
+ADAM  width s4                        37.884       37.827        2.258         1.06
+SETH  wenoz5 (p=1)                    16.448       16.404        0.980         1.43
+SETH  teno6 (C_T=1e-7)                39.822       39.783        2.374         1.01
+SETH  teno5 (C_T=1e-5)                24.053       24.017        1.434         1.67
+SETH  teno5_opt (C_T=1e-5)            24.052       24.024        1.434         1.67
+SETH  teno5_az (C_T=1e-5)             24.500       24.475        1.460         1.64
+seth_bench_weno: checks ok

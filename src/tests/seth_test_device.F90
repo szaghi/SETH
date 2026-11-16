@@ -2,7 +2,7 @@
 program seth_test_device
 !< SETH test: every kernel executed on the device (OpenACC) agrees with the same kernel on the host.
 !<
-!< Each of the 36 cases runs one kernel inside `!$acc parallel loop` over N deterministic stencils (smooth cubics,
+!< Each of the 37 cases runs one kernel inside `!$acc parallel loop` over N deterministic stencils (smooth cubics,
 !< jumps, an integer LCG), then the same loop on the host, and compares: states within 1e-13 of the stencil's
 !< magnitude, weights ratios within 1e-9 (the device and the host compile the kernel separately and may contract
 !< multiply-adds differently; the tolerances are those of seth_test_golden, for the same reasons). One case calls
@@ -13,7 +13,7 @@ program seth_test_device
 use seth
 implicit none
 integer(I4P), parameter :: N = 4096_I4P
-integer(I4P), parameter :: NK = 36_I4P
+integer(I4P), parameter :: NK = 37_I4P
 character(26), parameter :: NAMES(NK) = [ &
    'seth_weno1_js             ', &
    'seth_weno1_js_wr          ', &
@@ -50,7 +50,8 @@ character(26), parameter :: NAMES(NK) = [ &
    'seth_wenoz9_interp        ', &
    'seth_teno5_interp         ', &
    'seth_teno6_interp         ', &
-   'seth_teno5_opt            ']
+   'seth_teno5_opt            ', &
+   'seth_teno5_az             ']
 real(R8P)               :: v(-4:5,N), w(-4:5,N), rp(N), rm(N), wrp(N), wrm(N), hp(N), hm(N), hwp(N), hwm(N)
 real(R8P)               :: mag, ds, dw, worst_s, worst_w
 integer(I4P)            :: k, i, nbit, nfail
@@ -641,6 +642,22 @@ do k=1, NK
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
          call seth_teno5_opt(a, b, SETH_TENO_EPS, SETH_TENO5_OPT_CT, rp(i), rm(i))
+      enddo
+      endblock
+   case(37) ! seth_teno5_az
+      block
+      real(R8P) :: a(-2:3), b(-2:3), rmu
+      rmu = 1._R8P
+      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      do i=1, N
+         a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
+         call seth_teno5_az(a, b, SETH_TENO_EPS, SETH_TENO5_AZ_CT, seth_weno_descaling(3_I4P, 1._R8P, a, b), rp(i), rm(i))
+      enddo
+      hp = rp ; hm = rm ; hwp = wrp ; hwm = wrm
+
+      do i=1, N
+         a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R8P ; wrm(i) = -1._R8P
+         call seth_teno5_az(a, b, SETH_TENO_EPS, SETH_TENO5_AZ_CT, seth_weno_descaling(3_I4P, 1._R8P, a, b), rp(i), rm(i))
       enddo
       endblock
    endselect

@@ -199,7 +199,7 @@ Mach reflection for $r > 4$ (llm-wiki high-order-capturing-schemes `methods/weno
 one-dimensional, so that claim is neither confirmed nor refuted here. The orders of $\tau$ are measured exactly by the table generator (Castro et al.'s
 $\tau_7 = \lvert\beta_0-\beta_1-\beta_2+\beta_3\rvert$ is $O(h^6)$, as Li et al. 2022 state).
 
-## TENO: TENO5, TENO5-opt, TENO6, TENO6-opt, TENO6-NENO6
+## TENO: TENO5, TENO5-opt, TENO5-AZ, TENO6, TENO6-opt, TENO6-NENO6
 
 TENO (Fu, Hu & Adams 2016) changes two things. Its candidates have **incremental widths**: three-cell candidates
 around the face and, for TENO6, a fourth one of four cells that reaches downwind, so that the full stencil can carry
@@ -226,6 +226,7 @@ $g = 1 + \tau/(\beta+\varepsilon)$: the same values, without the overflow of $\g
 |---|---|---|---|---|
 | `seth_teno5` | 0.6, 0.3, 0.1 | 5 | `SETH_TENO5_CT` = $10^{-5}$ | Fu et al. 2016, Table 5 |
 | `seth_teno5_opt` | 0.55, 0.4, 0.05 | 4 | `SETH_TENO5_OPT_CT` = $10^{-5}$ | Fu et al. 2016, Tables 3 and 5 |
+| `seth_teno5_az` | 0.6, 0.3, 0.1 | 5 | `SETH_TENO5_AZ_CT` = $10^{-5}$, the ceiling $\lambda_d$ | Tang 2024, Eqs. (19)–(20) |
 | `seth_teno6` | 0.45, 0.3, 0.05, 0.2 | 6 | `SETH_TENO6_CT` = $10^{-7}$ | Fu et al. 2016, Table 5 |
 | `seth_teno6_opt` | 0.462, 0.3, 0.054, 0.184 | 5 | `SETH_TENO6_OPT_CT` = $10^{-7}$ | Fu et al. 2016, Table 5 |
 | `seth_teno6_neno6` | 0.42943, 0.17273, 0.08557, 0.31227 | 4 | `SETH_TENO6_NENO6_CT` = $10^{-6}$ | the NENO6 paper |
@@ -239,6 +240,21 @@ dissipation. The table generator solves for the candidates' weights that reprodu
 gives exactly $\tfrac{11}{20}, \tfrac25, \tfrac1{20}$ and $\eta = 0.54$ exactly $0.462, 0.3, 0.054, 0.184$, the
 values of Fu et al.'s Tables 3 to 5, which it asserts. TENO5-opt's linear scheme is fourth order, measured 3.99–4.01,
 and stays fourth order at a first-order critical point.
+
+**TENO5-AZ: a cutoff that vanishes on smooth data.** Tang (2024) keeps TENO5's candidates and weights and changes
+two things: the global measure, $\tau = \lvert\beta_0 + \beta_2 - 2\beta_1\rvert$ in WENO labels (upwind, central,
+downwind), $\lvert\beta_1 + \beta_2 - 2\beta_0\rvert$ in TENO's, measured $O(h^4)$ by the generator, and the cutoff,
+$C_T = \min(\lambda_d, \tau)$ with $\lambda_d = 10^{-5}$ (Eqs. (19)–(20)). Where the data is smooth $\tau \to 0$, so
+$C_T \to 0$ and no candidate is dropped: the scheme keeps fifth order at critical points of any order, where TENO5
+falls to second. SETH measures 5.00 at first- and second-order critical points (TENO5: 5.00 and 2.00), as Tang's
+Tables 1–3 report.
+
+The price is dimensional: $\tau$ scales with the square of the data, a pure number does not, so the cutoff depends
+on the units. `seth_teno5_az` takes an inverse descaler `rmu` and compares $\tau\,\mu^{-2}$: `rmu = 1` is Tang's
+scheme, which is what the verification runs (it is asserted not scale invariant, like plain WENO-JS);
+`rmu = seth_weno_descaling(3, 1, vp, vm)` makes it bitwise invariant under scaling by powers of 2, and also takes the
+property away, since $\tau/|v|^2$ does not vanish at a critical point: order 2 at a second-order one, measured. No
+choice of `rmu` keeps both.
 
 "TENO6-opt" denotes different weights in different papers; SETH's is the founding paper's. Lowering $C_T$ keeps more
 candidates (less dissipation, less robustness); the defaults are the papers'.
@@ -292,7 +308,7 @@ What exists is the pieces:
 |---|---|---|---|---|
 | WENO-JS | `seth_weno{1,3,5,7,9}_js` (+ `_wr`, `_interp`, `_interp_wr`) | $S = 1..5$, width $S$ | $2S-1$ | `rmu` |
 | WENO-Z | `seth_wenoz{3,5,7,9}` (+ `_interp`) | $S = 2..5$, width $S$ | $2S-1$ | `p` |
-| TENO | `seth_teno5`, `seth_teno6` (+ `_interp`), `seth_teno5_opt`, `seth_teno6_opt`, `seth_teno6_neno6` | 3 or 4, incremental | 5, 6 (5-opt 4, 6-opt 5, NENO6 4) | `ct` |
+| TENO | `seth_teno5`, `seth_teno6` (+ `_interp`), `seth_teno5_opt`, `seth_teno5_az`, `seth_teno6_opt`, `seth_teno6_neno6` | 3 or 4, incremental | 5, 6 (5-opt 4, 6-opt 5, NENO6 4) | `ct` (TENO5-AZ: `ct`, `rmu`) |
 | positivity | `seth_positivity_euler`, `seth_euler_admissible` | | | |
 
 Arguments and constants: [API](/guide/api). Stencil layout: [Conventions](/guide/conventions).

@@ -7,7 +7,10 @@
    ! their quadratic forms): non-negative in floating point by construction. The expanded quadratic form cancels and
    ! can round to -1e-14 on constant data, which with eps = 1e-40 turned tau/(beta + eps) into -inf and the state into
    ! NaN (found by seth_test_properties).
-   ! SETH_TENO selects the TENO weights (cutoff), otherwise the WENO-Z ones.
+   ! SETH_TENO selects the TENO weights (cutoff), otherwise the WENO-Z ones. SETH_TENO_AZ (with SETH_TENO) makes the
+   ! cutoff adaptive as in Tang 2024, Eq. (20): min(C_T, tau), zero where the data is smooth (tau -> 0). tau has the
+   ! dimension of the data squared, so the kernel takes the inverse descaler rmu and compares tau rmu^2 (rmu = 1: Tang's
+   ! form; rmu = 1/|data|: scale invariant), evaluated as (tau rmu) rmu so that zero data (rmu huge) gives 0, not NaN.
    !
    ! Cells by offset from the face i+1/2 (cell 0 left of it). The left state is the left-biased reconstruction of vp;
    ! the right state is the same reconstruction of the mirrored right-biased values, st(m) = vm(1-m).
@@ -16,6 +19,9 @@
    real(R8P),    intent(in)  :: eps         !< Regulariser of the smoothness indicators.
 #ifdef SETH_TENO
    real(R8P),    intent(in)  :: ct          !< Cutoff C_T of the normalised smoothness measures.
+#ifdef SETH_TENO_AZ
+   real(R8P),    intent(in)  :: rmu         !< Inverse descaler of tau in the adaptive cutoff (1: Tang 2024).
+#endif
 #else
    integer(I4P), intent(in)  :: p           !< Exponent of tau/beta in the weights (1 or 2).
 #endif
@@ -97,7 +103,11 @@
       wsum = 0._R8P
       do k=0, NC-1
          wgt(k) = 0._R8P
+#ifdef SETH_TENO_AZ
+         if (g(k)/x >= min(ct, (tau*rmu)*rmu)) wgt(k) = D(k)
+#else
          if (g(k)/x >= ct) wgt(k) = D(k)
+#endif
          wsum = wsum + wgt(k)
       enddo
 #else

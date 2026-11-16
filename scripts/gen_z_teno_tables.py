@@ -230,6 +230,10 @@ SCHEMES = {
               'TENO6: tau_6 = beta_6 - (beta_1 + beta_2 + 4 beta_0)/6, max-order linear weights'),
     'TENO5_OPT': (TENO_CELLS[:3], [0, 1, -1], None, 0, 'opt5', 'teno', 5,
                   'TENO5-opt: TENO5 with the optimised linear weights of Fu, Hu & Adams 2016 (eta = 0.2, 4th order)'),
+    # Tang 2024, Eq. (19): tau = |beta_0 + beta_2 - 2 beta_1| in WENO labels (beta_0 upwind, beta_1 central, beta_2
+    # downwind), i.e. |beta_S2 + beta_S1 - 2 beta_S0| in TENO labels; the cutoff min(C_T, tau) is the kernel's
+    'TENO5_AZ': (TENO_CELLS[:3], [-2, 1, 1], None, 0, 'max', 'teno', 4,
+                 'TENO5-AZ (Tang 2024): tau = |beta_1 + beta_2 - 2 beta_0| (TENO labels), cutoff min(C_T, tau)'),
     'TENO6_OPT': (TENO_CELLS, [Fr(-4, 6), Fr(-1, 6), Fr(-1, 6), 0], list(range(-2, 4)), 1, TENO6_OPT_D, 'teno', 6,
                   'TENO6-opt: TENO6 with the optimised linear weights of Fu, Hu & Adams 2016 (5th order)'),
     'TENO6_NENO6': (TENO_CELLS, [Fr(-4, 6), Fr(-1, 6), Fr(-1, 6), 0], list(range(-2, 4)), 1, TENO6_NENO6_D, 'teno', 6,

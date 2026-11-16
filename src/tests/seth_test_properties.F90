@@ -17,7 +17,8 @@ program seth_test_properties
 !< 5. Power-of-2 scaling: R(2^k v) = 2^k R(v) bitwise for WENO-Z and TENO (eps = 1e-40 is below one ulp of the
 !<    indicators of O(1) data) and for WENO-JS with the scale-invariant descaler (rmu = seth_weno_descaling(sigma=1));
 !<    plain WENO-JS (absolute eps = 1e-6) is not scale invariant, and the test also asserts that it is not, on data of
-!<    magnitude 1e-4, so that the documentation's statement stays true.
+!<    magnitude 1e-4, so that the documentation's statement stays true. TENO5-AZ the same way: Tang's cutoff
+!<    min(C_T, tau) is dimensional (asserted not invariant); with its descaler (rmu argument) it is bitwise invariant.
 !< 6. Robustness: the zero stencil, and magnitudes from 1e-200 up to the scheme's limit, give finite states inside
 !<    the data's range (the debug build traps overflow, invalid, zero divide). The indicators square the data, so 1e154
 !<    bounds every scheme; plain WENO-JS also raises (eps + IS) to the power wexp (= S, S-1 for S = 5), which
@@ -86,9 +87,17 @@ do id=1, NSCHEMES
       sc = 2._R8P**k
       select case(fam)
       case(FAM_Z, FAM_TENO)
-         call reconstruct(id, vp, vm, rp, rm)
-         call reconstruct(id, sc*vp, sc*vm, sp, sm)
-         if (sp /= sc*rp .or. sm /= sc*rm) call fail('scaling (bitwise)', sp/sc - rp, sm/sc - rm)
+         if (trim(SCHEMES(id)%name) == 'teno5_az') then ! Tang's cutoff min(C_T, tau) is dimensional: the descaled one
+            call seth_teno5_az(vp(-2:3), vm(-2:3), SETH_TENO_EPS, SETH_TENO5_AZ_CT, &
+                               seth_weno_descaling(3_I4P, 1._R8P, vp(-2:3), vm(-2:3)), rp, rm)
+            call seth_teno5_az(sc*vp(-2:3), sc*vm(-2:3), SETH_TENO_EPS, SETH_TENO5_AZ_CT, &
+                               seth_weno_descaling(3_I4P, 1._R8P, sc*vp(-2:3), sc*vm(-2:3)), sp, sm)
+            if (sp /= sc*rp .or. sm /= sc*rm) call fail('scaling, descaled TENO5-AZ (bitwise)', sp/sc - rp, sm/sc - rm)
+         else
+            call reconstruct(id, vp, vm, rp, rm)
+            call reconstruct(id, sc*vp, sc*vm, sp, sm)
+            if (sp /= sc*rp .or. sm /= sc*rm) call fail('scaling (bitwise)', sp/sc - rp, sm/sc - rm)
+         endif
       case default
          rmu = seth_weno_descaling(s, 1._R8P, vp(1-s:s), vm(1-s:s))
          call reconstruct(id, vp, vm, rp, rm, par=rmu)
@@ -122,8 +131,9 @@ do id=1, NSCHEMES
    vp = 0._R8P
    call reconstruct(id, vp, vp, rp, rm)
    if (rp /= 0._R8P .or. rm /= 0._R8P) call fail('zero stencil', rp, rm)
-   ! plain WENO-JS is not scale invariant: data of magnitude 1e-4 is reconstructed differently from the same data at 1
-   if ((fam == FAM_JS .or. fam == FAM_JS_INTERP) .and. s >= 2) then
+   ! plain WENO-JS and TENO5-AZ with rmu = 1 (Tang's form) are not scale invariant: data of magnitude 1e-4 is
+   ! reconstructed differently from the same data at 1
+   if (((fam == FAM_JS .or. fam == FAM_JS_INTERP) .and. s >= 2) .or. trim(SCHEMES(id)%name) == 'teno5_az') then
       x = 0._R8P
       do n_=1, 50
          call stencil(vp, vm, rough=.true.)
@@ -131,7 +141,7 @@ do id=1, NSCHEMES
          call reconstruct(id, 1.e-4_R8P*vp, 1.e-4_R8P*vm, sp, sm)
          x = max(x, abs(sp*1.e4_R8P - rp))
       enddo
-      if (x < 1.e-6_R8P) call fail('plain JS unexpectedly scale invariant', x, 0._R8P)
+      if (x < 1.e-6_R8P) call fail('plain JS or TENO5-AZ unexpectedly scale invariant', x, 0._R8P)
    endif
    print '(A16,A,I0,A)', SCHEMES(id)%name, ': ', failures, ' failures'
    if (failures > 0) passed = .false.

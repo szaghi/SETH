@@ -42,7 +42,7 @@ DPI = 110
 STYLE = dict(SCHEME_STYLE)  # swapped for SCHEME_STYLE_DARK while the dark twins are drawn (main)
 LABEL = {'weno1_js': 'WENO1-JS', 'weno3_js': 'WENO3-JS', 'weno5_js': 'WENO5-JS', 'weno7_js': 'WENO7-JS', 'weno9_js': 'WENO9-JS',
          'wenoz3': 'WENO-Z3', 'wenoz5': 'WENO-Z5', 'wenoz7': 'WENO-Z7', 'wenoz9': 'WENO-Z9', 'teno5': 'TENO5',
-         'teno6': 'TENO6', 'teno6_opt': 'TENO6-opt', 'teno6_neno6': 'TENO6-NENO6', 'teno5_opt': 'TENO5-opt'}
+         'teno6': 'TENO6', 'teno6_opt': 'TENO6-opt', 'teno6_neno6': 'TENO6-NENO6', 'teno5_opt': 'TENO5-opt', 'teno5_az': 'TENO5-AZ'}
 
 
 def base(s: str) -> str:

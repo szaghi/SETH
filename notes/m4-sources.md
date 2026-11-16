@@ -22,3 +22,19 @@ Fu, L., Hu, X.Y., Adams, N.A. (2016). *J. Comput. Phys.* 305:333. doi:10.1016/j.
 
 Measured: linear-scheme order 4 (generator, exact); 3.99-4.01 at a point (`seth_test_teno`); 4.00 at a first-order
 critical point and 2.00 at a second-order one (`seth_test_critical_points`).
+
+## TENO5-AZ (step 2.2)
+
+Tang, S. (2024). *Comput. Phys. Commun.* 299:109158.
+
+| Item | Status | Where |
+|---|---|---|
+| tau = abs(beta_0 + beta_2 - 2 beta_1), WENO labels (beta_0 on {j-2..j}, beta_1 on {j-1..j+1}, beta_2 on {j..j+2}) | quoted; SETH's TENO labels give TC = (-2, 1, 1) on (S0 central, S1 downwind, S2 upwind) | Eqs. (14), (19) |
+| C_T = min(lambda_d, tau), lambda_d = 1e-5 | quoted | Eq. (20) |
+| gamma_k = (C + tau/(beta_k + eps))^q with tau of Eq. (19), C = 1, q = 6, eps = 1e-40 | quoted | Eqs. (12), (20) and the text after |
+| order of tau on smooth data: 4 | derived (generator, exact) | |
+| fifth order at critical points of order 2 and 3 (TENO-Z: 2.26-3.0) | quoted; reproduced: 5.00 at n_cp = 1 and 2 | Tables 1-3 |
+
+Not in the paper: the `rmu` argument. The cutoff compares a pure number with tau, which has the dimension of the data
+squared; SETH multiplies tau by rmu^2 (rmu = 1: Tang's form). Measured: the descaled form is bitwise scale invariant
+and loses the critical-point property (order 2 at n_cp = 2).

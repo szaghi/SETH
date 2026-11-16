@@ -27,12 +27,14 @@ real(R8P)               :: vp(-2:3), vm(-2:3), rp, rm, h, err(2,NH), order, floo
 integer(I4P)            :: sc, j, m, side, jump, n_
 logical                 :: passed
 integer                 :: ur
-integer(I4P), parameter :: NSC = 7_I4P
+integer(I4P), parameter :: NSC = 8_I4P
 character(12), parameter :: NAMES(NSC) = ['TENO5       ', 'TENO6       ', 'TENO6-opt   ', 'TENO6-NENO6 ', &
-                                          'TENO5-interp', 'TENO6-interp', 'TENO5-opt   ']
-real(R8P),    parameter :: DESIGN(NSC) = [5._R8P, 6._R8P, 5._R8P, 4._R8P, 5._R8P, 6._R8P, 4._R8P]
+                                          'TENO5-interp', 'TENO6-interp', 'TENO5-opt   ', &
+                                          'TENO5-AZ    ']
+real(R8P),    parameter :: DESIGN(NSC) = [5._R8P, 6._R8P, 5._R8P, 4._R8P, 5._R8P, 6._R8P, 4._R8P, 5._R8P]
 real(R8P),    parameter :: CTS(NSC) = [SETH_TENO5_CT, SETH_TENO6_CT, SETH_TENO6_OPT_CT, SETH_TENO6_NENO6_CT, &
-                                       SETH_TENO5_CT, SETH_TENO6_CT, SETH_TENO5_OPT_CT]
+                                       SETH_TENO5_CT, SETH_TENO6_CT, SETH_TENO5_OPT_CT, &
+                                       SETH_TENO5_AZ_CT]
 
 passed = .true.
 call seed_rng(1005_I4P)
@@ -133,6 +135,7 @@ contains
    case(5) ; call seth_teno5_interp(vp, vm, SETH_TENO_EPS, ct, rp, rm)
    case(6) ; call seth_teno6_interp(vp, vm, SETH_TENO_EPS, ct, rp, rm)
    case(7) ; call seth_teno5_opt(vp, vm, SETH_TENO_EPS, ct, rp, rm)
+   case(8) ; call seth_teno5_az(vp, vm, SETH_TENO_EPS, ct, 1._R8P, rp, rm) ! Tang's form
    endselect
    endsubroutine kernel
 
@@ -149,6 +152,7 @@ contains
                         TENO6_NENO6_D, v)
    case(5) ; r = lin_of(TENO5_NC, TENO5_MAXW, TENO5_CLO, TENO5_CW, TENO5_INTERP_P, TENO5_INTERP_D, v)
    case(6) ; r = lin_of(TENO6_NC, TENO6_MAXW, TENO6_CLO, TENO6_CW, TENO6_INTERP_P, TENO6_INTERP_D, v)
+   case(8) ; r = lin_of(TENO5_AZ_NC, TENO5_AZ_MAXW, TENO5_AZ_CLO, TENO5_AZ_CW, TENO5_AZ_P, TENO5_AZ_D, v)
    case(7) ; r = lin_of(TENO5_OPT_NC, TENO5_OPT_MAXW, TENO5_OPT_CLO, TENO5_OPT_CW, TENO5_OPT_P, TENO5_OPT_D, v)
    endselect
    endfunction linear

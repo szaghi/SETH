@@ -28,6 +28,7 @@ program seth_test_critical_points
 !< | TENO5             | 5 (>= 4.5)                | Tang et al. 2024                              |
 !< | TENO6 / TENO6-opt | 6 / 5 (>= 5.5 / >= 4.5)   | Zhang et al. 2024b                            |
 !< | TENO5-opt         | 4 (>= 3.5)                | its linear scheme's order (Fu et al. 2016)    |
+!< | TENO5-AZ          | 5 at both points (>= 4.5) | Tang 2024, Tables 1-3                         |
 !<
 !< WENO-JS of every order, at both points: Henrick et al.'s rate max(2r - 2 - n_cp, n_cp) (eq. 60: r <= 6, eps = 0;
 !< llm-wiki high-order-capturing-schemes `properties/accuracy-at-critical-points.md`), within 0.5.
@@ -75,6 +76,7 @@ do id=1, NSCHEMES
       case('teno6')     ; lo = 5.5_R8P
       case('teno6_opt') ; lo = 4.5_R8P
       case('teno5_opt') ; lo = 3.5_R8P
+      case('teno5_az')  ; lo = 4.5_R8P
       endselect
       if (any(o1 < lo) .or. any(o1 > hi)) then
          print '(A,2ES10.2)', '   ^ first-order critical point outside the literature range: ', lo, hi
@@ -82,6 +84,9 @@ do id=1, NSCHEMES
       endif
       if (SCHEMES(id)%family /= FAM_JS .and. SCHEMES(id)%order >= 3._R8P .and. any(o2 < 1.7_R8P)) then
          print '(A)', '   ^ second-order critical point below the floor 1.7' ; passed = .false.
+      endif
+      if (trim(SCHEMES(id)%name) == 'teno5_az' .and. any(o2 < 4.5_R8P)) then ! Tang 2024, Tables 2-3
+         print '(A)', '   ^ TENO5-AZ below 4.5 at the second-order critical point (Tang 2024: 5)' ; passed = .false.
       endif
    enddo
 enddo

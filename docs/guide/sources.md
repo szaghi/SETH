@@ -31,7 +31,8 @@ which cite the paper; the provenance of every formula is in `notes/m2-sources.md
 - Pirozzoli, S. (2002). *J. Comput. Phys.* doi:10.1006/jcph.2002.7021 — the transfer function (via llm-wiki).
 - Rathan, S., Naga Raju, G. (2016). An improved non-linear weights for seventh-order WENO scheme. arXiv:1611.06755 —
   WENO-Z weights, the two $\tau_7$.
-- Tang et al. (2024). *Comput. Phys. Commun.* doi:10.1016/j.cpc.2024.109158 — critical-point test functions, TENO5
-  order (via llm-wiki).
+- Tang, S. (2024). A high-efficiency adaptive TENO scheme with optimal accuracy order at critical points. *Comput.
+  Phys. Commun.* 299:109158. doi:10.1016/j.cpc.2024.109158 — critical-point test functions and orders (Tables 1–3),
+  TENO5-AZ: $\tau$ and the adaptive cutoff (Eqs. (19)–(20)) (read in the paper).
 - Zhang et al. (2024b). *J. Comput. Phys.* doi:10.1016/j.jcp.2024.112793 — TENO6 orders at critical points (via
   llm-wiki).

@@ -47,6 +47,9 @@ call descriptor('teno6_neno6', 4, 6._R8P, TENO6_NENO6_NC, TENO6_NENO6_MAXW, TENO
 call descriptor('teno5_opt', 4, 5._R8P, TENO5_OPT_NC, TENO5_OPT_MAXW, TENO5_OPT_CLO, TENO5_OPT_CW, TENO5_OPT_P, &
                 TENO5_OPT_D, TENO5_OPT_L, TENO5_OPT_DQ, TENO5_OPT_TC, TENO5_OPT_TG, TENO5_OPT_GLO, TENO5_OPT_GW, &
                 TENO5_OPT_LG, TENO5_OPT_DG)
+call descriptor('teno5_az', 5, 4._R8P, TENO5_AZ_NC, TENO5_AZ_MAXW, TENO5_AZ_CLO, TENO5_AZ_CW, TENO5_AZ_P, &
+                TENO5_AZ_D, TENO5_AZ_L, TENO5_AZ_DQ, TENO5_AZ_TC, TENO5_AZ_TG, TENO5_AZ_GLO, TENO5_AZ_GW, &
+                TENO5_AZ_LG, TENO5_AZ_DG)
 call interp_descriptor('wenoz3_interp', 3, 3._R8P, WENOZ3_NC, WENOZ3_MAXW, WENOZ3_CLO, WENOZ3_CW, WENOZ3_INTERP_P, &
                        WENOZ3_INTERP_D, WENOZ3_L, WENOZ3_DQ, WENOZ3_TC, WENOZ3_TG, WENOZ3_GLO, WENOZ3_GW, WENOZ3_LG, &
                        WENOZ3_DG)

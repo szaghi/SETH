@@ -124,6 +124,8 @@ contains
       dissipative = .false.
    case('teno5_opt')
       call dsc(TENO5_OPT_NC, TENO5_OPT_MAXW, TENO5_OPT_CLO, TENO5_OPT_CW, TENO5_OPT_P, TENO5_OPT_D, c)
+   case('teno5_az')
+      call dsc(TENO5_AZ_NC, TENO5_AZ_MAXW, TENO5_AZ_CLO, TENO5_AZ_CW, TENO5_AZ_P, TENO5_AZ_D, c)
    case default ; error stop 'background: unknown scheme'
    end select
    endsubroutine background
