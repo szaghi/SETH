@@ -11,6 +11,7 @@ use seth_descaling
 use seth_weno_js
 use seth_weno_js_tables
 use seth_wenoz
+use seth_weno_c
 use seth_teno
 use seth_positivity
 use seth_mp
@@ -30,6 +31,7 @@ public :: seth_weno7_js, seth_weno7_js_wr, seth_weno7_js_interp, seth_weno7_js_i
 public :: seth_weno9_js, seth_weno9_js_wr, seth_weno9_js_interp, seth_weno9_js_interp_wr
 public :: seth_wenoz3, seth_wenoz5, seth_wenoz7, seth_wenoz9
 public :: seth_wenoz3_interp, seth_wenoz5_interp, seth_wenoz7_interp, seth_wenoz9_interp
+public :: seth_weno4_c, seth_weno6_c, seth_weno8_c
 public :: seth_teno5, seth_teno5_opt, seth_teno5_az, seth_teno6, seth_teno6_opt, seth_teno6_neno6, seth_teno8
 public :: seth_teno5_a, seth_teno8_a
 public :: seth_teno5_interp, seth_teno6_interp

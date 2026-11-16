@@ -26,7 +26,7 @@ public :: BIG_JUMP, ROBUST_EXP_MIN, ROBUST_EXP_MAX, ROBUST_EXP_MAX_JS
 public :: ORDERS_AT_FLOOR_OK, CONV_FLOOR_OP, CONV_ORDER_LOSS, INTERP_FLOOR, INTERP_CP_ORDER_LOSS, CP2_AZ_TANG
 public :: HENRICK_TOL, POINT_FLOOR, POINT_ORDER_LOSS, MP_NG, SPECTRAL_FLOOR, SPECTRAL_SLOPE_LOSS
 public :: TAU_FLOOR, TAU_ORDER_LOSS, CENTRAL_FLOOR_N, BURGERS_FLOOR_N, EULER_FLOOR_N2
-public :: POS_RANGE_EXP, SMALL_STEP, AI_STEP_TOL, SENSOR_SCALES, SENSOR_FLOW_RATIO
+public :: POS_RANGE_EXP, SMALL_STEP, AI_STEP_TOL, SENSOR_SCALES, SENSOR_FLOW_RATIO, CENTRED_ORDER_LOSS
 public :: TOL_BOUNDS, TOL_THETA, TOL_PROPERTIES, TOL_X, TOL_ANTIDISSIPATION, TOL_TABLES, TOL_ADR, TOL_CONSERVATION
 
 #if defined _R_P_IS_R4P
@@ -79,6 +79,10 @@ real(R_P), parameter :: POINT_ORDER_LOSS = 0.8_R_P !< The pointwise order tests:
                                                 !< floor, which are pre-asymptotic (R8P has the same errors there).
                                                 !< Worst: WENO5-JS interpolation, minus state, 3.74 at the coarsest
                                                 !< pair, against 4.5: 0.76 + 5 %.
+real(R_P), parameter :: CENTRED_ORDER_LOSS = 1.06_R_P !< seth_test_weno_c: order lost on the pairs above the floor,
+                                                 !< pre-asymptotic (R8P: 4.68 on the same pair). Worst: WENO6-C,
+                                                 !< right state, 4.69 (gfortran, ifx; nvfortran 4.72) against
+                                                 !< 6 - 0.3: a loss of 1.01, plus 5 %.
 integer,   parameter :: MP_NG = 3 !< seth_test_mp: the sin^4 grids N = 20, 40, 80. The cell averages are differences of
                                  !< the primitive (~0.4): they lose eps 0.4/h, and from N = 160 the L1 error grows as 1/h
                                  !< (1.38e-6 at N = 80, 1.66e-6 at 160, 1.3e-5 at 1280), noise the bound then reacts to.
@@ -195,6 +199,7 @@ logical,   parameter :: CP2_AZ_TANG = .true. !< seth_test_critical_points: TENO5
 real(R_P), parameter :: HENRICK_TOL = 0.5_R_P !< seth_test_critical_points: WENO-JS within 0.5 of Henrick's rates.
 real(R_P), parameter :: POINT_FLOOR = 2.e2_R_P !< The pointwise order tests: the floor of a face error, in eps.
 real(R_P), parameter :: POINT_ORDER_LOSS = 0._R_P !< The pointwise order tests: no order lost.
+real(R_P), parameter :: CENTRED_ORDER_LOSS = 0._R_P !< seth_test_weno_c: no order lost.
 integer,   parameter :: MP_NG = 7 !< seth_test_mp: the sin^4 grids N = 20 .. 1280.
 real(R_P), parameter :: SPECTRAL_FLOOR = 0._R_P !< seth_test_spectral: no floor, the slope between 0.1 and 0.2.
 real(R_P), parameter :: SPECTRAL_SLOPE_LOSS = 0._R_P !< seth_test_spectral: no slope lost.

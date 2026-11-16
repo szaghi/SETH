@@ -3,7 +3,9 @@ module seth_adam_reference
 !< SETH tests: ADAM's WENO kernels, verbatim, as the reference of the extraction.
 !<
 !< The non-TBP procedures of ADAM's adam_weno_object.F90 (commit 302f093e), copied by a script without any edit;
-!< only the module around them is new (S_MAX_M1 as ADAM defines it). weno_reconstruct_centered is left out (audit D1).
+!< only the module around them is new (S_MAX_M1 as ADAM defines it). weno_reconstruct_centered (copied at ADAM commit
+!< f46b56fb, where the file equals 302f093e's) and weno_reconstruct_centered_d1fix, the same with the weights computed on the
+!< shifted cells (audit D1: the one line changed), the references of seth_weno4/6/8_c.
 !< compute_kep_flux and compute_ducros: ADAM's src/app/flume/common/adam_flume_hybrid_library.F90 (last changed in
 !< commit 5e4fe007), the reference of seth_keep_pe6 and seth_ducros, copied the same way.
 use penf, only : I4P, R8P
@@ -11,6 +13,7 @@ implicit none
 private
 public :: weno_reconstruct_upwind, weno_reconstruct_upwind_wratio, weno_descaling, weno_weights_exponent
 public :: compute_kep_flux, compute_ducros
+public :: weno_reconstruct_centered, weno_reconstruct_centered_d1fix
 integer(I4P), parameter :: S_MAX_M1=4 !< Maximum number/dimensions of stencils minus 1 (ADAM).
 
 contains
@@ -272,4 +275,105 @@ contains
    psi = th * th / (th * th + wx * wx + wy * wy + wz * wz + eps)
    if (jump > jump_max) psi = 1._R8P
    endsubroutine compute_ducros
+
+   pure subroutine weno_reconstruct_centered(S, weno_a, weno_p, weno_d, weno_c, weno_zeps, weno_rmu, v, vr)
+   !< Reconstruct by WENO centered method of 2S order, non TBP.
+   integer(I4P), intent(in)  :: S                   !< Number of stencils used.
+   real(R8P),    intent(in)  :: weno_a(1:,0:,1:)    !< Optimal weights.
+   real(R8P),    intent(in)  :: weno_p(1:,0:,0:,1:) !< Polinomials coefficients.
+   real(R8P),    intent(in)  :: weno_d(0:,0:,0:,1:) !< Smoothness indicators coefficients.
+   real(R8P),    intent(in)  :: weno_c(1-S:,1:)     !< Centered polinomials coefficients.
+   real(R8P),    intent(in)  :: weno_zeps           !< Parameter for avoiding division by zero in computing IS.
+   real(R8P),    intent(in)  :: weno_rmu            !< Inverse of the descaler (1: Jiang-Shu weights).
+   real(R8P),    intent(in)  :: v (1:2,1-S:S)       !< Variables to be reconstructed.
+   real(R8P),    intent(out) :: vr(1:2)             !< Left and right (1,2) interface value of reconstructed v.
+   real(R8P)                 :: vu(1:2,-S_MAX_M1:S_MAX_M1) !< Variables to be reconstructed, upwind stencils (1-S:S-1).
+   real(R8P)                 :: vp(1:2,0:S_MAX_M1)  !< Polynomial reconstructions (0:S-1 used).
+   real(R8P)                 :: w (1:2,0:S_MAX_M1)  !< Weights of the stencils (0:S-1 used).
+   real(R8P)                 :: vc(1:2)             !< Centered reconstruction.
+   real(R8P)                 :: IS(1:3),ISC(1:2)    !< Centered smoothness indicator.
+   real(R8P)                 :: phi                 !< Centered-upwind blending coefficient.
+   integer(I4P)              :: s1, f               !< Counter.
+
+#ifdef DEV_OMP
+   !$omp declare target(weno_reconstruct_centered)
+#endif
+   ! upwind reconstruction
+   do s1=1-S, S
+      if (s1>1-S) vu(1,s1-1) = v(1,s1)
+      if (s1<S  ) vu(2,s1  ) = v(2,s1)
+   enddo
+   call weno_compute_polynomials_upwind(S=S, weno_p=weno_p, v=vu(1:2,1-S:-1+S), vp=vp(1:2,0:S-1))
+   call weno_compute_weights_upwind(S=S, weno_a=weno_a, weno_d=weno_d, weno_zeps=weno_zeps, weno_rmu=weno_rmu,     &
+                                    v=v(1:2,1-S:-1+S), w=w(1:2,0:S-1))
+   call weno_compute_convolution(S=S, vp=vp(1:2,0:S-1), w=w(1:2,0:S-1), vr=vr(1:2))
+   if (S>1) then
+      ! centered reconstruction
+      do f=1, 2
+         vc(f) = 0._R8P
+         do s1=1-S, S
+            vc(f) = vc(f) + weno_c(s1,S) * v(f,s1)
+         enddo
+         ! blending centered reconstruction with upwind one for discontinuos solution
+         IS(1) = (v(f,0) - v(f,-1))**2 + weno_zeps
+         IS(2) = (v(f,1) - v(f, 0))**2 + weno_zeps
+         IS(3) = (v(f,2) - v(f, 1))**2 + weno_zeps
+         ISC(1) = abs(IS(2)-IS(1))/(IS(2)+IS(1))
+         ISC(2) = abs(IS(3)-IS(2))/(IS(3)+IS(2))
+         phi = max(ISC(1),ISC(2))
+         vr(f) = vc(f) + phi*(vr(f)-vc(f))
+      enddo
+   endif
+   endsubroutine weno_reconstruct_centered
+
+   pure subroutine weno_reconstruct_centered_d1fix(S, weno_a, weno_p, weno_d, weno_c, weno_zeps, weno_rmu, v, vr)
+   !< Reconstruct by WENO centered method of 2S order, non TBP.
+   !< SETH: ADAM's routine with D1 fixed, the weights on the shifted cells vu (the one changed line).
+   integer(I4P), intent(in)  :: S                   !< Number of stencils used.
+   real(R8P),    intent(in)  :: weno_a(1:,0:,1:)    !< Optimal weights.
+   real(R8P),    intent(in)  :: weno_p(1:,0:,0:,1:) !< Polinomials coefficients.
+   real(R8P),    intent(in)  :: weno_d(0:,0:,0:,1:) !< Smoothness indicators coefficients.
+   real(R8P),    intent(in)  :: weno_c(1-S:,1:)     !< Centered polinomials coefficients.
+   real(R8P),    intent(in)  :: weno_zeps           !< Parameter for avoiding division by zero in computing IS.
+   real(R8P),    intent(in)  :: weno_rmu            !< Inverse of the descaler (1: Jiang-Shu weights).
+   real(R8P),    intent(in)  :: v (1:2,1-S:S)       !< Variables to be reconstructed.
+   real(R8P),    intent(out) :: vr(1:2)             !< Left and right (1,2) interface value of reconstructed v.
+   real(R8P)                 :: vu(1:2,-S_MAX_M1:S_MAX_M1) !< Variables to be reconstructed, upwind stencils (1-S:S-1).
+   real(R8P)                 :: vp(1:2,0:S_MAX_M1)  !< Polynomial reconstructions (0:S-1 used).
+   real(R8P)                 :: w (1:2,0:S_MAX_M1)  !< Weights of the stencils (0:S-1 used).
+   real(R8P)                 :: vc(1:2)             !< Centered reconstruction.
+   real(R8P)                 :: IS(1:3),ISC(1:2)    !< Centered smoothness indicator.
+   real(R8P)                 :: phi                 !< Centered-upwind blending coefficient.
+   integer(I4P)              :: s1, f               !< Counter.
+
+#ifdef DEV_OMP
+   !$omp declare target(weno_reconstruct_centered_d1fix)
+#endif
+   ! upwind reconstruction
+   do s1=1-S, S
+      if (s1>1-S) vu(1,s1-1) = v(1,s1)
+      if (s1<S  ) vu(2,s1  ) = v(2,s1)
+   enddo
+   call weno_compute_polynomials_upwind(S=S, weno_p=weno_p, v=vu(1:2,1-S:-1+S), vp=vp(1:2,0:S-1))
+   call weno_compute_weights_upwind(S=S, weno_a=weno_a, weno_d=weno_d, weno_zeps=weno_zeps, weno_rmu=weno_rmu,     &
+                                    v=vu(1:2,1-S:-1+S), w=w(1:2,0:S-1))
+   call weno_compute_convolution(S=S, vp=vp(1:2,0:S-1), w=w(1:2,0:S-1), vr=vr(1:2))
+   if (S>1) then
+      ! centered reconstruction
+      do f=1, 2
+         vc(f) = 0._R8P
+         do s1=1-S, S
+            vc(f) = vc(f) + weno_c(s1,S) * v(f,s1)
+         enddo
+         ! blending centered reconstruction with upwind one for discontinuos solution
+         IS(1) = (v(f,0) - v(f,-1))**2 + weno_zeps
+         IS(2) = (v(f,1) - v(f, 0))**2 + weno_zeps
+         IS(3) = (v(f,2) - v(f, 1))**2 + weno_zeps
+         ISC(1) = abs(IS(2)-IS(1))/(IS(2)+IS(1))
+         ISC(2) = abs(IS(3)-IS(2))/(IS(3)+IS(2))
+         phi = max(ISC(1),ISC(2))
+         vr(f) = vc(f) + phi*(vr(f)-vc(f))
+      enddo
+   endif
+   endsubroutine weno_reconstruct_centered_d1fix
 endmodule seth_adam_reference
