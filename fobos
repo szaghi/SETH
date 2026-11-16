@@ -294,6 +294,8 @@ preproc = -D_R_P_IS_R4P
 [template-r4-tests]
 template  = template-r4
 build_dir = exe-r4/
+# ADAM's code and the comparisons with it are R8P only (scripts/check_literals.py reads this list too)
+exclude   = src/tests/seth_adam_reference.F90 src/tests/seth_test_weno_js_adam.F90 src/tests/seth_test_central_adam.F90
 
 [template-r4-bench]
 template  = template-r4

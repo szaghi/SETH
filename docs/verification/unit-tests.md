@@ -1,6 +1,6 @@
 # Test programs
 
-`fobis build --mode tests-gnu && bash scripts/run_tests.sh` runs 34 programs (`fpm test` the same set). Every one
+`fobis build --mode tests-gnu && bash scripts/run_tests.sh` runs 35 programs (`fpm test` the same set). Every one
 exits non-zero on a violated assertion. They pass with gfortran 16.2, nvfortran 26.9 and ifx 2026.2, debug (all
 checks and floating-point traps on) and optimised, and in the OpenACC build on the GPU. Random stencils come from a
 fixed, printed seed (`SETH_TEST_SEED` overrides it), so a failure reproduces.
@@ -9,7 +9,8 @@ fixed, printed seed (`SETH_TEST_SEED` overrides it), so a failure reproduces.
 |---|---|---|
 | `seth_test_kinds` | the working kinds of PENF | — |
 | `seth_test_registry` | the test registry: every kernel dispatched, names unique, `_wr` kernels equal the plain ones bitwise | [C2](./contracts/properties) |
-| `seth_test_weno_js_adam` | WENO-JS against ADAM's kernels copied verbatim, 1.4 M results | [C1](./contracts/adam-equivalence) |
+| `seth_test_weno_js_adam` | WENO-JS against ADAM's kernels copied verbatim, 1.4 M results (R8P only) | [C1](./contracts/adam-equivalence) |
+| `seth_test_central_adam` | `seth_keep_pe6` bitwise equal to ADAM's `compute_kep_flux`, `seth_ducros` to `compute_ducros` (R8P only) | [H2](./hybrids/central) |
 | `seth_test_weno_js_order` | WENO-JS design order, reconstruction and interpolation | [A1](./accuracy/order-of-accuracy) |
 | `seth_test_weno_js_eno` | WENO-JS across a unit step at every cell boundary | [C2](./contracts/properties) |
 | `seth_test_wenoz` | WENO-Z order, ENO, mirror; reconstruction and interpolation | [A1](./accuracy/order-of-accuracy), [C2](./contracts/properties) |
@@ -17,7 +18,7 @@ fixed, printed seed (`SETH_TEST_SEED` overrides it), so a failure reproduces.
 | `seth_test_properties` | exactness, constants, translation, mirror, scaling, robustness, on every scheme | [C2](./contracts/properties) |
 | `seth_vv_hybrid` | hybrids in the 1-D Euler harness: the sensor quiet on a smooth wave, the central/TENO5 junction at fifth order, conservation with random switching, Sod/Lax/Shu–Osher against the pure schemes | [H3](./hybrids/harness) |
 | `seth_vv_roe` | the Roe flux path with entropy fix of the 1-D Euler harness: design order on a smooth wave (the fix silent), Sod and Lax, the transonic rarefaction with and without the fix, the 123 problem; the blast waves at Fu et al.'s cutoffs without the limiter ([issue #5](https://github.com/szaghi/SETH/issues/5)) | [S5](./shocks/blast#the-flux-issue-5) |
-| `seth_test_central` | the KEEP-PE central fluxes of order 2 to 8: order, consistency, the kinetic-energy identity, pressure equilibrium, bitwise equal to ADAM's `compute_kep_flux`, the device; the Ducros sensors | [H2](./hybrids/central) |
+| `seth_test_central` | the KEEP-PE central fluxes of order 2 to 8: order, consistency, the kinetic-energy identity, pressure equilibrium, the device; the Ducros sensors | [H2](./hybrids/central) |
 | `seth_test_sensors` | the four sensors on Li, Chen & Ren's static tests: their wavenumbers reproduced, the jump of test (b) flagged alone by theirs, constants smooth, steps not; critical points under refinement; invariance under the field-range normalisation | [H1](./hybrids/sensors) |
 | `seth_vv_sensors` | the four sensors on Shu–Osher and the blast waves: positivity, each sensor's cost hybrid of TENO5 and TENO6 within 3 times the pure scheme, the flagged fractions ordered as the static tests predict | [H1](./hybrids/sensors) |
 | `seth_test_sensor_fields` | the stencil sensors against the Ducros sensors on analytic 2-D fields: Taylor–Green unflagged by Ducros, every shock cell flagged, Ducros blind to a shock in a strong vortex and to a contact, the compression form blind to an expansion | [H1](./hybrids/sensors) |

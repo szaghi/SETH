@@ -10,16 +10,14 @@ program seth_test_central
 !<    of its scale (R the flux differences): the convective terms neither create nor destroy kinetic energy.
 !< 4. Pressure equilibrium: a uniform velocity and pressure across a random density (ratios up to 100): R(rho u) =
 !<    u R(rho) and R(E) = |u|^2/2 R(rho) to 1e-12 (velocity and pressure stay uniform).
-!< 5. ADAM: seth_keep_pe6 equals ADAM's compute_kep_flux bitwise on random states (gfortran; other compilers within
-!<    2e-15 of the flux scale, fused multiply-adds), and seth_ducros equals compute_ducros with its override off.
-!< 6. Ducros: pure dilatation phi = psi = 1 (compression), expansion phi = 1, psi = 0, pure rotation 0, and
+!< 5. Ducros: pure dilatation phi = psi = 1 (compression), expansion phi = 1, psi = 0, pure rotation 0, and
 !<    psi = sqrt(phi) in compression.
-!< 7. Device: seth_keep_pe6 in an OpenACC loop equals the host to 1e-13 (built with tests-nvf-oac; on the host
+!< 6. Device: seth_keep_pe6 in an OpenACC loop equals the host to 1e-13 (built with tests-nvf-oac; on the host
 !<    otherwise).
+!< The comparison with ADAM's compute_kep_flux and compute_ducros is seth_test_central_adam (R8P only).
 use seth
 use seth_test_parameters, only : COMPLEX_STEP, ORDER_FLOOR, TOL_DEVICE_HOST, TOL_DUCROS, TOL_DUCROS_SQRT, TOL_FLUX, TOL_KE_PEP
 use seth_test_rng, only : seed_rng
-use seth_adam_reference, only : compute_kep_flux, compute_ducros
 implicit none
 real(R_P),    parameter :: GAM = 1.4_R_P
 real(R_P),    parameter :: PI = acos(-1._R_P)
@@ -27,8 +25,8 @@ integer(I4P), parameter :: NK = 5_I4P
 character(12), parameter :: NAMES(NK) = ['keep_pe2    ', 'keep_pe4    ', 'keep_pe6    ', 'keep_pe8    ', 'keep_pe8_opt']
 integer(I4P), parameter :: HALF(NK) = [1, 2, 3, 4, 4]
 real(R_P),    parameter :: DESIGN(NK) = [2._R_P, 4._R_P, 6._R_P, 8._R_P, 6._R_P]
-real(R_P)               :: err(4), order, w(5,-3:4), f(5), fa(5), fe(5), x, s, phi, psi, g(3,3), worst
-integer(I4P)            :: k, d, n, ig, i, nbit, ntot
+real(R_P)               :: err(4), order, w(5,-3:4), f(5), fe(5), x, s, phi, psi, g(3,3), worst
+integer(I4P)            :: k, d, n, ig, i
 logical                 :: passed
 
 passed = .true.
@@ -59,28 +57,8 @@ do k=1, NK
    print '(A12,A,ES10.2,A,ES10.2)', NAMES(k), ' kinetic-energy identity ', x, ', pressure equilibrium ', s
    if (x > TOL_KE_PEP .or. s > TOL_KE_PEP) passed = .false.
 enddo
-! 5. ADAM
-nbit = 0 ; ntot = 0 ; worst = 0._R_P
-do n=1, 20000
-   do i=-2, 3
-      call random_number(w(:,i))
-      w(1,i) = 0.1_R_P + w(1,i) ; w(5,i) = 0.1_R_P + w(5,i) ; w(2:4,i) = 2._R_P*w(2:4,i) - 1._R_P
-   enddo
-   d = 1 + mod(n, 3)
-   call seth_keep_pe6(d, GAM, w(:,-2:3), f)
-   call compute_kep_flux(d, GAM, w(:,-2:3), fa)
-   ntot = ntot + 5 ; nbit = nbit + count(f == fa)
-   worst = max(worst, maxval(abs(f - fa))/maxval(abs(fa)))
-   call random_number(g) ; g = 2._R_P*g - 1._R_P
-   call seth_ducros(1.e-3_R_P, g, phi)
-   call compute_ducros(1.e-3_R_P, 0._R_P, 1._R_P, g, psi)
-   if (phi /= psi) then ; print '(A)', 'seth_ducros differs from ADAM''s compute_ducros' ; passed = .false. ; exit ; endif
-enddo
-print '(A,I0,A,I0,A,ES10.2)', 'seth_keep_pe6 against ADAM''s compute_kep_flux: ', nbit, ' of ', ntot, &
-      ' bitwise, worst scaled difference ', worst
-if (worst > 2.e-15_R_P) passed = .false. ! kind-ok: the ADAM comparison, R8P only
-! 7. the device: seth_keep_pe6 in an OpenACC loop against the host, on the states of item 5 (without OpenACC both on
-!    the host); within 1e-13 of the flux scale (contractions differ)
+! 6. the device: seth_keep_pe6 in an OpenACC loop against the host, on random states (without OpenACC both on the
+!    host); within 1e-13 of the flux scale (contractions differ)
 block
 integer(I4P), parameter :: NS = 4096_I4P
 real(R_P)               :: ws(5,-2:3,NS), fdev(5,NS), fhost(5,NS), wl(5,-2:3)
@@ -104,7 +82,7 @@ worst = maxval(abs(fdev - fhost))/maxval(abs(fhost))
 print '(A,ES10.2)', 'seth_keep_pe6, device against host, worst scaled difference ', worst
 if (worst > TOL_DEVICE_HOST) passed = .false.
 endblock
-! 6. Ducros
+! 5. Ducros
 g = 0._R_P ; g(1,1) = -1._R_P ; g(2,2) = -1._R_P ; g(3,3) = -1._R_P
 call seth_ducros(0._R_P, g, phi) ; call seth_ducros_compression(0._R_P, g, psi)
 if (abs(phi - 1._R_P) > TOL_DUCROS .or. abs(psi - 1._R_P) > TOL_DUCROS) then

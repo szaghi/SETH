@@ -22,7 +22,7 @@ pressure equilibrium), a difference from ADAM's flux, from which SETH's sixth-or
 | Order | $(F_{i+1/2} - F_{i-1/2})/h$ of a smooth periodic state against the exact derivative of the Euler flux (complex step), $N = 32 \dots 256$, each direction | [`seth_test_central.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_test_central.F90) |
 | Kinetic energy | random $\rho$, $\mathbf u$ and uniform $p$ on 64 periodic cells: $\sum_i \mathbf u_i \cdot R(\rho\mathbf u)_i - \tfrac12\lvert\mathbf u_i\rvert^2 R(\rho)_i$ against its scale | |
 | Pressure equilibrium | random $\rho \in [0.01, 1]$, uniform $\mathbf u$ and $p$: $R(\rho\mathbf u) - \mathbf u R(\rho)$, $R(E) - \tfrac12\lvert\mathbf u\rvert^2 R(\rho)$ | |
-| ADAM | `seth_keep_pe6` against `compute_kep_flux` copied verbatim (`src/tests/seth_adam_reference.F90`), 20 000 random states | |
+| ADAM | `seth_keep_pe6` against `compute_kep_flux` copied verbatim (`src/tests/seth_adam_reference.F90`), 20 000 random states (R8P only) | [`seth_test_central_adam.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_test_central_adam.F90) |
 | Ducros | the classical $\phi = \theta^2/(\theta^2 + \lvert\omega\rvert^2 + \varepsilon)$ and De Vanna et al.'s compression-only $\psi$ on dilatation, expansion, rotation, and $\psi = \sqrt\phi$ in compression | |
 
 ## Program
