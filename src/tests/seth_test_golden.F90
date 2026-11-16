@@ -23,7 +23,9 @@ program seth_test_golden
 !< file and this test's default path. v2 (2026-11-15) adds the WENO-Z and TENO interpolations; its lines for the schemes
 !< of v1 are identical to v1's, character for character (checked when v2 was written, same build), and v1 is kept.
 !< v3 (2026-11-15) adds TENO5-opt, v4 TENO5-AZ, v5 TENO8, v6 TENO5-A and TENO8-A; each keeps the lines of the previous
-!< file identical (same build), and the previous files are kept.
+!< file identical (same build), and the previous files are kept. v7 (2026-11-16) adds the centred WENO (WENO4/6/8-C),
+!< written by the optimised gfortran build: v6's 2368 lines are its first lines, character for character.
+!< R4P: seth_golden_r4_v2 adds them the same way (r4_v1's 2368 lines its first lines, the build of r4_v1's options).
 use, intrinsic :: iso_fortran_env, only : compiler_version, compiler_options
 use seth
 use seth_test_parameters, only : GOLDEN_FILE, GOLDEN_SCALE_EXP0, GOLDEN_SCALE_DEXP, TOL_GOLDEN, TOL_GOLDEN_WR

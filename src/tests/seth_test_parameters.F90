@@ -31,7 +31,7 @@ public :: TOL_BOUNDS, TOL_THETA, TOL_PROPERTIES, TOL_X, TOL_ANTIDISSIPATION, TOL
 
 #if defined _R_P_IS_R4P
 ! R4P: epsilon 1.2e-7, smallest normal 1.2e-38. Provisional (phase 4 measures): see the module's notes.
-character(*), parameter :: GOLDEN_FILE = 'src/tests/golden/seth_golden_r4_v1.txt' !< The R4P golden values.
+character(*), parameter :: GOLDEN_FILE = 'src/tests/golden/seth_golden_r4_v2.txt' !< The R4P golden values.
 integer,      parameter :: GOLDEN_SCALE_EXP0 = -60 !< The golden file's scaled stencils: data times 2^-60 ..
 integer,      parameter :: GOLDEN_SCALE_DEXP = 10  !< 2^50 (12 of them): normal, and their indicators (squares, times
                                                    !< coefficients up to ~1e2) stay inside R4P's range (1e-38 .. 3e38).
@@ -180,7 +180,7 @@ real(R_P), parameter :: TOL_ADR             = 6.e-4_R_P !< Round-off: 1e-12 in u
 real(R_P), parameter :: TOL_CONSERVATION    = 6.e-5_R_P !< Round-off: 1e-13 in ulps.
 #else
 ! R8P: the values the suite was verified with.
-character(*), parameter :: GOLDEN_FILE = 'src/tests/golden/seth_golden_v6.txt' !< The R8P golden values.
+character(*), parameter :: GOLDEN_FILE = 'src/tests/golden/seth_golden_v7.txt' !< The R8P golden values.
 integer,      parameter :: GOLDEN_SCALE_EXP0 = -498 !< The golden file's scaled stencils: data times 2^-498 .. 2^96
 integer,      parameter :: GOLDEN_SCALE_DEXP = 54    !< (12 of them), about 1e-150 .. 1e29.
 ! data magnitudes

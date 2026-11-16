@@ -5,7 +5,7 @@ module seth_test_schemes
 !< Every kernel reconstructs the two states at one face from two stencils with bounds 1-s:s (cells by offset from the
 !< face). Here the stencils are always passed as `v(-4:5)` (the widest, WENO-9) and sliced to the scheme's bounds, so a
 !< test writes its data once for all schemes. `reconstruct` calls the scheme's kernel with its default parameters, or
-!< with the `eps`/`par` given (`par`: rmu for WENO-JS, p for WENO-Z, C_T for TENO); `wrp`/`wrm`, when present, come
+!< with the `eps`/`par` given (`par`: rmu for WENO-JS and the centred WENO, p for WENO-Z, C_T for TENO); `wrp`/`wrm`, when present, come
 !< from the `_wr` kernel (WENO-JS only). `interp` marks the interpolations (point values at the cell centres instead
 !< of cell averages): WENO-JS (family FAM_JS_INTERP), WENO-Z and TENO (their own families, so that the family-driven
 !< expectations apply to them too).
@@ -13,10 +13,10 @@ use seth
 use seth_test_parameters, only : EPS_ZT
 implicit none
 private
-public :: scheme_t, NSCHEMES, SCHEMES, FAM_JS, FAM_JS_INTERP, FAM_Z, FAM_TENO, VLO, VHI
+public :: scheme_t, NSCHEMES, SCHEMES, FAM_JS, FAM_JS_INTERP, FAM_Z, FAM_TENO, FAM_C, VLO, VHI
 public :: reconstruct
 
-integer(I4P), parameter :: FAM_JS = 1, FAM_JS_INTERP = 2, FAM_Z = 3, FAM_TENO = 4
+integer(I4P), parameter :: FAM_JS = 1, FAM_JS_INTERP = 2, FAM_Z = 3, FAM_TENO = 4, FAM_C = 5
 integer(I4P), parameter :: VLO = -4_I4P, VHI = 5_I4P !< Bounds of the test stencils.
 
 type :: scheme_t
@@ -29,7 +29,7 @@ type :: scheme_t
    logical       :: interp = .false. !< Interpolation from point values (otherwise reconstruction from averages).
 endtype scheme_t
 
-integer(I4P), parameter :: NSCHEMES = 29_I4P
+integer(I4P), parameter :: NSCHEMES = 32_I4P
 type(scheme_t), parameter :: SCHEMES(NSCHEMES) = [ &
    scheme_t('weno1_js',        FAM_JS,        1, 1._R_P, 1.e-6_R_P,  1._R_P), &
    scheme_t('weno3_js',        FAM_JS,        2, 3._R_P, 1.e-6_R_P,  1._R_P), &
@@ -59,7 +59,10 @@ type(scheme_t), parameter :: SCHEMES(NSCHEMES) = [ &
    scheme_t('wenoz7_interp',   FAM_Z,         4, 7._R_P, EPS_ZT, 1._R_P, .true.), &
    scheme_t('wenoz9_interp',   FAM_Z,         5, 9._R_P, EPS_ZT, 2._R_P, .true.), &
    scheme_t('teno5_interp',    FAM_TENO,      3, 5._R_P, EPS_ZT, SETH_TENO5_CT, .true.), &
-   scheme_t('teno6_interp',    FAM_TENO,      3, 6._R_P, EPS_ZT, SETH_TENO6_CT, .true.)]
+   scheme_t('teno6_interp',    FAM_TENO,      3, 6._R_P, EPS_ZT, SETH_TENO6_CT, .true.), &
+   scheme_t('weno4_c',         FAM_C,         2, 4._R_P, 1.e-6_R_P,  1._R_P), &
+   scheme_t('weno6_c',         FAM_C,         3, 6._R_P, 1.e-6_R_P,  1._R_P), &
+   scheme_t('weno8_c',         FAM_C,         4, 8._R_P, 1.e-6_R_P,  1._R_P)]
 
 contains
    subroutine reconstruct(id, vp, vm, rp, rm, wrp, wrm, eps, par)
@@ -147,6 +150,12 @@ contains
       call seth_teno5_a(vp(-2:3), vm(-2:3), e, q, SETH_TENO5_A_XI, SETH_TENO5_A_A1, SETH_TENO5_A_A2, 1._R_P, rp, rm)
    case('teno8_a')
       call seth_teno8_a(vp(-3:4), vm(-3:4), e, q, SETH_TENO8_A_XI, SETH_TENO8_A_A1, SETH_TENO8_A_A2, 1._R_P, rp, rm)
+   case('weno4_c')
+      call seth_weno4_c(vp(-1:2), vm(-1:2), e, q, rp, rm)
+   case('weno6_c')
+      call seth_weno6_c(vp(-2:3), vm(-2:3), e, q, rp, rm)
+   case('weno8_c')
+      call seth_weno8_c(vp(-3:4), vm(-3:4), e, q, rp, rm)
    case default
       error stop 'reconstruct: unknown scheme'
    endselect

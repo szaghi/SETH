@@ -14,7 +14,9 @@ program seth_test_convergence
 !< Asserted on the finest pair of N whose errors stay above round-off (1e3 eps/h): WENO-Z with p = 2 and TENO at
 !< their order (first-order critical points do not
 !< degrade them: Borges 2008, Tang 2024, Zhang 2024b); WENO-JS at least Henrick et al.'s critical-point rate
-!< max(2r - 3, 1) (an Linf over all nodes is bounded by its worst node); WENO-Z with p = 1 at least 4 for WENO-Z5.
+!< max(2r - 3, 1) (an Linf over all nodes is bounded by its worst node); WENO-Z with p = 1 at least 4 for WENO-Z5;
+!< the centred WENO the rate of its upwind WENO-JS (where a difference of the blend's cells vanishes, phi = O(1) and
+!< the state is the upwind one: measured 1.55, 3.56, 4.76 for orders 4, 6, 8).
 !< Every scheme and order is printed.
 !< Per kind (seth_test_parameters): the round-off floor of the operator, and in R4P an order loss and the acceptance of
 !< a scheme that reaches round-off before any pair of levels is above it (it converged at least as fast as the floor
@@ -59,7 +61,7 @@ do id=1, NSCHEMES
       print '(A16,I3,2F12.2)', SCHEMES(id)%name, p, oop, oadv
       if (vv_report()) write(uo, '(A,1X,I1,2F8.3)') trim(SCHEMES(id)%name), p, oop, oadv
       ! the expected order
-      if (SCHEMES(id)%family == FAM_JS) then
+      if (SCHEMES(id)%family == FAM_JS .or. SCHEMES(id)%family == FAM_C) then
          need = real(max(2*SCHEMES(id)%s - 3, 1), R_P)
       elseif (SCHEMES(id)%family == FAM_Z .and. p == 1) then
          need = merge(4._R_P, -1._R_P, trim(SCHEMES(id)%name) == 'wenoz5')
