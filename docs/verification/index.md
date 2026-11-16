@@ -3,7 +3,7 @@
 Every capability of SETH is backed by a verification case: a Fortran program in `src/tests/` that runs the kernels
 and asserts the result against something it shares no code with, such as an exact solution, a fine reference, a
 published number, a theorem or ADAM's own code. The same programs are the test suite (`bash scripts/run_tests.sh`
-runs all 29, on six compiler builds and on the GPU), and with `SETH_VV_DIR` set they run every scheme on the report
+runs all 30, on six compiler builds and on the GPU), and with `SETH_VV_DIR` set they run every scheme on the report
 grids and write the data from which these pages are drawn (`scripts/run_vv.sh`). The figures are real SETH results
 and can be regenerated after any change of the kernels.
 
@@ -113,6 +113,8 @@ scheme. [Group page](./spectral/).
 The pieces of a hybrid scheme: the sensors that choose the linear branch. [Group page](./hybrids/).
 
 <div class="seth-gallery seth-catalog">
+
+[<strong>Central fluxes</strong><span>KEEP-PE of order 2 to 8: kinetic energy and pressure equilibrium to round-off, ADAM's flux bitwise</span><em>physics, contract</em>](./hybrids/central)
 
 [![Sensors](/verification/sensors.png)<strong>Sensors</strong><span>four published sensors on Li, Chen & Ren's static tests: their wavenumbers 0.64 and 2.06 reproduced</span><em>physics</em>](./hybrids/sensors)
 

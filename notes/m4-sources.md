@@ -111,3 +111,15 @@ Li, Y., Chen, C., Ren, Y.-X. (2022). *J. Comput. Phys.* 448:110770, §3.2. Wan, 
 | Fig. 9: Fu correct for k < 0.64, the new detector up to k = 2.06; Ren's and Harten's fail at very low k | quoted; reproduced: 0.64, 2.07, 0.04 | §3.2 |
 | Test (b): sin(12 pi x) - 2 / sin(24 pi x + pi/2) + 2 | quoted | §2.2 |
 | Wan & Xia: eta = tau_5/(e + mean beta), e = 1e-6; smooth eta <= 1/2, non-smooth eta >= 1, M(eta) = 2 - 2 eta between | quoted | §3, Eq. (3.14) |
+
+## Central fluxes and Ducros sensors (steps 4.1, 4.2)
+
+| Item | Status | Where |
+|---|---|---|
+| Pirozzoli's conservative form F = 2 sum_l a_l sum_{m<l} f(i-m, i-m+l), a_l the central first-derivative coefficients | from ADAM's compute_kep_flux (W) and the llm-wiki (A); verified by the order of every kernel | ADAM adam_flume_hybrid_library.F90; wiki split-convective-forms |
+| KEEP-PE internal energy flux <p><u_n>/(gamma - 1), mass flux <rho><u_n>, momentum f_rho <u> | quoted | De Michele et al. 2023, Eq. (15), "the scheme KEEP-PE in [Shima et al.]" |
+| Kinetic energy flux f_rho (u_c . u_r)/2, split pressure work (u_n,c p_r + u_n,r p_c)/2 | from ADAM (W); verified by the kinetic-energy identity and the pressure equilibrium (to round-off) | |
+| Shima et al. 2021 itself | not obtained (not in the corpus) | |
+| Liang & Fu's eight-point a_l (0.8441336457279522, -0.2441336457279522, 0.0570096576929319, -0.006723831837710873) | quoted; order 6 measured | Liang & Fu 2024b, after Eq. (46) |
+| Ducros phi = theta^2/(theta^2 + omega^2 + eps) | from ADAM's compute_ducros (W), equal to it bitwise with the override off | |
+| De Vanna's psi = max(-div u/sqrt(div^2 u + rot^2 u + eps), 0), eps = (u_inf/delta_0)^2 | quoted | De Vanna et al. 2023a, Eq. (9) |

@@ -4,10 +4,13 @@ module seth_adam_reference
 !<
 !< The non-TBP procedures of ADAM's adam_weno_object.F90 (commit 302f093e), copied by a script without any edit;
 !< only the module around them is new (S_MAX_M1 as ADAM defines it). weno_reconstruct_centered is left out (audit D1).
+!< compute_kep_flux and compute_ducros: ADAM's src/app/flume/common/adam_flume_hybrid_library.F90 (last changed in
+!< commit 5e4fe007), the reference of seth_keep_pe6 and seth_ducros, copied the same way.
 use penf, only : I4P, R8P
 implicit none
 private
 public :: weno_reconstruct_upwind, weno_reconstruct_upwind_wratio, weno_descaling, weno_weights_exponent
+public :: compute_kep_flux, compute_ducros
 integer(I4P), parameter :: S_MAX_M1=4 !< Maximum number/dimensions of stencils minus 1 (ADAM).
 
 contains
@@ -215,4 +218,58 @@ contains
    wexp = S
    if (S > 4) wexp = S - 1
    endfunction weno_weights_exponent
+
+   pure subroutine compute_kep_flux(d, gamma, w, f)
+   !< Compute the 6th-order KEP face flux of direction `d`.
+   integer(I4P), intent(in)  :: d            !< Direction, 1=x, 2=y, 3=z.
+   real(R8P),    intent(in)  :: gamma        !< Specific heats ratio.
+   real(R8P),    intent(in)  :: w(5,-2:3)    !< Cell states.
+   real(R8P),    intent(out) :: f(5)         !< Face flux.
+   real(R8P)                 :: a(3)         !< Coefficients.
+   real(R8P)                 :: uu           !< u_l . u_r.
+   real(R8P)                 :: mf, pf       !< Two-point mass flux and pressure.
+   real(R8P)                 :: rg           !< 1 / (gamma - 1).
+   integer(I4P)              :: l, m, n, c, r !< Counters.
+   !$acc routine seq
+   !$omp declare target
+
+   a(1) = 0.75_R8P ; a(2) = -0.15_R8P ; a(3) = 1._R8P / 60._R8P
+   rg = 1._R8P / (gamma - 1._R8P)
+   do n=1, 5
+      f(n) = 0._R8P
+   enddo
+   do l=1, 3
+      do m=0, l-1
+         c = -m ; r = -m + l
+         mf = 0.25_R8P * (w(1,c) + w(1,r)) * (w(1+d,c) + w(1+d,r))
+         pf = 0.5_R8P * (w(5,c) + w(5,r))
+         f(1) = f(1) + 2._R8P * a(l) * mf
+         do n=1, 3
+            f(1+n) = f(1+n) + 2._R8P * a(l) * mf * 0.5_R8P * (w(1+n,c) + w(1+n,r))
+         enddo
+         f(1+d) = f(1+d) + 2._R8P * a(l) * pf
+         uu = w(2,c) * w(2,r) + w(3,c) * w(3,r) + w(4,c) * w(4,r)
+         f(5) = f(5) + 2._R8P * a(l) * (0.5_R8P * mf * uu + 0.5_R8P * rg * pf * (w(1+d,c) + w(1+d,r)) + &
+                                        0.5_R8P * (w(1+d,c) * w(5,r) + w(1+d,r) * w(5,c)))
+      enddo
+   enddo
+   endsubroutine compute_kep_flux
+
+   pure subroutine compute_ducros(eps, jump, jump_max, g, psi)
+   !< Compute the Ducros et al. (1999) sensor, `theta^2 / (theta^2 + |omega|^2 + eps)`, from the velocity gradient `g(a,b) = d u_a / d x_b`;
+   !< 1 where the density jumps: the Ducros ratio cannot see a contact, where the velocity is uniform and a central flux rings.
+   real(R8P), intent(in)  :: eps    !< Floor of the denominator.
+   real(R8P), intent(in)  :: jump   !< Largest |rho_+ - rho_-| / (rho_+ + rho_-) of the cell along its active directions.
+   real(R8P), intent(in)  :: jump_max !< Its bound.
+   real(R8P), intent(in)  :: g(3,3) !< Velocity gradient.
+   real(R8P), intent(out) :: psi    !< Sensor.
+   real(R8P)              :: th, wx, wy, wz !< Dilatation and vorticity.
+   !$acc routine seq
+   !$omp declare target
+
+   th = g(1,1) + g(2,2) + g(3,3)
+   wx = g(3,2) - g(2,3) ; wy = g(1,3) - g(3,1) ; wz = g(2,1) - g(1,2)
+   psi = th * th / (th * th + wx * wx + wy * wy + wz * wz + eps)
+   if (jump > jump_max) psi = 1._R8P
+   endsubroutine compute_ducros
 endmodule seth_adam_reference

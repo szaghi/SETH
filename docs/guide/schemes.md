@@ -394,6 +394,15 @@ the central–WENO and central–TENO hybrids of the turbulence literature.
   as a finite-volume caller with `vp = vm` needs). On a GPU a warp with one flagged face runs both branches. The
   larger saving of a hybrid, the characteristic projection skipped where smooth, is the caller's and is not measured
   here;
+- **the central fluxes**, the non-dissipative branch: `seth_keep_pe2/4/6/8` and `seth_keep_pe8_opt`, the KEEP-PE
+  flux (Shima et al. 2021, as written by De Michele et al. 2023, Eq. (15): the kinetic energy flux
+  $\overline{\rho u_n}\,(\mathbf u_l\cdot\mathbf u_r)/2$, the internal energy flux $\bar p\,\bar u_n/(\gamma-1)$, the
+  split pressure work) in Pirozzoli's conservative form of order $2L$. Because a kinetic-energy-preserving flux above
+  second order is a sum of two-point products of the state, these take the primitive state of $2L$ cells and return
+  the flux vector: a second interface. The sixth-order one is ADAM's `compute_kep_flux`, bitwise
+  ([H2](/verification/hybrids/central));
+- **the shock sensors** of the central branch, `seth_ducros` (Ducros et al. 1999) and `seth_ducros_compression` (De
+  Vanna et al. 2023a), from the velocity gradient the caller computes;
 - the linear weights and candidate coefficients of every scheme, as named constants (`seth_weno_js_tables`,
   `seth_z_teno_tables`);
 - the weights ratios of the `_wr` kernels, $\min_k \omega_k/d_k$, a sensor already computed by the nonlinear branch;

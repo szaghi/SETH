@@ -78,6 +78,17 @@ call seth_sensor_tau (v, rmu, thr, s)   !          thr = SETH_SENSOR_TAU_ETA  (0
 published continuous form, usable as a blending weight. `rmu` multiplies the data (1, or Li, Chen & Ren's
 `1/max(maxval(abs(v)), 1)`): the regularisers are absolute. See [H1](/verification/hybrids/sensors).
 
+## Central fluxes and shock sensors
+
+```fortran
+call seth_keep_pe6(d, gamma, w, f)   ! w(5,-2:3): rho, u, v, w, p of the cells around the face; f(5): the flux
+                                     ! seth_keep_pe2 (w(5,0:1)), _pe4 (-1:2), _pe8 and _pe8_opt (-3:4)
+call seth_ducros(eps, g, phi)              ! g(3,3) = d u_a/d x_b; phi = theta^2/(theta^2 + |omega|^2 + eps)
+call seth_ducros_compression(eps, g, psi)  ! psi = max(-theta/sqrt(theta^2 + |omega|^2 + eps), 0)
+```
+
+`d` the normal direction (1 to 3), `gamma` the ratio of specific heats. See [H2](/verification/hybrids/central).
+
 ## Monotonicity-preserving bound
 
 ```fortran

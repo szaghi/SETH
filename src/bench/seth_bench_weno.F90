@@ -16,7 +16,9 @@ program seth_bench_weno
 !<      12 seth_teno5_opt, 13 seth_teno5_az (rmu = 1), 14 seth_teno8, 15 seth_teno5_a, 16 seth_teno8_a,
 !<      17 seth_weno5_js with seth_weno_descaling, 18 with seth_weno_descaling_ai, 19 seth_weno5_js + seth_mp_bound,
 !<      20 seth_linear5, 21 seth_linear7, 22 seth_sensor_lcr alone (s stored in rp, rm), 23 the cost hybrid of WENO-Z5:
-!<      seth_sensor_lcr, then seth_linear5 where s = 1 and seth_wenoz5 elsewhere (the flagged fraction of this field)
+!<      seth_sensor_lcr, then seth_linear5 where s = 1 and seth_wenoz5 elsewhere (the flagged fraction of this field),
+!<      24 seth_keep_pe6 and 25 ADAM's compute_kep_flux on the state rho = 1 + fp^2, u = fm, v = fp, w = 0.1, p = 1 + fm^2
+!<      (the flux of direction 1 in rp, its energy component in rm)
 !<
 !< ADAM's variants pack ADAM's rows as FLUME does (v(2,m) = fp(i+m), v(1,m) = fm(i+m+1)). Built with -acc the loops run
 !< on the device (timed with !$acc wait + system_clock); without, on one CPU core. Each variant: 2 warm-up passes, then
@@ -29,10 +31,10 @@ use seth
 use seth_weno_js_tables
 use adam_fnl_weno_kernels,       only : weno_reconstruct_upwind_dev
 use adam_fnl_weno_width_kernels, only : weno_reconstruct_upwind_s3_dev, weno_reconstruct_upwind_s4_dev
-use seth_adam_reference,         only : weno_reconstruct_upwind
+use seth_adam_reference,         only : weno_reconstruct_upwind, compute_kep_flux
 implicit none
 integer(I4P), parameter :: NG = 4_I4P         !< Ghost cells (WENO-7 reads i-3..i+4).
-integer(I4P), parameter :: NV = 23_I4P        !< Variants.
+integer(I4P), parameter :: NV = 25_I4P        !< Variants.
 integer(I4P), parameter :: SAMPLE = 65536_I4P !< Faces checked against the host.
 real(R8P),    parameter :: TOL = 64._R8P*epsilon(1._R8P)
 character(31), parameter :: NAMES(NV) = [character(31) :: 'SETH  weno5_js', 'ADAM  generic S=3', 'ADAM  width s3', &
@@ -44,7 +46,8 @@ character(31), parameter :: NAMES(NV) = [character(31) :: 'SETH  weno5_js', 'ADA
                                          'SETH  teno5_a', 'SETH  teno8_a', &
                                          'SETH  weno5_js + descaling', 'SETH  weno5_js + descaling_ai', &
                                          'SETH  weno5_js + mp_bound', 'SETH  linear5', 'SETH  linear7', &
-                                         'SETH  sensor_lcr', 'SETH  hybrid lcr+linear5/wenoz5']
+                                         'SETH  sensor_lcr', 'SETH  hybrid lcr+linear5/wenoz5', &
+                                         'SETH  keep_pe6', 'ADAM  compute_kep_flux']
 real(R8P), allocatable :: fp(:), fm(:), rp(:), rm(:), rp5(:), rm5(:), rp7(:), rm7(:)
 real(R8P), allocatable :: a3(:,:,:), p3(:,:,:,:), d3(:,:,:,:), a4(:,:,:), p4(:,:,:,:), d4(:,:,:,:)
 real(R8P), allocatable :: times(:)
@@ -108,6 +111,7 @@ contains
    !< One pass of variant v over all faces.
    integer(I4P), intent(in) :: v
    real(R8P)                :: vp5(-2:3), vm5(-2:3), vp7(-3:4), vm7(-3:4), w3(1:2,-2:2), w4(1:2,-3:3), vr(1:2)
+   real(R8P)                :: ws(5,-2:3), fk(5)
    integer(I4P)             :: i, m
    select case(v)
    case(1)
@@ -290,6 +294,20 @@ contains
          enddo
          call hybrid5(vp5, vm5, rp(i), rm(i))
       enddo
+   case(24, 25)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm) private(ws, fk)
+      do i=1, n
+         do m=-2, 3
+            ws(1,m) = 1._R8P + fp(i+m)**2 ; ws(2,m) = fm(i+m) ; ws(3,m) = fp(i+m) ; ws(4,m) = 0.1_R8P
+            ws(5,m) = 1._R8P + fm(i+m)**2
+         enddo
+         if (v == 24) then
+            call seth_keep_pe6(1_I4P, 1.4_R8P, ws, fk)
+         else
+            call compute_kep_flux(1_I4P, 1.4_R8P, ws, fk)
+         endif
+         rp(i) = fk(1) ; rm(i) = fk(5)
+      enddo
    case(9)
       do i=1, n
          do m=-2, 2
@@ -312,7 +330,7 @@ contains
    subroutine check(v)
    !< SETH variants against host SETH on a sample; ADAM variants against the SETH variant of their order.
    integer(I4P), intent(in) :: v
-   real(R8P)                :: vp5(-2:3), vm5(-2:3), vp7(-3:4), vm7(-3:4), hp, hm
+   real(R8P)                :: vp5(-2:3), vm5(-2:3), vp7(-3:4), vm7(-3:4), hp, hm, ws(5,-2:3), fk(5)
    integer(I4P)             :: i, m, k, stride
    diff = 0._R8P
    select case(v)
@@ -344,6 +362,17 @@ contains
          case(20) ; call seth_linear5(vp5, vm5, hp, hm)
          case(21) ; call seth_linear7(vp7, vm7, hp, hm)
          case(22) ; call seth_sensor_lcr(vp5, 1._R8P, SETH_SENSOR_LCR_PSIC, hp) ; hm = hp
+         case(24, 25)
+            do m=-2, 3
+               ws(1,m) = 1._R8P + vp5(m)**2 ; ws(2,m) = vm5(m) ; ws(3,m) = vp5(m) ; ws(4,m) = 0.1_R8P
+               ws(5,m) = 1._R8P + vm5(m)**2
+            enddo
+            if (v == 24) then
+               call seth_keep_pe6(1_I4P, 1.4_R8P, ws, fk)
+            else
+               call compute_kep_flux(1_I4P, 1.4_R8P, ws, fk)
+            endif
+            hp = fk(1) ; hm = fk(5)
          case(23) ; call hybrid5(vp5, vm5, hp, hm)
          case(16) ; call seth_teno8_a(vp7, vm7, SETH_TENO_EPS, SETH_TENO8_A_CR, SETH_TENO8_A_XI, SETH_TENO8_A_A1, &
                                       SETH_TENO8_A_A2, 1._R8P, hp, hm)

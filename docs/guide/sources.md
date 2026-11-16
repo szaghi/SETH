@@ -51,3 +51,10 @@ which cite the paper; the provenance of every formula is in `notes/m2-sources.md
   Comput. Phys.* 136:83 — the monotonicity-preserving bound (Eqs. (2.8)–(2.30)), $\alpha = 4$ (read in the paper).
 - Wan, Y., Xia, Y. (2022). *J. Comput. Phys.* — the detector $\eta = \tau_5/(\varepsilon + \bar\beta)$ and its three
   regions (§3, Eqs. (3.14)–(3.15)) (read in the paper).
+- De Michele, C., Coppola, G. (2023). Asymptotically entropy-conservative and kinetic-energy preserving numerical fluxes
+  for compressible Euler equations. arXiv:2307.10918 — KEEP-PE's internal energy flux (Eq. (15)), in their notation of
+  Shima et al. 2021 (read in the paper; Shima et al. not obtained).
+- Kuya, Y., Totani, K., Kawai, S. (2018). Kinetic energy and entropy preserving schemes for compressible flows by split
+  convective forms. *J. Comput. Phys.* 375:823 — the kinetic energy flux of KEP split forms (read in the paper).
+- De Vanna, F. et al. (2023a). *Comput. Fluids* — the compression-only Ducros sensor (Eq. (9)) (read in the paper).
+- Ducros, F. et al. (1999). *J. Comput. Phys.* 152:517 — the Ducros sensor (through ADAM's implementation).

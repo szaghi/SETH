@@ -72,6 +72,7 @@ export default withMermaid({
         { text: 'Hybrids', collapsed: false, items: [
           { text: 'Overview',                  link: '/verification/hybrids/' },
           { text: 'H1 Sensors',                link: '/verification/hybrids/sensors' },
+          { text: 'H2 Central fluxes',         link: '/verification/hybrids/central' },
         ] },
         { text: 'Contracts', collapsed: false, items: [
           { text: 'Overview',                  link: '/verification/contracts/' },
