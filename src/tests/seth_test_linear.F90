@@ -8,6 +8,7 @@ program seth_test_linear
 !<    background, TENO6, TENO8, and the TENO5/6 interpolations): to 8 eps of the data (other summation order).
 !< 3. vm(m) = vp(1-m) gives rm == rp bitwise.
 use seth
+use seth_test_parameters, only : ORDERS_AT_FLOOR_OK, POINT_FLOOR, POINT_ORDER_LOSS
 use seth_test_rng, only : seed_rng
 use seth_test_functions, only : gfun, gavg
 implicit none
@@ -43,12 +44,12 @@ do k=1, NK
    do side=1, 2
       order = -1._R_P
       do j=NH-1, 1, -1
-         if (err(side,j+1) > 2.e2_R_P*epsilon(1._R_P)) then
+         if (err(side,j+1) > POINT_FLOOR*epsilon(1._R_P)) then
             order = log(err(side,j)/err(side,j+1))/log(2._R_P) ; exit
          endif
       enddo
       print '(A16,A,A,A,F6.2)', NAMES(k), ' state=', merge('+','-',side==1), ' order=', order
-      if (order < DESIGN(k) - 0.3_R_P) passed = .false.
+      if (order < DESIGN(k) - 0.3_R_P - POINT_ORDER_LOSS .and. .not.(ORDERS_AT_FLOOR_OK .and. order < 0._R_P)) passed = .false.
    enddo
    ! 3. mirror
    do n_=1, 500

@@ -16,7 +16,8 @@ program seth_test_central
 !<    otherwise).
 !< The comparison with ADAM's compute_kep_flux and compute_ducros is seth_test_central_adam (R8P only).
 use seth
-use seth_test_parameters, only : COMPLEX_STEP, ORDER_FLOOR, TOL_DEVICE_HOST, TOL_DUCROS, TOL_DUCROS_SQRT, TOL_FLUX, TOL_KE_PEP
+use seth_test_parameters, only : CENTRAL_FLOOR_N, COMPLEX_STEP, ORDERS_AT_FLOOR_OK, ORDER_FLOOR, &
+                                 TOL_DEVICE_HOST, TOL_DUCROS, TOL_DUCROS_SQRT, TOL_FLUX, TOL_KE_PEP
 use seth_test_rng, only : seed_rng
 implicit none
 real(R_P),    parameter :: GAM = 1.4_R_P
@@ -38,10 +39,14 @@ do k=1, NK
          n = 32*2**(ig-1)
          err(ig) = derivative_error(k, d, n)
       enddo
-      order = log(err(3)/err(4))/log(2._R_P)
-      if (err(4) < ORDER_FLOOR) order = log(err(2)/err(3))/log(2._R_P) ! round-off floor near 1e-12
+      order = -1._R_P ! the finest pair whose finer error is above round-off: ORDER_FLOOR + CENTRAL_FLOOR_N n (R8P 1e-12)
+      do ig=3, 1, -1
+         if (err(ig+1) > ORDER_FLOOR + CENTRAL_FLOOR_N*32*2**ig) then
+            order = log(err(ig)/err(ig+1))/log(2._R_P) ; exit
+         endif
+      enddo
       print '(A12,A,I1,A,4ES10.2,A,F6.2)', NAMES(k), ' d=', d, ' Linf error ', err, ' order ', order
-      if (order < DESIGN(k) - 0.3_R_P) passed = .false.
+      if (order < DESIGN(k) - 0.3_R_P .and. .not.(ORDERS_AT_FLOOR_OK .and. order < 0._R_P)) passed = .false.
       ! 2. consistency
       do i=-3, 4
          w(:,i) = [1.3_R_P, 0.4_R_P, -0.2_R_P, 0.7_R_P, 2.1_R_P]

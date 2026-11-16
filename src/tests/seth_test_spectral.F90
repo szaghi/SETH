@@ -11,20 +11,21 @@ program seth_test_spectral
 !<    TENO6); the optimised TENO6 weights are printed (bandwidth-optimised schemes can be anti-dissipative at low
 !<    wavenumbers, Fu et al. 2016).
 !< 2. Low-wavenumber accuracy: |xi~ - xi| ~ xi^(o+1) for a scheme of order o: the slope between xi = 0.2 and 0.1 is at
-!<    least o + 1 - 0.3.
+!<    least o + 1 - 0.3. Per kind (seth_test_parameters): in R4P the pair moves to (0.2, 0.4) or (0.4, 0.8) while the
+!<    error at the smaller xi is within 20 eps xi of round-off (R4P's plateau is ~1e-8), with a recorded slope loss.
 !< 3. Resolution: the largest xi/pi with |Re xi~ - xi|/xi below 1% is 0.35 for the 5th-order and 0.42 for the
 !<    7th-order WENO background (Martin et al. 2006, via llm-wiki `methods/bandwidth-optimized-weno.md`), within 0.01.
 !<
 !< The interpolation tables are not a derivative operator and are left out.
 use seth
-use seth_test_parameters, only : TOL_ANTIDISSIPATION
+use seth_test_parameters, only : ORDERS_AT_FLOOR_OK, SPECTRAL_FLOOR, SPECTRAL_SLOPE_LOSS, TOL_ANTIDISSIPATION
 use seth_weno_js_tables
 use seth_z_teno_tables
 use seth_vv_cases, only : vv_report, vv_open
 implicit none
 integer(I4P), parameter :: NX = 20000_I4P
 real(R_P),    parameter :: PI = acos(-1._R_P)
-real(R_P)               :: c(-4:5), imax, slope, eff
+real(R_P)               :: c(-4:5), imax, slope, eff, xs
 integer(I4P)            :: k
 logical                 :: passed
 
@@ -121,10 +122,21 @@ contains
       imax = max(imax, aimag(z))
       if (eff < 0._R_P .and. abs(real(z, R_P) - xi)/xi >= 0.01_R_P) eff = real(i-1, R_P)/NX
    enddo
-   slope = log(abs(xit(c, 0.2_R_P) - 0.2_R_P)/abs(xit(c, 0.1_R_P) - 0.1_R_P))/log(2._R_P)
+   ! the pair (xs, 2 xs) from xs = 0.1, doubled while the error at xs is within the round-off floor (R8P: none)
+   xs = 0.1_R_P
+   do while (xs < 0.35_R_P .and. abs(xit(c, xs) - xs) <= SPECTRAL_FLOOR*epsilon(1._R_P)*xs)
+      xs = 2._R_P*xs
+   enddo
+   if (abs(xit(c, xs) - xs) <= SPECTRAL_FLOOR*epsilon(1._R_P)*xs) then
+      slope = -1._R_P ! at round-off on every pair
+   else
+      slope = log(abs(xit(c, 2._R_P*xs) - 2._R_P*xs)/abs(xit(c, xs) - xs))/log(2._R_P)
+   endif
    print '(A16,I6,ES14.2,2F14.3)', name, o, imax, slope, eff
    if (dissipative .and. imax > TOL_ANTIDISSIPATION) then ; print '(A)', '   ^ anti-dissipative' ; passed = .false. ; endif
-   if (slope < o + 1 - 0.3_R_P) then ; print '(A)', '   ^ low-wavenumber error slope below o + 1' ; passed = .false. ; endif
+   if (slope < o + 1 - 0.3_R_P - SPECTRAL_SLOPE_LOSS .and. .not.(ORDERS_AT_FLOOR_OK .and. slope < 0._R_P)) then
+      print '(A)', '   ^ low-wavenumber error slope below o + 1' ; passed = .false.
+   endif
    if (eff_ref > 0._R_P .and. abs(eff - eff_ref) > 0.01_R_P) then
       print '(A,F6.3)', '   ^ resolution differs from Martin et al. 2006: ', eff_ref ; passed = .false.
    endif

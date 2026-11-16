@@ -28,7 +28,7 @@ program seth_vv_roe
 !< fix; 123: L1 with and without the limiter), and for the blast: positive without the limiter (Roe 0.5, Roe 0.6,
 !< split 0.6), the L1 of those runs, limited faces and L1 of Roe with the limiter.
 use seth
-use seth_test_parameters, only : ORDER_FLOOR_EULER, T_SLACK
+use seth_test_parameters, only : EULER_FLOOR_N2, ORDERS_AT_FLOOR_OK, ORDER_FLOOR_EULER, T_SLACK
 use seth_test_schemes
 use seth_vv_euler
 use seth_vv_cases
@@ -67,9 +67,10 @@ do k=1, size(ids)
    need = SCHEMES(ids(k))%order
    print '(A18,2ES12.4,F8.2,A,F4.1)', vv_label(ids(k)), e1(nl), ei(nl), o, '  expected ', need
    if (nsonic /= 0) call fail(vv_label(ids(k))//': the entropy fix acted on a flow without sonic points')
-   if (o < 2._R_P) call fail(vv_label(ids(k))//': below second order')
+   if (o < 2._R_P .and. .not.(ORDERS_AT_FLOOR_OK .and. o < 0._R_P)) call fail(vv_label(ids(k))//': below second order')
    if (SCHEMES(ids(k))%family == FAM_TENO .or. (SCHEMES(ids(k))%family == FAM_Z .and. SCHEMES(ids(k))%s >= 3)) then
-      if (o < need - 0.5_R_P) call fail(vv_label(ids(k))//': below its expected order')
+      if (o < need - 0.5_R_P .and. .not.(ORDERS_AT_FLOOR_OK .and. o < 0._R_P)) &
+         call fail(vv_label(ids(k))//': below its expected order')
    endif
 enddo
 limiter = .false.
@@ -243,7 +244,7 @@ contains
    integer(I4P)          :: j
    o = -1._R_P
    do j=size(e)-1, 1, -1
-      if (e(j+1) > ORDER_FLOOR_EULER) then
+      if (e(j+1) > ORDER_FLOOR_EULER + EULER_FLOOR_N2*(20._R_P*2._R_P**j)**2) then
          o = log(e(j)/e(j+1))/log(2._R_P) ; return
       endif
    enddo

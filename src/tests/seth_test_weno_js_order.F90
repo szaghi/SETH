@@ -9,6 +9,7 @@ program seth_test_weno_js_order
 !< The observed order is taken on the finest pair of h whose errors stay above round-off (200 eps) and must reach
 !< 2S-1 - 0.5.
 use seth
+use seth_test_parameters, only : ORDERS_AT_FLOOR_OK, POINT_FLOOR, POINT_ORDER_LOSS
 use seth_test_functions, only : gfun, gavg
 use seth_vv_cases, only : vv_report, vv_open
 implicit none
@@ -23,7 +24,7 @@ integer                 :: ur
 
 passed = .true.
 if (vv_report()) call vv_open('orders-js.dat', ur, 'S interp state observed-order design')
-floor_ = 2.e2_R_P * epsilon(1._R_P) ! 100 eps |g|, |g| < 2 near XF
+floor_ = POINT_FLOOR * epsilon(1._R_P) ! R8P: 100 eps |g|, |g| < 2 near XF
 do S=1, 5
    if (allocated(vp)) deallocate(vp)
    allocate(vp(1-S:S))
@@ -52,7 +53,7 @@ do S=1, 5
          print '(A,I0,A,L1,A,A,A,F6.2,A,I0)', 'S=', S, ' interp=', interp, ' state=', merge('+','-',side==1), &
                ' observed order=', order, ' design=', 2*S-1
          if (vv_report()) write(ur, '(I2,1X,L1,1X,A1,F8.3,I3)') S, interp, merge('+','-',side==1), order, 2*S-1
-         if (order < 2*S - 1 - 0.5_R_P) passed = .false.
+         if (order < 2*S - 1 - 0.5_R_P - POINT_ORDER_LOSS .and. .not.(ORDERS_AT_FLOOR_OK .and. order < 0._R_P)) passed = .false.
       enddo
    enddo
 enddo

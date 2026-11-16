@@ -22,7 +22,7 @@ program seth_vv_hybrid
 !<    post-shock entropy waves to TENO6's nearly central background).
 !< Report mode: hybrid-summary.dat (case scheme mode L1 flagged-fraction positive) and hybrid-smooth.dat.
 use seth
-use seth_test_parameters, only : TOL_CONSERVATION, T_SLACK
+use seth_test_parameters, only : EULER_FLOOR_N2, ORDERS_AT_FLOOR_OK, TOL_CONSERVATION, T_SLACK
 use seth_test_schemes
 use seth_vv_euler
 use seth_vv_cases
@@ -50,12 +50,12 @@ do k=1, 2
          if (vv_report()) write(uw, '(A,1X,A,1X,I5,2ES24.15)') trim(MODES(mo+1)), trim(SCH(merge(1, 3, k == 1))), &
                                                                nn(j), e1(j), ei(j)
       enddo
-      o = log(e1(3)/e1(4))/log(2._R_P)
+      o = finest(e1)
       print '(A,A8,A,4ES10.2,A,F6.2,A,I0)', '1. smooth ', MODES(mo+1), ' '//trim(vv_label(ids(1)))//' L1 ', e1, &
             ' order ', o, ', flagged faces ', nflagged
       if (nflagged > 0) then ; print '(A)', '   ^ the sensor flagged a smooth wave' ; passed = .false. ; endif
-      if (mo == 1 .and. o < SCHEMES(ids(1))%order - 0.5_R_P) passed = .false.
-      if (mo == 2 .and. o < 5.5_R_P) passed = .false.
+      if (mo == 1 .and. o < SCHEMES(ids(1))%order - 0.5_R_P .and. .not.at_floor(o)) passed = .false.
+      if (mo == 2 .and. o < 5.5_R_P .and. .not.at_floor(o)) passed = .false.
    enddo
 enddo
 ! 2. J1: KEEP-PE on the left half, TENO5 on the right (TENO6's background on this wave is the sixth-order central
@@ -68,7 +68,7 @@ do j=1, 4
 enddo
 print '(A,4ES10.2,A,F6.2,A,4ES10.2,A,F6.2)', '2. junction KEEP-PE | TENO5: L1 ', e1, ' order ', &
       log(e1(3)/e1(4))/log(2._R_P), ', Linf ', ei, ' order ', log(ei(3)/ei(4))/log(2._R_P)
-if (log(e1(3)/e1(4))/log(2._R_P) < 4._R_P) passed = .false.
+if (finest(e1) < 4._R_P .and. .not.at_floor(finest(e1))) passed = .false.
 ! 3. J3: conservation with random switching
 call conservation(scheme_index('teno5'))
 ! 4. shocks
@@ -100,6 +100,27 @@ if (.not.passed) error stop 'hybrid verification failed'
 print '(A)', 'seth_vv_hybrid: ok'
 
 contains
+   pure function finest(e) result(o)
+   !< The order on the finest pair of nn whose finer error is above EULER_FLOOR_N2 N^2 (R8P 0: the pair 80, 160; in R4P
+   !< the round-off accumulated over the time-accurate steps, as seth_vv_euler_order); -1 if none.
+   real(R_P), intent(in) :: e(4)
+   real(R_P)             :: o
+   integer(I4P)          :: j
+   o = -1._R_P
+   do j=3, 1, -1
+      if (e(j+1) > EULER_FLOOR_N2*real(nn(j+1), R_P)**2) then
+         o = log(e(j)/e(j+1))/log(2._R_P) ; return
+      endif
+   enddo
+   endfunction finest
+
+   elemental function at_floor(o) result(r)
+   !< No pair above round-off, and accepted as such in this kind.
+   real(R_P), intent(in) :: o
+   logical               :: r
+   r = ORDERS_AT_FLOOR_OK .and. o < 0._R_P
+   endfunction at_floor
+
    subroutine record(case)
    !< Print, store and assert one shock run (mode mo of scheme k); the pure run sets the reference L1 of its case.
    character(*), intent(in) :: case

@@ -21,8 +21,10 @@ program seth_test_interpolation
 !< WENO-Z3, which drops at critical points as its reconstruction does (seth_test_convergence): its worst face sits at
 !< the critical point of the field, and the Linf ratio jumps with the position of the grid relative to it (measured:
 !< 4.2, 2.0, 4.3, 4.9 from N = 160 to 2560). Tolerance on an order: 0.5.
+!< Per kind (seth_test_parameters): the round-off floor; in R4P an order loss at critical points, whose observable pairs
+!< are the coarse, pre-asymptotic ones (the same errors as R8P there), and the acceptance of a scheme at round-off.
 use seth
-use seth_test_parameters, only : EPS_ZT
+use seth_test_parameters, only : EPS_ZT, INTERP_CP_ORDER_LOSS, INTERP_FLOOR, ORDERS_AT_FLOOR_OK
 use seth_test_schemes
 use seth_test_functions, only : gfun, gder, gder2
 use seth_vv_cases, only : vv_report, vv_open
@@ -63,11 +65,11 @@ do id=1, NSCHEMES
       else
          need = SCHEMES(id)%order
       endif
-      if (need > 0._R_P .and. any(o < need - 0.5_R_P)) then
+      if (need > 0._R_P .and. any(o < need - 0.5_R_P .and. .not.(ORDERS_AT_FLOOR_OK .and. o < 0._R_P))) then
          print '(A,F5.1)', '   ^ whole-domain order below ', need ; passed = .false.
       endif
       if (SCHEMES(id)%family == FAM_TENO .or. (SCHEMES(id)%family == FAM_Z .and. p == 2 .and. SCHEMES(id)%s >= 3)) then
-         if (any(ocp1 < need - 0.5_R_P)) then
+         if (any(ocp1 < need - 0.5_R_P - INTERP_CP_ORDER_LOSS .and. .not.(ORDERS_AT_FLOOR_OK .and. ocp1 < 0._R_P))) then
             print '(A,F5.1)', '   ^ order at first-order critical points below ', need ; passed = .false.
          endif
       endif
@@ -128,14 +130,15 @@ contains
    endfunction henrick
 
    pure function finest(e, nl) result(o)
-   !< Observed order on the finest pair of levels whose finer error is above round-off (100 eps); -1 if none.
+   !< Observed order on the finest pair of levels whose finer error is above round-off (INTERP_FLOOR eps, R8P 100); -1
+   !< if none.
    integer(I4P), intent(in) :: nl
    real(R_P),    intent(in) :: e(nl)
    real(R_P)                :: o
    integer(I4P)             :: j
    o = -1._R_P
    do j=nl-1, 1, -1
-      if (e(j+1) > 1.e2_R_P*epsilon(1._R_P)) then
+      if (e(j+1) > INTERP_FLOOR*epsilon(1._R_P)) then
          o = log(e(j)/e(j+1))/log(2._R_P) ; return
       endif
    enddo

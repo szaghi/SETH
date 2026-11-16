@@ -15,7 +15,7 @@ program seth_vv_euler_order
 !< least order 2; no limited face.
 !< Report mode: euler-order.dat (scheme N L1 Linf).
 use seth
-use seth_test_parameters, only : ORDER_FLOOR_EULER, T_SLACK
+use seth_test_parameters, only : EULER_FLOOR_N2, ORDERS_AT_FLOOR_OK, ORDER_FLOOR_EULER, T_SLACK
 use seth_test_schemes
 use seth_vv_euler
 use seth_vv_cases
@@ -44,9 +44,10 @@ do path=PATH_SPLIT, PATH_INTERP
       o = order(e1)
       need = SCHEMES(ids(k))%order ; if (path == PATH_INTERP) need = min(need, 6._R_P)
       print '(A18,2ES12.4,F8.2,A,F4.1)', vv_label(ids(k)), e1(nl), ei(nl), o, '  expected ', need
-      if (o < 2._R_P) call fail(vv_label(ids(k))//': below second order')
+      if (o < 2._R_P .and. .not.(ORDERS_AT_FLOOR_OK .and. o < 0._R_P)) call fail(vv_label(ids(k))//': below second order')
       if (SCHEMES(ids(k))%family == FAM_TENO .or. (SCHEMES(ids(k))%family == FAM_Z .and. SCHEMES(ids(k))%s >= 3)) then
-         if (o < need - 0.5_R_P) call fail(vv_label(ids(k))//': below its expected order')
+         if (o < need - 0.5_R_P .and. .not.(ORDERS_AT_FLOOR_OK .and. o < 0._R_P)) &
+            call fail(vv_label(ids(k))//': below its expected order')
       endif
    enddo
 enddo
@@ -83,14 +84,15 @@ contains
    endsubroutine wave
 
    pure function order(e) result(o)
-   !< Observed order on the finest pair whose finer error is above 1e-10: below it the round-off accumulated over the
-   !< tens of thousands of RK3 steps of the time-accurate dt (a plateau at 1e-12 .. 1e-11, measured) takes over.
+   !< Observed order on the finest pair whose finer error is above 1e-10 (+ EULER_FLOOR_N2 N^2 in R4P): below it the
+   !< round-off accumulated over the tens of thousands of RK3 steps of the time-accurate dt (a plateau at 1e-12 ..
+   !< 1e-11 in R8P, measured) takes over.
    real(R_P), intent(in) :: e(:)
    real(R_P)             :: o
    integer(I4P)          :: j
    o = -1._R_P
    do j=size(e)-1, 1, -1
-      if (e(j+1) > ORDER_FLOOR_EULER) then
+      if (e(j+1) > ORDER_FLOOR_EULER + EULER_FLOOR_N2*(20._R_P*2._R_P**j)**2) then
          o = log(e(j)/e(j+1))/log(2._R_P) ; return
       endif
    enddo

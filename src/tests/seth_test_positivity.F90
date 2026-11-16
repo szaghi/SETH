@@ -21,7 +21,7 @@ program seth_test_positivity
 !<
 !< Random numbers from a fixed, printed seed (SETH_TEST_SEED overrides it).
 use seth
-use seth_test_parameters, only : TOL_THETA
+use seth_test_parameters, only : POS_RANGE_EXP, TOL_THETA
 use seth_test_rng, only : seed_rng
 implicit none
 real(R_P),    parameter :: G = 1.4_R_P, EPS = SETH_POSITIVITY_EPS
@@ -97,12 +97,12 @@ contains
    endsubroutine fail
 
    subroutine random_state(nv, q)
-   !< rho, p log-uniform in [1e-8, 1], each velocity component uniform in [-10, 10].
+   !< rho, p log-uniform in [10^-POS_RANGE_EXP, 1] (R8P: 1e-8), each velocity component uniform in [-10, 10].
    integer(I4P), intent(in)  :: nv
    real(R_P),    intent(out) :: q(nv)
    real(R_P)                 :: r(nv), rho, p
    call random_number(r)
-   rho = 10._R_P**(-8._R_P*r(1)) ; p = 10._R_P**(-8._R_P*r(nv))
+   rho = 10._R_P**(-POS_RANGE_EXP*r(1)) ; p = 10._R_P**(-POS_RANGE_EXP*r(nv))
    q(1) = rho
    q(2:nv-1) = rho*(20._R_P*r(2:nv-1) - 10._R_P)
    q(nv) = p/(G - 1._R_P) + 0.5_R_P*dot_product(q(2:nv-1), q(2:nv-1))/rho

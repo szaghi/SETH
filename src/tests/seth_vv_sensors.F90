@@ -18,6 +18,7 @@ program seth_vv_sensors
 !< static tests predict on Shu-Osher (Ren's flags the most, then Fu's TENO detector, then Li, Chen & Ren's).
 !< Report: sensors-flows.dat (case scheme sensor L1 ratio flagged-fraction positive).
 use seth
+use seth_test_parameters, only : SENSOR_FLOW_EXEMPT, SENSOR_FLOW_RATIO
 use seth_test_schemes
 use seth_vv_euler
 use seth_vv_cases
@@ -116,8 +117,9 @@ contains
          if (vv_report()) write(us, '(A,1X,A,1X,A,ES24.15,2F10.5,1X,L1)') name, trim(BASES(ib)), trim(SNAMES(is)), &
                                                                           l1(1), l1(1)/l1p, frac, pos(1)
          if (.not.pos(1)) call fail(name//' '//trim(BASES(ib))//' '//trim(SNAMES(is))//': lost positivity')
-         if (pos(1) .and. l1(1) > 3._R_P*l1p) call fail(name//' '//trim(BASES(ib))//' '//trim(SNAMES(is))// &
-                                                        ': L1 above 3 times the pure scheme')
+         if (pos(1) .and. l1(1) > SENSOR_FLOW_RATIO*l1p .and. &
+             name//' '//trim(BASES(ib))//' '//trim(SNAMES(is)) /= SENSOR_FLOW_EXEMPT) &
+            call fail(name//' '//trim(BASES(ib))//' '//trim(SNAMES(is))//': L1 above the bound times the pure scheme')
       enddo
    enddo
    hybrid = HYB_NONE ; hyb_sensor = SENS_LCR

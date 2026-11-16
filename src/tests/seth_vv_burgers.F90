@@ -20,7 +20,7 @@ program seth_vv_burgers
 !<    overshoots bounded.
 !< Report mode: the error tables, the profiles at both times, and 61 frames from t = 0 to 1.5/pi (WENO5-JS, TENO6).
 use seth
-use seth_test_parameters, only : ORDER_FLOOR, TOL_BISECT, TOL_KINK, T_SLACK
+use seth_test_parameters, only : BURGERS_FLOOR_N, ORDERS_AT_FLOOR_OK, ORDER_FLOOR, TOL_BISECT, TOL_KINK, T_SLACK
 use seth_test_schemes
 use seth_vv_scalar
 use seth_vv_cases, only : vv_report, vv_open, vv_schemes, vv_label, l1_norm
@@ -57,10 +57,10 @@ do k=1, size(ids)
    enddo
    o = finest(e1(k,:))
    select case(vv_label(ids(k)))
-   case('teno5') ; if (o < 4.5_R_P) call fail('TENO5 below order 4.5 before the shock')
-   case('teno6') ; if (o < 5.5_R_P) call fail('TENO6 below order 5.5 before the shock')
+   case('teno5') ; if (o < 4.5_R_P .and. .not.at_floor(o)) call fail('TENO5 below order 4.5 before the shock')
+   case('teno6') ; if (o < 5.5_R_P .and. .not.at_floor(o)) call fail('TENO6 below order 5.5 before the shock')
    end select
-   if (o < 2._R_P) call fail(vv_label(ids(k))//' does not converge before the shock')
+   if (o < 2._R_P .and. .not.at_floor(o)) call fail(vv_label(ids(k))//' does not converge before the shock')
    ! TENO5-AZ (Tang 2024) is the one exception: its cutoff min(1e-5, tau) with tau = |beta_0 + beta_2 - 2 beta_1|
    ! vanishes where the shock crosses the stencil about symmetrically, every candidate is kept and the state
    ! overshoots, 3.5e-2 at 320 cells (measured, the same with the descaled cutoff); bounded at 5e-2 and printed
@@ -80,6 +80,13 @@ if (.not.passed) error stop 'Burgers verification failed'
 print '(A)', 'seth_vv_burgers: ok'
 
 contains
+   elemental function at_floor(o) result(r)
+   !< No pair above round-off, and accepted as such in this kind.
+   real(R_P), intent(in) :: o
+   logical               :: r
+   r = ORDERS_AT_FLOOR_OK .and. o < 0._R_P
+   endfunction at_floor
+
    subroutine fail(what)
    character(*), intent(in) :: what
    print '(A)', '   FAILED: '//what
@@ -87,13 +94,14 @@ contains
    endsubroutine fail
 
    pure function finest(e) result(o)
-   !< Observed order on the finest pair whose finer error is above 1e-11 (the 9th-order errors reach round-off).
+   !< Observed order on the finest pair whose finer error is above round-off: ORDER_FLOOR + BURGERS_FLOOR_N N (R8P
+   !< 1e-11: the 9th-order errors reach round-off; in R4P the accumulated round-off grows with N).
    real(R_P), intent(in) :: e(:)
    real(R_P)             :: o
    integer(I4P)          :: j
    o = -1._R_P
    do j=size(e)-1, 1, -1
-      if (e(j+1) > ORDER_FLOOR) then
+      if (e(j+1) > ORDER_FLOOR + BURGERS_FLOOR_N*40*2**j) then
          o = log(e(j)/e(j+1))/log(2._R_P) ; return
       endif
    enddo

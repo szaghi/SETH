@@ -32,14 +32,17 @@ program seth_test_critical_points
 !< | TENO8             | 6 (>= 5.5)                | its sixth-order background (Liang & Fu 2024b) |
 !<
 !< WENO-JS of every order, at both points: Henrick et al.'s rate max(2r - 2 - n_cp, n_cp) (eq. 60: r <= 6, eps = 0;
-!< llm-wiki high-order-capturing-schemes `properties/accuracy-at-critical-points.md`), within 0.5.
+!< llm-wiki high-order-capturing-schemes `properties/accuracy-at-critical-points.md`), within HENRICK_TOL (R8P 0.5).
 !<
 !< At the second-order point the literature measures 2 for WENO5-Z and disagrees on TENO (Fu 2023: no degeneration;
 !< Zhang et al. 2024b: 2; SETH measures 2): those schemes must reach at least 1.7, a floor that catches a collapse
 !< without deciding the contradiction. The other schemes are printed, not asserted. The interpolation kernels are not
 !< tested here: the literature has no critical-point test for them.
+!< Per kind (seth_test_parameters): in R4P an order of 99 (every h at round-off) is accepted by the two-sided checks
+!< (Henrick's rates, the WENO-JS and WENO-Z p = 1 ranges) as by the one-sided ones, and TENO5-AZ's Tang check at the
+!< second-order point is not made: its errors fall below R4P's round-off where R8P measures Tang's 5.
 use seth
-use seth_test_parameters, only : EPS_ZT
+use seth_test_parameters, only : CP2_AZ_TANG, EPS_ZT, HENRICK_TOL, ORDERS_AT_FLOOR_OK
 use seth_test_schemes
 use seth_vv_cases, only : vv_report, vv_open
 implicit none
@@ -66,7 +69,8 @@ do id=1, NSCHEMES
          r = SCHEMES(id)%s
          if (r >= 2) then
             rate1 = real(max(2*r - 3, 1), R_P) ; rate2 = real(max(2*r - 4, 2), R_P)
-            if (any(abs(o1 - rate1) > 0.5_R_P) .or. any(abs(o2 - rate2) > 0.5_R_P)) then
+            if (any(abs(o1 - rate1) > HENRICK_TOL .and. .not.at_floor(o1)) .or. &
+                any(abs(o2 - rate2) > HENRICK_TOL .and. .not.at_floor(o2))) then
                print '(A,2F6.1)', '   ^ not Henrick et al.''s rates ', rate1, rate2 ; passed = .false.
             endif
          endif
@@ -83,14 +87,14 @@ do id=1, NSCHEMES
       case('teno5_a')   ; lo = 4.5_R_P
       case('teno8_a')   ; lo = 5.5_R_P
       endselect
-      if (any(o1 < lo) .or. any(o1 > hi)) then
+      if (any(o1 < lo) .or. any(o1 > hi .and. .not.at_floor(o1))) then
          print '(A,2ES10.2)', '   ^ first-order critical point outside the literature range: ', lo, hi
          passed = .false.
       endif
       if (SCHEMES(id)%family /= FAM_JS .and. SCHEMES(id)%order >= 3._R_P .and. any(o2 < 1.7_R_P)) then
          print '(A)', '   ^ second-order critical point below the floor 1.7' ; passed = .false.
       endif
-      if (trim(SCHEMES(id)%name) == 'teno5_az' .and. any(o2 < 4.5_R_P)) then ! Tang 2024, Tables 2-3
+      if (CP2_AZ_TANG .and. trim(SCHEMES(id)%name) == 'teno5_az' .and. any(o2 < 4.5_R_P)) then ! Tang 2024, Tables 2-3
          print '(A)', '   ^ TENO5-AZ below 4.5 at the second-order critical point (Tang 2024: 5)' ; passed = .false.
       endif
    enddo
@@ -100,6 +104,13 @@ if (vv_report()) close(ur)
 print '(A)', 'seth_test_critical_points: ok'
 
 contains
+   elemental function at_floor(o) result(r)
+   !< Every h at round-off (no pair above it), and accepted as such in this kind.
+   real(R_P), intent(in) :: o
+   logical               :: r
+   r = ORDERS_AT_FLOOR_OK .and. o > 98._R_P
+   endfunction at_floor
+
    subroutine orders(id, kind, p, o)
    !< Observed orders of D for both biases at the critical point `kind` (1 or 2).
    integer(I4P), intent(in)  :: id, kind, p

@@ -13,9 +13,11 @@ program seth_test_mp
 !<    extremum of f (x = 0 and 1/2), and the L1 order with the bound at the finest pair is at least 4.5. Balsara & Shu
 !<    (2000, Table V) report order loss at the flat extrema of this function; this measures how much (WENO5-JS: the
 !<    bound never acts on these grids, the orders are those of the plain scheme).
+!<    The grids are the first MP_NG of N = 20 .. 1280 (seth_test_parameters: all of them in R8P; in R4P up to N = 80,
+!<    where the cell averages, differences of the primitive, are still accurate).
 !< 5. Scaling by 2^k and the mirror: bitwise.
 use seth
-use seth_test_parameters, only : EPS_ZT, TOL_BOUNDS
+use seth_test_parameters, only : EPS_ZT, MP_NG, TOL_BOUNDS
 use seth_test_rng, only : seed_rng
 use seth_test_functions, only : gavg
 implicit none
@@ -88,7 +90,7 @@ enddo
 print '(A,I0)', '3. smooth monotone stencils changed by the bound: ', k
 if (k > 0) passed = .false.
 ! 4. sin^4: orders with and without the bound, and where the bound acts
-do i=1, NG
+do i=1, MP_NG
    nn = ngrid(i)
    e1(i,:) = 0._R_P ; ei(i,:) = 0._R_P
    do j=0, nn-1 ! face (j+1)/nn, left state from the cells j-2 .. j+3 (cell j = [j/nn, (j+1)/nn])
@@ -109,7 +111,7 @@ do i=1, NG
    enddo
 enddo
 print '(A)', '4. sin^4(pi x), WENO5-JS left state:      N     L1 plain  order    L1 bound  order  Linf plain  Linf bound'
-do i=1, NG
+do i=1, MP_NG
    if (i == 1) then
       print '(A,I6,2(ES12.3,A7),2ES12.3)', '   ', ngrid(i), e1(i,1), '', e1(i,2), '', ei(i,1), ei(i,2)
    else
@@ -121,7 +123,7 @@ print '(A,I0)', '   faces the bound changed, all grids: ', nchanged
 if (nchanged > 0) then ! the curvature terms must leave accurate states near the extrema alone (Suresh & Huynh)
    print '(A)', '   ^ the bound changed an accurate state' ; passed = .false.
 endif
-if (log(e1(NG-1,2)/e1(NG,2))/log(2._R_P) < 4.5_R_P) then
+if (log(e1(MP_NG-1,2)/e1(MP_NG,2))/log(2._R_P) < 4.5_R_P) then
    print '(A)', '   ^ L1 order with the bound below 4.5' ; passed = .false.
 endif
 ! 5. scaling and mirror, bitwise

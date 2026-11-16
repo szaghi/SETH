@@ -27,7 +27,7 @@ program seth_test_properties
 !<    descaler (eps + IS rmu^2 = O(1)) WENO-JS is tested up to 1e140, as WENO-Z and TENO are. These are the R8P
 !<    ranges; R4P's (seth_test_parameters' ROBUST_EXP_*) stop where its squares do.
 use seth
-use seth_test_parameters, only : ROBUST_EXP_MAX, ROBUST_EXP_MAX_JS, ROBUST_EXP_MIN, TOL_PROPERTIES
+use seth_test_parameters, only : AI_STEP_TOL, ROBUST_EXP_MAX, ROBUST_EXP_MAX_JS, ROBUST_EXP_MIN, SMALL_STEP, TOL_PROPERTIES
 use seth_test_rng, only : seed_rng
 use seth_test_schemes
 implicit none
@@ -144,27 +144,27 @@ do id=1, NSCHEMES
          if (sp /= sc*rp .or. sm /= sc*rm) call fail('scaling, affine-invariant JS (bitwise)', sp/sc - rp, sm/sc - rm)
       enddo
       c = 0._R_P
-      do k=1-s, s ! a step of height 1e-7 at every cell boundary, on the offset 1
+      do k=1-s, s ! a step of height SMALL_STEP (R8P 1e-7) at every cell boundary, on the offset 1
          do n_=VLO, VHI
-            vp(n_) = 1._R_P + merge(1.e-7_R_P, 0._R_P, n_ >= k) ; vm(n_) = vp(n_)
+            vp(n_) = 1._R_P + merge(SMALL_STEP, 0._R_P, n_ >= k) ; vm(n_) = vp(n_)
          enddo
          call reconstruct(id, vp, vm, rp, rm, par=seth_weno_descaling_ai(s, vp(1-s:s), vm(1-s:s)))
-         x = max(x, (max(rp, rm) - (1._R_P + 1.e-7_R_P))/1.e-7_R_P, (1._R_P - min(rp, rm))/1.e-7_R_P)
+         x = max(x, (max(rp, rm) - (1._R_P + SMALL_STEP))/SMALL_STEP, (1._R_P - min(rp, rm))/SMALL_STEP)
          ! with the stencil's mean subtracted first and added back (Wang & Don, Remark 2): the expanded indicators of
          ! WENO-7/9 (Balsara-Shu integer forms) cancel the offset only to its round-off, which rmu^2 then amplifies
          wp = vp - sum(vp(1-s:s-1))/real(2*s-1, R_P) ; wm = wp
          call reconstruct(id, wp, wm, sp, sm, par=seth_weno_descaling_ai(s, wp(1-s:s), wm(1-s:s)))
          sp = sp + sum(vp(1-s:s-1))/real(2*s-1, R_P) ; sm = sm + sum(vp(1-s:s-1))/real(2*s-1, R_P)
-         c = max(c, (max(sp, sm) - (1._R_P + 1.e-7_R_P))/1.e-7_R_P, (1._R_P - min(sp, sm))/1.e-7_R_P)
+         c = max(c, (max(sp, sm) - (1._R_P + SMALL_STEP))/SMALL_STEP, (1._R_P - min(sp, sm))/SMALL_STEP)
          call reconstruct(id, vp, vm, rp, rm, par=seth_weno_descaling(s, 1._R_P, vp(1-s:s), vm(1-s:s)))
-         worst = max(worst, (max(rp, rm) - (1._R_P + 1.e-7_R_P))/1.e-7_R_P, (1._R_P - min(rp, rm))/1.e-7_R_P)
+         worst = max(worst, (max(rp, rm) - (1._R_P + SMALL_STEP))/SMALL_STEP, (1._R_P - min(rp, rm))/SMALL_STEP)
       enddo
-      print '(A16,A,3ES10.2)', SCHEMES(id)%name, ': 1e-7 step on 1, overshoot / jump: Ai, Ai on v - mean, mean-|v|: ', &
+      print '(A16,A,3ES10.2)', SCHEMES(id)%name, ': small step on 1, overshoot / jump: Ai, Ai on v - mean, mean-|v|: ', &
             x, c, worst
       if (c > 1.e-5_R_P) call fail('affine-invariant JS (mean subtracted): overshoot on a small step on an offset', c, x)
       ! the descaler alone rests on the round-off of the expanded indicators: WENO-5 1.6e-6 (gfortran), 3.1e-4
       ! (nvfortran, fused multiply-adds); asserted below 1e-3, the mean-subtracted form above to 1e-5
-      if (s == 3 .and. x > 1.e-3_R_P) call fail('affine-invariant WENO-5: overshoot on a small step on an offset', x, c)
+      if (s == 3 .and. x > AI_STEP_TOL) call fail('affine-invariant WENO-5: overshoot on a small step on an offset', x, c)
       if (worst < 1.e-2_R_P) call fail('mean-|v| descaler unexpectedly ENO on a small step on an offset', x, worst)
    endif
    ! plain WENO-JS and the adaptive cutoffs with rmu = 1 (the papers' forms) are not scale invariant: data of magnitude

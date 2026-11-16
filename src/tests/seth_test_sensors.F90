@@ -20,7 +20,7 @@ program seth_test_sensors
 !<    without normalisation the absolute regularisers change decisions at a = 1e-6 (the control).
 !< Report mode: sensors-cp.dat and sensors-scaling.dat too.
 use seth
-use seth_test_parameters, only : TOL_X
+use seth_test_parameters, only : SENSOR_SCALES, TOL_X
 use seth_vv_cases, only : vv_report, vv_open
 implicit none
 integer(I4P), parameter :: N = 192_I4P, NS = 4_I4P
@@ -177,7 +177,7 @@ contains
    !< Test (b) transformed to a f + b, a = 1e-6 .. 1e6, b = 0, 100: the fraction of faces whose decision (s = 1 or
    !< not) differs from that on the untransformed data, with three normalisations of the stencil: none (rmu = 1), the
    !< paper's per-stencil 1/max(|v|_max, 1), and the field's range 1/(max f - min f) (a global descaler).
-   real(R_P), parameter :: AS(5) = [1.e-6_R_P, 1.e-3_R_P, 1._R_P, 1.e3_R_P, 1.e6_R_P], BS(2) = [0._R_P, 100._R_P]
+   real(R_P), parameter :: AS(5) = SENSOR_SCALES, BS(2) = [0._R_P, 100._R_P] ! R8P: 1e-6, 1e-3, 1, 1e3, 1e6
    character(8), parameter :: NORMS(3) = ['none    ', 'paper   ', 'range   ']
    real(R_P)            :: g(0:N-1), vv(-2:3), r, ss
    logical              :: base(NS,3,2:N-4), dec

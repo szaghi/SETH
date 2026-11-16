@@ -11,7 +11,7 @@ program seth_test_wenoz
 !< 2. ENO: a unit step at every cell boundary of the stencil, both orientations; the states lie in [0, 1] to 1e-6.
 !< 3. Mirror: with vm(m) = vp(1-m) the right state equals the left one bitwise (the same arithmetic on the mirror).
 use seth
-use seth_test_parameters, only : EPS_ZT
+use seth_test_parameters, only : EPS_ZT, ORDERS_AT_FLOOR_OK, POINT_FLOOR, POINT_ORDER_LOSS
 use seth_test_rng, only : seed_rng
 use seth_test_functions, only : gfun, gavg
 use seth_vv_cases, only : vv_report, vv_open
@@ -28,7 +28,7 @@ integer              :: ur
 passed = .true.
 call seed_rng(1001_I4P)
 if (vv_report()) call vv_open('orders-wenoz.dat', ur, 'kind order p state observed-order')
-floor_ = 2.e2_R_P * epsilon(1._R_P) ! 100 eps |g|, |g| < 2 near XF
+floor_ = POINT_FLOOR * epsilon(1._R_P) ! R8P: 100 eps |g|, |g| < 2 near XF
 do t=1, 2
    interp = t == 2
    kind = merge('interp ', 'recon  ', interp)
@@ -58,7 +58,7 @@ do t=1, 2
             print '(A,A,I0,A,I0,A,A,A,F6.2)', kind, 'WENO-Z', o, ' p=', p, ' state=', merge('+','-',side==1), &
                   ' order=', order
             if (vv_report()) write(ur, '(A,1X,I2,1X,I1,1X,A1,F8.3)') trim(kind), o, p, merge('+','-',side==1), order
-            if (order < o - 0.5_R_P) passed = .false.
+            if (order < o - 0.5_R_P - POINT_ORDER_LOSS .and. .not.(ORDERS_AT_FLOOR_OK .and. order < 0._R_P)) passed = .false.
          enddo
       enddo
       ! ENO

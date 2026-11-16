@@ -18,7 +18,7 @@ program seth_test_tables
 !<   (cell averages; point values for the interpolation tables); the indicators 0 on constants and WENO<N>_JS_D_SCALE
 !<   on unit slope.
 use seth
-use seth_test_parameters, only : TOL_TABLES
+use seth_test_parameters, only : ORDERS_AT_FLOOR_OK, TAU_FLOOR, TAU_ORDER_LOSS, TOL_TABLES
 use seth_weno_js_tables
 use seth_z_teno_tables
 use seth_test_functions, only : gfun, gavg
@@ -149,9 +149,10 @@ contains
       if (tg /= 0._R_P) tau(lev) = tau(lev) + tg*betag(u, gw, glo, lg, dg)
       tau(lev) = abs(tau(lev))
    enddo
-   o = log(tau(3)/tau(4))/log(2._R_P)
+   o = tau_observed(tau)
    print '(A,F6.2,A,F4.1,A)', '   tau order ', o, ' (required ', tau_order, ')'
-   if (o < tau_order - 0.3_R_P) call fail('tau below its order')
+   if (o < tau_order - 0.3_R_P - TAU_ORDER_LOSS .and. .not.(ORDERS_AT_FLOOR_OK .and. o < 0._R_P)) &
+      call fail('tau below its order')
    endsubroutine descriptor
 
    subroutine interp_descriptor(name, order, tau_order, nc, maxw, clo, cw, cp, d, cl, dq, tc, tg, glo, gw, lg, dg)
@@ -197,9 +198,10 @@ contains
       if (tg /= 0._R_P) tau(lev) = tau(lev) + tg*betag(u, gw, glo, lg, dg)
       tau(lev) = abs(tau(lev))
    enddo
-   o = log(tau(3)/tau(4))/log(2._R_P)
+   o = tau_observed(tau)
    print '(A,F6.2,A,F4.1,A)', '   tau order on point values ', o, ' (required ', tau_order, ')'
-   if (o < tau_order - 0.3_R_P) call fail('tau below its order on point values')
+   if (o < tau_order - 0.3_R_P - TAU_ORDER_LOSS .and. .not.(ORDERS_AT_FLOOR_OK .and. o < 0._R_P)) &
+      call fail('tau below its order on point values')
    endsubroutine interp_descriptor
 
    pure function beta(k, u, nc, maxw, clo, cw, cl, dq) result(b)
@@ -274,4 +276,19 @@ contains
       if (abs(b - scale) > TOL*scale*100._R_P) call fail('indicator not D_SCALE on unit slope')
    enddo
    endsubroutine js
+
+   pure function tau_observed(tau) result(o)
+   !< The order of tau on the finest pair of h (0.2, 0.1, 0.05, 0.025) whose finer tau is above TAU_FLOOR (R8P 0: the
+   !< pair 0.05, 0.025); -1 if none. tau cancels to h^order out of indicators of order h^2: in R4P its finest values
+   !< are round-off.
+   real(R_P), intent(in) :: tau(4)
+   real(R_P)             :: o
+   integer(I4P)          :: j
+   o = -1._R_P
+   do j=3, 1, -1
+      if (tau(j+1) > TAU_FLOOR) then
+         o = log(tau(j)/tau(j+1))/log(2._R_P) ; return
+      endif
+   enddo
+   endfunction tau_observed
 endprogram seth_test_tables

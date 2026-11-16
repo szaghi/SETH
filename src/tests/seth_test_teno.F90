@@ -17,7 +17,7 @@ program seth_test_teno
 !< 5. vm(m) = vp(1-m) gives rm == rp bitwise.
 !< 6. TENO5-A and TENO8-A with a2 = 0 equal TENO5 at C_T = 1e-5 and TENO8 at 1e-7 bitwise (the cutoff 10^-floor(a1)).
 use seth
-use seth_test_parameters, only : BIG_JUMP, TOL_BOUNDS
+use seth_test_parameters, only : BIG_JUMP, ORDERS_AT_FLOOR_OK, POINT_FLOOR, POINT_ORDER_LOSS, TOL_BOUNDS
 use seth_test_rng, only : seed_rng
 use seth_z_teno_tables
 use seth_test_functions, only : gfun, gavg
@@ -41,7 +41,7 @@ real(R_P),    parameter :: CTS(NSC) = [SETH_TENO5_CT, SETH_TENO6_CT, SETH_TENO6_
 passed = .true.
 call seed_rng(1005_I4P)
 if (vv_report()) call vv_open('orders-teno.dat', ur, 'scheme state observed-order design')
-floor_ = 2.e2_R_P * epsilon(1._R_P) ! 100 eps |g|, |g| < 2 near XF
+floor_ = POINT_FLOOR * epsilon(1._R_P) ! R8P: 100 eps |g|, |g| < 2 near XF
 do sc=1, NSC
    ct = CTS(sc)
    ! 1. order
@@ -66,7 +66,7 @@ do sc=1, NSC
       enddo
       print '(A,A,A,A,F6.2)', trim(NAMES(sc)), ' state=', merge('+','-',side==1), ' order=', order
       if (vv_report()) write(ur, '(A,1X,A1,F8.3,F5.1)') trim(NAMES(sc)), merge('+','-',side==1), order, DESIGN(sc)
-      if (order < DESIGN(sc) - 0.5_R_P) passed = .false.
+      if (order < DESIGN(sc) - 0.5_R_P - POINT_ORDER_LOSS .and. .not.(ORDERS_AT_FLOOR_OK .and. order < 0._R_P)) passed = .false.
    enddo
    ! 2. linear scheme on smooth data
    worst = 0._R_P

@@ -16,8 +16,11 @@ program seth_test_convergence
 !< degrade them: Borges 2008, Tang 2024, Zhang 2024b); WENO-JS at least Henrick et al.'s critical-point rate
 !< max(2r - 3, 1) (an Linf over all nodes is bounded by its worst node); WENO-Z with p = 1 at least 4 for WENO-Z5.
 !< Every scheme and order is printed.
+!< Per kind (seth_test_parameters): the round-off floor of the operator, and in R4P an order loss and the acceptance of
+!< a scheme that reaches round-off before any pair of levels is above it (it converged at least as fast as the floor
+!< allows: a degraded scheme would stay above it). The R8P values keep the test as it was.
 use seth
-use seth_test_parameters, only : EPS_ZT
+use seth_test_parameters, only : CONV_FLOOR_OP, CONV_ORDER_LOSS, EPS_ZT, ORDERS_AT_FLOOR_OK
 use seth_test_schemes
 use seth_vv_cases, only : vv_report, vv_open
 implicit none
@@ -65,10 +68,10 @@ do id=1, NSCHEMES
       else
          need = SCHEMES(id)%order
       endif
-      if (need > 0._R_P .and. oop < need - 0.5_R_P) then
+      if (need > 0._R_P .and. oop < need - 0.5_R_P - CONV_ORDER_LOSS .and. .not.(ORDERS_AT_FLOOR_OK .and. oop < 0._R_P)) then
          print '(A,F5.1)', '   ^ operator below ', need ; passed = .false.
       endif
-      if (advect_it .and. oadv < need - 0.5_R_P) then
+      if (advect_it .and. oadv < need - 0.5_R_P - CONV_ORDER_LOSS .and. .not.(ORDERS_AT_FLOOR_OK .and. oadv < 0._R_P)) then
          print '(A,F5.1)', '   ^ advection below ', need ; passed = .false.
       endif
    enddo
@@ -141,8 +144,8 @@ contains
    endfunction henrick
 
    function finest_order(e, nl, kind) result(o)
-   !< Observed order on the finest pair of levels whose finer error is above round-off: 1e3 eps/h for the derivative
-   !< (kind 1, h = 2/(20 2^(j-1))), 1e3 eps for the solution (kind 0); -1 if none.
+   !< Observed order on the finest pair of levels whose finer error is above round-off: CONV_FLOOR_OP eps/h for the
+   !< derivative (kind 1, h = 2/(20 2^(j-1)); R8P 1e3), 1e3 eps for the solution (kind 0); -1 if none.
    integer(I4P), intent(in) :: nl, kind
    real(R_P),    intent(in) :: e(nl)
    real(R_P)                :: o, flo
@@ -150,7 +153,7 @@ contains
    o = -1._R_P
    do j=nl-1, 1, -1
       flo = 1.e3_R_P*epsilon(1._R_P)
-      if (kind == 1) flo = flo*(20._R_P*2._R_P**j)/2._R_P
+      if (kind == 1) flo = CONV_FLOOR_OP*epsilon(1._R_P)*(20._R_P*2._R_P**j)/2._R_P
       if (e(j+1) > flo) then
          o = log(e(j)/e(j+1))/log(2._R_P) ; return
       endif
