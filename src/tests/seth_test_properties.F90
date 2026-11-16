@@ -24,9 +24,10 @@ program seth_test_properties
 !<    the data's range (the debug build traps overflow, invalid, zero divide). The indicators square the data, so 1e154
 !<    bounds every scheme; plain WENO-JS also raises (eps + IS) to the power wexp (= S, S-1 for S = 5), which
 !<    overflows near 1e77 (WENO-3), 1e51 (WENO-5), 1e38 (WENO-7/9): tested up to 1e30. With the scale-invariant
-!<    descaler (eps + IS rmu^2 = O(1)) WENO-JS is tested up to 1e140, as WENO-Z and TENO are.
+!<    descaler (eps + IS rmu^2 = O(1)) WENO-JS is tested up to 1e140, as WENO-Z and TENO are. These are the R8P
+!<    ranges; R4P's (seth_test_parameters' ROBUST_EXP_*) stop where its squares do.
 use seth
-use seth_test_parameters, only : TOL_PROPERTIES
+use seth_test_parameters, only : ROBUST_EXP_MAX, ROBUST_EXP_MAX_JS, ROBUST_EXP_MIN, TOL_PROPERTIES
 use seth_test_rng, only : seed_rng
 use seth_test_schemes
 implicit none
@@ -108,16 +109,16 @@ do id=1, NSCHEMES
       ! 6. robustness
       call random_number(x)
       if (fam == FAM_JS .or. fam == FAM_JS_INTERP) then
-         sc = 10._R_P**(230._R_P*x - 200._R_P) ! plain WENO-JS: 1e-200 .. 1e30
+         sc = 10._R_P**((ROBUST_EXP_MAX_JS - ROBUST_EXP_MIN)*x + ROBUST_EXP_MIN) ! plain WENO-JS (R8P: 1e-200 .. 1e30)
       else
-         sc = 10._R_P**(340._R_P*x - 200._R_P) ! 1e-200 .. 1e140
+         sc = 10._R_P**((ROBUST_EXP_MAX - ROBUST_EXP_MIN)*x + ROBUST_EXP_MIN) ! R8P: 1e-200 .. 1e140
       endif
       wp = sc*vp ; wm = sc*vm
       call reconstruct(id, wp, wm, rp, rm)
       vmax = sc*max(maxval(abs(vp)), maxval(abs(vm)))
       if (.not.(abs(rp) <= 4._R_P*vmax .and. abs(rm) <= 4._R_P*vmax)) call fail('robustness (finite, bounded)', rp, rm)
-      if (fam == FAM_JS .or. fam == FAM_JS_INTERP) then ! scale-invariant WENO-JS: 1e-200 .. 1e140
-         sc = 10._R_P**(340._R_P*x - 200._R_P)
+      if (fam == FAM_JS .or. fam == FAM_JS_INTERP) then ! scale-invariant WENO-JS (R8P: 1e-200 .. 1e140)
+         sc = 10._R_P**((ROBUST_EXP_MAX - ROBUST_EXP_MIN)*x + ROBUST_EXP_MIN)
          wp = sc*vp ; wm = sc*vm
          rmu = seth_weno_descaling(s, 1._R_P, wp(1-s:s), wm(1-s:s))
          call reconstruct(id, wp, wm, rp, rm, par=rmu)

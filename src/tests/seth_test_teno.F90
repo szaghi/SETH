@@ -17,7 +17,7 @@ program seth_test_teno
 !< 5. vm(m) = vp(1-m) gives rm == rp bitwise.
 !< 6. TENO5-A and TENO8-A with a2 = 0 equal TENO5 at C_T = 1e-5 and TENO8 at 1e-7 bitwise (the cutoff 10^-floor(a1)).
 use seth
-use seth_test_parameters, only : TOL_BOUNDS
+use seth_test_parameters, only : BIG_JUMP, TOL_BOUNDS
 use seth_test_rng, only : seed_rng
 use seth_z_teno_tables
 use seth_test_functions, only : gfun, gavg
@@ -95,13 +95,13 @@ do sc=1, NSC
    print '(A,A,ES9.2)', trim(NAMES(sc)), ' worst overshoot: ', worst
    if (worst > TOL_BOUNDS) passed = .false.
    ! 4. large step
-   big = 1.e30_R_P
+   big = BIG_JUMP
    do jump=-1, 3
       do m=-2, 3
          vp(m) = merge(big, 0._R_P, m >= jump)
       enddo
       call kernel(sc, vp, vp, ct, rp, rm)
-      x = 4._R_P*epsilon(1._R_P)*big ! round-off of a convex combination of 1e30
+      x = 4._R_P*epsilon(1._R_P)*big ! round-off of a convex combination of big
       if (.not.(rp >= -x .and. rp <= big + x .and. rm >= -x .and. rm <= big + x)) then
          print '(A,A,2ES12.4)', trim(NAMES(sc)), ' large step out of bounds or NaN: ', rp, rm ; passed = .false.
       endif

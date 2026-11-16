@@ -9,7 +9,8 @@ program seth_test_golden
 !< generator), so the inputs are bit-identical on every compiler and any difference is the kernels'. The two states
 !< (and the weights ratios of WENO-JS) are compared with the golden file:
 !<
-!<   seth_test_golden                    compare with src/tests/golden/seth_golden_v6.txt (run from the repository root)
+!<   seth_test_golden                    compare with the golden file of the build's kind, GOLDEN_FILE of
+!<                                       seth_test_parameters (run from the repository root)
 !<   seth_test_golden write <file>       write a new golden file (refuses to overwrite an existing one)
 !<
 !< A state passes when it differs from the golden one by at most 1e-13 of the stencil's magnitude: other compilers
@@ -25,10 +26,10 @@ program seth_test_golden
 !< file identical (same build), and the previous files are kept.
 use, intrinsic :: iso_fortran_env, only : compiler_version, compiler_options
 use seth
-use seth_test_parameters, only : TOL_GOLDEN, TOL_GOLDEN_WR
+use seth_test_parameters, only : GOLDEN_FILE, GOLDEN_SCALE_EXP0, GOLDEN_SCALE_DEXP, TOL_GOLDEN, TOL_GOLDEN_WR
 use seth_test_schemes
 implicit none
-character(*), parameter :: GOLDEN = 'src/tests/golden/seth_golden_v6.txt'
+character(*), parameter :: GOLDEN = GOLDEN_FILE
 integer(I4P), parameter :: NST = 64_I4P
 real(R_P),    parameter :: TOL = TOL_GOLDEN, TOL_WR = TOL_GOLDEN_WR
 real(R_P)               :: vp(VLO:VHI,NST), vm(VLO:VHI,NST), r(4), g(4), mag, d, worst, worst_wr
@@ -133,7 +134,8 @@ contains
 
    subroutine stencils(vp, vm)
    !< NST deterministic stencil pairs, exact in binary: 16 smooth cubics with dyadic coefficients, 20 jumps (each cell
-   !< boundary, two shapes; VLO: constants), 12 scaled (a cubic with a jump times 2^-498 .. 2^96, about 1e-150 .. 1e29),
+   !< boundary, two shapes; VLO: constants), 12 scaled (a cubic with a jump times powers of 2 spanning the kind's range:
+   !< 2^-498 .. 2^96, about 1e-150 .. 1e29, in R8P; seth_test_parameters' GOLDEN_SCALE_*),
    !< 16 rough (an integer LCG).
    real(R_P), intent(out) :: vp(VLO:VHI,NST), vm(VLO:VHI,NST)
    integer(I4P)           :: k, m, j
@@ -159,9 +161,9 @@ contains
          vm(m,k) = merge(1._R_P, 1.25_R_P, m >= j)
       enddo
    enddo
-   do j=1, 12 ! scaled: a cubic with a jump, times 2^-498 .. 2^96 (exact)
+   do j=1, 12 ! scaled: a cubic with a jump, times 2^(GOLDEN_SCALE_EXP0 + (j-1) GOLDEN_SCALE_DEXP) (exact)
       k = k + 1
-      sc = 2._R_P**(-498 + (j-1)*54)
+      sc = 2._R_P**(GOLDEN_SCALE_EXP0 + (j-1)*GOLDEN_SCALE_DEXP)
       do m=VLO, VHI
          vp(m,k) = sc*(0.25_R_P*m - 0.03125_R_P*m*m + merge(1._R_P, 0._R_P, m >= 1))
          vm(m,k) = sc*(1._R_P - 0.125_R_P*m + 0.0078125_R_P*m**3 - merge(0.5_R_P, 0._R_P, m >= 0))
