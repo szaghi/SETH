@@ -67,9 +67,25 @@ peaks of the collision.*
 - With the limiter every scheme completes the run (asserted). On the splitting path WENO-Z5, TENO5 and TENO6 need
   about 100 to 500 limited faces, WENO-Z9 ($p = 2$) 585, WENO-Z7 ($p = 1$) 1826; the interpolation path needs
   5500 to 7100.
-- Borges et al. (2008) and Fu, Hu & Adams (2016) report WENO-Z5 and TENO results on this problem at 400 cells; Fu
-  et al. use a Roe flux with entropy fix, not Lax–Friedrichs splitting. SETH's harness reproduces those results only
-  with the limiter. Whether the published runs needed a safeguard is not stated in the summaries of those papers in
-  the llm-wiki: an open point, under investigation in [issue #3](https://github.com/szaghi/SETH/issues/3).
+- Borges et al. (2008) and Fu, Hu & Adams (2016) report WENO-Z5 and TENO results on this problem at 400 cells, and
+  neither paper mentions a positivity safeguard ([issue #3](https://github.com/szaghi/SETH/issues/3)). Borges et al.
+  (§5.2) project the Lax–Friedrichs-split fluxes on the Roe eigenvectors, at CFL 0.4; Fu et al. (§5.3) evaluate the
+  flux with "a Roe scheme with entropy-fix" and write in their conclusions that the limiter of Hu, Adams & Shu "can
+  also be applied to the TENO schemes to further improve robustness". SETH's harness splits the fluxes globally with
+  $\alpha = 1.1\max|\lambda|$, so it differs from Fu et al.'s in the flux, and reproduces their results only with
+  the limiter.
+- **The cutoff decides much of it.** Later TENO papers run this case with $C_T = 10^{-4}$ (llm-wiki weno-teno
+  `benchmarks/woodward-colella-blast-wave.md`). In this harness, without the limiter:
+
+  | Scheme | $C_T$ | positive | limited faces with the limiter | $L_1(\rho)$ |
+  |---|---|---|---|---|
+  | TENO5 | $10^{-5}$ (Fu et al.) | no | 515 | 0.0884 |
+  | TENO5 | $10^{-4}$ | no | 78 | 0.0916 |
+  | TENO6 | $10^{-7}$ (Fu et al.) | no | 197 | 0.0584 |
+  | TENO6 | $10^{-4}$ | **yes** | 13 | 0.0875 |
+
+  A larger cutoff buys robustness with dissipation: TENO6 at $10^{-4}$ needs no safeguard and loses half its accuracy
+  advantage. Measured on 2026-11-15 by running the case with the cutoff of the registry changed (not a registry
+  default).
 - The positivity-preserving flux limiter is a SETH kernel, `seth_positivity_euler` ([C7](../contracts/positivity),
   [API](/guide/api#positivity-limiter)); the harness uses it.
