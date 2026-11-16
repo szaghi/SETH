@@ -1,0 +1,9 @@
+baseline green in <workdir>
+cen4-row                     killed by seth_test_advection, seth_test_golden, seth_test_properties, seth_test_weno_c, seth_test_weno_c_adam
+cen6-row                     killed by seth_test_advection, seth_test_convergence, seth_test_golden, seth_test_properties, seth_test_weno_c, seth_test_weno_c_adam
+cen8-row                     killed by seth_test_advection, seth_test_convergence, seth_test_golden, seth_test_properties, seth_test_weno_c, seth_test_weno_c_adam
+weno-c-blend-max             killed by seth_test_golden, seth_test_weno_c, seth_test_weno_c_adam
+weno-c-blend-rmu             killed by seth_test_properties
+weno-c-blend-first-pair      killed by seth_test_critical_points, seth_test_golden, seth_test_weno_c, seth_test_weno_c_adam
+done
+mutation exit 0

@@ -36,6 +36,7 @@ Every `!$acc routine seq` of `src/lib`:
 | `seth_wenoz{3,5,7,9}`, `seth_teno5/6/6_opt/6_neno6` (+ `_interp`): `seth_z_teno_body.INC` | `st(LO:UMAX)`, `q`, `beta`, `wgt`, `g(0:NC-1)`: constants | `NC`, `LO`, `UMAX`, `GW` constants; the inner loops run to `CW(k)`, an element of a constant array | follows both rules (see notes) |
 | `seth_weno_descaling(S, ..)` | none | `S`, a dummy | rule 2 not followed; 0.8 % |
 | `seth_positivity_euler(nv, ..)`, `segment_bound`, `seth_euler_admissible` | **before:** `a0, a1, b0, b1(nv)`, `d(nv)` automatic; `ql - lam*f` temporaries; `dot_product` over `2:nv-1`. **now:** dimension 5 | `nv`, a dummy | rule 1 was broken, fixed; rule 2 not followed, ≤ 1 % |
+| `seth_weno{4,6,8}_c`, `blend` (`seth_weno_c.F90`, 2026-11-16) | `C(CEN<2S>_LO:CEN<2S>_HI)`, a parameter; scalars only otherwise | `CEN<2S>_LO`, `_HI`, constants; the upwind part is `seth_weno{3,5,7}_js` (above) | follows both rules; no array expression passed (the benchmark's WENO4-C copies its stencil into `(-1:2)` privates) |
 
 The dummy arrays (`vp(1-S:S)`, `ql(nv)`) are explicit-shape dummies, not automatic arrays: they are the caller's
 storage. In the callers (the benchmark, the device test) the stencil copies are `private` arrays of constant bounds.
