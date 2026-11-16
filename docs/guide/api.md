@@ -76,7 +76,9 @@ call seth_sensor_tau (v, rmu, thr, s)   !          thr = SETH_SENSOR_TAU_ETA  (0
 
 `s` in $[0, 1]$, `s = 1` where the published binary test says smooth (the linear branch may be used); below 1 the
 published continuous form, usable as a blending weight. `rmu` multiplies the data (1, or Li, Chen & Ren's
-`1/max(maxval(abs(v)), 1)`): the regularisers are absolute. See [H1](/verification/hybrids/sensors).
+`1/max(maxval(abs(v)), 1)`): the regularisers are absolute. With `rmu = 1/(max f - min f)`, the range of the field the
+caller reduces once, every sensor is invariant to the scale and offset of the data; the per-stencil form is not, and
+under an offset it changes decisions. See [H1](/verification/hybrids/sensors).
 
 ## Central fluxes and shock sensors
 

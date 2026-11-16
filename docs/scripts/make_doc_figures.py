@@ -420,6 +420,79 @@ class Figures:
         fig.tight_layout()
         self.save(fig, 'sensors')
 
+    SENSOR_NAMES = {'teno': 'TENO-based (Fu)', 'ren': 'Ren et al.', 'lcr': 'Li, Chen & Ren', 'tau': 'Wan & Xia',
+                    'ducros': 'Ducros', 'ducros-c': 'Ducros, compression'}
+
+    def sensor_static(self) -> None:
+        """Tables of the critical points and of the scaled data (seth_test_sensors, sections 4-5)."""
+        if self.has('sensors-cp.dat'):
+            rows = self.rows('sensors-cp.dat')
+            ms = sorted({int(r[1]) for r in rows})
+            body = []
+            for ncp in ('1', '2'):
+                for j, key in enumerate(('teno', 'ren', 'lcr', 'tau')):
+                    fl = {int(r[1]): r[2 + j] == '1' for r in rows if r[0] == ncp}
+                    body.append([ncp, self.SENSOR_NAMES[key]] + ['**flagged**' if fl[m] else '·' for m in ms])
+            self.table('sensors-cp', ['$n_{cp}$', 'sensor'] + [str(m) for m in ms], body)
+        if self.has('sensors-scaling.dat'):
+            rows = self.rows('sensors-scaling.dat')
+            body = []
+            for r in rows:
+                if float(r[0]) == 1.0 and float(r[1]) == 0.0:
+                    continue
+                body.append([f'{float(r[0]):.0e}', f'{float(r[1]):g}', r[2]] + [f'{100 * float(x):.1f} %' for x in r[3:7]])
+            self.table('sensors-scaling', ['$a$', '$b$', 'normalisation', 'TENO-based', 'Ren', 'Li, Chen & Ren',
+                                           'Wan & Xia'], body)
+
+    def sensor_flows(self) -> None:
+        """x-t flag fields of the four sensors on Shu-Osher and the blast (pure TENO5), and the hybrid table."""
+        cases = [('shu-osher', 'Shu–Osher'), ('blast', 'Woodward–Colella blast')]
+        if self.has(*[f'sensors-{c}-flags.dat' for c, _ in cases]):
+            keys = ['teno', 'ren', 'lcr', 'tau']
+            fig, axs = plt.subplots(4, 2, figsize=(12, 8.4), sharex='col')
+            ink = '0.85' if self.dark else '0.15'
+            cmap = mpl.colors.ListedColormap(['none', ink])
+            for col, (case, title) in enumerate(cases):
+                lines = [ln for ln in (self.data / f'sensors-{case}-flags.dat').read_text().splitlines()
+                         if ln and not ln.startswith('#')]
+                x = np.array([float(t) for t in lines[0].split()])
+                rec = [ln.split() for ln in lines[1:]]
+                for row, key in enumerate(keys):
+                    sel = [r for r in rec if int(r[1]) == row + 1]
+                    t = np.array([float(r[0]) for r in sel])
+                    z = np.array([[int(v) for v in r[2:]] for r in sel])
+                    ax = axs[row, col]
+                    ax.pcolormesh(x, t, z, cmap=cmap, shading='nearest', rasterized=True)
+                    ax.set_ylabel(f'{self.SENSOR_NAMES[key]}\n$t$', fontsize=8)
+                    if row == 0:
+                        ax.set_title(f'{title}, pure TENO5, 400 cells: faces flagged ($s < 1$)', fontsize=10)
+                axs[3, col].set_xlabel('$x$')
+            fig.tight_layout()
+            self.save(fig, 'sensor-flows')
+        if self.has('sensors-flows.dat'):
+            body = []
+            for r in self.rows('sensors-flows.dat'):
+                if r[2] == 'pure':
+                    continue
+                body.append([r[0], label(r[1]), self.SENSOR_NAMES[r[2]], f'{float(r[3]):.4g}', f'{float(r[4]):.3f}',
+                             f'{100 * float(r[5]):.1f} %', 'yes' if r[6] == 'T' else '**no**'])
+            self.table('sensor-flows', ['case', 'scheme', 'sensor', '$L_1(\\rho)$', 'against pure', 'faces flagged',
+                                        'positive'], body)
+        if self.has('sensor-fields.dat'):
+            rows = self.rows('sensor-fields.dat')
+            keys = ['teno', 'ren', 'lcr', 'tau', 'ducros', 'ducros-c']
+            par = {'taylor-green': '$N$ = {:g}', 'shock': 'Mach {:g}', 'shock-vortex': '$\\omega_0/\\lvert\\theta\\rvert$ = {:g}',
+                   'expansion': '', 'contact': ''}
+            groups: dict[tuple[str, str], dict[str, float]] = {}
+            for r in rows:
+                groups.setdefault((r[0], r[1]), {})[r[2]] = float(r[3])
+            body = []
+            for (case, p), v in groups.items():
+                body.append([case, par[case].format(float(p))] + [f'{v[k]:.3f}' for k in keys])
+            self.table('sensor-fields', ['field', 'parameter'] + [self.SENSOR_NAMES[k] for k in keys], body,
+                       note='Taylor–Green, expansion, contact: the fraction of all interior cells flagged; shock: of '
+                            'the cells next to it; shock in a vortex: of the shock cells within $r_0$ of its centre.')
+
     # ---------------------------------------------------------------------------------------- unit-test reports
     def spectral(self) -> None:
         names = [p.name[9:-4] for p in sorted(self.data.glob('spectral-*.dat'))]
@@ -548,7 +621,8 @@ def main() -> int:
         'euler-order': f.euler_order,
         'advection': f.advection,
         'adr': f.adr,
-        'sensors': f.sensors,
+        'sensors': lambda: (f.sensors(), f.sensor_static()),
+        'sensor-flows': f.sensor_flows,
         'hybrid': f.hybrid,
         'spectral': f.spectral,
         'order-tables': f.order_tables,

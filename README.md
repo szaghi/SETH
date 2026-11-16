@@ -52,7 +52,7 @@
 git clone https://github.com/szaghi/SETH && cd SETH
 fobis fetch                                                   # PENF, into src/third_party/
 fobis build --mode static-gnu                                 # lib/gnu/static/libseth.a
-fobis build --mode tests-gnu && bash scripts/run_tests.sh     # the 32 verification programs
+fobis build --mode tests-gnu && bash scripts/run_tests.sh     # the 34 verification programs
 ```
 
 as a FoBiS dependency, in the `fobos` of your project (then `fobis fetch && fobis build`):

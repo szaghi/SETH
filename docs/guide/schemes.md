@@ -389,7 +389,12 @@ the central–WENO and central–TENO hybrids of the turbulence literature.
 - **the sensors**, the switch: `seth_sensor_teno` (Fu's TENO-based detector), `seth_sensor_ren` (Ren et al.),
   `seth_sensor_lcr` (Li, Chen & Ren 2022) and `seth_sensor_tau` (Wan & Xia 2022), each on the six values around a
   face, returning $s \in [0, 1]$ with $s = 1$ where the published test says smooth. On a sine they judge smooth up to
-  $k = 0.64$, $0.04$, $2.07$ and $1.36$ ([H1](/verification/hybrids/sensors): the paper's 0.64 and 2.06 reproduced);
+  $k = 0.64$, $0.04$, $2.07$ and $1.36$ ([H1](/verification/hybrids/sensors): the paper's 0.64 and 2.06 reproduced).
+  Measured further on H1: Li, Chen & Ren's never flags a critical point, and is the most selective in flows, so
+  selective that TENO6's cost hybrid on Shu–Osher sends the entropy waves to the nearly central background (1.81
+  times the pure scheme's $L_1$), where Fu's detector gives 1.04 and Wan & Xia's 1.00; none is scale invariant by
+  itself, and $r_\mu = 1/(\max f - \min f)$ over the field makes all four so. No sensor is the guide's default yet:
+  the flows that decide it are turbulent ones, ADAM's;
 - **the cost**, measured at kernel level on the RTX 4070: a sensor 0.30 ns per face, a linear kernel 0.095, WENO-Z5
   0.985. A hybrid that calls the sensor on both biases and the linear kernel where both say smooth costs 0.67 on a
   mostly smooth field, and breaks even with WENO-Z5 at about 30% of faces flagged (60% with one sensor call per face,

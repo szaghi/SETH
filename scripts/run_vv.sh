@@ -34,7 +34,7 @@ PY="${SETH_VV_PYTHON:-exe/.vv-venv/bin/python}"
 PROGRAMS=(seth_vv_sod seth_vv_lax seth_vv_test123 seth_vv_shu_osher seth_vv_blast seth_vv_burgers seth_vv_euler_order
           seth_vv_advection seth_vv_adr seth_test_spectral seth_test_convergence seth_test_interpolation
           seth_test_weno_js_order seth_test_wenoz seth_test_teno seth_test_critical_points seth_test_sensors seth_vv_hybrid
-          seth_vv_roe)
+          seth_vv_roe seth_vv_sensors seth_test_sensor_fields)
 [[ ${#ONLY[@]} -gt 0 ]] && PROGRAMS=("${ONLY[@]}")
 mkdir -p "$DATA"
 DATA_ABS="$(cd "$DATA" && pwd)"
