@@ -176,3 +176,8 @@ main = "seth_test_sensors.F90"
 name = "seth_test_central"
 source-dir = "src/tests"
 main = "seth_test_central.F90"
+
+[[test]]
+name = "seth_vv_hybrid"
+source-dir = "src/tests"
+main = "seth_vv_hybrid.F90"

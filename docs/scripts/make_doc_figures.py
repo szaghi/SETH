@@ -377,6 +377,19 @@ class Figures:
         fig.tight_layout()
         self.save(fig, 'adr')
 
+    def hybrid(self) -> None:
+        if not self.has('hybrid-summary.dat'):
+            return
+        rows = self.rows('hybrid-summary.dat')
+        pure = {(r[0], r[1]): float(r[3]) for r in rows if r[2] == 'pure'}
+        body = []
+        for r in rows:
+            ratio = float(r[3]) / pure[(r[0], r[1])]
+            body.append([r[0], label(r[1]), r[2], f'{float(r[3]):.4g}', f'{ratio:.3f}', f'{100 * float(r[4]):.1f} %',
+                         'yes' if r[5] == 'T' else '**no**'])
+        self.table('hybrid', ['case', 'scheme', 'mode', '$L_1(\\rho)$', 'against pure', 'faces flagged', 'positive'],
+                   body)
+
     def sensors(self) -> None:
         if not self.has('sensors-k.dat', 'sensors-b.dat'):
             return
@@ -536,6 +549,7 @@ def main() -> int:
         'advection': f.advection,
         'adr': f.adr,
         'sensors': f.sensors,
+        'hybrid': f.hybrid,
         'spectral': f.spectral,
         'order-tables': f.order_tables,
         'critical-tables': f.critical_tables,

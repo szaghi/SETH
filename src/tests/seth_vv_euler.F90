@@ -30,12 +30,25 @@ module seth_vv_euler
 !<
 !< Boundaries: periodic, transmissive (zeroth-order extrapolation) or reflecting walls. Time: SSP-RK3 (Shu & Osher
 !< 1988).
+!<
+!< Hybrids (PATH_SPLIT only; roadmap issue #4, steps 3.4 and 4.3), set by the module variable `hybrid`: the density of
+!< cells i-2..i+3 feeds seth_sensor_lcr (Li, Chen & Ren 2022, normalised by max(|rho|, 1)); a face whose sensor is
+!< below 1 is flagged, and the flags are dilated by `hyb_buffer` faces on each side. Flagged faces take the
+!< characteristic flux-split nonlinear scheme as above; the others
+!< - HYB_COST: the linear background of the scheme on component-wise Lax-Friedrichs-split fluxes (alpha the largest of
+!<   the characteristic alphas): no projection, no weights;
+!< - HYB_KEP: the sixth-order KEEP-PE central flux (seth_keep_pe6) of the primitive state;
+!< - HYB_LEFT_KEP: KEEP-PE on the faces left of `hyb_split` (a fraction of the domain), the nonlinear scheme right of
+!<   it, regardless of the sensor (the junction experiment J1);
+!< - HYB_RANDOM: KEEP-PE or the nonlinear scheme at random faces (J3, conservation).
+!< `nflagged` and `nhybfaces` count the flagged and the evaluated faces.
 use seth
-use seth_test_schemes, only : reconstruct, VLO, VHI
+use seth_test_schemes, only : reconstruct, VLO, VHI, SCHEMES
 implicit none
 private
 public :: GAMMA, NG, PATH_SPLIT, PATH_INTERP, BC_PERIODIC, BC_TRANSMISSIVE, BC_REFLECTIVE
 public :: prim2cons, cons2prim, euler_dt, euler_step, nfallback, corrections, limiter, nlimited, positive_state
+public :: HYB_NONE, HYB_COST, HYB_KEP, HYB_LEFT_KEP, HYB_RANDOM, hybrid, hyb_buffer, hyb_split, nflagged, nhybfaces
 
 real(R8P),    parameter :: GAMMA = 1.4_R8P
 integer(I4P), parameter :: NG = 5_I4P
@@ -49,6 +62,13 @@ integer(I4P) :: nfallback = 0 !< Interpolated face states replaced by first-orde
 logical      :: corrections = .true. !< PATH_INTERP: add the flux corrections (off: the second-order flux F0).
 logical      :: limiter = .false.    !< Positivity-preserving flux limiter (Hu, Adams & Shu 2013).
 integer(I4P) :: nlimited = 0         !< Faces where the limiter blended in the first-order flux (theta < 1).
+integer(I4P), parameter :: HYB_NONE = 0, HYB_COST = 1, HYB_KEP = 2, HYB_LEFT_KEP = 3, HYB_RANDOM = 4
+integer(I4P) :: hybrid = HYB_NONE    !< The hybrid of PATH_SPLIT (HYB_NONE: the nonlinear scheme everywhere).
+integer(I4P) :: hyb_buffer = 2       !< Faces each side of a flagged one that are flagged too.
+real(R8P)    :: hyb_split = 0.5_R8P  !< HYB_LEFT_KEP: the fraction of the faces that take KEEP-PE.
+integer(I8P) :: nflagged = 0         !< Faces the hybrid's sensor flagged (nonlinear scheme), summed over residuals.
+integer(I8P) :: nhybfaces = 0        !< Faces a hybrid evaluated, summed over residuals.
+integer(I8P) :: hyb_seed = 12345     !< State of the LCG of HYB_RANDOM.
 
 contains
    pure function prim2cons(w) result(q)
@@ -155,6 +175,8 @@ contains
    real(R8P)                          :: fhat(3,0:n), fn(3,1-NG:n+NG), l(3,3), r(3,3), lam(3), alpha(3)
    real(R8P)                          :: w(3,VLO:VHI), g(3,VLO:VHI), vp(VLO:VHI), vm(VLO:VHI), rp, rm, fc(3)
    real(R8P)                          :: wl(3), wr(3), ql(3), qr(3), pl(3), pr(3)
+   real(R8P)                          :: ws(5,-2:3), fk(5), sv
+   logical                            :: flagged(0:n), raw(0:n)
    integer(I4P)                       :: i, m, k
    call ghosts(q, n, bc)
    do i=1-NG, n+NG
@@ -173,7 +195,51 @@ contains
       alpha = 1.1_R8P*alpha ! margin: alpha = max|lambda| exactly makes g- = (lambda - alpha) w/2 a second-order
                             ! critical point where |lambda| peaks, where TENO drops to second order
    endif
+   if (hybrid /= HYB_NONE) then
+      do i=0, n
+         select case(hybrid)
+         case(HYB_LEFT_KEP)
+            raw(i) = real(i, R8P) > hyb_split*n
+         case(HYB_RANDOM)
+            hyb_seed = mod(48271_I8P*hyb_seed, 2147483647_I8P) ! Park & Miller's minimal standard generator
+            raw(i) = hyb_seed > 1073741823_I8P
+         case default
+            vp(-2:3) = q(1,i-2:i+3)
+            call seth_sensor_lcr(vp(-2:3), 1._R8P/max(maxval(abs(vp(-2:3))), 1._R8P), SETH_SENSOR_LCR_PSIC, sv)
+            raw(i) = sv < 1._R8P
+         endselect
+      enddo
+      if (bc == BC_PERIODIC) raw(n) = raw(0) ! faces 0 and n are the same face: one flux, or mass leaks
+      if (hybrid == HYB_COST .or. hybrid == HYB_KEP) then
+         do i=0, n
+            flagged(i) = any(raw(max(0, i-hyb_buffer):min(n, i+hyb_buffer)))
+         enddo
+      else
+         flagged = raw
+      endif
+      nhybfaces = nhybfaces + n + 1 ; nflagged = nflagged + count(flagged)
+   endif
    do i=0, n ! face i+1/2: stencil cell m is cell i+m
+      if (hybrid /= HYB_NONE) then
+         if (.not.flagged(i)) then
+            if (hybrid == HYB_COST) then ! component-wise split fluxes, the linear background
+               do k=1, 3
+                  vp = 0.5_R8P*(fn(k,i+VLO:i+VHI) + maxval(alpha)*q(k,i+VLO:i+VHI))
+                  vm = 0.5_R8P*(fn(k,i+VLO:i+VHI) - maxval(alpha)*q(k,i+VLO:i+VHI))
+                  call linear_background(id, vp, vm, rp, rm)
+                  fhat(k,i) = rp + rm
+               enddo
+            else ! KEEP-PE of the primitive state
+               do m=-2, 3
+                  pl = cons2prim(q(:,i+m))
+                  ws(:,m) = [pl(1), pl(2), 0._R8P, 0._R8P, pl(3)]
+               enddo
+               call seth_keep_pe6(1_I4P, GAMMA, ws, fk)
+               fhat(:,i) = [fk(1), fk(2), fk(5)]
+            endif
+            cycle
+         endif
+      endif
       call eigen(q(:,i), q(:,i+1), l, r, lam)
       do m=VLO, VHI
          w(:,m) = matmul(l, q(:,i+m))
@@ -210,6 +276,21 @@ contains
       res(:,i) = -(fhat(:,i) - fhat(:,i-1))/h
    enddo
    endsubroutine residual
+
+   subroutine linear_background(id, vp, vm, rp, rm)
+   !< The linear background of scheme id (its order and family), the smooth branch of HYB_COST.
+   integer(I4P), intent(in)  :: id
+   real(R8P),    intent(in)  :: vp(VLO:VHI), vm(VLO:VHI)
+   real(R8P),    intent(out) :: rp, rm
+   select case(trim(SCHEMES(id)%name))
+   case('weno3_js', 'wenoz3')                       ; call seth_linear3(vp(-1:2), vm(-1:2), rp, rm)
+   case('teno6', 'teno6_opt', 'teno6_neno6')        ; call seth_linear6(vp(-2:3), vm(-2:3), rp, rm)
+   case('weno7_js', 'wenoz7')                       ; call seth_linear7(vp(-3:4), vm(-3:4), rp, rm)
+   case('teno8', 'teno8_a')                         ; call seth_linear8(vp(-3:4), vm(-3:4), rp, rm)
+   case('weno9_js', 'wenoz9')                       ; call seth_linear9(vp(-4:5), vm(-4:5), rp, rm)
+   case default                                     ; call seth_linear5(vp(-2:3), vm(-2:3), rp, rm)
+   endselect
+   endsubroutine linear_background
 
    subroutine limit(q, n, h, dt, fhat)
    !< The positivity-preserving flux limiter of SETH (seth_positivity_euler, Hu, Adams & Shu 2013) at every face: the
