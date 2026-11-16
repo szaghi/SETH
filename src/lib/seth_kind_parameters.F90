@@ -21,7 +21,14 @@ public :: SETH_TENO_EPS, SETH_POSITIVITY_BACKOFF
 
 #if defined _R_P_IS_R4P
 integer, parameter :: KIND_CHECK = 1/merge(1, 0, R_P == R4P) !< Stops the build if PENF's R_P is not R4P.
-#error "SETH: the R4P parameter set is not defined yet (roadmap issue #4, 6.2, phase 2)"
+! R4P: epsilon 1.2e-7, smallest normal 1.2e-38, largest 3.4e38.
+real(R_P), parameter :: SETH_TENO_EPS = 1.e-30_R_P !< The papers' 1e-40 is below the smallest normal R4P number (and
+                                                   !< flushed to zero on a GPU): 1e-30 is normal, and negligible
+                                                   !< against any indicator R4P data can produce (a difference of one
+                                                   !< ulp of unit data squares to 1.4e-14). The R4P kernels never
+                                                   !< divide by it alone (their weights are ratios: seth_z_teno_body).
+real(R_P), parameter :: SETH_POSITIVITY_BACKOFF = 5.e-7_R_P !< About 4 ulps of R4P, as 1e-15 is of R8P: 1 - 1e-15 is 1
+                                                            !< in R4P, and the back-off would do nothing.
 #elif defined _R_P_IS_R16P
 #error "SETH: R16P is not supported (no device code, no caller)"
 #else

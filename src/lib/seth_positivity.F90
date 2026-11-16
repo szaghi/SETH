@@ -55,7 +55,8 @@ public :: SETH_POSITIVITY_NV_MAX
 public :: seth_positivity_euler
 public :: seth_euler_admissible
 
-real(R_P),    parameter :: SETH_POSITIVITY_EPS = 1.e-13_R_P !< The floor of Hu, Adams & Shu (2013).
+! kind-ok: an absolute floor of rho and p (a default for the kernel's arguments), not a step; normal in R4P too
+real(R_P),    parameter :: SETH_POSITIVITY_EPS = 1.e-13_R_P !< The floor of Hu, Adams & Shu (2013). kind-ok
 integer(I4P), parameter :: SETH_POSITIVITY_NV_MAX = 5_I4P   !< Largest nv (3-D Euler): the dimension of the locals.
 integer(I4P), parameter :: NVM = SETH_POSITIVITY_NV_MAX
 
@@ -106,8 +107,8 @@ contains
    endif
    t = min(segment_bound(nv, gamma, eps_rho, eps_p, a0, a1), segment_bound(nv, gamma, eps_rho, eps_p, b0, b1))
    ! rounding guard on the flux actually returned: the closed form puts a state on the floor, where rounding can leave
-   ! it a few ulp below; back off by relative steps 1e-15, 2e-15, 4e-15, ... (theta stays within rounding of its
-   ! maximum), down to theta = 0 (f_low, admissible) at worst
+   ! it a few ulp below; back off by relative steps b, 2 b, 4 b, ... (b = SETH_POSITIVITY_BACKOFF, a few ulps of the
+   ! kind: theta stays within rounding of its maximum), down to theta = 0 (f_low, admissible) at worst
    theta = t
    do it=0, 52
       do k=1, nv

@@ -29,10 +29,11 @@
    real(R_P),    intent(in)  :: rmu         !< Inverse descaler of the sensor's regulariser (1: the papers' form).
    real(R_P)                 :: ct          !< Cutoff C_T of this state, from the sensor.
    real(R_P)                 :: da, db, eta, etamin, epss, mm, gg !< Sensor work.
+   ! kind-ok below: the TENO-A cutoffs, values compared with the normalised chi (relative), normal in R4P too
    real(R_P),    parameter   :: POW10(0:20) = [1.e0_R_P, 1.e-1_R_P, 1.e-2_R_P, 1.e-3_R_P, 1.e-4_R_P, 1.e-5_R_P, &
-                                               1.e-6_R_P, 1.e-7_R_P, 1.e-8_R_P, 1.e-9_R_P, 1.e-10_R_P, 1.e-11_R_P, &
-                                               1.e-12_R_P, 1.e-13_R_P, 1.e-14_R_P, 1.e-15_R_P, 1.e-16_R_P, &
-                                               1.e-17_R_P, 1.e-18_R_P, 1.e-19_R_P, 1.e-20_R_P] !< 10^-k, k = 0..20.
+                                               1.e-6_R_P, 1.e-7_R_P, 1.e-8_R_P, 1.e-9_R_P, 1.e-10_R_P, 1.e-11_R_P, & ! kind-ok
+                                               1.e-12_R_P, 1.e-13_R_P, 1.e-14_R_P, 1.e-15_R_P, 1.e-16_R_P, & ! kind-ok
+                                               1.e-17_R_P, 1.e-18_R_P, 1.e-19_R_P, 1.e-20_R_P] !< 10^-k, k = 0..20 (kind-ok).
 #else
    real(R_P),    intent(in)  :: ct          !< Cutoff C_T of the normalised smoothness measures.
 #endif
