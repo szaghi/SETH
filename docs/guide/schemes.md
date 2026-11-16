@@ -184,11 +184,20 @@ WENO-JS's. Across a jump, $\tau = O(1)$ and the smooth candidates, with small $\
 | WENO-Z7 | $\lvert\beta_0 + 3\beta_1 - 3\beta_2 - \beta_3\rvert$, $O(h^7)$ | Don & Borges, as quoted by Rathan & Naga Raju 2016 |
 | WENO-Z9 | $\lvert\beta_0 - \beta_4\rvert$, $O(h^7)$ | Castro et al.'s rule for odd $r$, as restated by Li et al. 2022 |
 
-$p$ = 1 (Borges) or 2 (fifth order at first-order critical points; recommended for higher orders); $\varepsilon =
-10^{-40}$ is the usual choice. The orders of $\tau$ are measured exactly by the table generator (Castro et al.'s
-$\tau_7 = \lvert\beta_0-\beta_1-\beta_2+\beta_3\rvert$ is $O(h^6)$, as Li et al. 2022 state). WENO-Z9 needs
-$p = 2$: with $p = 1$ it is not robust at shocks ([Burgers](/verification/shocks/burgers),
-[issue #1](https://github.com/szaghi/SETH/issues/1)).
+$p$ = 1 (Borges) or 2 (fifth order at first-order critical points); $\varepsilon = 10^{-40}$ is the usual choice.
+What SETH's verification runs, and recommends, is measured on its shock cases ($L_1(\rho)$ against the reference or
+the exact solution; the overshoot behind the Burgers shock; limited faces on the blast wave):
+
+| Scheme | $p$ | Why | $p = 1$ against $p = 2$ |
+|---|---|---|---|
+| WENO-Z3, WENO-Z5 | 1 | Borges et al.'s choice; the low-dissipation claims of the [Sod](/verification/shocks/sod) and [Lax](/verification/shocks/lax) cases are asserted with it | — |
+| WENO-Z7 | 1 | $p = 2$ is more robust but more dissipative everywhere | composite profile $L_1$ 0.0479 / 0.0510, Shu–Osher 0.142 / 0.180, Sod 0.00242 / 0.00280, blast 0.074 / 0.090 with 1826 / 23 limited faces, Burgers overshoot $6\cdot10^{-3}$ / $9\cdot10^{-7}$ |
+| WENO-Z9 | 2 | with $p = 1$ it is not robust at shocks | Burgers overshoot 0.28 / $9\cdot10^{-4}$, composite profile within $[-0.055, 1.056]$ / $[-8\cdot10^{-5}, 1.0005]$, blast 6294 / 585 limited faces |
+
+Castro et al. (2011) recommend $p = r - 1$ for robustness at high order and report $p \le 2$ unstable on the double
+Mach reflection for $r > 4$ (llm-wiki high-order-capturing-schemes `methods/weno-z.md`). SETH's cases are
+one-dimensional, so that claim is neither confirmed nor refuted here. The orders of $\tau$ are measured exactly by the table generator (Castro et al.'s
+$\tau_7 = \lvert\beta_0-\beta_1-\beta_2+\beta_3\rvert$ is $O(h^6)$, as Li et al. 2022 state).
 
 ## TENO: TENO5, TENO6, TENO6-opt, TENO6-NENO6
 
