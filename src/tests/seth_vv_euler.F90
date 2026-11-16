@@ -40,7 +40,8 @@ module seth_vv_euler
 !< 1988).
 !<
 !< Hybrids (PATH_SPLIT only; roadmap issue #4, steps 3.4 and 4.3), set by the module variable `hybrid`: the density of
-!< cells i-2..i+3 feeds seth_sensor_lcr (Li, Chen & Ren 2022, normalised by max(|rho|, 1)); a face whose sensor is
+!< cells i-2..i+3 feeds the sensor `hyb_sensor` (default seth_sensor_lcr, Li, Chen & Ren 2022; or seth_sensor_teno,
+!< _ren, _tau, at their published thresholds), normalised by max(|rho|, 1); a face whose sensor is
 !< below 1 is flagged, and the flags are dilated by `hyb_buffer` faces on each side. Flagged faces take the
 !< characteristic flux-split nonlinear scheme as above; the others
 !< - HYB_COST: the linear background of the scheme on component-wise Lax-Friedrichs-split fluxes (alpha the largest of
@@ -57,6 +58,7 @@ private
 public :: GAMMA, NG, PATH_SPLIT, PATH_INTERP, PATH_ROE, BC_PERIODIC, BC_TRANSMISSIVE, BC_REFLECTIVE
 public :: prim2cons, cons2prim, euler_dt, euler_step, nfallback, corrections, limiter, nlimited, positive_state
 public :: roe_fix, nsonic
+public :: SENS_TENO, SENS_REN, SENS_LCR, SENS_TAU, hyb_sensor
 public :: HYB_NONE, HYB_COST, HYB_KEP, HYB_LEFT_KEP, HYB_RANDOM, hybrid, hyb_buffer, hyb_split, nflagged, nhybfaces
 
 real(R8P),    parameter :: GAMMA = 1.4_R8P
@@ -80,6 +82,8 @@ real(R8P)    :: hyb_split = 0.5_R8P  !< HYB_LEFT_KEP: the fraction of the faces 
 integer(I8P) :: nflagged = 0         !< Faces the hybrid's sensor flagged (nonlinear scheme), summed over residuals.
 integer(I8P) :: nhybfaces = 0        !< Faces a hybrid evaluated, summed over residuals.
 integer(I8P) :: hyb_seed = 12345     !< State of the LCG of HYB_RANDOM.
+integer(I4P), parameter :: SENS_TENO = 1, SENS_REN = 2, SENS_LCR = 3, SENS_TAU = 4
+integer(I4P) :: hyb_sensor = SENS_LCR !< The hybrid's sensor (SETH's four kernels; Phase 5 compares them).
 
 contains
    pure function prim2cons(w) result(q)
@@ -216,7 +220,16 @@ contains
             raw(i) = hyb_seed > 1073741823_I8P
          case default
             vp(-2:3) = q(1,i-2:i+3)
-            call seth_sensor_lcr(vp(-2:3), 1._R8P/max(maxval(abs(vp(-2:3))), 1._R8P), SETH_SENSOR_LCR_PSIC, sv)
+            select case(hyb_sensor)
+            case(SENS_TENO)
+               call seth_sensor_teno(vp(-2:3), 1._R8P/max(maxval(abs(vp(-2:3))), 1._R8P), SETH_SENSOR_TENO_CT, sv)
+            case(SENS_REN)
+               call seth_sensor_ren(vp(-2:3), 1._R8P/max(maxval(abs(vp(-2:3))), 1._R8P), SETH_SENSOR_REN_PSIC, sv)
+            case(SENS_TAU)
+               call seth_sensor_tau(vp(-2:3), 1._R8P/max(maxval(abs(vp(-2:3))), 1._R8P), SETH_SENSOR_TAU_ETA, sv)
+            case default
+               call seth_sensor_lcr(vp(-2:3), 1._R8P/max(maxval(abs(vp(-2:3))), 1._R8P), SETH_SENSOR_LCR_PSIC, sv)
+            endselect
             raw(i) = sv < 1._R8P
          endselect
       enddo
