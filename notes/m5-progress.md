@@ -24,6 +24,7 @@ they land.
 | 3.3 | E5 | `seth_vv_nonpoly` section 6: Shu–Osher scaled by 1/8, TENO5 bitwise equal, TENO5-RBF 0.47 in density | |
 | 3.3 | E6 (100 periods) | `seth_vv_nonpoly` section 7: inside the range (s = 0.075) the growth rate equals the prediction (6.6e-5 / 6.8e-5); outside, up to 4 times it; the amplitude nearly triples at s = 0.3, CFL 0.05 | |
 | 3.4 | the complete scheme, N5 | `seth_teno5_rbf_dr`; device case 56; bench 39; the ablation of seven schemes on Sod, Lax, Shu–Osher, the blast waves (report mode) | |
+| 3.1, 3.2, 3.4 | PERF1, PERF2 | `notes/m5-bench-data/41-nonpoly-*`: ST 0.88 / 0.86 / 0.97 × TENO5 (GPU / gfortran / nvfortran; budget 1.05); RBF **1.27** / 0.91 / 1.04 (1.25); RBF+DR 2.97 / 2.77 / **3.14** (3.0); bench_compare ok | |
 | 3.1 | correctness (spec 14, rows of spec 16) | `seth_test_nonpoly`: order 5.008 / 4.993; equal to `seth_linear5` bitwise on smooth data; 4.000 beside a jump where TENO5 gives 3.011; overshoot 2e-16; the rows exact | |
 | 3.2 | correctness (specs 1–4, 6 partly) | `seth_test_nonpoly` specs 15–16: s = 0 is ST bitwise; order 5.0 with alpha fixed; Eq. 29's error constant within 0.03 %; the kernel equal to a reference (sensor, row) on 10^5 stencils | |
 | 3.2, 3.3 | G6, E6 (the band, D7) | spec 18: band edges 0.1640 / 0.3266 against the predicted 0.1643 / 0.3286, peaks within 4 %; validated range s <= 0.123 (TENO6's 2e-4) | |

@@ -91,6 +91,8 @@ ns per face, the median of three runs of `seth_bench_weno` (raw outputs in `note
 GPU column on the RTX 4070 (`bench-nvf-oac`, $2^{24}$ faces), the CPU columns on one pinned core of the i9-13900KF
 ($2^{22}$ faces, `bench-gnu` and `bench-nvf`). The field is the benchmark's smooth wave with a jump every 2048 cells:
 mostly smooth faces, where the early exit acts. The budgets are issue #6's, against `seth_teno5` on the same device.
+The last three rows are a second series (`notes/m5-bench-data/41-nonpoly-*`, the same session; its TENO5: 1.435, 80.5,
+37.4) and their ratios are to that series' TENO5.
 
 | Kernel | GPU | CPU gfortran | CPU nvfortran | GPU ratio | gfortran ratio | budget |
 |---|---|---|---|---|---|---|
@@ -102,6 +104,9 @@ mostly smooth faces, where the early exit acts. The budgets are issue #6's, agai
 | `seth_teno5_thinc`, no early exit | 9.686 | 573.6 | 188.0 | 6.71 | 7.08 | — |
 | DR, stored masks (two passes) | 2.622 | 156.8 | 61.3 | 1.82 | 1.93 | — |
 | THINC, stored masks (two passes) | 2.630 | 157.3 | 61.2 | 1.82 | 1.94 | — |
+| `seth_teno5_st` | 1.267 | 69.5 | 36.2 | 0.88 | 0.86 | 1.05 |
+| `seth_teno5_rbf` ($s_1 = s_2 = 0.09$) | 1.824 | 73.1 | 39.0 | **1.27** | 0.91 | 1.25 |
+| `seth_teno5_rbf_dr` (per face) | 4.262 | 222.8 | 117.1 | 2.97 | 2.77 | 3.0 |
 
 Experiment E1 of the plan: the self-contained kernels recompute the masks of the neighbouring cells at every face,
 in that face's characteristic basis (the default, owner decision D3). TENO5-DR fits the budget of 3 times TENO5 on the
@@ -112,8 +117,11 @@ third with nvfortran). The mask kernel misses its own budget (0.70) on the GPU a
 meets it with nvfortran (0.53): it is TENO5's cutoff without the candidate values, and the cutoff, not the
 candidates, is most of TENO5's cost where divisions are dear. The stored-mask variant (each cell's two masks once, then the faces) costs 1.65–1.94
 times TENO5 for either detector; on scalar data it is equal bit for bit, on systems it computes each mask in its own face's
-basis and the results differ ([NP4](/verification/nonpolynomial/dr#results)). Published whole-solver costs, for
-orientation only: TENO5-THINC 1.17 times TENO5 per time step (Takagi et al. 2022, Table 3), the complete RBF+DR
+basis and the results differ ([NP4](/verification/nonpolynomial/dr#results)). Stencil targeting costs less than TENO5 (one row
+instead of the weighted candidates), and so the complete scheme of Liang & Fu, RBF+DR, costs about what TENO5-DR
+does; the Gaussian-RBF kernel misses its budget on the GPU only (1.27 against 1.25: the sensor's divisions), and the
+complete scheme fits the budget of 3 on the GPU and with gfortran, not with nvfortran (3.14). Published whole-solver
+costs, for orientation only: TENO5-THINC 1.17 times TENO5 per time step (Takagi et al. 2022, Table 3), the complete RBF+DR
 scheme 1.38–1.42 (Liang & Fu 2024, Table 1). The old kernels did not slow down (`bench_compare.py`: ok on the GPU and
 on the gfortran core).
 
