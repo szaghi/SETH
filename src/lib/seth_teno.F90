@@ -41,8 +41,8 @@ real(R_P), parameter :: SETH_TENO6_CT       = 1.e-7_R_P !< C_T of TENO6 (Fu, Hu 
 real(R_P), parameter :: SETH_TENO5_OPT_CT   = 1.e-5_R_P !< C_T of TENO5-opt (Fu, Hu & Adams 2016, Table 5).
 real(R_P), parameter :: SETH_TENO5_AZ_CT    = 1.e-5_R_P !< lambda_d of TENO5-AZ, the cutoff's ceiling (Tang 2024, Eq. 20).
 real(R_P), parameter :: SETH_TENO8_CT       = 1.e-7_R_P !< C_T of TENO8 (Hong, Ye & Ye 2022; Fu et al. 2016's 6-point value).
-! adaptive cutoff: TENO5-A (Fu, Hu & Adams 2018, as restated by Tang 2024, Eqs. (15)-(16)) and the eight-point one
-! of Liang & Fu 2024b (Eqs. (47)-(49))
+! adaptive cutoff: TENO5-A (Fu, Hu & Adams 2019, as restated by Tang 2024, Eqs. (15)-(16), and Huang, Liang & Fu
+! 2023, Eqs. (18)-(20)) and the eight-point one of Liang & Fu 2024b (Eqs. (47)-(49))
 real(R_P), parameter :: SETH_TENO5_A_CR = 0.24_R_P  !< C_r of TENO5-A (Tang 2024, after Eq. 16).
 real(R_P), parameter :: SETH_TENO5_A_XI = 1.e-3_R_P !< xi of TENO5-A.
 real(R_P), parameter :: SETH_TENO5_A_A1 = 10._R_P   !< alpha_1 of TENO5-A: C_T 1e-10 on smooth data.

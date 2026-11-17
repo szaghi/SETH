@@ -285,7 +285,7 @@ more so for smaller $C_T$ ($2.2\cdot10^{-3}$ at $10^{-5}$, $9.6\cdot10^{-3}$ at 
 dissipation does not reach that band. Advected for four periods, no mode of the band grows (its amplitude never
 exceeds the initial one): the positive ADR is a one-step measure, not a growth, for TENO6 and TENO8 alike.
 
-**TENO5-A and TENO8-A: the cutoff from a sensor.** Fu, Hu & Adams (2018) let the cutoff follow the local
+**TENO5-A and TENO8-A: the cutoff from a sensor.** Fu, Hu & Adams (2019) let the cutoff follow the local
 smoothness (Fu 2021, Eqs. (17)–(19); Liang & Fu 2024b, Eqs. (47)–(49)):
 
 $$ \eta_j = \frac{\lvert 2\Delta_{j+1/2}\Delta_{j-1/2}\rvert + e}{\Delta_{j+1/2}^2 + \Delta_{j-1/2}^2 + e},\quad
@@ -298,7 +298,7 @@ $10^{-a_1}$; a jump has $\eta \to 0$, $m = 1$ and $10^{-(a_1 - a_2)}$.
 
 | Kernel | Background | $C_r$, $\xi$, $a_1$, $a_2$ | $C_T$ range | Source |
 |---|---|---|---|---|
-| `seth_teno5_a` | TENO5 | 0.24, $10^{-3}$, 10, 5 | $10^{-10}$ … $10^{-5}$ | Tang 2024, Eqs. (15)–(16) (TENO-A) |
+| `seth_teno5_a` | TENO5 | 0.24, $10^{-3}$, 10, 5 | $10^{-10}$ … $10^{-5}$ | Tang 2024, Eqs. (15)–(16); Huang, Liang & Fu 2023, Eqs. (18)–(20) |
 | `seth_teno8_a` | TENO8 | 0.23, $10^{-3}$, 10.5, 3.5 | $10^{-10}$ … $10^{-7}$ | Liang & Fu 2024b, Eqs. (47)–(49) |
 
 With $a_2 = 0$ either kernel is the fixed-cutoff one at $10^{-\lfloor a_1 \rfloor}$, bitwise (asserted). What SETH

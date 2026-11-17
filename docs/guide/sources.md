@@ -5,7 +5,9 @@ read in the [llm-wiki](https://szaghi.github.io/llm-wiki/) bundles `weno-teno` a
 which cite the paper; the provenance of every formula is in `notes/m2-sources.md`.
 
 - Balsara, D.S., Shu, C.-W. (2000). Monotonicity preserving WENO schemes with increasingly high order of accuracy.
-  *J. Comput. Phys.* 160:405. doi:10.1006/jcph.2000.6443 — WENO-7/9 indicators (through ADAM's tables).
+  *J. Comput. Phys.* 160:405. doi:10.1006/jcph.2000.6443 — the WENO-7/9 indicators, candidates, optimal weights and
+  optimal combinations (§III.a–b, Tables I–II) (read in the paper; SETH's tables checked against it and against the
+  indicators' definition by `scripts/check_papers.py`).
 - Borges, R., Carmona, M., Costa, B., Don, W.S. (2008). An improved WENO scheme for hyperbolic conservation laws.
   *J. Comput. Phys.* 227:3191. doi:10.1016/j.jcp.2007.11.038 — WENO-Z, $\tau_5$, critical-point orders (via llm-wiki).
 - Castro, M., Costa, B., Don, W.S. (2011). High order WENO-Z schemes. *J. Comput. Phys.* 230:1766.
@@ -40,6 +42,20 @@ which cite the paper; the provenance of every formula is in `notes/m2-sources.md
   method for compressible gas dynamics and turbulence simulation. *Comput. Phys. Commun.* 302:109236 — TENO8's
   background: the face coefficients (Eq. (46)), the linear weights, $\tau_8$ (read in the paper).
 - Hong, Z., Ye, Z., Ye, K. (2022). *J. Comput. Phys.* — $C_T = 10^{-7}$ for TENO6 and TENO8 (read in the paper).
+- Fu, L., Hu, X.Y., Adams, N.A. (2019). Improved five- and six-point targeted essentially nonoscillatory schemes
+  with adaptive dissipation. *AIAA J.* 57(3):1143 — TENO5-A, the original (not obtained; restated by Huang, Liang & Fu
+  2023 and Tang 2024).
+- Huang, H., Liang, T., Fu, L. (2023). A five-point TENO scheme with adaptive dissipation based on a new scale sensor.
+  *Commun. Comput. Phys.* 33:1106. doi:10.4208/cicp.oa-2022-0286 — the standard TENO5-A, Eqs. (18)–(20): $C_r$, $\xi$,
+  $\alpha_1$, $\alpha_2$ (read in the paper, arXiv:2303.10020; checked by `scripts/check_papers.py`). Its new
+  five-point scale sensor is not in SETH.
+- Fu, L. (2019). A hybrid method with TENO based discontinuity indicator for hyperbolic conservation laws. *Commun.
+  Comput. Phys.* 26:973. doi:10.4208/cicp.oa-2018-0176 — the TENO-based detector, the original (not obtained; restated
+  by Fu 2023 and Li, Chen & Ren 2022).
+- Fu, L. (2023). Review of the high-order TENO schemes for compressible gas dynamics and turbulence. *Arch. Comput.
+  Methods Eng.* 30:2493. doi:10.1007/s11831-022-09877-7 — the TENO-based detector, §3.4, Eqs. (21)–(23): $q = 6$,
+  $C_T = 5\cdot10^{-4}$ (read in the paper; checked by `scripts/check_papers.py`); its $\varepsilon$ is not given there,
+  SETH's $10^{-4}$ is Li, Chen & Ren's.
 - Fu, L. (2021). Very-high-order TENO schemes with adaptive accuracy order and adaptive dissipation control. *Comput.
   Methods Appl. Mech. Engrg.* — the adaptive cutoff, Eqs. (17)–(19) (read in the paper).
 - Li, Y., Chen, C., Ren, Y.-X. (2022). A class of high-order finite difference schemes with minimized dispersion and

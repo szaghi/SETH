@@ -143,3 +143,18 @@ Measured: orders 4.00/4.07, 6.03/6.00, 7.99/8.19 at a point (`seth_test_weno_c`)
 is O(1) where a difference vanishes; WENO8-C overshoots 1/280 at a step in its outer cells (-3, 4), which the blend's
 detector (cells -1..2) does not read. ADAM's S = 1 (`weno-c-2`, documented as second order) never reaches the blend
 and is WENO1: not ported.
+
+## The papers of issue #4's checklist (2026-11-17)
+
+Read in the paper (pdftotext of the corpus PDFs) and checked in exact arithmetic by `scripts/check_papers.py`, with no
+ADAM input (against an exact derivation and against SETH's own sources):
+
+| Item | Status | Where |
+|---|---|---|
+| WENO7/9-JS indicators IS_k^r, r = 4, 5 (integer forms) | read; = 240 and 5040 times the Jiang-Shu indicators derived from their definition; = SETH's WENO7_JS_D, WENO9_JS_D | Balsara & Shu 2000, §III.a-b |
+| WENO7/9-JS candidates a_{k,i}, optimal weights C_k, optimal combination u^L | read; = the derived candidates and maximum-order weights; = SETH's _P, _A | Balsara & Shu 2000, Tables I-II and §III.a-b |
+| TENO5-A: C_r = 0.24, xi = 1e-3, eta = min over i-1..i+1, g = (1-m)^4 (1+4m), C_T = 10^-floor(alpha_1 - alpha_2 (1-g)), alpha_1 = 10, alpha_2 = 5 | read (arXiv 2303.10020, the preprint of the CiCP paper); = SETH_TENO5_A_* and seth_teno5_a; the original is Fu, Hu & Adams, AIAA J. 57(3):1143 (2019), not obtained | Huang, Liang & Fu 2023, Eqs. (18)-(20) |
+| Fu's TENO-based detector: gamma_k = (beta_k + eps)^-q, q = 6, chi_k normalised, smooth iff every chi_k > C_T = 5e-4 | read; = seth_sensor_teno; eps not given there ("a small value"): SETH's 1e-4 stays Li, Chen & Ren's; the original is Fu, CiCP 26:973 (2019), not obtained | Fu 2023, §3.4, Eqs. (21)-(23) |
+
+Not in the corpus, still read second-hand: Shima et al. 2021 (KEEP-PE, through De Michele & Coppola 2023), Ducros
+et al. 1999 (through an implementation), Pirozzoli 2010/2011, and the two originals above.
