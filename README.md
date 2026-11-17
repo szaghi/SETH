@@ -6,13 +6,13 @@
   <img src="docs/public/logo.svg" alt="SETH, the Riemann fan opened like a folding fan on a crackle-glazed tile" width="320">
 </picture>
 
-#### *the WENO and TENO kernels of ADAM, one pure function each, on every CPU and GPU*
+#### *WENO and TENO kernels, one pure function each, on every CPU and GPU*
 
 ### **S**moothness-weighted **E**NO, **T**ENO and **H**ybrids
 
-> High-order non-oscillatory reconstruction and interpolation for HPC, in modern Fortran. Extracted from the WENO
-> machinery of ADAM and successor of WenOOF: one `pure`, device-callable kernel per scheme, coefficients as
-> compile-time constants, no dynamic dispatch where the cells are swept.
+> High-order non-oscillatory reconstruction and interpolation for HPC, in modern Fortran. The successor of WenOOF:
+> one `pure`, device-callable kernel per scheme, coefficients as compile-time constants, no dynamic dispatch where the
+> cells are swept.
 
 [![Version](https://img.shields.io/github/v/release/szaghi/SETH?label=version)](https://github.com/szaghi/SETH/releases)
 [![CI](https://github.com/szaghi/SETH/actions/workflows/ci.yml/badge.svg)](https://github.com/szaghi/SETH/actions/workflows/ci.yml)
@@ -27,10 +27,10 @@
 <table>
 <tr>
 <td><b>🧮 Every scheme, one kernel each</b><br><sub>WENO-JS 1/3/5/7/9, WENO-Z 3/5/7/9, TENO5, TENO5-opt, TENO5-AZ, TENO5-A, TENO6, TENO6-opt, NENO6, TENO8 and TENO8-A, for reconstruction from cell averages and interpolation from point values, and the centred WENO4/6/8-C (reconstruction), optionally returning the weights ratios. <a href="https://szaghi.github.io/SETH/guide/schemes">Schemes</a> · <a href="https://szaghi.github.io/SETH/guide/api">API</a></sub></td>
-<td><b>⚡ Called from inside your loops</b><br><sub>Every kernel is <code>pure</code>, <code>!$acc routine seq</code> and <code>!$omp declare target</code>; the coefficients are compile-time constants, so nothing is set up or copied to the device. On an RTX 4070 the WENO-5/7 kernels run 1.26–1.31× faster than ADAM's. <a href="https://szaghi.github.io/SETH/guide/performance">Performance</a></sub></td>
+<td><b>⚡ Called from inside your loops</b><br><sub>Every kernel is <code>pure</code>, <code>!$acc routine seq</code> and <code>!$omp declare target</code>; the coefficients are compile-time constants, so nothing is set up or copied to the device. On an RTX 4070, WENO-5 reconstructs a face in 0.97 ns and WENO-7 in 1.76 ns, in double precision. <a href="https://szaghi.github.io/SETH/guide/performance">Performance</a></sub></td>
 </tr>
 <tr>
-<td><b>🎯 Bitwise ADAM, exact coefficients</b><br><sub>WENO-JS is bitwise equal to ADAM's kernels. The WENO-Z and TENO coefficients are derived in exact rational arithmetic, cross-checked against the papers and re-verified as compiled. <a href="https://szaghi.github.io/SETH/verification/contracts/adam-equivalence">Equivalence with ADAM</a> · <a href="https://szaghi.github.io/SETH/verification/contracts/tables">Tables</a></sub></td>
+<td><b>🎯 Exact coefficients</b><br><sub>The WENO-Z and TENO coefficients are derived in exact rational arithmetic, cross-checked against the papers and re-verified as compiled. <a href="https://szaghi.github.io/SETH/verification/contracts/tables">Tables</a></sub></td>
 <td><b>🛡️ Positivity near vacuum</b><br><sub><code>seth_positivity_euler</code>, the flux limiter of Hu, Adams &amp; Shu (2013) for the Euler equations in 1-D to 3-D: the blending factor in closed form, the largest that keeps density and pressure above their floors, on the host and on the GPU. <a href="https://szaghi.github.io/SETH/guide/api#positivity-limiter">Positivity limiter</a></sub></td>
 </tr>
 <tr>
@@ -90,7 +90,7 @@ The [quick start](https://szaghi.github.io/SETH/guide/quickstart) lists every ke
 > *Chief Yak Shaver & Serial Library Resurrector* — wrote WenOOF, watched it die of run-time polymorphism in the inner loops, and named its successor after the son Adam had once Abel was gone
 
 **[Giacomo Rossi](https://github.com/giacrossi)**
-> *High Priest of the GPU & Exorcist of Data Races* — ADAM co-author, from whose WENO machinery SETH was carved out, rib by rib
+> *High Priest of the GPU & Exorcist of Data Races* — co-author of the GPU WENO machinery SETH grew from
 
 **[Claude](https://claude.ai)** (Anthropic)
 > *Omniscient Code Oracle & Tireless Rubber Duck* — AI pair programmer, responsible for deriving coefficients in exact rational arithmetic and for running mutants all night so humans don't have to

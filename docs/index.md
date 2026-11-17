@@ -4,7 +4,7 @@ layout: home
 hero:
   name: SETH
   text: Smoothness-weighted ENO, TENO and Hybrids
-  tagline: The WENO and TENO kernels of ADAM, one pure function each, on every CPU and GPU. High-order non-oscillatory reconstruction and interpolation for HPC, in modern Fortran.
+  tagline: High-order non-oscillatory reconstruction and interpolation for HPC, in modern Fortran. WENO and TENO kernels, one pure function each, on every CPU and GPU.
   image:
     light: /logo.svg
     dark: /logo-dark.svg
@@ -42,7 +42,7 @@ features:
       width: 44
       height: 44
     title: Called from inside your loops
-    details: Every kernel is pure, acc routine seq and omp declare target; the coefficients are compile-time constants, so nothing is set up or copied to the device. On an RTX 4070 the WENO-5/7 kernels run 1.26–1.31× faster than ADAM's.
+    details: Every kernel is pure, acc routine seq and omp declare target; the coefficients are compile-time constants, so nothing is set up or copied to the device. On an RTX 4070, WENO-5 reconstructs a face in 0.97 ns and WENO-7 in 1.76 ns, in double precision.
     link: /guide/performance
     linkText: Performance
   - icon:
@@ -50,10 +50,10 @@ features:
       dark: /icons/weights-dark.svg
       width: 44
       height: 44
-    title: Bitwise ADAM, exact coefficients
-    details: WENO-JS is bitwise equal to ADAM's kernels. The WENO-Z and TENO coefficients are derived in exact rational arithmetic, cross-checked against the papers and re-verified as compiled.
-    link: /verification/contracts/adam-equivalence
-    linkText: Equivalence with ADAM
+    title: Exact coefficients
+    details: The WENO-Z and TENO coefficients are derived in exact rational arithmetic, cross-checked against the papers and re-verified as compiled.
+    link: /verification/contracts/tables
+    linkText: Tables
   - icon:
       light: /icons/smoothness.svg
       dark: /icons/smoothness-dark.svg
@@ -99,7 +99,7 @@ const authors = [
     avatar: 'https://github.com/giacrossi.png',
     name: 'Giacomo Rossi',
     title: 'High Priest of the GPU & Exorcist of Data Races',
-    desc: 'ADAM co-author, from whose WENO machinery SETH was carved out, rib by rib.',
+    desc: 'Co-author of the GPU WENO machinery SETH grew from.',
     links: [{ icon: 'github', link: 'https://github.com/giacrossi' }],
   },
   {
