@@ -57,6 +57,21 @@ which cite the paper; the provenance of every formula is in `notes/m2-sources.md
   (4.1)–(4.4): the four three-point stencils, $\beta_{3,3}$, $q = 6$, $C_T = 5\cdot10^{-4}$, $\varepsilon = 10^{-4}$
   in one dimension and $10^{-3}$ in several (read in the paper; SETH's indicators, evaluated from its source, and its
   two values of $\varepsilon$, `SETH_SENSOR_TENO_EPS_1D` and `_MD`, checked by `scripts/check_papers.py`).
+- Takagi, S., Fu, L., Wakimura, H., Xiao, F. (2022). A novel high-order low-dissipation TENO-THINC scheme for
+  hyperbolic conservation laws. *J. Comput. Phys.* 452:110899. doi:10.1016/j.jcp.2021.110899 — the THINC function
+  and its face value (Eqs. (15)–(16), $\beta = 1.6$), the first-order guard (Eq. (17)), $\zeta$ and the detector
+  (Eqs. (19)–(20)), Table 1 (read in the paper; `notes/m5-sources.md`; the face formula re-derived by
+  `scripts/gen_nonpoly_tables.py`).
+- Liang, T., Xiao, F., Shyy, W., Fu, L. (2022). A fifth-order low-dissipation discontinuity-resolving TENO scheme for
+  compressible flow simulation. *J. Comput. Phys.* 467:111465. doi:10.1016/j.jcp.2022.111465 — TENO5-DR: the flags
+  of Tables 1–3 (reproduced digit for digit by `seth_test_nonpoly`), $\zeta$ (Eq. (17)), the detectors (Eqs. (24),
+  (32)), the two-steepness interpolation (Eq. (31), $A = 0.91, 1.23$), the guard (Eq. (33)), the static tests of §3.1
+  and Table 4 (read in the paper; `notes/m5-sources.md`).
+- Liang, T., Fu, L. (2024). A new type of non-polynomial based TENO scheme for hyperbolic conservation laws. *J.
+  Comput. Phys.* 497:112618. doi:10.1016/j.jcp.2023.112618 — stencil targeting (§3.1, Fig. 2), the Gaussian-RBF flux
+  rows (Eq. (25), every coefficient re-derived by `scripts/gen_nonpoly_tables.py`, which also finds the labels
+  $R'_2$, $R'_3$ swapped against §3.1's stencils), the truncation errors (Eq. (29)), the sensor and $\lambda$ (Eqs.
+  (30)–(32)) (read in the paper; `notes/m5-sources.md`).
 - Fu, L. (2023). Review of the high-order TENO schemes for compressible gas dynamics and turbulence. *Arch. Comput.
   Methods Eng.* 30:2493. doi:10.1007/s11831-022-09877-7 — the TENO-based detector, §3.4, Eqs. (21)–(23): $q = 6$,
   $C_T = 5\cdot10^{-4}$ (read in the paper; checked by `scripts/check_papers.py`); its $\varepsilon$ is not given there
