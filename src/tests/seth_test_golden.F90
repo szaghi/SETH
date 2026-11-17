@@ -26,6 +26,9 @@ program seth_test_golden
 !< file identical (same build), and the previous files are kept. v7 (2026-11-16) adds the centred WENO (WENO4/6/8-C),
 !< written by the optimised gfortran build: v6's 2368 lines are its first lines, character for character.
 !< R4P: seth_golden_r4_v2 adds them the same way (r4_v1's 2368 lines its first lines, the build of r4_v1's options).
+!< v8 (2026-11-17) adds the composite non-polynomial kernels TENO5-DR and TENO5-THINC (issue #6), written by the
+!< optimised gfortran build: v7's 2563 lines are its first lines, character for character; seth_golden_r4_v3 the same
+!< way after r4_v2's 2563 lines (gfortran -O3, R4P).
 use, intrinsic :: iso_fortran_env, only : compiler_version, compiler_options
 use seth
 use seth_test_parameters, only : GOLDEN_FILE, GOLDEN_SCALE_EXP0, GOLDEN_SCALE_DEXP, TOL_GOLDEN, TOL_GOLDEN_WR

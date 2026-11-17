@@ -27,12 +27,12 @@ public :: ORDERS_AT_FLOOR_OK, CONV_FLOOR_OP, CONV_ORDER_LOSS, INTERP_FLOOR, INTE
 public :: HENRICK_TOL, POINT_FLOOR, POINT_ORDER_LOSS, MP_NG, SPECTRAL_FLOOR, SPECTRAL_SLOPE_LOSS
 public :: TAU_FLOOR, TAU_ORDER_LOSS, CENTRAL_FLOOR_N, BURGERS_FLOOR_N, EULER_FLOOR_N2
 public :: POS_RANGE_EXP, SMALL_STEP, AI_STEP_TOL, SENSOR_SCALES, SENSOR_FLOW_RATIO, CENTRED_ORDER_LOSS
-public :: NP_FLAGS_EPS, NP_TOL
+public :: NP_FLAGS_EPS, NP_TOL, NP_GUARD_SCALE
 public :: TOL_BOUNDS, TOL_THETA, TOL_PROPERTIES, TOL_X, TOL_ANTIDISSIPATION, TOL_TABLES, TOL_ADR, TOL_CONSERVATION
 
 #if defined _R_P_IS_R4P
 ! R4P: epsilon 1.2e-7, smallest normal 1.2e-38. Provisional (phase 4 measures): see the module's notes.
-character(*), parameter :: GOLDEN_FILE = 'src/tests/golden/seth_golden_r4_v2.txt' !< The R4P golden values.
+character(*), parameter :: GOLDEN_FILE = 'src/tests/golden/seth_golden_r4_v3.txt' !< The R4P golden values.
 integer,      parameter :: GOLDEN_SCALE_EXP0 = -60 !< The golden file's scaled stencils: data times 2^-60 ..
 integer,      parameter :: GOLDEN_SCALE_DEXP = 10  !< 2^50 (12 of them): normal, and their indicators (squares, times
                                                    !< coefficients up to ~1e2) stay inside R4P's range (1e-38 .. 3e38).
@@ -40,6 +40,8 @@ integer,      parameter :: GOLDEN_SCALE_DEXP = 10  !< 2^50 (12 of them): normal,
 ! coefficients (up to ~1e3): data up to 1e16. Plain WENO-JS's power of the indicator no longer overflows first in R4P
 ! (its weights are ratios to the smallest indicator there), so it has the same bound.
 real(R_P), parameter :: BIG_JUMP          = 1.e16_R_P !< The TENO test's large jump: at the edge of R4P's range.
+real(R_P), parameter :: NP_GUARD_SCALE    = 1.e-9_R_P  !< seth_test_properties: a scale of the data at which the composites'
+                                                   !< guard (a product of differences <= 1e-15) acts; normal in R4P.
 real(R_P), parameter :: NP_TOL            = 6.e-5_R_P  !< seth_test_nonpoly: the overrides against their closed forms
                                                    !< and conservation, the 1e-13 of R8P in ulps (about 450).
 real(R_P), parameter :: NP_FLAGS_EPS      = 1.e-12_R_P !< eps of the flag tests (seth_test_nonpoly, Tables 1-3): R4P's
@@ -187,12 +189,14 @@ real(R_P), parameter :: TOL_ADR             = 6.e-4_R_P !< Round-off: 1e-12 in u
 real(R_P), parameter :: TOL_CONSERVATION    = 6.e-5_R_P !< Round-off: 1e-13 in ulps.
 #else
 ! R8P: the values the suite was verified with.
-character(*), parameter :: GOLDEN_FILE = 'src/tests/golden/seth_golden_v7.txt' !< The R8P golden values.
+character(*), parameter :: GOLDEN_FILE = 'src/tests/golden/seth_golden_v8.txt' !< The R8P golden values.
 integer,      parameter :: GOLDEN_SCALE_EXP0 = -498 !< The golden file's scaled stencils: data times 2^-498 .. 2^96
 integer,      parameter :: GOLDEN_SCALE_DEXP = 54    !< (12 of them), about 1e-150 .. 1e29.
 ! data magnitudes
 real(R_P), parameter :: BIG_JUMP          = 1.e30_R_P !< The TENO test's large jump (tau/eps would overflow without the
                                                       !< normalisation by g_max).
+real(R_P), parameter :: NP_GUARD_SCALE    = 1.e-9_R_P  !< seth_test_properties: a scale of the data at which the composites'
+                                                   !< guard (a product of differences <= 1e-15) acts; normal in R4P.
 real(R_P), parameter :: NP_TOL            = 1.e-13_R_P !< seth_test_nonpoly: the overrides against their closed forms
                                                    !< and conservation (issue #6, steps 2.1-2.2, frozen).
 real(R_P), parameter :: NP_FLAGS_EPS      = 1.e-40_R_P !< eps of the flag tests (seth_test_nonpoly): the papers' (the R8P

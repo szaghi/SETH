@@ -31,9 +31,11 @@ type :: scheme_t
    real(R_P)     :: eps    = 0._R_P  !< Default regulariser.
    real(R_P)     :: par    = 0._R_P  !< Default rmu (JS), p (Z), C_T (TENO).
    logical       :: interp = .false. !< Interpolation from point values (otherwise reconstruction from averages).
+   logical       :: wide   = .false. !< Reads the whole VLO:VHI (the composite non-polynomial kernels, -5:6); s is then
+                                     !< the stencil of its smooth part (TENO5's), which the tests' grids are sized by.
 endtype scheme_t
 
-integer(I4P), parameter :: NSCHEMES = 32_I4P
+integer(I4P), parameter :: NSCHEMES = 34_I4P
 type(scheme_t), parameter :: SCHEMES(NSCHEMES) = [ &
    scheme_t('weno1_js',        FAM_JS,        1, 1._R_P, 1.e-6_R_P,  1._R_P), &
    scheme_t('weno3_js',        FAM_JS,        2, 3._R_P, 1.e-6_R_P,  1._R_P), &
@@ -66,7 +68,9 @@ type(scheme_t), parameter :: SCHEMES(NSCHEMES) = [ &
    scheme_t('teno6_interp',    FAM_TENO,      3, 6._R_P, EPS_ZT, SETH_TENO6_CT, .true.), &
    scheme_t('weno4_c',         FAM_C,         2, 4._R_P, 1.e-6_R_P,  1._R_P), &
    scheme_t('weno6_c',         FAM_C,         3, 6._R_P, 1.e-6_R_P,  1._R_P), &
-   scheme_t('weno8_c',         FAM_C,         4, 8._R_P, 1.e-6_R_P,  1._R_P)]
+   scheme_t('weno8_c',         FAM_C,         4, 8._R_P, 1.e-6_R_P,  1._R_P), &
+   scheme_t('teno5_dr',        FAM_TENO,      3, 5._R_P, EPS_ZT, SETH_TENO5_CT, .false., .true.), &
+   scheme_t('teno5_thinc',     FAM_TENO,      3, 5._R_P, EPS_ZT, SETH_TENO5_CT, .false., .true.)]
 
 contains
    subroutine reconstruct(id, vp, vm, rp, rm, wrp, wrm, eps, par)
@@ -160,6 +164,10 @@ contains
       call seth_weno6_c(vp(-2:3), vm(-2:3), e, q, rp, rm)
    case('weno8_c')
       call seth_weno8_c(vp(-3:4), vm(-3:4), e, q, rp, rm)
+   case('teno5_dr') ! TENO5-DR (Liang et al. 2022), the papers' constants; par: C_T
+      call seth_teno5_dr(vp, vm, e, q, SETH_DR_T1, SETH_DR_T2, 1._R_P, rp, rm)
+   case('teno5_thinc') ! TENO5-THINC (Takagi et al. 2022)
+      call seth_teno5_thinc(vp, vm, e, q, SETH_THINC_BETA, 1._R_P, rp, rm)
    case default
       error stop 'reconstruct: unknown scheme'
    endselect

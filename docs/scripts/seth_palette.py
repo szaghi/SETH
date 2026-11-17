@@ -37,6 +37,7 @@ SCHEME_STYLE = {
     'wenoz3': ('#2f5004', 'v'), 'wenoz5': (MOEGI, 's'), 'wenoz7': ('#76a52a', 's'), 'wenoz9': ('#a5c76a', 's'),
     'teno5': (PLUM, '^'), 'teno5_opt': ('#b77fb4', '^'), 'teno5_az': ('#5e2f6e', 'v'), 'teno6': (UMBER, 'D'), 'teno6_opt': ('#d29a5a', 'D'), 'teno6_neno6': ('#6e420e', 'D'), 'teno8': ('#3d2508', 'P'), 'teno5_a': ('#c25da8', 'X'), 'teno8_a': ('#7a4a12', 'X'),
     'weno4_c': ('#1b5563', 'h'), 'weno6_c': ('#2c7a8c', 'h'), 'weno8_c': ('#5aa3b3', 'h'),
+    'teno5_dr': ('#8e1d6b', '*'), 'teno5_thinc': ('#e07bb6', 'p'),  # TENO5's plum hue, the composites (issue #6)
 }
 
 # the same for the dark twins, drawn by the scripts themselves (figure_theme keeps any stroke above 3:1, so it would
@@ -47,6 +48,7 @@ SCHEME_STYLE_DARK = {
     'wenoz3': ('#4c7d12', 'v'), 'wenoz5': (MOEGI_D, 's'), 'wenoz7': ('#8fc23e', 's'), 'wenoz9': ('#b5d77a', 's'),
     'teno5': (PLUM_D, '^'), 'teno5_opt': ('#d0a3cd', '^'), 'teno5_az': ('#8a4f9e', 'v'), 'teno6': (UMBER_D, 'D'), 'teno6_opt': ('#dba264', 'D'), 'teno6_neno6': ('#9a5c1c', 'D'), 'teno8': ('#e0a868', 'P'), 'teno5_a': ('#de8cc8', 'X'), 'teno8_a': ('#c99050', 'X'),
     'weno4_c': ('#2a7486', 'h'), 'weno6_c': ('#3e9fb3', 'h'), 'weno8_c': ('#7cc3d1', 'h'),
+    'teno5_dr': ('#e86fc0', '*'), 'teno5_thinc': ('#f3b3d8', 'p'),
 }
 
 # the two biased stencils of the Conventions page: vp / the left state, vm / the right state

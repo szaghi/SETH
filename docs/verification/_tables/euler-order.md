@@ -20,6 +20,8 @@
 | WENO4-C | 4.731e-06 | 5.69 |
 | WENO6-C | 5.147e-11 | 6.10 |
 | WENO8-C | 1.456e-11 | 7.26 |
+| TENO5-DR | 2.087e-10 | 5.00 |
+| TENO5-THINC | 2.087e-10 | 5.00 |
 | WENO3-JS interp. | 1.655e-05 | 4.09 |
 | WENO5-JS interp. | 5.785e-10 | 5.06 |
 | WENO7-JS interp. | 3.933e-12 | 5.95 |

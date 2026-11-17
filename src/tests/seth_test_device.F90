@@ -2,7 +2,7 @@
 program seth_test_device
 !< SETH test: every kernel executed on the device (OpenACC) agrees with the same kernel on the host.
 !<
-!< Each of the 51 cases runs one kernel inside `!$acc parallel loop` over N deterministic stencils (smooth cubics,
+!< Each of the 53 cases runs one kernel inside `!$acc parallel loop` over N deterministic stencils (smooth cubics,
 !< jumps, an integer LCG), then the same loop on the host, and compares: states within 1e-13 of the stencil's
 !< magnitude, weights ratios within 1e-9 (the device and the host compile the kernel separately and may contract
 !< multiply-adds differently; the tolerances are those of seth_test_golden, for the same reasons). One case calls
@@ -15,7 +15,7 @@ use seth_test_parameters, only : EPS_ZT, POS_RANGE_EXP, POSITIVITY_FLOOR, TOL_DE
                                  TOL_DEVICE_WR
 implicit none
 integer(I4P), parameter :: N = 4096_I4P
-integer(I4P), parameter :: NK = 51_I4P
+integer(I4P), parameter :: NK = 53_I4P
 character(26), parameter :: NAMES(NK) = [ &
    'seth_weno1_js             ', &
    'seth_weno1_js_wr          ', &
@@ -67,8 +67,10 @@ character(26), parameter :: NAMES(NK) = [ &
    'seth_weno6_c              ', &
    'seth_weno8_c              ', &
    'seth_sensor_teno_eps      ', &
-   'seth_teno5_mask           ']
-real(R_P)               :: v(-4:5,N), w(-4:5,N), rp(N), rm(N), wrp(N), wrm(N), hp(N), hm(N), hwp(N), hwm(N)
+   'seth_teno5_mask           ', &
+   'seth_teno5_dr             ', &
+   'seth_teno5_thinc          ']
+real(R_P)               :: v(-5:6,N), w(-5:6,N), rp(N), rm(N), wrp(N), wrm(N), hp(N), hm(N), hwp(N), hwm(N)
 real(R_P)               :: mag, ds, dw, worst_s, worst_w
 integer(I4P)            :: k, i, nbit, nfail
 logical                 :: passed
@@ -928,10 +930,40 @@ do k=1, NK
          rp(i) = real(mk, R_P) ; rm(i) = real(mk2, R_P)
       enddo
       endblock
+   case(52) ! seth_teno5_dr, the papers' constants
+      block
+      real(R_P) :: a(-5:6), b(-5:6)
+      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b)
+      do i=1, N
+         a = v(:,i) ; b = w(:,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
+         call seth_teno5_dr(a, b, SETH_TENO_EPS, SETH_TENO5_CT, SETH_DR_T1, SETH_DR_T2, 1._R_P, rp(i), rm(i))
+      enddo
+      hp = rp ; hm = rm ; hwp = wrp ; hwm = wrm
+
+      do i=1, N
+         a = v(:,i) ; b = w(:,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
+         call seth_teno5_dr(a, b, SETH_TENO_EPS, SETH_TENO5_CT, SETH_DR_T1, SETH_DR_T2, 1._R_P, rp(i), rm(i))
+      enddo
+      endblock
+   case(53) ! seth_teno5_thinc, the paper's constants
+      block
+      real(R_P) :: a(-5:6), b(-5:6)
+      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b)
+      do i=1, N
+         a = v(:,i) ; b = w(:,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
+         call seth_teno5_thinc(a, b, SETH_TENO_EPS, SETH_TENO5_CT, SETH_THINC_BETA, 1._R_P, rp(i), rm(i))
+      enddo
+      hp = rp ; hm = rm ; hwp = wrp ; hwm = wrm
+
+      do i=1, N
+         a = v(:,i) ; b = w(:,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
+         call seth_teno5_thinc(a, b, SETH_TENO_EPS, SETH_TENO5_CT, SETH_THINC_BETA, 1._R_P, rp(i), rm(i))
+      enddo
+      endblock
    endselect
    nbit = 0 ; nfail = 0 ; worst_s = 0._R_P ; worst_w = 0._R_P
    do i=1, N
-      mag = max(maxval(abs(v(:,i))), maxval(abs(w(:,i))), tiny(1._R_P))
+      mag = max(maxval(abs(v(-4:5,i))), maxval(abs(w(-4:5,i))), tiny(1._R_P)) ! -4:5: as before the widening
       ds = max(abs(rp(i) - hp(i)), abs(rm(i) - hm(i)))/mag
       dw = max(abs(wrp(i) - hwp(i)), abs(wrm(i) - hwm(i)))
       if (rp(i) == hp(i) .and. rm(i) == hm(i) .and. wrp(i) == hwp(i) .and. wrm(i) == hwm(i)) nbit = nbit + 1
@@ -1062,7 +1094,7 @@ contains
 
    subroutine stencils(v, w)
    !< N stencil pairs, exact in binary: smooth cubics, jumps, an integer LCG, cycling.
-   real(R_P), intent(out) :: v(-4:5,N), w(-4:5,N)
+   real(R_P), intent(out) :: v(-5:6,N), w(-5:6,N)
    integer(I8P)           :: state
    integer(I4P)           :: i, m, j
    state = 20261115_I8P
@@ -1079,6 +1111,20 @@ contains
          case default
             state = mod(16807_I8P*state, 2147483647_I8P) ; v(m,i) = real(state, R_P)/2147483647._R_P - 0.5_R_P
             state = mod(16807_I8P*state, 2147483647_I8P) ; w(m,i) = real(state, R_P)/2147483647._R_P - 0.3_R_P
+         endselect
+      enddo
+      ! the cells -5 and 6 of the composite kernels: the same formula, or (the LCG) constant continuation, so that the
+      ! cells -4..5 and the LCG's stream are those written before the widening
+      do m=-5, 6, 11
+         select case(mod(i, 3))
+         case(0)
+            v(m,i) = 1._R_P + (j/8._R_P)*m - (j/64._R_P)*m*m + (1._R_P/512._R_P)*m**3
+            w(m,i) = -0.5_R_P + (j/16._R_P)*m + (j/128._R_P)*m*m
+         case(1)
+            v(m,i) = merge(1._R_P, 0._R_P, m >= mod(i, 10) - 4)
+            w(m,i) = merge(-2._R_P, 0.5_R_P, m >= mod(i, 9) - 4)
+         case default
+            v(m,i) = v(merge(-4, 5, m < 0),i) ; w(m,i) = w(merge(-4, 5, m < 0),i)
          endselect
       enddo
    enddo

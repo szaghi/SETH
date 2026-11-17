@@ -29,7 +29,7 @@ program seth_test_properties
 !<    ranges; R4P's (seth_test_parameters' ROBUST_EXP_*) stop where its squares do.
 use seth
 use seth_test_parameters, only : AI_STEP_TOL, ROBUST_EXP_MAX, ROBUST_EXP_MAX_JS, ROBUST_EXP_MIN, SMALL_STEP, &
-                                 TOL_PROPERTIES
+                                 TOL_PROPERTIES, NP_GUARD_SCALE
 use seth_test_rng, only : seed_rng
 use seth_test_schemes
 implicit none
@@ -78,7 +78,7 @@ do id=1, NSCHEMES
       do m=VLO, VHI
          wm(m) = 0._R_P
       enddo
-      do m=1-s, s
+      do m=merge(VLO, 1-s, SCHEMES(id)%wide), merge(VHI, s, SCHEMES(id)%wide) ! the composites read all of -5:6
          wm(m) = vp(1-m)
       enddo
       call reconstruct(id, vp, wm, rp, rm)
@@ -171,13 +171,15 @@ do id=1, NSCHEMES
    endif
    ! plain WENO-JS and the adaptive cutoffs with rmu = 1 (the papers' forms) are not scale invariant: data of magnitude
    ! 1e-4 is reconstructed differently from the same data at 1
+   ! (the composites' guard compares a product of two differences with 1e-15: it acts on data near 1e-9, NP_GUARD_SCALE)
    if (((fam == FAM_JS .or. fam == FAM_JS_INTERP) .and. s >= 2) .or. dimensional(SCHEMES(id)%name)) then
       x = 0._R_P
-      do n_=1, 50
+      sc = merge(NP_GUARD_SCALE, 1.e-4_R_P, SCHEMES(id)%wide)
+      do n_=1, merge(2000, 50, SCHEMES(id)%wide) ! the composites differ only where a detector fires: a few % of stencils
          call stencil(vp, vm, rough=.true.)
          call reconstruct(id, vp, vm, rp, rm)
-         call reconstruct(id, 1.e-4_R_P*vp, 1.e-4_R_P*vm, sp, sm)
-         x = max(x, abs(sp*1.e4_R_P - rp))
+         call reconstruct(id, sc*vp, sc*vm, sp, sm)
+         x = max(x, abs(sp/sc - rp))
       enddo
       if (x < 1.e-6_R_P) call fail('plain JS or an adaptive cutoff unexpectedly scale invariant', x, 0._R_P)
    endif
@@ -240,10 +242,11 @@ contains
    endfunction poly_avg
 
    pure function dimensional(name) result(yes)
-   !< The schemes whose published form is not scale invariant (an adaptive cutoff with a dimensional quantity).
+   !< The schemes whose published form is not scale invariant (an adaptive cutoff with a dimensional quantity; the
+   !< first-order guard of the DR and THINC overrides, a product of two differences against 1e-15).
    character(*), intent(in) :: name
    logical                  :: yes
-   yes = any(trim(name) == [character(16) :: 'teno5_az', 'teno5_a', 'teno8_a'])
+   yes = any(trim(name) == [character(16) :: 'teno5_az', 'teno5_a', 'teno8_a', 'teno5_dr', 'teno5_thinc'])
    endfunction dimensional
 
    subroutine descaled(name, vp, vm, rp, rm)
@@ -261,6 +264,12 @@ contains
    case('teno8_a')
       call seth_teno8_a(vp(-3:4), vm(-3:4), SETH_TENO_EPS, SETH_TENO8_A_CR, SETH_TENO8_A_XI, SETH_TENO8_A_A1, &
                         SETH_TENO8_A_A2, seth_weno_descaling(4_I4P, 1._R_P, vp(-3:4), vm(-3:4)), rp, rm)
+   case('teno5_dr')
+      call seth_teno5_dr(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_DR_T1, SETH_DR_T2, &
+                         seth_weno_descaling(3_I4P, 1._R_P, vp(-2:3), vm(-2:3)), rp, rm)
+   case('teno5_thinc')
+      call seth_teno5_thinc(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_THINC_BETA, &
+                            seth_weno_descaling(3_I4P, 1._R_P, vp(-2:3), vm(-2:3)), rp, rm)
    endselect
    endsubroutine descaled
 endprogram seth_test_properties

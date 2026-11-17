@@ -175,6 +175,7 @@ contains
    case('wenoz7') ; call dsc(WENOZ7_NC, WENOZ7_MAXW, WENOZ7_CLO, WENOZ7_CW, WENOZ7_P, WENOZ7_D, c)
    case('wenoz9') ; call dsc(WENOZ9_NC, WENOZ9_MAXW, WENOZ9_CLO, WENOZ9_CW, WENOZ9_P, WENOZ9_D, c)
    case('teno5') ; call dsc(TENO5_NC, TENO5_MAXW, TENO5_CLO, TENO5_CW, TENO5_P, TENO5_D, c)
+   case('teno5_dr', 'teno5_thinc') ; call dsc(TENO5_NC, TENO5_MAXW, TENO5_CLO, TENO5_CW, TENO5_P, TENO5_D, c) ! TENO5's
    case('teno6') ; call dsc(TENO6_NC, TENO6_MAXW, TENO6_CLO, TENO6_CW, TENO6_P, TENO6_D, c)
    case('teno6_opt')
       call dsc(TENO6_OPT_NC, TENO6_OPT_MAXW, TENO6_OPT_CLO, TENO6_OPT_CW, TENO6_OPT_P, TENO6_OPT_D, c)
