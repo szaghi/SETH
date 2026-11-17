@@ -83,6 +83,7 @@ on the GPU it saves 0.045 ns per face (WENO4-C, WENO6-C) and 0.065 (WENO8-C), an
 cost, not most of it, as the change had assumed: the rest is its other FP64 operations (the central sum, the
 indicators), presumably counted at this card's FP64 rate like any other (not measured separately). On one core the
 gain is within the spread of the runs: gfortran 1.60, 1.14, 1.08 (WENO4-C still over), nvfortran 1.08, 1.04, 1.04.
+WENO4-C's miss is accepted (2026-11-17): the budget stays as frozen and recorded as missed, and the kernel as it is.
 
 ## Single precision
 
