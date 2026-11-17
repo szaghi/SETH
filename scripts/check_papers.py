@@ -12,8 +12,16 @@ candidate reconstructions, the maximum-order weights) and against what SETH comp
   Hu & Adams (AIAA J. 57(3):1143, 2019): C_r, xi, alpha_1, alpha_2 (src/lib/seth_teno.F90).
 - Fu (2023), Arch. Comput. Methods Eng. 30:2493, section 3.4, Eqs. (21)-(23), the TENO-based detector of Fu (Commun.
   Comput. Phys. 26:973, 2019): the power q and the threshold C_T (src/lib/seth_sensors.F90).
+- The originals (read 2026-11-17): Fu, Hu & Adams (2019), AIAA J. 57(3):1143, Eqs. (20)-(22), TENO5-A; Fu (2019),
+  Eqs. (4.1)-(4.4), the detector: SETH's four indicator statements, evaluated from the Fortran source as exact
+  quadratic forms, against the indicators derived from their definition and the printed beta_{3,3}, and its eps
+  against the one-dimensional value; Shima, Kuya, Tamaki & Kawai (2021), J. Comput. Phys. 427:110060, Table 1 (KEEP)
+  and Eq. (17) (KEEP-PE), inside Pirozzoli's (2010) conservative sum, J. Comput. Phys. 229:7180, Eqs. (6), (11)-(13):
+  SETH's KEEP-PE kernel body and coefficients, evaluated in exact arithmetic on random states, orders 2 to 8;
+  Ducros et al. (1999), J. Comput. Phys. 152:517, Eq. (22): seth_ducros evaluated the same way.
 
 Usage (from the repository root): python3 scripts/check_papers.py [--tables FILE] [--teno FILE] [--sensors FILE]
+                                  [--kep FILE] [--kep-body FILE] [--shock-sensors FILE]
 Exit status 0 when every check passes. No ADAM input.
 """
 
@@ -91,12 +99,18 @@ BS_UL = {4: ['-1/140', '5/84', '-101/420', '319/420', '107/210', '-19/210', '1/1
          5: ['1/630', '-41/2520', '199/2520', '-641/2520', '1879/2520', '275/504', '-61/504', '11/504', '-1/504']}
 BS_SCALE = {4: 240, 5: 5040}  # the printed integers are the indicator times this (SETH's WENO<2r-1>_JS_D_SCALE)
 
-# Huang, Liang & Fu 2023, Eqs. (19)-(20): the standard TENO5-A
+# Huang, Liang & Fu 2023, Eqs. (19)-(20), the standard TENO5-A = Fu, Hu & Adams 2019, Eqs. (20)-(22) (read 2026-11-17)
 HLF_TENO5_A = {'SETH_TENO5_A_CR': F('0.24'), 'SETH_TENO5_A_XI': F('1e-3'), 'SETH_TENO5_A_A1': F('10'),
                'SETH_TENO5_A_A2': F('5')}
 # Fu 2023, Eqs. (21)-(23): gamma_k = (beta_k + eps)^-q, q = 6; smooth iff every chi_k > C_T = 5e-4
 FU_Q = 6
 FU_CT = F('5e-4')
+# Fu 2019, Eqs. (4.1)-(4.2): the fourth stencil i+1..i+3, beta_{3,3} as printed (times 3); eps = 1e-4 in one
+# dimension (1e-3 in several)
+FU19_BETA33 = {(1, 1): 22, (1, 2): -73, (1, 3): 29, (2, 2): 61, (2, 3): -49, (3, 3): 10}
+FU19_EPS_1D = F('1e-4')
+FU19_STENCILS = [[-2, -1, 0], [-1, 0, 1], [0, 1, 2], [1, 2, 3]]  # S0-S2 the TENO5 candidates, S3 of Eq. (4.1)
+# Ducros et al. 1999, Eq. (22): Phi = (div u)^2/((div u)^2 + |omega|^2 + eps), omega = curl u
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -198,7 +212,7 @@ def check_teno5_a(teno: str) -> None:
         got = scalar(teno, name)
         if got != want:
             fail(f'{name} = {got}, Huang, Liang & Fu 2023 Eqs. (19)-(20) give {want}')
-    print('  Huang, Liang & Fu 2023: TENO5-A C_r, xi, alpha_1, alpha_2 checked')
+    print('  Huang, Liang & Fu 2023 and Fu, Hu & Adams 2019: TENO5-A C_r, xi, alpha_1, alpha_2 checked')
 
 
 def check_sensor_teno(sensors: str) -> None:
@@ -212,15 +226,169 @@ def check_sensor_teno(sensors: str) -> None:
     print('  Fu 2023: TENO detector q and C_T checked')
 
 
+NUMLIT = re.compile(r'(\d+\.\d*|\d*\.\d+|\d+)(?:e([-+]?\d+))?_R_P')
+
+
+def fortran_expr(text: str, arrays: tuple[str, ...]) -> str:
+    """A Fortran expression of SETH's kernels as Python: exact R_P literals, `a(i, j)` of the named arrays indexed."""
+    text = NUMLIT.sub(lambda m: f'Fr("{m.group(1)}{"e" + m.group(2) if m.group(2) else ""}")', text)
+    for name in arrays:
+        text = re.sub(rf'\b{name}\(([^()]*)\)', rf'{name}[(\1)]', text)
+    return text
+
+
+def quadratic_form(expr: str, cells: list[int]) -> list[list[Fr]]:
+    """The symmetric matrix of a quadratic Fortran expression in w(cell), by polarisation, in exact arithmetic."""
+    code = fortran_expr(expr, ('w',))
+
+    def q(vals: dict[int, Fr]) -> Fr:
+        w = {k: vals.get(k, Fr(0)) for k in range(-4, 6)}
+        return eval(code, {'Fr': Fr, 'w': w})  # noqa: S307 - SETH's own source
+
+    n = len(cells)
+    mat = [[Fr(0)] * n for _ in range(n)]
+    for a in range(n):
+        mat[a][a] = q({cells[a]: Fr(1)})
+    for a in range(n):
+        for b in range(a + 1, n):
+            mat[a][b] = mat[b][a] = (q({cells[a]: Fr(1), cells[b]: Fr(1)}) - mat[a][a] - mat[b][b]) / 2
+    return mat
+
+
+def check_sensor_teno_indicators(sensors: str) -> None:
+    body = re.search(r'subroutine seth_sensor_teno\((.*?)endsubroutine seth_sensor_teno', sensors, re.S).group(1)
+    for k, cells in enumerate(FU19_STENCILS):
+        m = re.search(rf'beta\({k + 1}\) = ([^!\n]+)', body)
+        if m is None:
+            fail(f'seth_sensor_teno: beta({k + 1}) not found')
+            continue
+        seth = quadratic_form(m.group(1), cells)
+        if seth != _zt.indicator(cells):
+            fail(f'seth_sensor_teno beta({k + 1}) is not the Jiang-Shu indicator of cells {cells} on cell i')
+    printed = as_matrix(FU19_BETA33, [1, 2, 3])
+    if any(printed[a][b] != 3 * _zt.indicator([1, 2, 3])[a][b] for a in range(3) for b in range(3)):
+        fail('Fu 2019 Eq. (4.1) differs from the Jiang-Shu indicator of cells i+1..i+3')
+    eps = re.search(r'parameter\s*::\s*EPS\s*=\s*([^!\n]+)', body)
+    if eps is None or Fr(eps.group(1).strip().replace('_R_P', '')) != FU19_EPS_1D:
+        fail(f'seth_sensor_teno eps is not Fu 2019\'s one-dimensional {FU19_EPS_1D}')
+    print('  Fu 2019: the detector\'s four indicators (Eq. (4.1)) and its one-dimensional eps checked')
+
+
+def fortran_loops(body: str, arrays: tuple[str, ...]) -> str:
+    """The statements and `do` loops of a kernel body as Python (one statement per line, `;` split, `&` joined)."""
+    text = re.sub(r'&\s*\n\s*', ' ', body)
+    out, depth = [], 0
+    for line in text.splitlines():
+        line = re.sub(r'!.*$', '', line).strip()
+        for stmt in [x.strip() for x in line.split(';') if x.strip()]:
+            loop = re.match(r'do (\w+)\s*=\s*([^,]+),\s*(.+)$', stmt)
+            if loop:
+                out.append('    ' * depth + f'for {loop.group(1)} in range({fortran_expr(loop.group(2), arrays)}, '
+                                             f'{fortran_expr(loop.group(3), arrays)} + 1):')
+                depth += 1
+            elif stmt == 'enddo':
+                depth -= 1
+            else:
+                lhs, rhs = stmt.split('=', 1)
+                out.append('    ' * depth + f'{fortran_expr(lhs.strip(), arrays)} = {fortran_expr(rhs, arrays)}')
+    return '\n'.join(out)
+
+
+def keep_pe_reference(nl: int, a: list[Fr], d: int, gamma: Fr, w: dict) -> list[Fr]:
+    """Pirozzoli 2010, Eq. (13), with the two-point flux of Shima et al. 2021 (Table 1, KEEP; Eq. (17), KEEP-PE)."""
+    f = [Fr(0)] * 6
+    for l in range(1, nl + 1):  # noqa: E741 - the papers' index
+        for m in range(l):
+            c, r = -m, -m + l
+            rho, un, p = (w[1, c] + w[1, r]) / 2, (w[1 + d, c] + w[1 + d, r]) / 2, (w[5, c] + w[5, r]) / 2
+            mass = rho * un                                                            # C~
+            terms = [mass] + [mass * (w[1 + k, c] + w[1 + k, r]) / 2 + (p if k == d else 0) for k in (1, 2, 3)]
+            kinetic = mass * sum(w[1 + k, c] * w[1 + k, r] for k in (1, 2, 3)) / 2  # K~
+            internal = p * un / (gamma - 1)                                            # I~, Eq. (17)
+            work = (w[1 + d, c] * w[5, r] + w[1 + d, r] * w[5, c]) / 2                 # P~
+            terms.append(kinetic + internal + work)
+            for n in range(5):
+                f[n + 1] += 2 * a[l - 1] * terms[n]
+    return f[1:]
+
+
+def central_coefficients(nl: int) -> list[Fr]:
+    """a_l of the central first derivative of order 2L, D f = sum_l a_l (f_{j+l} - f_{j-l})/h (Pirozzoli Eq. (6))."""
+    mat = [[Fr(2 * j ** (2 * k + 1)) for j in range(1, nl + 1)] for k in range(nl)]
+    return _zt.solve(mat, [Fr(1)] + [Fr(0)] * (nl - 1))
+
+
+def check_keep_pe(kep: str, body_inc: str) -> None:
+    import random
+    rng = random.Random(1017)
+    loops = re.search(r'(do l=1, NL.*\n\s*enddo\s*\n\s*enddo)', body_inc, re.S)
+    rg_line = re.search(r'rg = ([^\n]+)', body_inc)
+    if loops is None or rg_line is None:
+        fail('seth_kep_body.INC: the loops or rg not found')
+        return
+    code = f'rg = {fortran_expr(rg_line.group(1), ())}\n' + fortran_loops(loops.group(1), ('f', 'w', 'A'))
+    for name, nl_s, a_s in re.findall(r'subroutine (seth_keep_pe\w+)\(.*?NL = (\d+)_I4P.*?A\(NL\) = \[([^\]]+)\]',
+                                      kep, re.S):
+        nl = int(nl_s)
+        a = [_zt._js.rational(x.strip()) for x in re.sub(r'!<[^\n]*|&', ' ', a_s).split(',')]
+        if name != 'seth_keep_pe8_opt' and a != central_coefficients(nl):
+            fail(f'{name}: A is not the central first derivative of order {2 * nl}')
+        moments = [sum(2 * j ** (2 * k + 1) * x for j, x in enumerate(a, 1)) for k in range(3)]  # order 2, 4, 6
+        if name == 'seth_keep_pe8_opt':  # Liang & Fu's 16-digit optimised a_l: consistent and sixth order to round-off
+            if abs(moments[0] - 1) > Fr(1, 10 ** 15) or any(abs(x) > Fr(1, 10 ** 14) for x in moments[1:]):
+                fail(f'{name}: A is not sixth order to round-off (moments {[float(x) for x in moments]})')
+        elif moments[0] != 1:
+            fail(f'{name}: A is not consistent (sum 2 l a_l != 1)')
+        for d in (1, 2, 3):
+            for _ in range(5):
+                w = {(k, c): Fr(rng.randint(1, 97), rng.randint(1, 13)) for k in range(1, 6) for c in range(1 - nl, nl + 1)}
+                gamma = Fr(7, 5)
+                env = {'Fr': Fr, 'NL': nl, 'A': dict(enumerate(a, 1)), 'w': w, 'd': d, 'gamma': gamma,
+                       'f': {n: Fr(0) for n in range(1, 6)}, 'range': range}
+                exec(code, env)  # noqa: S102 - SETH's own source, translated
+                if [env['f'][n] for n in range(1, 6)] != keep_pe_reference(nl, a, d, gamma, w):
+                    fail(f'{name}, direction {d}: the kernel differs from Pirozzoli Eq. (13) with Shima et al.\'s flux')
+                    break
+    print('  Shima et al. 2021 + Pirozzoli 2010: the KEEP-PE kernels (orders 2-8, the optimised 8) checked exactly')
+
+
+def check_ducros(shock: str) -> None:
+    import random
+    rng = random.Random(1999)
+    body = re.search(r'subroutine seth_ducros\((.*?)endsubroutine seth_ducros\b', shock, re.S)
+    if body is None:
+        fail('seth_ducros not found')
+        return
+    stmts = [x for x in re.findall(r'^\s*((?:th|wx|wy|wz|phi) = [^!\n]+)', body.group(1), re.M)]
+    code = '\n'.join(fortran_expr(x, ('g',)) for line in stmts for x in [y.strip() for y in line.split(';')])
+    for _ in range(50):
+        g = {(i, j): Fr(rng.randint(-50, 50), rng.randint(1, 9)) for i in (1, 2, 3) for j in (1, 2, 3)}
+        eps = Fr(rng.randint(1, 9), 10 ** rng.randint(1, 6))
+        env = {'Fr': Fr, 'g': g, 'eps': eps}
+        exec(code, env)  # noqa: S102 - SETH's own source, translated
+        div = g[1, 1] + g[2, 2] + g[3, 3]
+        curl = [g[3, 2] - g[2, 3], g[1, 3] - g[3, 1], g[2, 1] - g[1, 2]]
+        if env['phi'] != div ** 2 / (div ** 2 + sum(x * x for x in curl) + eps):
+            fail('seth_ducros differs from Ducros et al. 1999, Eq. (22)')
+            break
+    print('  Ducros et al. 1999: seth_ducros checked against Eq. (22)')
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument('--tables', type=Path, default=Path('src/lib/seth_weno_js_tables.F90'))
     ap.add_argument('--teno', type=Path, default=Path('src/lib/seth_teno.F90'))
     ap.add_argument('--sensors', type=Path, default=Path('src/lib/seth_sensors.F90'))
+    ap.add_argument('--kep', type=Path, default=Path('src/lib/seth_kep.F90'))
+    ap.add_argument('--kep-body', type=Path, default=Path('src/lib/seth_kep_body.INC'))
+    ap.add_argument('--shock-sensors', type=Path, default=Path('src/lib/seth_shock_sensors.F90'))
     args = ap.parse_args()
     check_balsara_shu(args.tables.read_text())
     check_teno5_a(args.teno.read_text())
     check_sensor_teno(args.sensors.read_text())
+    check_sensor_teno_indicators(args.sensors.read_text())
+    check_keep_pe(args.kep.read_text(), args.kep_body.read_text())
+    check_ducros(args.shock_sensors.read_text())
     if FAILED:
         print(f'check_papers: {len(FAILED)} check(s) failed')
         return 1
