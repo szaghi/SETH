@@ -123,6 +123,8 @@ MUTANTS = [
     ('thinc-half-beta', 'src/lib/seth_nonpoly.F90', 'pure function thinc_face(', 't = tanh(0.5_R_P*beta)', 't = tanh(beta)'),
     ('thinc-right-state-mirror', 'src/lib/seth_nonpoly.F90', 'if (lm > 0) rm = thinc_face(', 'thinc_face(vm(2), vm(1), vm(0)', 'thinc_face(vm(0), vm(1), vm(2)'),
     ('dr-right-state-mirror', 'src/lib/seth_nonpoly.F90', 'if (lm > 0) rm = dr_face(', 'dr_face(vm(2), vm(1), vm(0)', 'dr_face(vm(-1), vm(0), vm(1)'),
+    # issue #6: the early exit of the self-contained kernels (THINC's downwind range)
+    ('early-exit-thinc-downwind', 'src/lib/seth_nonpoly.F90', 'do c=1, merge(3_I4P, 2_I4P, thinc)', 'merge(3_I4P, 2_I4P, thinc)', 'merge(2_I4P, 2_I4P, thinc)'),
 ]
 
 

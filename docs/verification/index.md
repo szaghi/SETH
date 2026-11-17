@@ -60,6 +60,13 @@ The findings that change how the kernels should be used, each documented on its 
 - The centred WENO6-C and WENO8-C leave such packets too, without any anti-dissipation: their blend damps a small
   disturbance on a smooth flow at a rate that does not grow with the resolution. WENO8-C is not ENO for a jump in its
   two outer cells ([A5](./accuracy/centred-weno), [S6](./shocks/burgers)).
+- The composite non-polynomial kernels (TENO5-DR, TENO5-THINC) read twelve cells, `-5..6`: a solver needs **6 ghost
+  cells** and projects all twelve into the face's characteristic basis ([NP1](./nonpolynomial/flags),
+  [Conventions](/guide/conventions)). TENO5's flags are rounding noise on flat data (any value in R4P, non-dyadic
+  constants in R8P), so detector activations in uniform regions mean nothing; the states are unaffected.
+- TENO5-DR halves TENO5's density error on the Sod and Lax tubes with flux splitting; on the Roe path its gain on Sod
+  nearly vanishes ([NP4](./nonpolynomial/dr)). Whether a neighbour's flags are computed in the face's basis or in
+  their own changes the result on systems, with neither better everywhere (experiment E1).
 
 ## Accuracy
 

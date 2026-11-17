@@ -60,7 +60,7 @@ implicit none
 private
 public :: GAMMA, NG, PATH_SPLIT, PATH_INTERP, PATH_ROE, BC_PERIODIC, BC_TRANSMISSIVE, BC_REFLECTIVE, BC_INFLOW
 public :: prim2cons, cons2prim, euler_dt, euler_step, nfallback, corrections, limiter, nlimited, positive_state
-public :: roe_fix, nsonic
+public :: roe_fix, nsonic, stored_masks
 public :: SENS_TENO, SENS_REN, SENS_LCR, SENS_TAU, hyb_sensor
 public :: HYB_NONE, HYB_COST, HYB_KEP, HYB_LEFT_KEP, HYB_RANDOM, hybrid, hyb_buffer, hyb_split, nflagged, nhybfaces
 
@@ -78,6 +78,12 @@ logical      :: limiter = .false.    !< Positivity-preserving flux limiter (Hu, 
 integer(I4P) :: nlimited = 0         !< Faces where the limiter blended in the first-order flux (theta < 1).
 logical      :: roe_fix = .true.     !< PATH_ROE: the entropy fix (local Lax-Friedrichs at sign changes).
 integer(I8P) :: nsonic = 0           !< PATH_ROE: characteristic fields evaluated with local Lax-Friedrichs.
+logical      :: stored_masks = .false. !< PATH_SPLIT, the composite kernels (registry flag `wide`): the stored-mask
+                                       !< variant of notes/kernel-api-design.md, section 11.4, instead of the
+                                       !< self-contained kernel. Every cell's masks are computed once, in the basis of
+                                       !< that cell's own face (the left-biased mask of cell i in face i+1/2's, the
+                                       !< right-biased mask of cell i+1 in face i+1/2's), and read by the faces around
+                                       !< it; the default recomputes them in the basis of the face being reconstructed.
 integer(I4P), parameter :: HYB_NONE = 0, HYB_COST = 1, HYB_KEP = 2, HYB_LEFT_KEP = 3, HYB_RANDOM = 4
 integer(I4P) :: hybrid = HYB_NONE    !< The hybrid of PATH_SPLIT (HYB_NONE: the nonlinear scheme everywhere).
 integer(I4P) :: hyb_buffer = 2       !< Faces each side of a flagged one that are flagged too.
@@ -197,6 +203,8 @@ contains
    real(R_P)                          :: wl(3), wr(3), ql(3), qr(3), pl(3), pr(3)
    real(R_P)                          :: ws(5,-2:3), fk(5), sv, laml(3), lamr(3), a
    logical                            :: flagged(0:n), raw(0:n)
+   real(R_P)                          :: u5(-2:2), v5(-2:2)
+   integer(I4P)                       :: msl(3,-3:n+3), msr(3,-2:n+4), mpk(-3:3), mmk(-3:3), lpk, lmk
    integer(I4P)                       :: i, m, k
    call ghosts(q, n, bc)
    do i=1-NG, n+NG
@@ -248,6 +256,23 @@ contains
       endif
       nhybfaces = nhybfaces + n + 1 ; nflagged = nflagged + count(flagged)
    endif
+   if (stored_masks .and. path == PATH_SPLIT .and. SCHEMES(id)%wide) then ! pass 1 of the stored-mask variant
+      do i=-3, n+3
+         call eigen(q(:,i), q(:,i+1), l, r, lam)
+         do m=-2, 3
+            w(:,m) = matmul(l, q(:,i+m))
+            g(:,m) = matmul(l, fn(:,i+m))
+         enddo
+         do k=1, 3
+            do m=-2, 2
+               u5(m) = 0.5_R_P*(g(k,m) + alpha(k)*w(k,m))          ! the left-biased mask of cell i
+               v5(m) = 0.5_R_P*(g(k,1-m) - alpha(k)*w(k,1-m))      ! the right-biased mask of cell i+1, mirrored
+            enddo
+            call seth_teno5_mask(u5, SCHEMES(id)%eps, SCHEMES(id)%par, msl(k,i))
+            call seth_teno5_mask(v5, SCHEMES(id)%eps, SCHEMES(id)%par, msr(k,i+1))
+         enddo
+      enddo
+   endif
    do i=0, n ! face i+1/2: stencil cell m is cell i+m
       if (hybrid /= HYB_NONE) then
          if (.not.flagged(i)) then
@@ -278,7 +303,21 @@ contains
          do k=1, 3
             vp = 0.5_R_P*(g(k,:) + alpha(k)*w(k,:))
             vm = 0.5_R_P*(g(k,:) - alpha(k)*w(k,:))
-            call reconstruct(id, vp, vm, rp, rm, par=par)
+            if (stored_masks .and. SCHEMES(id)%wide) then ! pass 2: TENO5, the stored masks, detector, override
+               call seth_teno5(vp(-2:3), vm(-2:3), SCHEMES(id)%eps, SCHEMES(id)%par, rp, rm)
+               do m=-3, 3
+                  mpk(m) = msl(k,i+m) ; mmk(m) = msr(k,i+1-m)
+               enddo
+               if (trim(SCHEMES(id)%name) == 'teno5_thinc') then
+                  call seth_thinc_detect(mpk, mmk, lpk, lmk)
+                  call seth_thinc_override(vp(-1:2), vm(-1:2), lpk, lmk, SETH_THINC_BETA, 1._R_P, rp, rm)
+               else
+                  call seth_dr_detect(mpk, mmk, lpk, lmk)
+                  call seth_dr_override(vp(-1:2), vm(-1:2), lpk, lmk, SETH_DR_T1, SETH_DR_T2, 1._R_P, rp, rm)
+               endif
+            else
+               call reconstruct(id, vp, vm, rp, rm, par=par)
+            endif
             fc(k) = rp + rm
          enddo
          fhat(:,i) = matmul(r, fc)

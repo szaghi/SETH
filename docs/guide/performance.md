@@ -85,6 +85,38 @@ indicators), presumably counted at this card's FP64 rate like any other (not mea
 gain is within the spread of the runs: gfortran 1.60, 1.14, 1.08 (WENO4-C still over), nvfortran 1.08, 1.04, 1.04.
 WENO4-C's miss is accepted (2026-11-17): the budget stays as frozen and recorded as missed, and the kernel as it is.
 
+## The non-polynomial composites (issue #6)
+
+ns per face, the median of three runs of `seth_bench_weno` (raw outputs in `notes/m5-bench-data/40-nonpoly-*`): the
+GPU column on the RTX 4070 (`bench-nvf-oac`, $2^{24}$ faces), the CPU columns on one pinned core of the i9-13900KF
+($2^{22}$ faces, `bench-gnu` and `bench-nvf`). The field is the benchmark's smooth wave with a jump every 2048 cells:
+mostly smooth faces, where the early exit acts. The budgets are issue #6's, against `seth_teno5` on the same device.
+
+| Kernel | GPU | CPU gfortran | CPU nvfortran | GPU ratio | gfortran ratio | budget |
+|---|---|---|---|---|---|---|
+| `seth_teno5` | 1.443 | 81.1 | 37.2 | — | — | — |
+| `seth_teno5_mask`, both biases | 1.168 | 70.9 | 19.9 | **0.81** | **0.87** | 0.70 |
+| `seth_teno5_dr` (per face) | 3.924 | 232.6 | 113.7 | 2.72 | 2.87 | 3.0 |
+| `seth_teno5_thinc` (per face) | 4.998 | 303.2 | 129.5 | **3.46** | **3.74** | 3.0 |
+| `seth_teno5_dr`, no early exit | 8.525 | 504.1 | 168.1 | 5.91 | 6.22 | — |
+| `seth_teno5_thinc`, no early exit | 9.686 | 573.6 | 188.0 | 6.71 | 7.08 | — |
+| DR, stored masks (two passes) | 2.622 | 156.8 | 61.3 | 1.82 | 1.93 | — |
+| THINC, stored masks (two passes) | 2.630 | 157.3 | 61.2 | 1.82 | 1.94 | — |
+
+Experiment E1 of the plan: the self-contained kernels recompute the masks of the neighbouring cells at every face,
+in that face's characteristic basis (the default, owner decision D3). TENO5-DR fits the budget of 3 times TENO5 on the
+GPU (2.72) and with gfortran (2.87), and misses it narrowly with nvfortran (3.05); TENO5-THINC misses it everywhere
+(3.46, 3.74, 3.48), because its detector needs three downwind masks per state where DR's needs two (the early exit,
+which tests the downwind cells first, saves about half the work of the full detector on this field on the GPU, a
+third with nvfortran). The mask kernel misses its own budget (0.70) on the GPU and with gfortran (0.81, 0.87) and
+meets it with nvfortran (0.53): it is TENO5's cutoff without the candidate values, and the cutoff, not the
+candidates, is most of TENO5's cost where divisions are dear. The stored-mask variant (each cell's two masks once, then the faces) costs 1.65–1.94
+times TENO5 for either detector; on scalar data it is equal bit for bit, on systems it computes each mask in its own face's
+basis and the results differ ([NP4](/verification/nonpolynomial/dr#results)). Published whole-solver costs, for
+orientation only: TENO5-THINC 1.17 times TENO5 per time step (Takagi et al. 2022, Table 3), the complete RBF+DR
+scheme 1.38–1.42 (Liang & Fu 2024, Table 1). The old kernels did not slow down (`bench_compare.py`: ok on the GPU and
+on the gfortran core).
+
 ## Single precision
 
 `src/bench/seth_bench_kinds.F90` times the same kernels in the working kind, built in R8P and in R4P

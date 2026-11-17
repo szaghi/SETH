@@ -482,6 +482,24 @@ class Figures:
                                   '(smooth cubics, independent values, jumps, kinks); *constant*: 1000 constants drawn '
                                   'in $[-10, 10]$.')
 
+    CASE_NAMES = {'sod': 'Sod', 'lax': 'Lax', 'shu-osher': 'Shu–Osher', 'blast': 'blast waves'}
+
+    def nonpoly_solver(self) -> None:
+        """seth_vv_nonpoly: the contact at N = 100 (step 2.2, spec 7) and experiment E1 (the two mask variants)."""
+        if self.has('nonpoly-contact.dat'):
+            body = [[self.CASE_NAMES.get(r[0], r[0]), label(r[1]), fmt(float(r[2])), r[3], 'yes' if r[4] == 'T' else '**no**']
+                    for r in self.rows('nonpoly-contact.dat')]
+            self.table('nonpoly-contact', ['case', 'scheme', '$L_1(\\rho)$', 'cells across the contact', 'positive'],
+                       body)
+        if self.has('nonpoly-e1.dat'):
+            body = []
+            for r in self.rows('nonpoly-e1.dat'):
+                a, b = float(r[2]), float(r[3])
+                body.append([self.CASE_NAMES.get(r[0], r[0]), label(r[1]), fmt(a) if a >= 0 else '—', fmt(b) if b >= 0 else '—',
+                             fmt(float(r[4])), 'yes' if r[5] == 'T' and r[6] == 'T' else '**no**'])
+            self.table('nonpoly-e1', ['case', 'scheme', '$L_1(\\rho)$ per face', '$L_1(\\rho)$ stored masks',
+                                      'max $\\lvert\\Delta\\rho\\rvert$ between them', 'positive'], body)
+
     SENSOR_NAMES = {'teno': 'TENO-based (Fu)', 'ren': 'Ren et al.', 'lcr': 'Li, Chen & Ren', 'tau': 'Wan & Xia',
                     'ducros': 'Ducros', 'ducros-c': 'Ducros, compression'}
 
@@ -708,6 +726,7 @@ def main() -> int:
         'critical-tables': f.critical_tables,
         'weno-c': f.weno_c,
         'nonpoly-flags': f.nonpoly_flags,
+        'nonpoly-solver': f.nonpoly_solver,
         'convergence': lambda: f.convergence('convergence', 'convergence.dat',
                                              'whole-domain operator error, Henrick field (critical points included)',
                                              '$L_\\infty(D - u\')$'),

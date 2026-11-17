@@ -32,7 +32,7 @@ module seth_nonpoly
 !< Liang Eq. 33; rmu = 1 the papers' form). The self-contained kernels seth_teno5_dr and seth_teno5_thinc are the
 !< composite schemes in one call per face (notes/kernel-api-design.md, section 11.3): TENO5's two states, the masks
 !< of the neighbouring cells recomputed from the twelve values vp, vm(-5:6) (in the basis the caller projected them
-!< into: the face's own), the detector, the override. The face's own cell is tested first and the downwind cells next;
+!< into: the face's own), the detector, the override. The downwind cells are tested first and the face's own cell next;
 !< detection is ruled out as soon as it cannot hold, without changing the result (an early exit). Sources:
 !< notes/m5-sources.md.
 use penf, only : I4P, R_P
@@ -209,31 +209,31 @@ contains
    endsubroutine seth_teno5_thinc
 
    pure function side_level(w, eps, ct, thinc) result(l)
-   !< The detection level of one state from its left-biased data w(-5:5) (the right state's mirrored): the face's own
-   !< cell first (zeta 2 or -1 rules both detectors out), then the downwind cells (one zeta in {-1, 2} among 1..2, DR,
-   !< or 1..3, THINC, is necessary), then the upwind ones. Every mask not needed stays 7 (zeta 0), unread by the
-   !< conditions that the early exits have already decided.
+   !< The detection level of one state from its left-biased data w(-5:5) (the right state's mirrored). The downwind
+   !< cells first: one zeta in {-1, 2} among the cells 1..2 (DR) or 1..3 (THINC) is necessary to both conditions, and on
+   !< smooth data none has it, so those masks alone rule detection out. Then the face's own cell (zeta 2 or -1 rules
+   !< both detectors out, THINC also 1), then the upwind cells. Every mask not computed stays 7 (zeta 0), unread by the
+   !< conditions the early exits have already decided: the result is the full detector's.
    real(R_P), intent(in) :: w(-5:5)  !< Left-biased values, cells by offset from the face.
    real(R_P), intent(in) :: eps, ct  !< TENO5's regulariser and cutoff.
    logical,   intent(in) :: thinc    !< THINC's detector (cells -3..3) instead of DR's (-3..2).
    integer(I4P)          :: l        !< Level.
-   integer(I4P)          :: mk(-3:3), c, z, chi
+   integer(I4P)          :: mk(-3:3), c, z
    logical               :: dn
    !$acc routine seq
    !$omp declare target
    l = 0
    mk = 7
-   mk(0) = cell_mask(w, 0_I4P, eps, ct)
-   z = seth_teno5_zeta(mk(0))
-   if (z == 2 .or. z == -1) return
-   chi = merge(3_I4P, 2_I4P, thinc)
    dn = .false.
-   do c=1, chi
+   do c=1, merge(3_I4P, 2_I4P, thinc)
       mk(c) = cell_mask(w, c, eps, ct)
       z = seth_teno5_zeta(mk(c))
       dn = dn .or. z == -1 .or. z == 2
    enddo
    if (.not.dn) return
+   mk(0) = cell_mask(w, 0_I4P, eps, ct)
+   z = seth_teno5_zeta(mk(0))
+   if (z == 2 .or. z == -1 .or. (thinc .and. z == 1)) return
    do c=-3, -1
       mk(c) = cell_mask(w, c, eps, ct)
    enddo
