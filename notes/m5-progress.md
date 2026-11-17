@@ -30,6 +30,8 @@ they land.
 | 3.2, 3.3 | G6, E6 (the band, D7) | spec 18: band edges 0.1640 / 0.3266 against the predicted 0.1643 / 0.3286, peaks within 4 %; validated range s <= 0.123 (TENO6's 2e-4) | |
 | 3.3 | E7 | spec 17: the mask (0,1,1) only on noise (0.05 %), never on smooth data, a jump or a kink | |
 
+| 1.1–3.4 | G10 (mutants) | `notes/mutation-run-2026-11-17-nonpoly.txt`: the 38 mutants of issue #6 (mask bits, every term of Eqs. 24, 32 and 20, the branches of zeta, the steepness levels, the guards with their sign and rmu, THINC's beta/2, both mirrors, the early exit, the row by mask, the s^2 rows' sign and table, the sensor's c_r, nodes and s2) all killed | |
+
 ## Findings
 
 - **Constant data does not give the mask 7** (step 1.1). The indicators of a constant that is not exact in binary are
