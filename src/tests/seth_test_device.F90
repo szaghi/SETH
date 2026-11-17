@@ -2,7 +2,7 @@
 program seth_test_device
 !< SETH test: every kernel executed on the device (OpenACC) agrees with the same kernel on the host.
 !<
-!< Each of the 53 cases runs one kernel inside `!$acc parallel loop` over N deterministic stencils (smooth cubics,
+!< Each of the 56 cases runs one kernel inside `!$acc parallel loop` over N deterministic stencils (smooth cubics,
 !< jumps, an integer LCG), then the same loop on the host, and compares: states within 1e-13 of the stencil's
 !< magnitude, weights ratios within 1e-9 (the device and the host compile the kernel separately and may contract
 !< multiply-adds differently; the tolerances are those of seth_test_golden, for the same reasons). One case calls
@@ -15,7 +15,7 @@ use seth_test_parameters, only : EPS_ZT, POS_RANGE_EXP, POSITIVITY_FLOOR, TOL_DE
                                  TOL_DEVICE_WR
 implicit none
 integer(I4P), parameter :: N = 4096_I4P
-integer(I4P), parameter :: NK = 53_I4P
+integer(I4P), parameter :: NK = 56_I4P
 character(26), parameter :: NAMES(NK) = [ &
    'seth_weno1_js             ', &
    'seth_weno1_js_wr          ', &
@@ -69,7 +69,10 @@ character(26), parameter :: NAMES(NK) = [ &
    'seth_sensor_teno_eps      ', &
    'seth_teno5_mask           ', &
    'seth_teno5_dr             ', &
-   'seth_teno5_thinc          ']
+   'seth_teno5_thinc          ', &
+   'seth_teno5_st             ', &
+   'seth_teno5_rbf            ', &
+   'seth_teno5_rbf_dr         ']
 real(R_P)               :: v(-5:6,N), w(-5:6,N), rp(N), rm(N), wrp(N), wrm(N), hp(N), hm(N), hwp(N), hwm(N)
 real(R_P)               :: mag, ds, dw, worst_s, worst_w
 integer(I4P)            :: k, i, nbit, nfail
@@ -958,6 +961,47 @@ do k=1, NK
       do i=1, N
          a = v(:,i) ; b = w(:,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_teno5_thinc(a, b, SETH_TENO_EPS, SETH_TENO5_CT, SETH_THINC_BETA, 1._R_P, rp(i), rm(i))
+      enddo
+      endblock
+   case(54, 55) ! seth_teno5_st; seth_teno5_rbf with s1 = s2 = 0.09 (the paper's alpha = 3 at dx = 0.03)
+      block
+      real(R_P) :: a(-2:3), b(-2:3), sv
+      sv = merge(0.09_R_P, 0._R_P, k == 55)
+      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b)
+      do i=1, N
+         a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
+         if (k == 54) then
+            call seth_teno5_st(a, b, SETH_TENO_EPS, SETH_TENO5_CT, rp(i), rm(i))
+         else
+            call seth_teno5_rbf(a, b, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, sv, sv, rp(i), rm(i))
+         endif
+      enddo
+      hp = rp ; hm = rm ; hwp = wrp ; hwm = wrm
+
+      do i=1, N
+         a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
+         if (k == 54) then
+            call seth_teno5_st(a, b, SETH_TENO_EPS, SETH_TENO5_CT, rp(i), rm(i))
+         else
+            call seth_teno5_rbf(a, b, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, sv, sv, rp(i), rm(i))
+         endif
+      enddo
+      endblock
+   case(56) ! seth_teno5_rbf_dr, s1 = s2 = 0.09, the papers' DR constants
+      block
+      real(R_P) :: a(-5:6), b(-5:6)
+      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b)
+      do i=1, N
+         a = v(:,i) ; b = w(:,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
+         call seth_teno5_rbf_dr(a, b, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, 0.09_R_P, 0.09_R_P, SETH_DR_T1, &
+                                SETH_DR_T2, 1._R_P, rp(i), rm(i))
+      enddo
+      hp = rp ; hm = rm ; hwp = wrp ; hwm = wrm
+
+      do i=1, N
+         a = v(:,i) ; b = w(:,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
+         call seth_teno5_rbf_dr(a, b, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, 0.09_R_P, 0.09_R_P, SETH_DR_T1, &
+                                SETH_DR_T2, 1._R_P, rp(i), rm(i))
       enddo
       endblock
    endselect

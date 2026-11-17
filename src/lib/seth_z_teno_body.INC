@@ -21,7 +21,10 @@
    ! SETH_TENO_MASK (with SETH_TENO, plain cutoff) builds the flag kernel of issue #6 instead: one left-biased stencil
    ! v(LO:UMAX) centred on a cell, no candidate values, no weights; the output mk = sum_k delta_k 2**k, delta_k = 1
    ! where candidate k passes the cutoff. SETH_TENO_FLAGS (test code) keeps the kernel and adds the masks of its two
-   ! states, mp and mm, the same sum. Neither switch changes the code of any other kernel.
+   ! states, mp and mm, the same sum. SETH_TENO_ROWS (with SETH_TENO, plain cutoff) builds stencil targeting (Liang & Fu
+   ! 2024): the mask of each state selects one row of face coefficients, ROWP(LO:UMAX,0:7), instead of the weighted
+   ! candidates; with SETH_TENO_RBF too the row is ROWP + s^2 ROWC, s = s1 + s2 (1 - g(m)) from the sensor of their Eqs.
+   ! 30-32 on the state's stencil (SEPS its regulariser). None of these switches changes the code of any other kernel.
 #ifdef SETH_TENO_MASK
    real(R_P),    intent(in)  :: v(LO:UMAX)  !< Values of the cell's stencil, left-biased (upwind to the left).
 #else
@@ -48,6 +51,14 @@
 #ifdef SETH_TENO_AZ
    real(R_P),    intent(in)  :: rmu         !< Inverse descaler of tau in the adaptive cutoff (1: Tang 2024).
 #endif
+#ifdef SETH_TENO_RBF
+   real(R_P),    intent(in)  :: cr          !< Threshold c_r of the sensor (Liang & Fu 2024, Eq. 30; SETH_RBF_CR).
+   real(R_P),    intent(in)  :: s1, s2      !< alpha_1 dx, alpha_2 dx: s = lambda dx = s1 + s2 (1 - g(m)) (Eq. 32).
+   real(R_P)                 :: da, db, eta, etamin, mm, gg, sr !< Sensor work; sr = s.
+#endif
+#ifdef SETH_TENO_ROWS
+   integer(I4P)              :: mr          !< Mask of the current state: the row it selects.
+#endif
 #else
    integer(I4P), intent(in)  :: p           !< Exponent of tau/beta in the weights (1 or 2).
 #endif
@@ -63,7 +74,7 @@
    integer(I4P)              :: ms(1:2)     !< Masks of the two states.
 #endif
    real(R_P)                 :: st(LO:UMAX) !< Stencil of the current side, left-biased.
-#ifndef SETH_TENO_MASK
+#if !defined(SETH_TENO_MASK) && !defined(SETH_TENO_ROWS)
    real(R_P)                 :: q(0:NC-1)   !< Candidate face values.
 #endif
    real(R_P)                 :: beta(0:NC-1)!< Candidate smoothness indicators.
@@ -119,7 +130,7 @@
 #endif
       ! candidates
       do k=0, NC-1
-#ifndef SETH_TENO_MASK
+#if !defined(SETH_TENO_MASK) && !defined(SETH_TENO_ROWS)
          q(k) = 0._R_P
          do a=0, CW(k)-1
             q(k) = q(k) + CP(a,k)*st(CLO(k)+a)
@@ -202,6 +213,34 @@
          if (wgt(k) > 0._R_P) ms(side) = ms(side) + 2_I4P**k
       enddo
 #endif
+#ifdef SETH_TENO_ROWS
+      mr = 0
+      do k=0, NC-1
+         if (wgt(k) > 0._R_P) mr = mr + 2_I4P**k
+      enddo
+#ifdef SETH_TENO_RBF
+      ! the sensor of Liang & Fu 2024, Eqs. 30-32, at the nodes -1..1 of this state's stencil
+      etamin = 1._R_P
+      do m=-1, 1
+         da = st(m+1) - st(m) ; db = st(m) - st(m-1)
+         eta = (abs(2._R_P*da*db) + SEPS)/(da*da + db*db + SEPS)
+         etamin = min(etamin, eta)
+      enddo
+      mm = 1._R_P - min(1._R_P, etamin/cr)
+      gg = (1._R_P - mm)**4*(1._R_P + 4._R_P*mm)
+      sr = s1 + s2*(1._R_P - gg)
+      sr = sr*sr
+      r(side) = 0._R_P
+      do m=LO, UMAX
+         r(side) = r(side) + (ROWP(m,mr) + sr*ROWC(m,mr))*st(m)
+      enddo
+#else
+      r(side) = 0._R_P
+      do m=LO, UMAX
+         r(side) = r(side) + ROWP(m,mr)*st(m)
+      enddo
+#endif
+#endif
 #else
 #ifdef _R_P_IS_R4P
       ! R4P: D_k (W + V u_k**p), u_k = a/b_k, W = 1/(1 + r**p), V = r**p/(1 + r**p), r = tau/a (a, b_k as above): the
@@ -257,7 +296,7 @@
       enddo
 #endif
 #endif
-#ifndef SETH_TENO_MASK
+#if !defined(SETH_TENO_MASK) && !defined(SETH_TENO_ROWS)
       r(side) = 0._R_P
       do k=0, NC-1
          r(side) = r(side) + (wgt(k)/wsum)*q(k)

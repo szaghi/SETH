@@ -15,6 +15,9 @@ module seth_nonpoly
 !<    call seth_dr_override(vp, vm, lp, lm, t1, t2, rmu, rp, rm)
 !<    call seth_teno5_dr(vp, vm, eps, ct, t1, t2, rmu, rp, rm)       ! vp, vm(-5:6)
 !<    call seth_teno5_thinc(vp, vm, eps, ct, beta, rmu, rp, rm)      ! vp, vm(-5:6)
+!<    call seth_teno5_st(vp, vm, eps, ct, rp, rm)                     ! vp, vm(-2:3): stencil targeting
+!<    call seth_teno5_rbf(vp, vm, eps, ct, cr, s1, s2, rp, rm)        ! vp, vm(-2:3): Gaussian-RBF fluxes
+!<    call seth_teno5_rbf_dr(vp, vm, eps, ct, cr, s1, s2, t1, t2, rmu, rp, rm) ! vp, vm(-5:6): Liang & Fu 2024
 !<
 !< `v(-2:2)` the five values centred on one cell, upwind to the left (the caller mirrors the data for the other bias),
 !< `eps` and `ct` TENO5's regulariser and cutoff (the papers: SETH_TENO_EPS, C_T = 1e-5, SETH_TENO5_CT), `m` the
@@ -37,17 +40,22 @@ module seth_nonpoly
 !< notes/m5-sources.md.
 use penf, only : I4P, R_P
 use seth_z_teno_tables
-use seth_nonpoly_tables, only : SETH_DR_T1, SETH_DR_T2
-use seth_kind_parameters, only : SETH_NONPOLY_GUARD
+use seth_nonpoly_tables, only : SETH_DR_T1, SETH_DR_T2, NP_RBF_P, NP_RBF_C
+use seth_kind_parameters, only : SETH_NONPOLY_GUARD, SETH_TENO_EPS
 use seth_teno, only : seth_teno5
 implicit none
 private
 public :: seth_teno5_mask, seth_teno5_zeta, seth_dr_detect, seth_thinc_detect
 public :: seth_thinc_override, seth_dr_override
 public :: seth_teno5_dr, seth_teno5_thinc
+public :: seth_teno5_st, seth_teno5_rbf, seth_teno5_rbf_dr
 public :: SETH_DR_T1, SETH_DR_T2, SETH_THINC_BETA, SETH_NONPOLY_GUARD
+public :: SETH_RBF_CR, SETH_RBF_ALPHA1, SETH_RBF_ALPHA2
 
 real(R_P), parameter :: SETH_THINC_BETA = 1.6_R_P !< Steepness of the THINC function (Takagi et al. 2022, Eq. 15).
+real(R_P), parameter :: SETH_RBF_CR     = 0.4_R_P !< c_r of the RBF scheme's sensor (Liang & Fu 2024, Eq. 30).
+real(R_P), parameter :: SETH_RBF_ALPHA1 = 3._R_P  !< alpha_1 of lambda = alpha_1 + alpha_2 (1 - g) (Eq. 32).
+real(R_P), parameter :: SETH_RBF_ALPHA2 = 3._R_P  !< alpha_2 (Eq. 32). The caller passes s1 = alpha_1 dx, s2 = alpha_2 dx.
 
 contains
    pure subroutine seth_teno5_mask(v, eps, ct, mk)
@@ -65,6 +73,47 @@ contains
 #undef SETH_TENO_MASK
 #undef SETH_TENO
    endsubroutine seth_teno5_mask
+
+   pure subroutine seth_teno5_st(vp, vm, eps, ct, rp, rm)
+   !< Stencil-targeted TENO5 (Liang & Fu 2024, section 3.1): TENO5's cutoff, then the mask of each state selects one
+   !< polynomial row (NP_RBF_P): (1,1,1) the five cells, (1,0,1) the cells -2..1, (1,1,0) -1..2, one candidate kept
+   !< that candidate, (0,1,1) TENO5's renormalised weights 3 q1/4 + q2/4 (issue #6, D4). Signature of seth_teno5.
+   integer(I4P), parameter :: NC = TENO5_NC, LO = TENO5_LO, UMAX = TENO5_UMAX, MAXW = TENO5_MAXW
+   integer(I4P), parameter :: CLO(0:NC-1) = TENO5_CLO, CW(0:NC-1) = TENO5_CW
+   integer(I4P), parameter :: GLO = TENO5_GLO, GW = TENO5_GW
+   real(R_P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = TENO5_L, CDQ(0:MAXW-1,0:NC-1) = TENO5_DQ
+   real(R_P),    parameter :: D(0:NC-1) = TENO5_D, TC(0:NC-1) = TENO5_TC, TG = TENO5_TG
+   real(R_P),    parameter :: CLG(0:GW-1,0:GW-1) = TENO5_LG, CDG(0:GW-1) = TENO5_DG
+   real(R_P),    parameter :: ROWP(LO:UMAX,0:7) = NP_RBF_P
+#define SETH_TENO
+#define SETH_TENO_ROWS
+#include "seth_z_teno_body.INC"
+#undef SETH_TENO_ROWS
+#undef SETH_TENO
+   endsubroutine seth_teno5_st
+
+   pure subroutine seth_teno5_rbf(vp, vm, eps, ct, cr, s1, s2, rp, rm)
+   !< Gaussian-RBF TENO5 (Liang & Fu 2024, Eqs. 25, 30-32): the rows of stencil targeting plus s^2 times the Gaussian
+   !< correction (NP_RBF_C, the expansion of Eq. 25 truncated at lambda^2 dx^2, as printed), s = lambda dx = s1 +
+   !< s2 (1 - g(m)) from the sensor of Eqs. 30-31 on each state's stencil (c_r, the minimum over the nodes -1..1,
+   !< regulariser SETH_TENO_EPS: the paper's 1e-40 in R8P). s1 = alpha_1 dx, s2 = alpha_2 dx come from the caller
+   !< (issue #6, D5): the results depend on the length unit; s1 = s2 = 0 is seth_teno5_st.
+   integer(I4P), parameter :: NC = TENO5_NC, LO = TENO5_LO, UMAX = TENO5_UMAX, MAXW = TENO5_MAXW
+   integer(I4P), parameter :: CLO(0:NC-1) = TENO5_CLO, CW(0:NC-1) = TENO5_CW
+   integer(I4P), parameter :: GLO = TENO5_GLO, GW = TENO5_GW
+   real(R_P),    parameter :: CL(0:MAXW-1,0:MAXW-1,0:NC-1) = TENO5_L, CDQ(0:MAXW-1,0:NC-1) = TENO5_DQ
+   real(R_P),    parameter :: D(0:NC-1) = TENO5_D, TC(0:NC-1) = TENO5_TC, TG = TENO5_TG
+   real(R_P),    parameter :: CLG(0:GW-1,0:GW-1) = TENO5_LG, CDG(0:GW-1) = TENO5_DG
+   real(R_P),    parameter :: ROWP(LO:UMAX,0:7) = NP_RBF_P, ROWC(LO:UMAX,0:7) = NP_RBF_C
+   real(R_P),    parameter :: SEPS = SETH_TENO_EPS
+#define SETH_TENO
+#define SETH_TENO_ROWS
+#define SETH_TENO_RBF
+#include "seth_z_teno_body.INC"
+#undef SETH_TENO_RBF
+#undef SETH_TENO_ROWS
+#undef SETH_TENO
+   endsubroutine seth_teno5_rbf
 
    pure function seth_teno5_zeta(mk) result(z)
    !< zeta of a mask (Liang et al. 2022, Eq. 17; Takagi et al. 2022, Eq. 19): 2 where the downwind and the upwind
@@ -174,6 +223,43 @@ contains
       call seth_dr_override(c, d, lp, lm, t1, t2, rmu, rp, rm)
    endif
    endsubroutine seth_teno5_dr
+
+   pure subroutine seth_teno5_rbf_dr(vp, vm, eps, ct, cr, s1, s2, t1, t2, rmu, rp, rm)
+   !< The complete scheme of Liang & Fu 2024 (section 3.3), self-contained: seth_teno5_rbf's states (stencil targeting
+   !< and the Gaussian-RBF rows), the DR detector on the masks of TENO5's cutoff of the cells -3..2 (the paper's flags
+   !< are plain TENO5's: Eqs. 33-36 are Liang et al. 2022's Eqs. 17, 24, 31, 32), the DR override. s1 = s2 = 0: the
+   !< stencil-targeted TENO5 with the DR override.
+   real(R_P), intent(in)  :: vp(-5:6) !< Left-biased values, cells by offset from the face (-5..4 read).
+   real(R_P), intent(in)  :: vm(-5:6) !< Right-biased values (-3..6 read).
+   real(R_P), intent(in)  :: eps, ct  !< TENO5's regulariser and cutoff (the paper: SETH_TENO_EPS, 1e-5).
+   real(R_P), intent(in)  :: cr       !< The RBF sensor's threshold (SETH_RBF_CR).
+   real(R_P), intent(in)  :: s1, s2   !< alpha_1 dx, alpha_2 dx.
+   real(R_P), intent(in)  :: t1, t2   !< tanh of the two steepness constants (SETH_DR_T1, SETH_DR_T2).
+   real(R_P), intent(in)  :: rmu      !< Inverse descaler of the guard (1: the paper's form).
+   real(R_P), intent(out) :: rp, rm   !< Left and right states at the face.
+   real(R_P)              :: a(-2:3), b(-2:3), w(-5:5), c(-1:2), d(-1:2)
+   integer(I4P)           :: m, lp, lm
+   !$acc routine seq
+   !$omp declare target
+   do m=-2, 3
+      a(m) = vp(m) ; b(m) = vm(m)
+   enddo
+   call seth_teno5_rbf(a, b, eps, ct, cr, s1, s2, rp, rm)
+   do m=-5, 5
+      w(m) = vp(m)
+   enddo
+   lp = side_level(w, eps, ct, .false.)
+   do m=-5, 5
+      w(m) = vm(1-m)
+   enddo
+   lm = side_level(w, eps, ct, .false.)
+   if (lp > 0 .or. lm > 0) then
+      do m=-1, 2
+         c(m) = vp(m) ; d(m) = vm(m)
+      enddo
+      call seth_dr_override(c, d, lp, lm, t1, t2, rmu, rp, rm)
+   endif
+   endsubroutine seth_teno5_rbf_dr
 
    pure subroutine seth_teno5_thinc(vp, vm, eps, ct, beta, rmu, rp, rm)
    !< TENO5-THINC (Takagi, Fu, Wakimura & Xiao 2022), self-contained: seth_teno5, the THINC detector on the masks of the

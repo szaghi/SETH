@@ -37,13 +37,46 @@ program seth_test_nonpoly
 !<    by the detector, TENO5's states overridden. The reference shares only seth_teno5, seth_teno5_mask and the
 !<    detectors and overrides with the kernels (no early exit, no neighbour recomputation).
 !< 13. N2: on the smooth fields no face is detected and the states equal seth_teno5's bitwise.
+!< Steps 3.1 and 3.2, seth_teno5_st and seth_teno5_rbf (frozen in issue #6, section 6):
+!< 14. ST: order 5.0 +- 0.1 at a point (the generic g of seth_test_functions, cell averages, face at 0.3), both states;
+!<     equal to seth_linear5 to 64 eps of the data on smooth data; beside a jump that leaves the mask (1,1,0) the order
+!<     of the smooth side's error is 4.0 +- 0.2 where TENO5 gives 3.0 +- 0.2; across a unit jump at every cell boundary
+!<     no state outside [0, 1] by more than 1e-12 (R8P; TOL scaled in R4P).
+!< 15. RBF: s1 = s2 = 0 gives seth_teno5_st (bitwise with gfortran and ifx; nvfortran -fast reassociates the row
+!<     sum, so 4 eps of the data is asserted, a deviation from the frozen "bitwise" recorded in notes/m5-progress.md);
+!<     with alpha_1 = alpha_2 = 3 fixed and dx -> 0 the order is
+!<     5.0 +- 0.1 (s = 3 dx .. 6 dx shrinks with the grid: the paper's degeneration to the polynomial scheme).
+!< 16. RBF spec 3 (G1, G2): the generated rows: the polynomial rows of the masks 1, 2, 4 are TENO5's candidates, of 7
+!<     linear5's, of 6 TENO5's renormalised weights, exactly; every s^2 row sums to zero; the leading error of the
+!<     five-point row with lambda = 3 fixed equals Liang & Fu's Eq. 29, -dx^5 (lambda^2 g'''/2 + g^(5)/60), within 1 %
+!<     (Richardson on dx, the generic g). And the kernel equals a reference written here (the sensor of Eqs. 30-31,
+!<     the row of the state's mask, P + s^2 C) to 64 eps on 10^5 random stencils with s1 = s2 = 0.3 (the sensor active).
+!< 17. E7 (step 3.3): how often each mask occurs, by data: smooth cubics, a jump of random place and height on a
+!<     linear function, a kink, independent values; 10^5 stencils each (10^7 in report mode, nonpoly-census.dat). The
+!<     mask (0,1,1), which no row of Liang & Fu covers (D4), is reported, not asserted.
+!< 18. G6, E6 (step 3.2 spec 5, step 3.3): the linear RBF scheme, the five-point row P + s^2 C with s fixed: the
+!<     imaginary part of its modified wavenumber, Im theta~ = -Re sum_m c_m (e^{i theta m} - e^{i theta (m-1)}), over
+!<     theta in (0, pi], at s^2 = 9e-4, 3.6e-3, 2.25e-2, 9e-2 (frozen in issue #6). Predicted from Eq. 29 (issue #6,
+!<     section 1.3): Im theta~ = theta^4 (s^2/2 - theta^2/60) at leading order, a band theta^2 < 30 s^2 of growth with a
+!<     peak of (200/3) s^6 at theta^2 = 20 s^2. Asserted at the two smaller s (where the leading order holds): the band's
+!<     edge within 10 % of sqrt(30) s, the peak within a factor 2 of the prediction (the bound of D7). Reported: the four
+!<     bands and peaks, and the largest s whose peak stays at or below 2e-4, TENO6's (D7's validated range of s).
+!< 19. Step 1.3, Liang et al. 2022, section 3.1: the detectors on point values at the cell centres of [0, 2], constant
+!<     continuation beyond the ends, the left state of each face (the cell containing the discontinuity, positive
+!<     speed). (a) sin(10 pi x), (b) sin(24 pi x), N = 120: no activation of either detector (the paper's statement).
+!<     (c), (d), N = 100 and 400: every jump of the function (above 0.1) has a DR activation within 1.5 cells, and every
+!<     DR activation lies within 1.5 cells of a jump of the function or of its derivative. (e), N = 200 and 400: counts
+!<     only (its frozen spec contradicts the paper's own Fig. 5: left to the owner). Report: nonpoly-static.dat.
 !< 4. Constant data and a jump of BIG_JUMP: the mask is defined and never 0 (one chi_k >= 1/3 > C_T). Not 7 on
 !<    constant data in general (printed): the indicators of a non-dyadic constant are round-off, far above eps.
 use seth
-use seth_test_parameters, only : BIG_JUMP, NP_FLAGS_EPS, NP_TOL
+use seth_test_parameters, only : BIG_JUMP, NP_FLAGS_EPS, NP_TOL, ORDERS_AT_FLOOR_OK, POINT_FLOOR, POINT_ORDER_LOSS
 use seth_test_rng, only : seed_rng
 use seth_test_teno_flags, only : teno5_flags
 use seth_vv_cases, only : vv_report, vv_open
+use seth_test_functions, only : gfun, gavg
+use seth_nonpoly_tables, only : NP_RBF_P, NP_RBF_C
+use seth_z_teno_tables, only : TENO5_P, LIN5_C
 implicit none
 integer(I4P), parameter :: NR = 1000000_I4P, NM = 100000_I4P
 real(R_P)               :: vp(-2:3), vm(-2:3), w(-2:2), rp, rm, sp, sm, y
@@ -141,6 +174,18 @@ print '(A)', 'constant data and a big jump: mask in 1..7'
 ! 12.-13. the self-contained kernels against the two-pass reference
 call self_contained()
 
+! 14.-15. stencil targeting and the RBF fluxes
+call targeting()
+
+! 17. E7, the census of the masks
+call census()
+
+! 18. G6 and E6, the long-wave growth of the linear RBF scheme
+call rbf_adr()
+
+! 19. the published static tests
+call static_tests()
+
 ! 7.-11. the overrides
 call overrides()
 
@@ -195,6 +240,357 @@ contains
    enddo
    l = merge(1, 0, any(z(-3:-1) == 1 .or. z(-3:-1) == 2) .and. z(0) == 0 .and. any(z(1:3) == -1 .or. z(1:3) == 2))
    endfunction thinc_ref
+
+   subroutine rbf_adr()
+   !< Spec 18.
+   real(R_P), parameter    :: S2(4) = [9.e-4_R_P, 3.6e-3_R_P, 2.25e-2_R_P, 9.e-2_R_P]
+   integer(I4P), parameter :: NT = 20000_I4P
+   real(R_P)               :: th, g, gmax, thmax, edge, pk, pe, s, smax
+   integer(I4P)            :: k, j, ua
+   logical                 :: ok
+   ok = .true.
+   if (vv_report()) call vv_open('nonpoly-adr.dat', ua, 's^2 band-edge predicted-edge peak predicted-peak theta-of-peak')
+   print '(A)', 'RBF linear five-point row: the band of growth (Im theta~ > 0) and its peak'
+   do k=1, 4
+      gmax = 0._R_P ; thmax = 0._R_P ; edge = 0._R_P
+      do j=1, NT
+         th = acos(-1._R_P)*j/NT
+         g = growth(th, S2(k))
+         if (g > gmax) then ; gmax = g ; thmax = th ; endif
+         if (g > 0._R_P) edge = th
+      enddo
+      pe = sqrt(30._R_P*S2(k)) ; pk = 200._R_P/3._R_P*S2(k)**3
+      print '(A,ES9.2,A,F8.4,A,F8.4,A,ES10.3,A,ES10.3)', '  s^2 ', S2(k), ': edge ', edge, ' (pred. ', pe, &
+            '), peak ', gmax, ' (pred. ', pk
+      if (vv_report()) write(ua, '(6ES16.7)') S2(k), edge, pe, gmax, pk, thmax
+      if (k <= 2) then
+         if (abs(edge/pe - 1._R_P) > 0.1_R_P .or. gmax > 2._R_P*pk .or. gmax < 0.5_R_P*pk) ok = .false.
+      endif
+   enddo
+   ! D7: the largest s whose peak stays at or below 2e-4
+   smax = 0._R_P
+   do k=1, 600
+      s = 0.001_R_P*k
+      gmax = 0._R_P
+      do j=1, 2000
+         gmax = max(gmax, growth(acos(-1._R_P)*j/2000._R_P, s*s))
+      enddo
+      if (gmax <= 2.e-4_R_P) smax = s
+      if (gmax > 2.e-4_R_P) exit
+   enddo
+   print '(A,F6.3,A)', '  largest s with a peak <= 2e-4 (TENO6''s): ', smax, ' (D7: the validated range)'
+   if (vv_report()) then
+      write(ua, '(A,F8.4)') '# validated-s ', smax
+      close(ua)
+   endif
+   if (.not.ok) then ; print '(A)', 'FAIL 18: band or peak off the prediction' ; passed = .false. ; endif
+   endsubroutine rbf_adr
+
+   pure function growth(th, s2) result(g)
+   !< Im theta~ of the linear five-point RBF row with s^2 = s2.
+   real(R_P), intent(in) :: th, s2
+   real(R_P)             :: g
+   integer(I4P)          :: m
+   g = 0._R_P
+   do m=-2, 2
+      g = g - (NP_RBF_P(m,7) + s2*NP_RBF_C(m,7))*(cos(th*m) - cos(th*(m-1)))
+   enddo
+   endfunction growth
+
+   subroutine static_tests()
+   !< Spec 19.
+   integer              :: us
+   logical              :: ok
+   ok = .true.
+   if (vv_report()) call vv_open('nonpoly-static.dat', us, 'case N detector x-of-each-activation...')
+   call static_one('a', 120, 0, us, ok)
+   call static_one('b', 120, 0, us, ok)
+   call static_one('c', 100, 1, us, ok) ; call static_one('c', 400, 1, us, ok)
+   call static_one('d', 100, 2, us, ok) ; call static_one('d', 400, 2, us, ok)
+   call static_one('e', 200, 3, us, ok) ; call static_one('e', 400, 3, us, ok)
+   if (vv_report()) close(us)
+   if (.not.ok) then ; print '(A)', 'FAIL 19: the static tests' ; passed = .false. ; endif
+   endsubroutine static_tests
+
+   subroutine static_one(case_, n, kind_, us, ok)
+   character(*), intent(in)    :: case_
+   integer(I4P), intent(in)    :: n, kind_
+   integer,      intent(in)    :: us
+   real(R_P), parameter :: JC(2) = [0.6_R_P, 0.8_R_P], KC(8) = [0.2_R_P, 0.4_R_P, 0.6_R_P, 0.8_R_P, 1._R_P, 1.1_R_P, &
+                                                            1.2_R_P, 1.4_R_P]
+   real(R_P), parameter :: JD(9) = [0.4_R_P, 0.5_R_P, 0.6_R_P, 0.9_R_P, 1._R_P, 1.1_R_P, 1.2_R_P, 1.5_R_P, 1.8_R_P]
+   real(R_P), parameter :: JE(7) = [0.25_R_P, 0.27_R_P, 0.29_R_P, 0.6_R_P, 0.63_R_P, 0.66_R_P, 1.14_R_P]
+   logical,      intent(inout) :: ok
+   real(R_P)                   :: f(-3:n+2), w(-2:2), x, h, xs(n)
+   integer(I4P)                :: mk(-3:n+2), i, m, l, lm, ndr, nth, j
+   real(R_P)                   :: xdr(n), xth(n)
+   h = 2._R_P/n
+   do i=0, n-1
+      x = (i + 0.5_R_P)*h ; xs(i+1) = x
+      select case(case_)
+      case('a') ; f(i) = sin(10._R_P*acos(-1._R_P)*x)
+      case('b') ; f(i) = sin(24._R_P*acos(-1._R_P)*x)
+      case('c') ; f(i) = static_c(x)
+      case('d') ; f(i) = static_d(x)
+      case default ; f(i) = static_e(x)
+      endselect
+   enddo
+   f(-3:-1) = f(0) ; f(n:n+2) = f(n-1)
+   do i=-1, n
+      do m=-2, 2
+         w(m) = f(min(max(i+m, 0), n-1))
+      enddo
+      call seth_teno5_mask(w, SETH_TENO_EPS, SETH_TENO5_CT, mk(i))
+   enddo
+   mk(-3:-2) = mk(-1) ; mk(n+1:n+2) = mk(n)
+   ndr = 0 ; nth = 0
+   do i=0, n-1
+      call seth_dr_detect(mk(i-3:i+3), mk(i-3:i+3), l, lm)
+      if (l > 0) then ; ndr = ndr + 1 ; xdr(ndr) = xs(i+1) ; endif
+      call seth_thinc_detect(mk(i-3:i+3), mk(i-3:i+3), l, lm)
+      if (l > 0) then ; nth = nth + 1 ; xth(nth) = xs(i+1) ; endif
+   enddo
+   print '(A,A,A,I4,A,I3,A,I3)', '  static (', case_, '), N = ', n, ': DR activations ', ndr, ', THINC ', nth
+   if (vv_report()) then
+      write(us, '(A,1X,I0,1X,A,*(1X,F8.4))') case_, n, 'dr', xdr(1:ndr)
+      write(us, '(A,1X,I0,1X,A,*(1X,F8.4))') case_, n, 'thinc', xth(1:nth)
+   endif
+   select case(kind_)
+   case(0)
+      if (ndr > 0 .or. nth > 0) then ; print '(A)', '  FAIL: activations on a sine' ; ok = .false. ; endif
+   case(1)
+      call complete_local(JC, KC, ndr, xdr, h, ok)
+   case(2)
+      call complete_local(JD, JD, ndr, xdr, h, ok)
+   endselect
+   endsubroutine static_one
+
+   subroutine complete_local(jumps, marks, nf, xf, h, ok)
+   !< Every jump has an activation within 1.5 cells; every activation lies within 1.5 cells of a mark (a jump of the
+   !< function or of its derivative).
+   real(R_P),    intent(in)    :: jumps(:), marks(:), xf(:), h
+   integer(I4P), intent(in)    :: nf
+   logical,      intent(inout) :: ok
+   integer(I4P)                :: j
+   do j=1, size(jumps)
+      if (.not.any(abs(xf(1:nf) - jumps(j)) <= 1.5_R_P*h)) then
+         print '(A,F6.3)', '  FAIL: jump not flagged at x = ', jumps(j) ; ok = .false.
+      endif
+   enddo
+   do j=1, nf
+      if (.not.any(abs(marks - xf(j)) <= 1.5_R_P*h)) then
+         print '(A,F6.3)', '  FAIL: activation away from every jump at x = ', xf(j) ; ok = .false.
+      endif
+   enddo
+   endsubroutine complete_local
+
+   subroutine census()
+   !< Spec 17 (E7).
+   character(8), parameter :: DNAME(4) = ['smooth  ', 'jump    ', 'kink    ', 'noise   ']
+   real(R_P)                :: v(-2:2), cf(0:3), y, hgt
+   integer(I4P)             :: d, n_, m, mk, jp, cnt(0:7), uc
+   integer(I8P)             :: nn
+   nn = merge(10000000_I8P, 100000_I8P, vv_report())
+   if (vv_report()) call vv_open('nonpoly-census.dat', uc, 'data stencils count-of-mask-0..7')
+   print '(A,I0,A)', 'E7: masks by data, ', nn, ' stencils each (mask = d0 + 2 d1 + 4 d2)'
+   do d=1, 4
+      cnt = 0
+      do n_=1, int(nn, I4P)
+         call random_number(cf) ; cf = cf - 0.5_R_P
+         call random_number(y) ; jp = -1 + int(4._R_P*y)
+         call random_number(hgt) ; hgt = 10._R_P**(8._R_P*hgt - 6._R_P)
+         do m=-2, 2
+            select case(d)
+            case(1) ; v(m) = 1._R_P + cf(1)*m + cf(2)*m*m*0.1_R_P + cf(3)*m**3*0.01_R_P
+            case(2) ; v(m) = cf(0) + cf(1)*m*0.1_R_P + merge(hgt, 0._R_P, m >= jp)
+            case(3) ; v(m) = cf(0) + cf(1)*abs(m - jp + 0.5_R_P)
+            case default ; call random_number(v(m))
+            endselect
+         enddo
+         call seth_teno5_mask(v, SETH_TENO_EPS, SETH_TENO5_CT, mk)
+         cnt(mk) = cnt(mk) + 1
+      enddo
+      print '(2X,A8,8I10)', DNAME(d), cnt
+      if (vv_report()) write(uc, '(A,1X,I0,8(1X,I0))') trim(DNAME(d)), nn, cnt
+   enddo
+   if (vv_report()) close(uc)
+   endsubroutine census
+
+   subroutine targeting()
+   !< Specs 14-15.
+   integer(I4P), parameter :: NH = 6_I4P
+   real(R_P), parameter    :: XF = 0.3_R_P
+   real(R_P)               :: vp(-2:3), vm(-2:3), h, rp, rm, sp, sm, ex, e(4,NH), o(4), worst, lo, hi, x
+   integer(I4P)            :: j, m, k, jump, n_, us
+   logical                 :: ok
+   ok = .true.
+   if (vv_report()) call vv_open('nonpoly-st.dat', us, 'quantity value')
+   ! order on smooth data: ST (both states), RBF with s = 3 dx .. 6 dx; ST against linear5
+   worst = 0._R_P
+   do j=1, NH
+      h = 0.2_R_P/2._R_P**(j-1)
+      do m=-2, 3
+         vp(m) = gavg(XF + (m-1)*h, XF + m*h) ; vm(m) = gavg(XF + (m-1)*h, XF + m*h)
+      enddo
+      ex = gfun(XF)
+      call seth_teno5_st(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, rp, rm)
+      call seth_linear5(vp, vm, sp, sm)
+      worst = max(worst, abs(rp - sp)/maxval(abs(vp)), abs(rm - sm)/maxval(abs(vp)))
+      e(1,j) = abs(rp - ex) ; e(2,j) = abs(rm - ex)
+      call seth_teno5_rbf(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, SETH_RBF_ALPHA1*h, SETH_RBF_ALPHA2*h, &
+                          rp, rm)
+      e(3,j) = abs(rp - ex) ; e(4,j) = abs(rm - ex)
+   enddo
+   do k=1, 4
+      o(k) = pair_order(e(k,:))
+   enddo
+   print '(A,4F7.3,A,ES9.2)', 'ST order (left, right), RBF order (left, right): ', o, '; ST - linear5: ', worst
+   if (vv_report()) write(us, '(A,4(1X,F8.4))') 'orders-smooth', o
+   if (vv_report()) write(us, '(A,1X,ES12.4)') 'st-minus-linear5', worst
+   if (any(abs(o - 5._R_P) > 0.1_R_P + POINT_ORDER_LOSS .and. .not.(ORDERS_AT_FLOOR_OK .and. o < 0._R_P))) then
+      print '(A)', 'FAIL 14-15: order' ; ok = .false.
+   endif
+   if (worst > 64._R_P*epsilon(1._R_P)) then ; print '(A)', 'FAIL 14: ST differs from linear5' ; ok = .false. ; endif
+   ! beside a jump between the cells -2 and -1 (mask (1,1,0)): the error of the smooth side, ST against TENO5
+   do j=1, NH
+      h = 0.1_R_P/2._R_P**(j-1)
+      do m=-2, 3
+         vp(m) = gavg(XF + (m-1)*h, XF + m*h) + merge(1._R_P, 0._R_P, m <= -2)
+      enddo
+      ex = gfun(XF)
+      call seth_teno5_st(vp, vp, SETH_TENO_EPS, SETH_TENO5_CT, rp, rm)
+      call seth_teno5(vp, vp, SETH_TENO_EPS, SETH_TENO5_CT, sp, sm)
+      e(1,j) = abs(rp - ex) ; e(2,j) = abs(sp - ex)
+   enddo
+   o(1) = pair_order(e(1,:)) ; o(2) = pair_order(e(2,:))
+   print '(A,2F7.3)', 'beside a jump, mask (1,1,0): order of ST, of TENO5: ', o(1:2)
+   if (vv_report()) write(us, '(A,2(1X,F8.4))') 'orders-jump', o(1:2)
+   if ((abs(o(1) - 4._R_P) > 0.2_R_P + POINT_ORDER_LOSS .or. abs(o(2) - 3._R_P) > 0.2_R_P + POINT_ORDER_LOSS) .and. &
+       .not.(ORDERS_AT_FLOOR_OK .and. min(o(1), o(2)) < 0._R_P)) then
+      print '(A)', 'FAIL 14: orders beside the jump' ; ok = .false.
+   endif
+   ! a unit jump at every cell boundary, both orientations: no overshoot
+   worst = 0._R_P
+   do jump=-1, 3
+      do k=0, 1
+         do m=-2, 3
+            vp(m) = merge(1._R_P, 0._R_P, (m >= jump) .neqv. (k == 1)) ; vm(m) = vp(m)
+         enddo
+         call seth_teno5_st(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, rp, rm)
+         worst = max(worst, -rp, rp - 1._R_P, -rm, rm - 1._R_P)
+      enddo
+   enddo
+   print '(A,ES9.2)', 'ST across a unit jump: worst overshoot ', worst
+   if (vv_report()) write(us, '(A,1X,ES12.4)') 'overshoot', worst
+   if (worst > NP_TOL*1.e1_R_P) then ; print '(A)', 'FAIL 14: overshoot' ; ok = .false. ; endif
+   ! RBF with s1 = s2 = 0 is ST: bitwise with gfortran and ifx; nvfortran -fast reassociates the row sum (P + 0 C) f,
+   ! so the frozen "bitwise" is asserted as 4 eps of the data, the bitwise count printed (deviation recorded in
+   ! notes/m5-progress.md)
+   k = 0 ; worst = 0._R_P
+   do n_=1, 100000
+      call random_stencil(vp, vm)
+      call seth_teno5_st(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, rp, rm)
+      call seth_teno5_rbf(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, 0._R_P, 0._R_P, sp, sm)
+      if (rp == sp .and. rm == sm) k = k + 1
+      worst = max(worst, abs(rp - sp)/max(maxval(abs(vp)), tiny(1._R_P)), abs(rm - sm)/max(maxval(abs(vm)), tiny(1._R_P)))
+   enddo
+   print '(A,I0,A,ES9.2)', 'RBF at s1 = s2 = 0 against ST on 10^5 stencils: bitwise ', k, ', worst ', worst
+   if (worst > 4._R_P*epsilon(1._R_P)) then ; print '(A)', 'FAIL 15: RBF at s = 0 differs from ST' ; ok = .false. ; endif
+   call rbf_rows(ok)
+   if (vv_report()) close(us)
+   if (.not.ok) passed = .false.
+   endsubroutine targeting
+
+   subroutine rbf_rows(ok)
+   !< Spec 16.
+   logical, intent(inout) :: ok
+   logical                :: rows_ok
+   real(R_P), parameter   :: XF = 0.3_R_P, LAM = 3._R_P
+   real(R_P)              :: vp(-2:3), vm(-2:3), w(-2:3), rp, rm, sp, sm, h, e(2), c, pred, g3, g5, worst
+   integer(I4P)           :: k, m, j, n_
+   ! the polynomial rows, exactly
+   rows_ok = .true.
+   do m=-2, 2
+      if (NP_RBF_P(m,7) /= LIN5_C(m)) rows_ok = .false.
+   enddo
+   do k=0, 2
+      do m=-2, 2
+         if (m >= TENO5_CLO_(k) .and. m <= TENO5_CLO_(k) + 2) then
+            if (NP_RBF_P(m,2**k) /= TENO5_P(m - TENO5_CLO_(k),k)) rows_ok = .false.
+         elseif (NP_RBF_P(m,2**k) /= 0._R_P) then
+            rows_ok = .false.
+         endif
+      enddo
+   enddo
+   do m=-2, 2
+      c = 0._R_P
+      if (m >= 0) c = c + 0.75_R_P*TENO5_P(m,1)
+      if (m <= 0) c = c + 0.25_R_P*TENO5_P(m+2,2)
+      if (abs(NP_RBF_P(m,6) - c) > 4._R_P*epsilon(1._R_P)) rows_ok = .false.
+   enddo
+   do k=0, 7
+      if (abs(sum(NP_RBF_C(:,k))) > 16._R_P*epsilon(1._R_P)) rows_ok = .false.
+   enddo
+   if (.not.rows_ok) then ; print '(A)', 'FAIL 16: a generated row' ; ok = .false. ; endif
+   ! Eq. 29: the leading error of the five-point row, lambda fixed
+   g3 = -0.729_R_P*cos(0.9_R_P*XF + 0.4_R_P) + 0.108_R_P*exp(0.6_R_P*XF) + 0.3_R_P*4.913_R_P*sin(1.7_R_P*XF - 1.1_R_P)
+   g5 = 0.59049_R_P*cos(0.9_R_P*XF + 0.4_R_P) + 0.03888_R_P*exp(0.6_R_P*XF) &
+        - 0.3_R_P*14.19857_R_P*sin(1.7_R_P*XF - 1.1_R_P)
+   pred = -(0.5_R_P*LAM*LAM*g3 + g5/60._R_P)
+   do j=1, 2
+      h = 0.025_R_P/2._R_P**(j-1)
+      do m=-2, 3
+         vp(m) = gavg(XF + (m-1)*h, XF + m*h)
+      enddo
+      call seth_teno5_rbf(vp, vp, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, LAM*h, LAM*h, rp, rm)
+      e(j) = (rp - gfun(XF))/h**5
+   enddo
+   c = 2._R_P*e(2) - e(1) ! Richardson: the O(dx^6) term removed
+   if (abs(e(2))*(0.0125_R_P**5) < POINT_FLOOR*epsilon(1._R_P) .and. ORDERS_AT_FLOOR_OK) then
+      print '(A)', 'RBF five-point row, lambda = 3: its error is below round-off at this precision (not checked)'
+   else
+      print '(A,2ES13.5,A,F7.3,A)', 'RBF five-point row, lambda = 3: error / dx^5 ', c, pred, ' (', &
+            100._R_P*abs(c/pred - 1._R_P), ' % from Eq. 29)'
+      if (abs(c/pred - 1._R_P) > 0.01_R_P) then ; print '(A)', 'FAIL 16: Eq. 29' ; ok = .false. ; endif
+   endif
+   ! the kernel against the reference, sensor active
+   worst = 0._R_P
+   do n_=1, 100000
+      call random_stencil(vp, vm)
+      call seth_teno5_rbf(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, 0.3_R_P, 0.3_R_P, rp, rm)
+      sp = rbf_ref(vp, 0.3_R_P, 0.3_R_P)
+      do m=-2, 3
+         w(m) = vm(1-m)
+      enddo
+      sm = rbf_ref(w, 0.3_R_P, 0.3_R_P)
+      worst = max(worst, abs(rp - sp)/maxval(abs(vp)), abs(rm - sm)/maxval(abs(vm)))
+   enddo
+   print '(A,ES9.2)', 'RBF kernel against the reference on 10^5 stencils (s1 = s2 = 0.3): worst ', worst
+   if (worst > 64._R_P*epsilon(1._R_P)) then ; print '(A)', 'FAIL 16: RBF kernel differs from its reference' ; ok = .false. ; endif
+   endsubroutine rbf_rows
+
+   function rbf_ref(v, s1, s2) result(r)
+   !< Liang & Fu 2024, Eqs. 25 and 30-32 for the left-biased state of v(-2:3): the mask of the cell's TENO5 cutoff
+   !< selects the row, s = s1 + s2 (1 - g(m)) from the minimum of eta over the nodes -1..1.
+   real(R_P), intent(in) :: v(-2:3), s1, s2
+   real(R_P)             :: r, eta(-1:1), mm, g, s, u(-2:2)
+   integer(I4P)          :: j, mk
+   do j=-2, 2
+      u(j) = v(j)
+   enddo
+   call seth_teno5_mask(u, SETH_TENO_EPS, SETH_TENO5_CT, mk)
+   do j=-1, 1
+      eta(j) = (abs(2._R_P*(v(j) - v(j-1))*(v(j+1) - v(j))) + SETH_TENO_EPS) &
+               /((v(j) - v(j-1))**2 + (v(j+1) - v(j))**2 + SETH_TENO_EPS)
+   enddo
+   mm = 1._R_P - min(1._R_P, minval(eta)/SETH_RBF_CR)
+   g = (1._R_P - mm)**4*(1._R_P + 4._R_P*mm)
+   s = s1 + s2*(1._R_P - g)
+   r = 0._R_P
+   do j=-2, 2
+      r = r + (NP_RBF_P(j,mk) + s*s*NP_RBF_C(j,mk))*v(j)
+   enddo
+   endfunction rbf_ref
 
    subroutine overrides()
    !< Specs 7-11 of the two overrides.
@@ -531,6 +927,27 @@ contains
    print '(A,T24,A,7I1,A,7I1,A)', label, 'DR levels (cells 2..8) ', ldr, ', THINC ', lth, merge(' ok  ', ' FAIL', lp == 1)
    if (lp /= 1) passed = .false.
    endsubroutine levels
+
+   pure function pair_order(e) result(o)
+   !< The order from the finest pair of grids whose finer error is above round-off (POINT_FLOOR eps); -1: none.
+   real(R_P), intent(in) :: e(:)
+   real(R_P)             :: o
+   integer(I4P)          :: j
+   o = -1._R_P
+   do j=size(e)-1, 1, -1
+      if (e(j+1) > POINT_FLOOR*epsilon(1._R_P)) then
+         o = log(e(j)/e(j+1))/log(2._R_P) ; exit
+      endif
+   enddo
+   endfunction pair_order
+
+   pure function TENO5_CLO_(k) result(c)
+   !< The first cell of TENO5's candidate k (S0 central, S1 downwind, S2 upwind).
+   integer(I4P), intent(in) :: k
+   integer(I4P)             :: c
+   integer(I4P), parameter  :: CLO(0:2) = [-1, 0, -2]
+   c = CLO(k)
+   endfunction TENO5_CLO_
 
    subroutine random_stencil(vp, vm)
    !< A random stencil pair: a smooth cubic, independent values, a jump (random place and height) on a cubic, or a kink.

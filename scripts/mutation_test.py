@@ -125,6 +125,14 @@ MUTANTS = [
     ('dr-right-state-mirror', 'src/lib/seth_nonpoly.F90', 'if (lm > 0) rm = dr_face(', 'dr_face(vm(2), vm(1), vm(0)', 'dr_face(vm(-1), vm(0), vm(1)'),
     # issue #6: the early exit of the self-contained kernels (THINC's downwind range)
     ('early-exit-thinc-downwind', 'src/lib/seth_nonpoly.F90', 'do c=1, merge(3_I4P, 2_I4P, thinc)', 'merge(3_I4P, 2_I4P, thinc)', 'merge(2_I4P, 2_I4P, thinc)'),
+    # issue #6: stencil targeting and the RBF fluxes (the row by mask, the sign of the s^2 rows, the sensor's c_r, its
+    # node range and s2, a coefficient of the generated C rows)
+    ('st-row-by-mask', 'src/lib/seth_z_teno_body.INC', 'r(side) = r(side) + ROWP(m,mr)*st(m)', 'ROWP(m,mr)', 'ROWP(m,7)'),
+    ('rbf-c-sign', 'src/lib/seth_z_teno_body.INC', '(ROWP(m,mr) + sr*ROWC(m,mr))', '+ sr*ROWC', '- sr*ROWC'),
+    ('rbf-sensor-cr', 'src/lib/seth_z_teno_body.INC', '! the sensor of Liang & Fu 2024', 'etamin/cr', 'etamin/(2._R_P*cr)'),
+    ('rbf-sensor-nodes', 'src/lib/seth_z_teno_body.INC', '! the sensor of Liang & Fu 2024', 'do m=-1, 1', 'do m=0, 1'),
+    ('rbf-s2-dropped', 'src/lib/seth_z_teno_body.INC', 'sr = s1 + s2*(1._R_P - gg)', 'sr = s1 + s2*(1._R_P - gg)', 'sr = s1'),
+    ('rbf-c-table', 'src/lib/seth_nonpoly_tables.F90', '-5._R_P/4._R_P', '1._R_P/5._R_P', '1._R_P/4._R_P'),  # mask 7's row
 ]
 
 

@@ -104,6 +104,9 @@ The interpolation kernels take the same arguments as the reconstruction ones; TE
 ```fortran
 call seth_teno5_dr   (vp, vm, eps, ct, t1, t2, rmu, rp, rm)  ! vp, vm(-5:6): TENO5-DR (Liang et al. 2022), one call per face
 call seth_teno5_thinc(vp, vm, eps, ct, beta, rmu, rp, rm)    ! vp, vm(-5:6): TENO5-THINC (Takagi et al. 2022)
+call seth_teno5_st   (vp, vm, eps, ct, rp, rm)                ! vp, vm(-2:3): stencil targeting (Liang & Fu 2024)
+call seth_teno5_rbf  (vp, vm, eps, ct, cr, s1, s2, rp, rm)    ! vp, vm(-2:3): Gaussian-RBF; s1 = alpha_1 dx, s2 = alpha_2 dx
+call seth_teno5_rbf_dr(vp, vm, eps, ct, cr, s1, s2, t1, t2, rmu, rp, rm) ! vp, vm(-5:6): Liang & Fu 2024's complete scheme
 ! the pieces, for a caller building its own composite (a stored-mask, two-pass variant)
 call seth_teno5_mask(v, eps, ct, m)                 ! v(-2:2) centred on a cell: m = delta_0 + 2 delta_1 + 4 delta_2
 z = seth_teno5_zeta(m)                              ! zeta of a mask (Liang et al. 2022, Eq. 17): 2, 1, -1 or 0
@@ -119,7 +122,9 @@ first-order guard of the overrides, $(f_{i+1}-f_i)(f_i-f_{i-1})\,r_\mu^2 \le$ `S
 the cell value ($r_\mu = 1$: the papers' form). The composite kernels read **twelve cells**, `-5..6`: a solver needs 6
 ghost cells and projects all twelve into the face's characteristic basis ([Conventions](./conventions)). The masks of
 the neighbouring cells are recomputed per face; `mp(c)` is the mask of cell `c` of the left-biased data, `mm(c)` of
-cell `c` of the mirrored right-biased data `vm(1-m)`. Verification: [Non-polynomial](/verification/nonpolynomial/).
+cell `c` of the mirrored right-biased data `vm(1-m)`. `cr = SETH_RBF_CR` (0.4), `s1 = SETH_RBF_ALPHA1*dx`,
+`s2 = SETH_RBF_ALPHA2*dx` (both 3): the RBF kernel's results depend on the length unit, and its validated range is
+$s \le 0.12$. Verification: [Non-polynomial](/verification/nonpolynomial/).
 
 ## Linear kernels
 

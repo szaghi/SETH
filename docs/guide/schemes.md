@@ -376,6 +376,30 @@ What it is, and what it is not:
   ratio $\psi = 2\lvert ab\rvert/(a^2+b^2)$ (for $\varepsilon = 0$, an identity): a continuous form of the switch of the
   hybrid schemes ([Hybrids](#hybrids)). ADAM's $S = 1$ (`weno-c-2`) never reaches the blend and is WENO1: not ported.
 
+## Non-polynomial TENO: TENO5-DR, TENO5-THINC, stencil targeting, Gaussian-RBF
+
+Four schemes of the TENO line ([issue #6](https://github.com/szaghi/SETH/issues/6)) keep TENO5's cutoff and use its
+flags, $\delta_k$ of each cell, the 3-bit mask $\delta_0 + 2\delta_1 + 4\delta_2$ of `seth_teno5_mask`:
+
+- **TENO5-DR** (Liang, Xiao, Shyy & Fu 2022) and **TENO5-THINC** (Takagi, Fu, Wakimura & Xiao 2022): a detector reads
+  $\zeta$ of the cells around the face (Eq. 17: 2 where both one-sided candidates are cut, 1 the downwind, $-1$ the
+  upwind) and, where a discontinuity sits inside the cell, replaces TENO5's state: by the face value of a
+  hyperbolic-tangent step through the cell (THINC, $\beta = 1.6$, Eq. 16) or by the two-steepness interpolation
+  $m + h\tanh(A + \operatorname{atanh}B)$, $A = 0.91$ or $1.23$ (DR, Eq. 31); both fall to the cell value where
+  $(f_{i+1}-f_i)(f_i-f_{i-1}) \le 10^{-15}$. The kernels `seth_teno5_dr`, `seth_teno5_thinc` read twelve cells,
+  $-5..6$ (6 ghost cells), and recompute the neighbours' flags per face ([Verification](/verification/nonpolynomial/)).
+- **Stencil targeting** (Liang & Fu 2024, §3.1): the mask selects one polynomial row, the widest stencil that avoids
+  the flagged cells: five points, the four points $-2..1$ ($3q_0/4 + q_2/4$) or $-1..2$ ($q_0/2 + q_1/2$), or one
+  candidate. Fourth order beside a jump where TENO5 is third (`seth_teno5_st`).
+- **Gaussian-RBF** (Liang & Fu 2024, Eqs. 25, 30–32): each row of stencil targeting plus $s^2$ times a correction
+  row (the Gaussian RBF expanded to $s^2 = \lambda^2\Delta x^2$), $s = s_1 + s_2(1 - g(m))$ from a sensor
+  (`seth_teno5_rbf`). The caller passes $s_k = \alpha_k \Delta x$ ($\alpha_1 = \alpha_2 = 3$ in the paper): the results
+  depend on the length unit, and the linear scheme grows waves with $\theta^2 < 30 s^2$; the validated range is
+  $s \le 0.12$ ([NP6](/verification/nonpolynomial/rbf)).
+- **The complete scheme** of Liang & Fu 2024 (`seth_teno5_rbf_dr`): the RBF rows with the DR override on top. Measured
+  piece by piece ([NP7](/verification/nonpolynomial/ablation)): the DR override buys the gain on the shock tubes, the
+  RBF term the gain on Shu–Osher, at an $s$ outside its validated range.
+
 ## Interpolation with WENO-Z and TENO
 
 `seth_wenoz<N>_interp` and `seth_teno<5|6>_interp` interpolate the face value from point values at the cell centres,
@@ -484,6 +508,7 @@ the central–WENO and central–TENO hybrids of the turbulence literature.
 | WENO-JS | `seth_weno{1,3,5,7,9}_js` (+ `_wr`, `_interp`, `_interp_wr`) | $S = 1..5$, width $S$ | $2S-1$ | `rmu` |
 | WENO-Z | `seth_wenoz{3,5,7,9}` (+ `_interp`) | $S = 2..5$, width $S$ | $2S-1$ | `p` |
 | TENO | `seth_teno5`, `seth_teno6` (+ `_interp`), `seth_teno5_opt`, `seth_teno5_az`, `seth_teno6_opt`, `seth_teno6_neno6`, `seth_teno8`, `seth_teno5_a`, `seth_teno8_a` | 3 to 6, incremental | 5, 6, 8-point 6 (5-opt 4, 6-opt 5, NENO6 4) | `ct` (TENO5-AZ: `ct`, `rmu`; -A: `cr`, `xi`, `a1`, `a2`, `rmu`) |
+| non-polynomial TENO | `seth_teno5_dr`, `seth_teno5_thinc`, `seth_teno5_rbf_dr` (bounds $-5:6$), `seth_teno5_st`, `seth_teno5_rbf`; pieces `seth_teno5_mask`, `seth_dr_detect`, `seth_thinc_detect`, `seth_dr_override`, `seth_thinc_override` | TENO5's | 5 (ST 4 beside a jump) | `ct`; DR `t1`, `t2`, `rmu`; THINC `beta`, `rmu`; RBF `cr`, `s1`, `s2` |
 | centred WENO | `seth_weno{4,6,8}_c` | WENO-JS ($S = 2..4$) blended with the central row on $2S$ cells | $2S$ | `eps`, `rmu` |
 | positivity | `seth_positivity_euler`, `seth_euler_admissible` | | | |
 

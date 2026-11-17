@@ -16,8 +16,8 @@ use seth
 use seth_test_parameters, only : EPS_ZT
 implicit none
 private
-public :: scheme_t, NSCHEMES, SCHEMES, FAM_JS, FAM_JS_INTERP, FAM_Z, FAM_TENO, FAM_C, VLO, VHI, WLO, WHI
-public :: reconstruct, extend
+public :: scheme_t, NSCHEMES, NALL, SCHEMES, FAM_JS, FAM_JS_INTERP, FAM_Z, FAM_TENO, FAM_C, VLO, VHI, WLO, WHI
+public :: reconstruct, extend, rbf_dx
 
 integer(I4P), parameter :: FAM_JS = 1, FAM_JS_INTERP = 2, FAM_Z = 3, FAM_TENO = 4, FAM_C = 5
 integer(I4P), parameter :: VLO = -5_I4P, VHI = 6_I4P !< Bounds of the test stencils (the composite kernels' -5:6).
@@ -35,8 +35,13 @@ type :: scheme_t
                                      !< the stencil of its smooth part (TENO5's), which the tests' grids are sized by.
 endtype scheme_t
 
-integer(I4P), parameter :: NSCHEMES = 34_I4P
-type(scheme_t), parameter :: SCHEMES(NSCHEMES) = [ &
+! the schemes 1..NSCHEMES are swept by every test; NSCHEMES+1..NALL are dispatched only when a test asks for them by
+! name: the stencil-targeted and Gaussian-RBF kernels of issue #6, whose shape parameter s = alpha dx needs the grid's
+! dx (rbf_dx, set by the Euler harness), which the sweeps of the order and property tests do not provide (with s
+! fixed while dx shrinks, s^2 C f is a first-order error by construction)
+integer(I4P), parameter :: NSCHEMES = 34_I4P, NALL = 38_I4P
+real(R_P)               :: rbf_dx = 0.01_R_P !< dx of the RBF kernels: s1 = SETH_RBF_ALPHA1 rbf_dx, s2 = ... ALPHA2.
+type(scheme_t), parameter :: SCHEMES(NALL) = [ &
    scheme_t('weno1_js',        FAM_JS,        1, 1._R_P, 1.e-6_R_P,  1._R_P), &
    scheme_t('weno3_js',        FAM_JS,        2, 3._R_P, 1.e-6_R_P,  1._R_P), &
    scheme_t('weno5_js',        FAM_JS,        3, 5._R_P, 1.e-6_R_P,  1._R_P), &
@@ -70,7 +75,11 @@ type(scheme_t), parameter :: SCHEMES(NSCHEMES) = [ &
    scheme_t('weno6_c',         FAM_C,         3, 6._R_P, 1.e-6_R_P,  1._R_P), &
    scheme_t('weno8_c',         FAM_C,         4, 8._R_P, 1.e-6_R_P,  1._R_P), &
    scheme_t('teno5_dr',        FAM_TENO,      3, 5._R_P, EPS_ZT, SETH_TENO5_CT, .false., .true.), &
-   scheme_t('teno5_thinc',     FAM_TENO,      3, 5._R_P, EPS_ZT, SETH_TENO5_CT, .false., .true.)]
+   scheme_t('teno5_thinc',     FAM_TENO,      3, 5._R_P, EPS_ZT, SETH_TENO5_CT, .false., .true.), &
+   scheme_t('teno5_st',        FAM_TENO,      3, 5._R_P, EPS_ZT, SETH_TENO5_CT), &
+   scheme_t('teno5_rbf',       FAM_TENO,      3, 5._R_P, EPS_ZT, SETH_TENO5_CT), &
+   scheme_t('teno5_st_dr',     FAM_TENO,      3, 5._R_P, EPS_ZT, SETH_TENO5_CT, .false., .true.), &
+   scheme_t('teno5_rbf_dr',    FAM_TENO,      3, 5._R_P, EPS_ZT, SETH_TENO5_CT, .false., .true.)]
 
 contains
    subroutine reconstruct(id, vp, vm, rp, rm, wrp, wrm, eps, par)
@@ -168,6 +177,15 @@ contains
       call seth_teno5_dr(vp, vm, e, q, SETH_DR_T1, SETH_DR_T2, 1._R_P, rp, rm)
    case('teno5_thinc') ! TENO5-THINC (Takagi et al. 2022)
       call seth_teno5_thinc(vp, vm, e, q, SETH_THINC_BETA, 1._R_P, rp, rm)
+   case('teno5_st')
+      call seth_teno5_st(vp(-2:3), vm(-2:3), e, q, rp, rm)
+   case('teno5_rbf')
+      call seth_teno5_rbf(vp(-2:3), vm(-2:3), e, q, SETH_RBF_CR, SETH_RBF_ALPHA1*rbf_dx, SETH_RBF_ALPHA2*rbf_dx, rp, rm)
+   case('teno5_st_dr') ! the complete scheme without the RBF term: stencil targeting and DR
+      call seth_teno5_rbf_dr(vp, vm, e, q, SETH_RBF_CR, 0._R_P, 0._R_P, SETH_DR_T1, SETH_DR_T2, 1._R_P, rp, rm)
+   case('teno5_rbf_dr') ! the complete scheme of Liang & Fu 2024
+      call seth_teno5_rbf_dr(vp, vm, e, q, SETH_RBF_CR, SETH_RBF_ALPHA1*rbf_dx, SETH_RBF_ALPHA2*rbf_dx, SETH_DR_T1, &
+                             SETH_DR_T2, 1._R_P, rp, rm)
    case default
       error stop 'reconstruct: unknown scheme'
    endselect

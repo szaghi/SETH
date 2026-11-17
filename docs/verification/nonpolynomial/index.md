@@ -21,4 +21,4 @@ harness carries that footprint since 2026-11-17, with every earlier result uncha
 | [NP7 Ablation](./ablation) | P | Seven schemes on every 1-D case (TENO5, ST, RBF, THINC, DR, ST+DR, RBF+DR): L1 error, overshoot, contact width, activations, limited faces; which piece buys what. |
 | [NP8 Length units](./units) | P | Shu–Osher on [0, 10] and rescaled to [0, 1] (E5): TENO5 equal to round-off, the RBF scheme's dependence on the length unit measured, and the s of every published case. |
 
-NP1, NP3 and NP4 are implemented (NP4 without E2–E4 yet); the other five are planned.
+All eight cases are implemented.

@@ -55,7 +55,7 @@ module seth_vv_euler
 !< - HYB_RANDOM: KEEP-PE or the nonlinear scheme at random faces (J3, conservation).
 !< `nflagged` and `nhybfaces` count the flagged and the evaluated faces.
 use seth
-use seth_test_schemes, only : reconstruct, VLO, VHI, SCHEMES
+use seth_test_schemes, only : reconstruct, VLO, VHI, SCHEMES, rbf_dx
 implicit none
 private
 public :: GAMMA, NG, PATH_SPLIT, PATH_INTERP, PATH_ROE, BC_PERIODIC, BC_TRANSMISSIVE, BC_REFLECTIVE, BC_INFLOW
@@ -206,6 +206,7 @@ contains
    real(R_P)                          :: u5(-2:2), v5(-2:2)
    integer(I4P)                       :: msl(3,-3:n+3), msr(3,-2:n+4), mpk(-3:3), mmk(-3:3), lpk, lmk
    integer(I4P)                       :: i, m, k
+   rbf_dx = h ! the RBF kernels' s = alpha dx (seth_test_schemes)
    call ghosts(q, n, bc)
    do i=1-NG, n+NG
       fn(:,i) = flux(q(:,i))

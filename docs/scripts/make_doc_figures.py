@@ -42,7 +42,7 @@ DPI = 110
 STYLE = dict(SCHEME_STYLE)  # swapped for SCHEME_STYLE_DARK while the dark twins are drawn (main)
 LABEL = {'weno1_js': 'WENO1-JS', 'weno3_js': 'WENO3-JS', 'weno5_js': 'WENO5-JS', 'weno7_js': 'WENO7-JS', 'weno9_js': 'WENO9-JS',
          'wenoz3': 'WENO-Z3', 'wenoz5': 'WENO-Z5', 'wenoz7': 'WENO-Z7', 'wenoz9': 'WENO-Z9', 'teno5': 'TENO5',
-         'teno6': 'TENO6', 'teno6_opt': 'TENO6-opt', 'teno6_neno6': 'TENO6-NENO6', 'teno5_opt': 'TENO5-opt', 'teno5_az': 'TENO5-AZ', 'teno8': 'TENO8', 'teno5_a': 'TENO5-A', 'teno8_a': 'TENO8-A', 'teno5_dr': 'TENO5-DR', 'teno5_thinc': 'TENO5-THINC',
+         'teno6': 'TENO6', 'teno6_opt': 'TENO6-opt', 'teno6_neno6': 'TENO6-NENO6', 'teno5_opt': 'TENO5-opt', 'teno5_az': 'TENO5-AZ', 'teno8': 'TENO8', 'teno5_a': 'TENO5-A', 'teno8_a': 'TENO8-A', 'teno5_dr': 'TENO5-DR', 'teno5_thinc': 'TENO5-THINC', 'teno5_st': 'TENO5-ST', 'teno5_rbf': 'TENO5-RBF', 'teno5_st_dr': 'TENO5-ST+DR', 'teno5_rbf_dr': 'TENO5-RBF+DR',
          'weno4_c': 'WENO4-C', 'weno6_c': 'WENO6-C', 'weno8_c': 'WENO8-C'}
 
 
@@ -482,6 +482,133 @@ class Figures:
                                   '(smooth cubics, independent values, jumps, kinks); *constant*: 1000 constants drawn '
                                   'in $[-10, 10]$.')
 
+    def nonpoly_census(self) -> None:
+        """seth_test_nonpoly, spec 17 (E7): the masks of TENO5's cutoff by data."""
+        if self.has('nonpoly-census.dat'):
+            body = []
+            for r in self.rows('nonpoly-census.dat'):
+                n = int(r[1])
+                body.append([r[0], f'{n:.0e}'.replace('e+0', 'e')] +
+                            [f'{int(c) / n:.2%}' if int(c) else '0' for c in r[2:10]])
+            self.table('nonpoly-census', ['data', 'stencils'] + [f'{m} ({m & 1}{m >> 1 & 1}{m >> 2 & 1})'
+                                                                 for m in range(8)], body,
+                       note='Mask $m = \\delta_0 + 2\\delta_1 + 4\\delta_2$, in parentheses '
+                            '$(\\delta_0\\delta_1\\delta_2)$; the fraction of the stencils.')
+
+    def nonpoly_st(self) -> None:
+        """seth_test_nonpoly, spec 14: stencil targeting's orders."""
+        if self.has('nonpoly-st.dat'):
+            v = {r[0]: r[1:] for r in self.rows('nonpoly-st.dat')}
+            body = [['smooth data (the generic $g$), left / right state', f"{float(v['orders-smooth'][0]):.3f} / "
+                     f"{float(v['orders-smooth'][1]):.3f}", 'equal to `seth_linear5` within '
+                     f"{fmt(float(v['st-minus-linear5'][0]))}"],
+                    ['beside a jump, mask (1,1,0)', f"{float(v['orders-jump'][0]):.3f}",
+                     f"TENO5: {float(v['orders-jump'][1]):.3f}"],
+                    ['across a unit jump', '—', f"overshoot {fmt(float(v['overshoot'][0]))}"],
+                    ['RBF, $s = 3\\,dx$, left / right state', f"{float(v['orders-smooth'][2]):.3f} / "
+                     f"{float(v['orders-smooth'][3]):.3f}", '$\\alpha$ fixed, $dx \\to 0$']]
+            self.table('nonpoly-st', ['case', 'observed order', ''], body)
+
+    def nonpoly_adr(self) -> None:
+        """seth_test_nonpoly, spec 18 (G6, E6): the long-wave growth of the linear RBF row, against the prediction."""
+        if self.has('nonpoly-adr.dat'):
+            txt = (self.data / 'nonpoly-adr.dat').read_text().splitlines()
+            rows = [ln.split() for ln in txt if ln and not ln.startswith('#')]
+            valid = [ln.split()[-1] for ln in txt if ln.startswith('# validated-s')]
+            body = [[fmt(float(r[0])), fmt(float(r[0]) ** 0.5), f'{float(r[1]):.4f}', f'{float(r[2]):.4f}',
+                     fmt(float(r[3])), fmt(float(r[4]))] for r in rows]
+            note = (f'The largest $s$ whose peak stays at or below $2\\cdot10^{{-4}}$ (TENO6\'s): {valid[0]}.'
+                    if valid else '')
+            self.table('nonpoly-adr', ['$s^2$', '$s$', 'band edge $\\theta$', 'predicted $\\sqrt{30}\\,s$',
+                                       'peak of Im $\\tilde\\theta$', 'predicted $200 s^6/3$'], body, note=note)
+
+    def nonpoly_advection(self) -> None:
+        """seth_vv_nonpoly, sections 3-4: N4, N6 (the halo), E2 (contact spreading), E3 (smooth gradients)."""
+        names = ['teno5', 'teno5_dr', 'teno5_thinc']
+        if self.has('nonpoly-halo.dat'):
+            body = [[label(r[0]), r[1], fmt(float(r[2])), 'yes' if r[3] == 'T' else '**no**',
+                     'yes' if r[4] == 'T' else '**no**'] for r in self.rows('nonpoly-halo.dat')]
+            self.table('nonpoly-halo', ['scheme', 'states overridden (block 1)', 'sum of $u$: relative change',
+                                        'two blocks, 6 ghost cells: bitwise', 'two blocks, 5 ghost cells: differs'],
+                       body)
+        if self.has('nonpoly-e2.dat'):
+            d = self.load('nonpoly-e2.dat')
+            self.table('nonpoly-e2', ['period'] + [label(n) for n in names],
+                       [[str(int(r[0]))] + [str(int(x)) for x in r[1:]] for r in d],
+                       note='Cells whose value lies between 5 % and 95 % of the unit jump, both jumps of the square '
+                            'wave, $N = 100$, CFL 0.4.')
+            fig, ax = plt.subplots(figsize=(6.4, 3.4))
+            for j, n in enumerate(names):
+                c, mk = style(n)
+                ax.plot(d[:, 0], d[:, j + 1], '-', color=c, marker=mk, ms=4, lw=1.2, label=label(n))
+            ax.set_xlabel('periods')
+            ax.set_ylabel('cells across the two jumps')
+            ax.set_ylim(0, None)
+            ax.grid(alpha=0.3)
+            ax.legend(fontsize=8)
+            ax.set_title('E2: a square wave advected 10 periods, $N = 100$', fontsize=10)
+            fig.tight_layout()
+            self.save(fig, 'nonpoly-e2')
+        if self.has('nonpoly-e3.dat'):
+            d = self.load('nonpoly-e3.dat')
+            self.table('nonpoly-e3', ['gradient width (cells)'] + [f'$L_1$ {label(n)}' for n in names],
+                       [[f'{r[0]:g}'] + [fmt(x) for x in r[1:]] for r in d],
+                       note='A smooth periodic plateau, $0.5(\\tanh((x - 0.25)/(w h)) - \\tanh((x - 0.75)/(w h)))$, '
+                            'advected one period, $N = 100$.')
+
+    def nonpoly_static(self) -> None:
+        """seth_test_nonpoly, spec 19: Liang et al. 2022's static tests, where each detector fires."""
+        if self.has('nonpoly-static.dat'):
+            act: dict[tuple[str, str], dict[str, list[str]]] = {}
+            for r in self.rows('nonpoly-static.dat'):
+                act.setdefault((r[0], r[1]), {})[r[2]] = r[3:]
+            body = []
+            for (case, n), d in act.items():
+                dr, th = d.get('dr', []), d.get('thinc', [])
+                body.append([f'({case})', n, str(len(dr)), ' '.join(f'{float(x):.3f}' for x in dr) or '—',
+                             str(len(th)), ' '.join(f'{float(x):.3f}' for x in th) or '—'])
+            self.table('nonpoly-static', ['test', '$N$', 'DR', 'where ($x$)', 'THINC', 'where ($x$)'], body)
+
+    def nonpoly_ablation(self) -> None:
+        """seth_vv_nonpoly, sections 5-6: N5, the ablation, and E5, the length unit."""
+        if self.has('nonpoly-ablation.dat'):
+            rows = self.rows('nonpoly-ablation.dat')
+            cases = list(dict.fromkeys(r[0] for r in rows))
+            schemes = list(dict.fromkeys(r[1] for r in rows))
+            val = {(r[0], r[1]): r for r in rows}
+            body = []
+            for sch in schemes:
+                line = [label(sch)]
+                for c in cases:
+                    r = val[(c, sch)]
+                    line.append(fmt(float(r[2])) + ('' if r[4] == 'T' else ' **not positive**'))
+                line.append(val[('blast', sch)][3] if ('blast', sch) in val else '—')
+                body.append(line)
+            self.table('nonpoly-ablation', ['scheme'] + [f'$L_1(\\rho)$ {self.CASE_NAMES.get(c, c)}' for c in cases]
+                       + ['blast: faces limited'], body,
+                       note='Sod, Lax: $N = 200$ against the exact solution; Shu–Osher: $N = 200$ on $[-5, 5]$ against '
+                            'WENO5-JS on 3200 cells; blast waves: $N = 400$, the positivity limiter on, against WENO5-JS '
+                            'on 6400 cells. The RBF kernels with $s = 3\\,\\Delta x$ (Liang & Fu\'s $\\alpha = 3$): '
+                            '0.15 on Shu–Osher, outside the validated range $s \\le 0.12$.')
+        if self.has('nonpoly-units.dat'):
+            body = [[label(r[0]), fmt(float(r[1])), f'{float(r[2]):.3f}', f'{float(r[3]):.4f}']
+                    for r in self.rows('nonpoly-units.dat')]
+            self.table('nonpoly-units', ['scheme', 'max density difference', '$s$ on $[-5, 5]$', '$s$ scaled by 1/8'],
+                       body)
+
+    def nonpoly_e6(self) -> None:
+        """seth_vv_nonpoly, section 7 (E6): the growth of a sine over 100 periods under the RBF scheme."""
+        if self.has('nonpoly-e6.dat'):
+            body = []
+            for r in self.rows('nonpoly-e6.dat'):
+                s = float(r[3])
+                body.append([r[0], r[1], r[2], f'{s:.3f}' + ('' if s <= 0.12 else ' (outside)'), f'{float(r[4]):.3e}',
+                             f'{float(r[5]):.3e}', f'{float(r[6]):.3e}'])  # signed: a negative rate is a decay
+            self.table('nonpoly-e6', ['$\\lambda$', '$N$', 'CFL', '$s$', 'growth rate, RBF', 'growth rate, TENO5',
+                                      'predicted $\\lambda$ term'], body,
+                       note='$\\sin 2\\pi x$ advected 100 periods, SSP-RK3; the growth rate is $\\log(A(t)/A(0))/t$; '
+                            'the prediction is the $\\lambda$ term of Eq. 29, $\\Delta x^5 k^4 \\lambda^2/2$.')
+
     CASE_NAMES = {'sod': 'Sod', 'lax': 'Lax', 'shu-osher': 'Shu–Osher', 'blast': 'blast waves'}
 
     def nonpoly_solver(self) -> None:
@@ -727,6 +854,13 @@ def main() -> int:
         'weno-c': f.weno_c,
         'nonpoly-flags': f.nonpoly_flags,
         'nonpoly-solver': f.nonpoly_solver,
+        'nonpoly-census': f.nonpoly_census,
+        'nonpoly-st': f.nonpoly_st,
+        'nonpoly-adr': f.nonpoly_adr,
+        'nonpoly-advection': f.nonpoly_advection,
+        'nonpoly-static': f.nonpoly_static,
+        'nonpoly-ablation': f.nonpoly_ablation,
+        'nonpoly-e6': f.nonpoly_e6,
         'convergence': lambda: f.convergence('convergence', 'convergence.dat',
                                              'whole-domain operator error, Henrick field (critical points included)',
                                              '$L_\\infty(D - u\')$'),
