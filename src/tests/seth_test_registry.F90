@@ -18,7 +18,7 @@ do id=1, NSCHEMES
       if (SCHEMES(id)%name == SCHEMES(j)%name) then ; print '(A)', 'duplicate '//SCHEMES(id)%name ; passed = .false. ; endif
    enddo
    do n_=1, 200
-      call random_number(vp) ; call random_number(vm)
+      call random_number(vp(WLO:WHI)) ; call random_number(vm(WLO:WHI)) ; call extend(vp) ; call extend(vm)
       call reconstruct(id, vp, vm, rp, rm)
       call reconstruct(id, vp, vm, rp2, rm2, wrp, wrm)
       if (rp /= rp2 .or. rm /= rm2) then

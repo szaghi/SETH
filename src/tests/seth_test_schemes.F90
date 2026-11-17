@@ -3,21 +3,25 @@ module seth_test_schemes
 !< SETH tests: the registry of every scheme and one dispatch, so that each test sweeps all of them.
 !<
 !< Every kernel reconstructs the two states at one face from two stencils with bounds 1-s:s (cells by offset from the
-!< face). Here the stencils are always passed as `v(-4:5)` (the widest, WENO-9) and sliced to the scheme's bounds, so a
-!< test writes its data once for all schemes. `reconstruct` calls the scheme's kernel with its default parameters, or
-!< with the `eps`/`par` given (`par`: rmu for WENO-JS and the centred WENO, p for WENO-Z, C_T for TENO); `wrp`/`wrm`, when present, come
-!< from the `_wr` kernel (WENO-JS only). `interp` marks the interpolations (point values at the cell centres instead
-!< of cell averages): WENO-JS (family FAM_JS_INTERP), WENO-Z and TENO (their own families, so that the family-driven
-!< expectations apply to them too).
+!< face). Here the stencils are always passed as `v(-5:6)` (VLO:VHI, the footprint of the composite non-polynomial
+!< kernels of issue #6, which read the neighbours' flags) and sliced to the scheme's bounds, so a test writes its data
+!< once for all schemes. WLO:WHI = -4:5 is the widest polynomial stencil (WENO-9): the generators of frozen data (random
+!< draws, counts of cases, whole-stencil maxima) loop on it and extend the two outer cells by constant continuation
+!< (`extend`), so that every result written before the widening is unchanged. `reconstruct` calls the scheme's kernel
+!< with its default parameters, or with the `eps`/`par` given (`par`: rmu for WENO-JS and the centred WENO, p for
+!< WENO-Z, C_T for TENO); `wrp`/`wrm`, when present, come from the `_wr` kernel (WENO-JS only). `interp` marks the
+!< interpolations (point values at the cell centres instead of cell averages): WENO-JS (family FAM_JS_INTERP), WENO-Z
+!< and TENO (their own families, so that the family-driven expectations apply to them too).
 use seth
 use seth_test_parameters, only : EPS_ZT
 implicit none
 private
-public :: scheme_t, NSCHEMES, SCHEMES, FAM_JS, FAM_JS_INTERP, FAM_Z, FAM_TENO, FAM_C, VLO, VHI
-public :: reconstruct
+public :: scheme_t, NSCHEMES, SCHEMES, FAM_JS, FAM_JS_INTERP, FAM_Z, FAM_TENO, FAM_C, VLO, VHI, WLO, WHI
+public :: reconstruct, extend
 
 integer(I4P), parameter :: FAM_JS = 1, FAM_JS_INTERP = 2, FAM_Z = 3, FAM_TENO = 4, FAM_C = 5
-integer(I4P), parameter :: VLO = -4_I4P, VHI = 5_I4P !< Bounds of the test stencils.
+integer(I4P), parameter :: VLO = -5_I4P, VHI = 6_I4P !< Bounds of the test stencils (the composite kernels' -5:6).
+integer(I4P), parameter :: WLO = -4_I4P, WHI = 5_I4P !< Bounds of the widest polynomial stencil (WENO-9).
 
 type :: scheme_t
    character(16) :: name   = ''      !< Kernel name without the seth_ prefix.
@@ -166,4 +170,11 @@ contains
       wrp = -1._R_P ; wrm = -1._R_P ! no weights ratio for this family
    endif
    endsubroutine reconstruct
+
+   pure subroutine extend(v)
+   !< Constant continuation of a stencil written on WLO:WHI to VLO:VHI (the outer cells copy the nearest written one).
+   real(R_P), intent(inout) :: v(VLO:VHI) !< Stencil, written on WLO:WHI.
+   v(VLO:WLO-1) = v(WLO)
+   v(WHI+1:VHI) = v(WHI)
+   endsubroutine extend
 endmodule seth_test_schemes

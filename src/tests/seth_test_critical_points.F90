@@ -130,7 +130,7 @@ contains
       call reconstruct(id, um, um, rp0, rm0, eps=EPS_ZT, par=par)
       err(1,j) = abs((rp1 - rp0)/h) ! f'(0) = 0
       err(2,j) = abs((rm1 - rm0)/h)
-      flo(j) = FLOOR_*max(maxval(abs(up)), maxval(abs(um)))/h
+      flo(j) = FLOOR_*max(maxval(abs(up(WLO:WHI))), maxval(abs(um(WLO:WHI))))/h ! WLO:WHI: the floor as before -5:6
    enddo
    do side=1, 2
       o(side) = 99._R_P ! exact to round-off on every h

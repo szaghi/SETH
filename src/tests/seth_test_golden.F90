@@ -136,7 +136,7 @@ contains
 
    subroutine stencils(vp, vm)
    !< NST deterministic stencil pairs, exact in binary: 16 smooth cubics with dyadic coefficients, 20 jumps (each cell
-   !< boundary, two shapes; VLO: constants), 12 scaled (a cubic with a jump times powers of 2 spanning the kind's range:
+   !< boundary of WLO:WHI, two shapes; WLO: constants), 12 scaled (a cubic with a jump times powers of 2 spanning the kind's range:
    !< 2^-498 .. 2^96, about 1e-150 .. 1e29, in R8P; seth_test_parameters' GOLDEN_SCALE_*),
    !< 16 rough (an integer LCG).
    real(R_P), intent(out) :: vp(VLO:VHI,NST), vm(VLO:VHI,NST)
@@ -151,7 +151,7 @@ contains
          vm(m,k) = -0.5_R_P + (j/16._R_P)*m + (j/128._R_P)*m*m - (j/1024._R_P)*m**3
       enddo
    enddo
-   do j=VLO, VHI ! jumps between cells j-1 and j, both orientations (j = VLO: the constant stencils)
+   do j=WLO, WHI ! jumps between cells j-1 and j, both orientations (j = WLO: the constant stencils)
       k = k + 1
       do m=VLO, VHI
          vp(m,k) = merge(1._R_P, 0._R_P, m >= j)
@@ -174,10 +174,11 @@ contains
    state = 20261115_I8P
    do j=1, 16 ! rough: a 31-bit LCG (Park-Miller), the same numbers on every compiler
       k = k + 1
-      do m=VLO, VHI
+      do m=WLO, WHI
          state = mod(16807_I8P*state, 2147483647_I8P) ; vp(m,k) = real(state, R_P)/2147483647._R_P - 0.5_R_P
          state = mod(16807_I8P*state, 2147483647_I8P) ; vm(m,k) = real(state, R_P)/2147483647._R_P - 0.3_R_P
       enddo
+      call extend(vp(:,k)) ; call extend(vm(:,k))
    enddo
    if (k /= NST) error stop 'stencils: count mismatch'
    endsubroutine stencils

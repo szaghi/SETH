@@ -2,10 +2,10 @@
 module seth_vv_euler
 !< SETH verification: a minimal 1-D Euler solver around the SETH kernels (test harness, not library API).
 !<
-!< Ideal gas, gamma = 1.4, conservative variables q = (rho, rho u, E) on N cells of width h with NG = 5 ghost cells
-!< (WENO-9), point values at the cell centres (conservative finite differences: the fluxes at the faces, du/dt =
-!< -(F_{i+1/2} - F_{i-1/2})/h). Three space discretizations, the two ways SETH's kernels are used and a variant of the
-!< first:
+!< Ideal gas, gamma = 1.4, conservative variables q = (rho, rho u, E) on N cells of width h with NG = 6 ghost cells
+!< (the -5:6 footprint of the composite kernels of issue #6; WENO-9 needs 5), point values at the cell centres
+!< (conservative finite differences: the fluxes at the faces, du/dt = -(F_{i+1/2} - F_{i-1/2})/h). Three space
+!< discretizations, the two ways SETH's kernels are used and a variant of the first:
 !<
 !< - PATH_SPLIT, the reconstruction kernels: flux splitting (Shu & Osher 1989; Jiang & Shu 1996) on characteristic
 !<   variables. At each face the Roe-averaged left and right eigenvectors L, R project the stencil's states and fluxes,
@@ -65,7 +65,7 @@ public :: SENS_TENO, SENS_REN, SENS_LCR, SENS_TAU, hyb_sensor
 public :: HYB_NONE, HYB_COST, HYB_KEP, HYB_LEFT_KEP, HYB_RANDOM, hybrid, hyb_buffer, hyb_split, nflagged, nhybfaces
 
 real(R_P),    parameter :: GAMMA = 1.4_R_P
-integer(I4P), parameter :: NG = 5_I4P
+integer(I4P), parameter :: NG = 6_I4P
 integer(I4P), parameter :: PATH_SPLIT = 1, PATH_INTERP = 2, PATH_ROE = 3
 integer(I4P), parameter :: BC_PERIODIC = 1, BC_TRANSMISSIVE = 2, BC_REFLECTIVE = 3, BC_INFLOW = 4
 ! f'' h^2 and f'''' h^4 at the face from the node fluxes of cells -2..3 (exact rationals)

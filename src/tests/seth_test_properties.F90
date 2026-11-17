@@ -205,14 +205,15 @@ contains
    if (present(rough)) y = 1._R_P
    if (y < 0.5_R_P) then
       call random_number(cf) ; cf = cf - 0.5_R_P
-      do m=VLO, VHI
+      do m=WLO, WHI
          vp(m) = 1._R_P + cf(1)*m + cf(2)*m*m*0.1_R_P + cf(3)*m**3*0.01_R_P
          vm(m) = 2._R_P - cf(1)*m + cf(0)*m*m*0.1_R_P
       enddo
    else
-      call random_number(vp) ; call random_number(vm)
-      vp = vp - 0.5_R_P ; vm = vm - 0.3_R_P
+      call random_number(vp(WLO:WHI)) ; call random_number(vm(WLO:WHI))
+      vp(WLO:WHI) = vp(WLO:WHI) - 0.5_R_P ; vm(WLO:WHI) = vm(WLO:WHI) - 0.3_R_P
    endif
+   call extend(vp) ; call extend(vm) ! the draws and the maxima of the stencils as before the widening to VLO:VHI
    endsubroutine stencil
 
    pure function poly(cf, deg, x) result(y)
