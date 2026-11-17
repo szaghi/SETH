@@ -109,6 +109,7 @@ FU_CT = F('5e-4')
 # dimension (1e-3 in several)
 FU19_BETA33 = {(1, 1): 22, (1, 2): -73, (1, 3): 29, (2, 2): 61, (2, 3): -49, (3, 3): 10}
 FU19_EPS_1D = F('1e-4')
+FU19_EPS_MD = F('1e-3')
 FU19_STENCILS = [[-2, -1, 0], [-1, 0, 1], [0, 1, 2], [1, 2, 3]]  # S0-S2 the TENO5 candidates, S3 of Eq. (4.1)
 # Ducros et al. 1999, Eq. (22): Phi = (div u)^2/((div u)^2 + |omega|^2 + eps), omega = curl u
 
@@ -218,11 +219,11 @@ def check_teno5_a(teno: str) -> None:
 def check_sensor_teno(sensors: str) -> None:
     if scalar(sensors, 'SETH_SENSOR_TENO_CT') != FU_CT:
         fail(f'SETH_SENSOR_TENO_CT differs from Fu 2023 Eq. (23) ({FU_CT})')
-    body = re.search(r'subroutine seth_sensor_teno\((.*?)endsubroutine seth_sensor_teno', sensors, re.S)
+    body = re.search(r'subroutine seth_sensor_teno_eps\((.*?)endsubroutine seth_sensor_teno_eps', sensors, re.S)
     power = body and re.search(r'g\(k\) = (\(g\(k\)\*g\(k\)\)(?:\*\(g\(k\)\*g\(k\)\))*)', body.group(1))
     q = power.group(1).count('g(k)') if power else 0
     if q != FU_Q:
-        fail(f'seth_sensor_teno raises gamma to the power {q}, Fu 2023 Eq. (21) has q = {FU_Q}')
+        fail(f'seth_sensor_teno_eps raises gamma to the power {q}, Fu 2023 Eq. (21) has q = {FU_Q}')
     print('  Fu 2023: TENO detector q and C_T checked')
 
 
@@ -256,21 +257,25 @@ def quadratic_form(expr: str, cells: list[int]) -> list[list[Fr]]:
 
 
 def check_sensor_teno_indicators(sensors: str) -> None:
-    body = re.search(r'subroutine seth_sensor_teno\((.*?)endsubroutine seth_sensor_teno', sensors, re.S).group(1)
+    body = re.search(r'subroutine seth_sensor_teno_eps\((.*?)endsubroutine seth_sensor_teno_eps', sensors, re.S).group(1)
     for k, cells in enumerate(FU19_STENCILS):
         m = re.search(rf'beta\({k + 1}\) = ([^!\n]+)', body)
         if m is None:
-            fail(f'seth_sensor_teno: beta({k + 1}) not found')
+            fail(f'seth_sensor_teno_eps: beta({k + 1}) not found')
             continue
         seth = quadratic_form(m.group(1), cells)
         if seth != _zt.indicator(cells):
-            fail(f'seth_sensor_teno beta({k + 1}) is not the Jiang-Shu indicator of cells {cells} on cell i')
+            fail(f'seth_sensor_teno_eps beta({k + 1}) is not the Jiang-Shu indicator of cells {cells} on cell i')
     printed = as_matrix(FU19_BETA33, [1, 2, 3])
     if any(printed[a][b] != 3 * _zt.indicator([1, 2, 3])[a][b] for a in range(3) for b in range(3)):
         fail('Fu 2019 Eq. (4.1) differs from the Jiang-Shu indicator of cells i+1..i+3')
-    eps = re.search(r'parameter\s*::\s*EPS\s*=\s*([^!\n]+)', body)
-    if eps is None or Fr(eps.group(1).strip().replace('_R_P', '')) != FU19_EPS_1D:
-        fail(f'seth_sensor_teno eps is not Fu 2019\'s one-dimensional {FU19_EPS_1D}')
+    if scalar(sensors, 'SETH_SENSOR_TENO_EPS_1D') != FU19_EPS_1D:
+        fail(f'SETH_SENSOR_TENO_EPS_1D is not Fu 2019\'s one-dimensional {FU19_EPS_1D}')
+    if scalar(sensors, 'SETH_SENSOR_TENO_EPS_MD') != FU19_EPS_MD:
+        fail(f'SETH_SENSOR_TENO_EPS_MD is not Fu 2019\'s multi-dimensional {FU19_EPS_MD}')
+    if not re.search(r'subroutine seth_sensor_teno\(.*?call seth_sensor_teno_eps\(v, rmu, thr, SETH_SENSOR_TENO_EPS_1D, s\)'
+                     r'.*?endsubroutine seth_sensor_teno\b', sensors, re.S):
+        fail('seth_sensor_teno is not seth_sensor_teno_eps with SETH_SENSOR_TENO_EPS_1D')
     print('  Fu 2019: the detector\'s four indicators (Eq. (4.1)) and its one-dimensional eps checked')
 
 

@@ -56,7 +56,7 @@ which cite the paper; the provenance of every formula is in `notes/m2-sources.md
   Comput. Phys.* 26:973. doi:10.4208/cicp.oa-2018-0176 — the TENO-based detector, the original, §4.1–4.2, Eqs.
   (4.1)–(4.4): the four three-point stencils, $\beta_{3,3}$, $q = 6$, $C_T = 5\cdot10^{-4}$, $\varepsilon = 10^{-4}$
   in one dimension and $10^{-3}$ in several (read in the paper; SETH's indicators, evaluated from its source, and its
-  one-dimensional $\varepsilon$ checked by `scripts/check_papers.py`).
+  two values of $\varepsilon$, `SETH_SENSOR_TENO_EPS_1D` and `_MD`, checked by `scripts/check_papers.py`).
 - Fu, L. (2023). Review of the high-order TENO schemes for compressible gas dynamics and turbulence. *Arch. Comput.
   Methods Eng.* 30:2493. doi:10.1007/s11831-022-09877-7 — the TENO-based detector, §3.4, Eqs. (21)–(23): $q = 6$,
   $C_T = 5\cdot10^{-4}$ (read in the paper; checked by `scripts/check_papers.py`); its $\varepsilon$ is not given there

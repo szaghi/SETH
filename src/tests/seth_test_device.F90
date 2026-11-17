@@ -2,7 +2,7 @@
 program seth_test_device
 !< SETH test: every kernel executed on the device (OpenACC) agrees with the same kernel on the host.
 !<
-!< Each of the 49 cases runs one kernel inside `!$acc parallel loop` over N deterministic stencils (smooth cubics,
+!< Each of the 50 cases runs one kernel inside `!$acc parallel loop` over N deterministic stencils (smooth cubics,
 !< jumps, an integer LCG), then the same loop on the host, and compares: states within 1e-13 of the stencil's
 !< magnitude, weights ratios within 1e-9 (the device and the host compile the kernel separately and may contract
 !< multiply-adds differently; the tolerances are those of seth_test_golden, for the same reasons). One case calls
@@ -15,7 +15,7 @@ use seth_test_parameters, only : EPS_ZT, POS_RANGE_EXP, POSITIVITY_FLOOR, TOL_DE
                                  TOL_DEVICE_WR
 implicit none
 integer(I4P), parameter :: N = 4096_I4P
-integer(I4P), parameter :: NK = 49_I4P
+integer(I4P), parameter :: NK = 50_I4P
 character(26), parameter :: NAMES(NK) = [ &
    'seth_weno1_js             ', &
    'seth_weno1_js_wr          ', &
@@ -65,7 +65,8 @@ character(26), parameter :: NAMES(NK) = [ &
    'seth_sensor_lcr           ', &
    'seth_weno4_c              ', &
    'seth_weno6_c              ', &
-   'seth_weno8_c              ']
+   'seth_weno8_c              ', &
+   'seth_sensor_teno_eps      ']
 real(R_P)               :: v(-4:5,N), w(-4:5,N), rp(N), rm(N), wrp(N), wrm(N), hp(N), hm(N), hwp(N), hwm(N)
 real(R_P)               :: mag, ds, dw, worst_s, worst_w
 integer(I4P)            :: k, i, nbit, nfail
@@ -880,6 +881,24 @@ do k=1, NK
       do i=1, N
          a = v(-3:4,i) ; b = w(-3:4,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno8_c(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i))
+      enddo
+      endblock
+   case(50) ! seth_sensor_teno_eps with Fu's multi-dimensional eps, 1e-3: the sensor value in rp, rm = rp
+      block
+      real(R_P) :: a(-2:3), b(-2:3), rmu
+      rmu = 1._R_P
+      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      do i=1, N
+         a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
+         call seth_sensor_teno_eps(a, 1._R_P/max(maxval(abs(a)), 1._R_P), SETH_SENSOR_TENO_CT, SETH_SENSOR_TENO_EPS_MD, rp(i))
+         rm(i) = rp(i)
+      enddo
+      hp = rp ; hm = rm ; hwp = wrp ; hwm = wrm
+
+      do i=1, N
+         a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
+         call seth_sensor_teno_eps(a, 1._R_P/max(maxval(abs(a)), 1._R_P), SETH_SENSOR_TENO_CT, SETH_SENSOR_TENO_EPS_MD, rp(i))
+         rm(i) = rp(i)
       enddo
       endblock
    endselect

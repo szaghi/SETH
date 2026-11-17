@@ -113,6 +113,7 @@ branch of a hybrid. Bounds as the scheme's (`1-S:S`; TENO6 and linear6 `-2:3`).
 
 ```fortran
 call seth_sensor_teno(v, rmu, thr, s)   ! v(-2:3); thr = SETH_SENSOR_TENO_CT  (5e-4)
+call seth_sensor_teno_eps(v, rmu, thr, eps, s) ! eps = SETH_SENSOR_TENO_EPS_1D (1e-4) or _MD (1e-3)
 call seth_sensor_ren (v, rmu, thr, s)   !          thr = SETH_SENSOR_REN_PSIC (0.3)
 call seth_sensor_lcr (v, rmu, thr, s)   !          thr = SETH_SENSOR_LCR_PSIC (0.4)
 call seth_sensor_tau (v, rmu, thr, s)   !          thr = SETH_SENSOR_TAU_ETA  (0.5)
@@ -124,8 +125,10 @@ published continuous form, usable as a blending weight. `rmu` multiplies the dat
 caller reduces once, every sensor is invariant to the scale and offset of the data; the per-stencil form is not, and
 under an offset it changes decisions. See [H1](/verification/hybrids/sensors).
 
-`seth_sensor_teno`'s regulariser is $\varepsilon = 10^{-4}$, Fu's (2019) one-dimensional value; Fu uses $10^{-3}$ in
-several dimensions, and the kernel has no argument for it.
+`seth_sensor_teno`'s regulariser is $\varepsilon$ = `SETH_SENSOR_TENO_EPS_1D` = $10^{-4}$, Fu's (2019) one-dimensional
+value; `seth_sensor_teno_eps` takes it as an argument, and Fu uses `SETH_SENSOR_TENO_EPS_MD` = $10^{-3}$ in several
+dimensions. $\varepsilon$ is absolute: with `rmu = 1` it sets the smallest jump flagged, about 0.005 of the data's
+units in one dimension and 0.017 in several.
 
 ## Central fluxes and shock sensors
 

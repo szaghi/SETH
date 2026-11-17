@@ -443,7 +443,8 @@ the central–WENO and central–TENO hybrids of the turbulence literature.
   per state: 0.095 ns per face for `seth_linear5` on the RTX 4070, a tenth of WENO5-JS. A linear background is not a
   central scheme: the upwind ones keep their dissipation; the gain is the cost of the weights and, for systems, of the
   characteristic projection the caller can skip where the sensor says smooth;
-- **the sensors**, the switch: `seth_sensor_teno` (Fu's TENO-based detector), `seth_sensor_ren` (Ren et al.),
+- **the sensors**, the switch: `seth_sensor_teno` (Fu's TENO-based detector; `seth_sensor_teno_eps` with its
+  regulariser explicit), `seth_sensor_ren` (Ren et al.),
   `seth_sensor_lcr` (Li, Chen & Ren 2022) and `seth_sensor_tau` (Wan & Xia 2022), each on the six values around a
   face, returning $s \in [0, 1]$ with $s = 1$ where the published test says smooth. On a sine they judge smooth up to
   $k = 0.64$, $0.04$, $2.07$ and $1.36$ ([H1](/verification/hybrids/sensors): the paper's 0.64 and 2.06 reproduced).

@@ -13,6 +13,9 @@ module seth_sensors
 !<                                            2022, Eqs. (55)-(57)): four three-point stencils i-2..i, i-1..i+1, i..i+2,
 !<                                            i+1..i+3, Jiang-Shu indicators on cell i, gamma_k = (beta_k + 1e-4)^-6,
 !<                                            normalised; smooth iff every chi_k > thr = 5e-4. s = min(1, min chi/thr).
+!<    call seth_sensor_teno_eps(v, rmu, thr, eps, s)   the same with its regulariser eps explicit: seth_sensor_teno
+!<                                            is it with eps = SETH_SENSOR_TENO_EPS_1D = 1e-4, Fu's one-dimensional value;
+!<                                            SETH_SENSOR_TENO_EPS_MD = 1e-3 is Fu's value in several dimensions.
 !<    call seth_sensor_ren(v, rmu, thr, s)    Ren et al.'s ratio (Li, Chen & Ren, Eqs. (48)-(53)): psi_j =
 !<                                            (2 a b + e)/(a^2 + b^2 + e), a = |v_j - v_{j-1}|, b = |v_j - v_{j+1}|,
 !<                                            the minimum over j = i-1 .. i+2, e = 0.9 thr/(1 - 0.9 thr) xi^2,
@@ -29,22 +32,37 @@ module seth_sensors
 use penf, only : I4P, R_P
 implicit none
 private
-public :: SETH_SENSOR_TENO_CT, SETH_SENSOR_REN_PSIC, SETH_SENSOR_LCR_PSIC, SETH_SENSOR_TAU_ETA
-public :: seth_sensor_teno, seth_sensor_ren, seth_sensor_lcr, seth_sensor_tau
+public :: SETH_SENSOR_TENO_CT, SETH_SENSOR_TENO_EPS_1D, SETH_SENSOR_TENO_EPS_MD
+public :: SETH_SENSOR_REN_PSIC, SETH_SENSOR_LCR_PSIC, SETH_SENSOR_TAU_ETA
+public :: seth_sensor_teno, seth_sensor_teno_eps, seth_sensor_ren, seth_sensor_lcr, seth_sensor_tau
 
-real(R_P), parameter :: SETH_SENSOR_TENO_CT  = 5.e-4_R_P !< C_T* of Fu's detector (Li, Chen & Ren 2022, Eq. 57).
+real(R_P), parameter :: SETH_SENSOR_TENO_CT  = 5.e-4_R_P !< C_T* of Fu's detector (Fu 2019, Eq. 4.4; Li, Chen & Ren, Eq. 57).
+real(R_P), parameter :: SETH_SENSOR_TENO_EPS_1D = 1.e-4_R_P !< eps of Fu's detector in one dimension (Fu 2019, Eq. 4.2).
+real(R_P), parameter :: SETH_SENSOR_TENO_EPS_MD = 1.e-3_R_P !< eps of Fu's detector in several dimensions (Fu 2019).
 real(R_P), parameter :: SETH_SENSOR_REN_PSIC = 0.3_R_P   !< psi_c of Ren's detector (Li, Chen & Ren 2022, Eq. 52).
 real(R_P), parameter :: SETH_SENSOR_LCR_PSIC = 0.4_R_P   !< psi_c of Li, Chen & Ren's detector (Eq. 60).
 real(R_P), parameter :: SETH_SENSOR_TAU_ETA  = 0.5_R_P   !< Smooth limit of Wan & Xia's eta (non-smooth at twice it).
 
 contains
    pure subroutine seth_sensor_teno(v, rmu, thr, s)
-   !< Fu's TENO-based detector: s = min(1, min_k chi_k / thr).
+   !< Fu's TENO-based detector with Fu's one-dimensional regulariser, SETH_SENSOR_TENO_EPS_1D.
    real(R_P), intent(in)  :: v(-2:3) !< Values around the face.
    real(R_P), intent(in)  :: rmu     !< Inverse magnitude the values are multiplied by.
    real(R_P), intent(in)  :: thr     !< Threshold C_T* (SETH_SENSOR_TENO_CT).
    real(R_P), intent(out) :: s       !< Smoothness, 1: smooth.
-   real(R_P), parameter   :: EPS = 1.e-4_R_P !< Regulariser of the indicators: Fu 2019's 1-D value (1e-3 in several).
+   !$acc routine seq
+   !$omp declare target
+
+   call seth_sensor_teno_eps(v, rmu, thr, SETH_SENSOR_TENO_EPS_1D, s)
+   endsubroutine seth_sensor_teno
+
+   pure subroutine seth_sensor_teno_eps(v, rmu, thr, eps, s)
+   !< Fu's TENO-based detector with its regulariser explicit: s = min(1, min_k chi_k / thr).
+   real(R_P), intent(in)  :: v(-2:3) !< Values around the face.
+   real(R_P), intent(in)  :: rmu     !< Inverse magnitude the values are multiplied by.
+   real(R_P), intent(in)  :: thr     !< Threshold C_T* (SETH_SENSOR_TENO_CT).
+   real(R_P), intent(in)  :: eps     !< Regulariser of the indicators (SETH_SENSOR_TENO_EPS_1D, _MD).
+   real(R_P), intent(out) :: s       !< Smoothness, 1: smooth.
    real(R_P)              :: w(-2:3), beta(4), g(4), gmin, gsum
    integer(I4P)           :: k
    !$acc routine seq
@@ -58,15 +76,15 @@ contains
    beta(3) = 13._R_P/12._R_P*(w(0) - 2._R_P*w(1) + w(2))**2 + 0.25_R_P*(3._R_P*w(0) - 4._R_P*w(1) + w(2))**2
    beta(4) = 13._R_P/12._R_P*(w(1) - 2._R_P*w(2) + w(3))**2 + 0.25_R_P*(5._R_P*w(1) - 8._R_P*w(2) + 3._R_P*w(3))**2
    ! chi_k = gamma_k / sum gamma, gamma_k = (beta_k + eps)^-6 = ((beta_min + eps)/(beta_k + eps))^6 / (beta_min + eps)^6
-   gmin = minval(beta) + EPS
+   gmin = minval(beta) + eps
    gsum = 0._R_P
    do k=1, 4
-      g(k) = gmin/(beta(k) + EPS)
+      g(k) = gmin/(beta(k) + eps)
       g(k) = (g(k)*g(k))*(g(k)*g(k))*(g(k)*g(k))
       gsum = gsum + g(k)
    enddo
    s = min(1._R_P, (minval(g)/gsum)/thr)
-   endsubroutine seth_sensor_teno
+   endsubroutine seth_sensor_teno_eps
 
    pure subroutine seth_sensor_ren(v, rmu, thr, s)
    !< Ren et al.'s ratio of first differences, the minimum over the nodes i-1 .. i+2: s = min(1, psi/thr).

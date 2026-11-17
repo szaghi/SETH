@@ -18,6 +18,10 @@ program seth_test_sensors
 !<    (rmu = 1; the paper's per-stencil 1/max(|v|, 1); the field's range, 1/(max f - min f)): the fraction of faces
 !<    whose decision changes. Asserted: the range normalisation changes at most one face (invariant up to round-off);
 !<    without normalisation the absolute regularisers change decisions at a = 1e-6 (the control).
+!< 6. The detector's regulariser (night 2026-11-17, frozen 10:11): seth_sensor_teno equals seth_sensor_teno_eps with
+!<    SETH_SENSOR_TENO_EPS_1D bitwise on random stencils (magnitudes 1e-6..1e6, rmu = 1 and 1/max(|v|, 1)); eps acts as Fu's
+!<    floor (Fu 2019: 1e-4 in one dimension, 1e-3 in several): a step of 0.01 at every position is flagged with 1e-4 and
+!<    not with 1e-3 (s = 1 everywhere), a step of 0.05 with both (rmu = 1).
 !< Report mode: sensors-cp.dat and sensors-scaling.dat too.
 use seth
 use seth_test_parameters, only : SENSOR_SCALES, TOL_X
@@ -121,10 +125,49 @@ enddo
 call critical_points()
 ! 5. scaled and offset data
 call scaling()
+! 6. the TENO detector's regulariser
+call teno_eps()
 if (.not.passed) error stop 'sensor test failed'
 print '(A)', 'seth_test_sensors: ok'
 
 contains
+   subroutine teno_eps()
+   !< Section 6: seth_sensor_teno = seth_sensor_teno_eps(SETH_SENSOR_TENO_EPS_1D) bitwise; eps decides the smallest step.
+   real(R_P)    :: w(-2:3), sa, sb_, rmu_, mag, smin4, smin3, h
+   integer(I4P) :: it, mm, jj, ih
+   do it=1, 2000
+      call random_number(mag) ; mag = 10._R_P**(12._R_P*mag - 6._R_P)
+      call random_number(w) ; w = mag*(w - 0.5_R_P)
+      rmu_ = merge(1._R_P, 1._R_P/max(maxval(abs(w)), 1._R_P), mod(it, 2) == 0)
+      call seth_sensor_teno(w, rmu_, SETH_SENSOR_TENO_CT, sa)
+      call seth_sensor_teno_eps(w, rmu_, SETH_SENSOR_TENO_CT, SETH_SENSOR_TENO_EPS_1D, sb_)
+      if (sa /= sb_) then
+         print '(A,2ES16.8)', '   teno: seth_sensor_teno differs from seth_sensor_teno_eps(SETH_SENSOR_TENO_EPS_1D)', sa, sb_
+         passed = .false. ; exit
+      endif
+   enddo
+   do ih=1, 2
+      h = merge(0.01_R_P, 0.05_R_P, ih == 1)
+      smin4 = 1._R_P ; smin3 = 1._R_P
+      do jj=-1, 3
+         do mm=-2, 3
+            w(mm) = merge(h, 0._R_P, mm >= jj)
+         enddo
+         call seth_sensor_teno_eps(w, 1._R_P, SETH_SENSOR_TENO_CT, SETH_SENSOR_TENO_EPS_1D, sa)
+         call seth_sensor_teno_eps(w, 1._R_P, SETH_SENSOR_TENO_CT, SETH_SENSOR_TENO_EPS_MD, sb_)
+         smin4 = min(smin4, sa) ; smin3 = min(smin3, sb_)
+      enddo
+      print '(A,F5.2,A,2F8.4)', '   teno: step of ', h, ': smallest s with eps 1e-4, 1e-3 ', smin4, smin3
+      if (.not.(smin4 < 1._R_P)) then ; print '(A)', '   teno: the step not flagged with eps 1e-4' ; passed = .false. ; endif
+      if (ih == 1 .and. .not.(smin3 == 1._R_P)) then
+         print '(A)', '   teno: a step of 0.01 flagged with eps 1e-3' ; passed = .false.
+      endif
+      if (ih == 2 .and. .not.(smin3 < 1._R_P)) then
+         print '(A)', '   teno: a step of 0.05 not flagged with eps 1e-3' ; passed = .false.
+      endif
+   enddo
+   endsubroutine teno_eps
+
    subroutine critical_points()
    !< f = cos(pi x) (critical point of order 1 at x = 0) and f = sin(pi x)^3 (order 2), cells of width h = 1/m centred
    !< at (j + 1/2) h, the five faces j h, j = -2 .. 2, around x = 0: flagged (some s < 1) or not, for m = 2 .. 1024
