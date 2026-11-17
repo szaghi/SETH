@@ -43,19 +43,23 @@ which cite the paper; the provenance of every formula is in `notes/m2-sources.md
   background: the face coefficients (Eq. (46)), the linear weights, $\tau_8$ (read in the paper).
 - Hong, Z., Ye, Z., Ye, K. (2022). *J. Comput. Phys.* — $C_T = 10^{-7}$ for TENO6 and TENO8 (read in the paper).
 - Fu, L., Hu, X.Y., Adams, N.A. (2019). Improved five- and six-point targeted essentially nonoscillatory schemes
-  with adaptive dissipation. *AIAA J.* 57(3):1143 — TENO5-A, the original (not obtained; restated by Huang, Liang & Fu
-  2023 and Tang 2024).
+  with adaptive dissipation. *AIAA J.* 57(3):1143. doi:10.2514/1.J057370 — TENO5-A, the original, Eqs. (20)–(22):
+  the sensor, $C_r = 0.24$, $\xi = 10^{-3}$, $\alpha_1 = 10$, $\alpha_2 = 5$ (read in the paper, the Article in
+  Advance; checked by `scripts/check_papers.py`). Its TENO6-A ($C_r = 0.17$, $\alpha_1 = 10.5$, $\alpha_2 = 4.5$) is
+  not in SETH.
 - Huang, H., Liang, T., Fu, L. (2023). A five-point TENO scheme with adaptive dissipation based on a new scale sensor.
   *Commun. Comput. Phys.* 33:1106. doi:10.4208/cicp.oa-2022-0286 — the standard TENO5-A, Eqs. (18)–(20): $C_r$, $\xi$,
   $\alpha_1$, $\alpha_2$ (read in the paper, arXiv:2303.10020; checked by `scripts/check_papers.py`). Its new
   five-point scale sensor is not in SETH.
 - Fu, L. (2019). A hybrid method with TENO based discontinuity indicator for hyperbolic conservation laws. *Commun.
-  Comput. Phys.* 26:973. doi:10.4208/cicp.oa-2018-0176 — the TENO-based detector, the original (not obtained; restated
-  by Fu 2023 and Li, Chen & Ren 2022).
+  Comput. Phys.* 26:973. doi:10.4208/cicp.oa-2018-0176 — the TENO-based detector, the original, §4.1–4.2, Eqs.
+  (4.1)–(4.4): the four three-point stencils, $\beta_{3,3}$, $q = 6$, $C_T = 5\cdot10^{-4}$, $\varepsilon = 10^{-4}$
+  in one dimension and $10^{-3}$ in several (read in the paper; SETH's indicators, evaluated from its source, and its
+  one-dimensional $\varepsilon$ checked by `scripts/check_papers.py`).
 - Fu, L. (2023). Review of the high-order TENO schemes for compressible gas dynamics and turbulence. *Arch. Comput.
   Methods Eng.* 30:2493. doi:10.1007/s11831-022-09877-7 — the TENO-based detector, §3.4, Eqs. (21)–(23): $q = 6$,
-  $C_T = 5\cdot10^{-4}$ (read in the paper; checked by `scripts/check_papers.py`); its $\varepsilon$ is not given there,
-  SETH's $10^{-4}$ is Li, Chen & Ren's.
+  $C_T = 5\cdot10^{-4}$ (read in the paper; checked by `scripts/check_papers.py`); its $\varepsilon$ is not given there
+  (Fu 2019 gives it).
 - Fu, L. (2021). Very-high-order TENO schemes with adaptive accuracy order and adaptive dissipation control. *Comput.
   Methods Appl. Mech. Engrg.* — the adaptive cutoff, Eqs. (17)–(19) (read in the paper).
 - Li, Y., Chen, C., Ren, Y.-X. (2022). A class of high-order finite difference schemes with minimized dispersion and
@@ -69,8 +73,23 @@ which cite the paper; the provenance of every formula is in `notes/m2-sources.md
   regions (§3, Eqs. (3.14)–(3.15)) (read in the paper).
 - De Michele, C., Coppola, G. (2023). Asymptotically entropy-conservative and kinetic-energy preserving numerical fluxes
   for compressible Euler equations. arXiv:2307.10918 — KEEP-PE's internal energy flux (Eq. (15)), in their notation of
-  Shima et al. 2021 (read in the paper; Shima et al. not obtained).
+  Shima et al. 2021 (read in the paper).
+- Shima, N., Kuya, Y., Tamaki, Y., Kawai, S. (2021). Preventing spurious pressure oscillations in split convective form
+  discretization for compressible flows. *J. Comput. Phys.* 427:110060. doi:10.1016/j.jcp.2020.110060 — KEEP-PE: the
+  KEEP fluxes (Table 1) and the pressure-equilibrium internal energy flux (Eq. (17)) (read in the paper; SETH's kernels,
+  evaluated from their source, checked by `scripts/check_papers.py`).
+- Pirozzoli, S. (2010). Generalized conservative approximations of split convective derivative operators. *J.
+  Comput. Phys.* 229:7180. doi:10.1016/j.jcp.2010.06.006 — the locally conservative form of any order, Eqs. (6),
+  (11)–(13) (read in the paper; checked with Shima et al.'s flux).
+- Pirozzoli, S. (2011). Stabilized non-dissipative approximations of Euler equations in generalized curvilinear
+  coordinates. *J. Comput. Phys.* 230:2997. doi:10.1016/j.jcp.2011.01.001; and (2011) Numerical methods for high-speed
+  flows. *Annu. Rev. Fluid Mech.* 43:163. doi:10.1146/annurev-fluid-122109-160718 — read; SETH takes no formula from
+  them (curvilinear coordinates; a review).
 - Kuya, Y., Totani, K., Kawai, S. (2018). Kinetic energy and entropy preserving schemes for compressible flows by split
   convective forms. *J. Comput. Phys.* 375:823 — the kinetic energy flux of KEP split forms (read in the paper).
 - De Vanna, F. et al. (2023a). *Comput. Fluids* — the compression-only Ducros sensor (Eq. (9)) (read in the paper).
-- Ducros, F. et al. (1999). *J. Comput. Phys.* 152:517 — the Ducros sensor (through ADAM's implementation).
+- Ducros, F., Ferrand, V., Nicoud, F., Weber, C., Darracq, D., Gacherieu, C., Poinsot, T. (1999). Large-eddy
+  simulation of the shock/turbulence interaction. *J. Comput. Phys.* 152:517. doi:10.1006/jcph.1999.6238 — the Ducros
+  sensor, Eq. (22), there a factor of Jameson's pressure sensor (Eqs. (23)–(24)) with $\varepsilon = 10^{-30}$ (read in
+  the paper; `seth_ducros`, evaluated from its source, checked by `scripts/check_papers.py`; its $\varepsilon$ is the
+  caller's).

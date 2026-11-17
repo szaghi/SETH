@@ -9,8 +9,8 @@ module seth_sensors
 !<    s = 1   the published binary test says smooth: the linear branch may be used;
 !<    s < 1   not smooth; s itself is the published continuous form where there is one, a blending weight.
 !<
-!<    call seth_sensor_teno(v, rmu, thr, s)   Fu's TENO-based detector (Fu 2019, as written by Li, Chen & Ren 2022,
-!<                                            Eqs. (55)-(57)): four three-point stencils i-2..i, i-1..i+1, i..i+2,
+!<    call seth_sensor_teno(v, rmu, thr, s)   Fu's TENO-based detector (Fu 2019, Eqs. (4.1)-(4.4); Li, Chen & Ren
+!<                                            2022, Eqs. (55)-(57)): four three-point stencils i-2..i, i-1..i+1, i..i+2,
 !<                                            i+1..i+3, Jiang-Shu indicators on cell i, gamma_k = (beta_k + 1e-4)^-6,
 !<                                            normalised; smooth iff every chi_k > thr = 5e-4. s = min(1, min chi/thr).
 !<    call seth_sensor_ren(v, rmu, thr, s)    Ren et al.'s ratio (Li, Chen & Ren, Eqs. (48)-(53)): psi_j =
@@ -44,7 +44,7 @@ contains
    real(R_P), intent(in)  :: rmu     !< Inverse magnitude the values are multiplied by.
    real(R_P), intent(in)  :: thr     !< Threshold C_T* (SETH_SENSOR_TENO_CT).
    real(R_P), intent(out) :: s       !< Smoothness, 1: smooth.
-   real(R_P), parameter   :: EPS = 1.e-4_R_P !< Regulariser of the indicators (Li, Chen & Ren, after Eq. 55).
+   real(R_P), parameter   :: EPS = 1.e-4_R_P !< Regulariser of the indicators: Fu 2019's 1-D value (1e-3 in several).
    real(R_P)              :: w(-2:3), beta(4), g(4), gmin, gsum
    integer(I4P)           :: k
    !$acc routine seq

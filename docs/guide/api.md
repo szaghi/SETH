@@ -124,6 +124,9 @@ published continuous form, usable as a blending weight. `rmu` multiplies the dat
 caller reduces once, every sensor is invariant to the scale and offset of the data; the per-stencil form is not, and
 under an offset it changes decisions. See [H1](/verification/hybrids/sensors).
 
+`seth_sensor_teno`'s regulariser is $\varepsilon = 10^{-4}$, Fu's (2019) one-dimensional value; Fu uses $10^{-3}$ in
+several dimensions, and the kernel has no argument for it.
+
 ## Central fluxes and shock sensors
 
 ```fortran

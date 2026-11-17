@@ -119,9 +119,9 @@ Li, Y., Chen, C., Ren, Y.-X. (2022). *J. Comput. Phys.* 448:110770, §3.2. Wan, 
 | Pirozzoli's conservative form F = 2 sum_l a_l sum_{m<l} f(i-m, i-m+l), a_l the central first-derivative coefficients | from ADAM's compute_kep_flux (W) and the llm-wiki (A); verified by the order of every kernel | ADAM adam_flume_hybrid_library.F90; wiki split-convective-forms |
 | KEEP-PE internal energy flux <p><u_n>/(gamma - 1), mass flux <rho><u_n>, momentum f_rho <u> | quoted | De Michele et al. 2023, Eq. (15), "the scheme KEEP-PE in [Shima et al.]" |
 | Kinetic energy flux f_rho (u_c . u_r)/2, split pressure work (u_n,c p_r + u_n,r p_c)/2 | from ADAM (W); verified by the kinetic-energy identity and the pressure equilibrium (to round-off) | |
-| Shima et al. 2021 itself | not obtained (not in the corpus) | |
+| Shima et al. 2021 itself | read 2026-11-17: Table 1 (KEEP) and Eq. (17) (KEEP-PE) are the kernels' two-point flux, checked exactly with Pirozzoli 2010 Eqs. (11)-(13) by scripts/check_papers.py | Shima et al. 2021 |
 | Liang & Fu's eight-point a_l (0.8441336457279522, -0.2441336457279522, 0.0570096576929319, -0.006723831837710873) | quoted; order 6 measured | Liang & Fu 2024b, after Eq. (46) |
-| Ducros phi = theta^2/(theta^2 + omega^2 + eps) | from ADAM's compute_ducros (W), equal to it bitwise with the override off | |
+| Ducros phi = theta^2/(theta^2 + omega^2 + eps) | from ADAM's compute_ducros (W), equal to it bitwise with the override off; read 2026-11-17: Ducros et al. 1999 Eq. (22) (eps = 1e-30 there, a factor of Jameson's sensor), checked by scripts/check_papers.py | Ducros et al. 1999 |
 | De Vanna's psi = max(-div u/sqrt(div^2 u + rot^2 u + eps), 0), eps = (u_inf/delta_0)^2 | quoted | De Vanna et al. 2023a, Eq. (9) |
 
 ## Centred WENO (6.3)
@@ -153,8 +153,12 @@ ADAM input (against an exact derivation and against SETH's own sources):
 |---|---|---|
 | WENO7/9-JS indicators IS_k^r, r = 4, 5 (integer forms) | read; = 240 and 5040 times the Jiang-Shu indicators derived from their definition; = SETH's WENO7_JS_D, WENO9_JS_D | Balsara & Shu 2000, §III.a-b |
 | WENO7/9-JS candidates a_{k,i}, optimal weights C_k, optimal combination u^L | read; = the derived candidates and maximum-order weights; = SETH's _P, _A | Balsara & Shu 2000, Tables I-II and §III.a-b |
-| TENO5-A: C_r = 0.24, xi = 1e-3, eta = min over i-1..i+1, g = (1-m)^4 (1+4m), C_T = 10^-floor(alpha_1 - alpha_2 (1-g)), alpha_1 = 10, alpha_2 = 5 | read (arXiv 2303.10020, the preprint of the CiCP paper); = SETH_TENO5_A_* and seth_teno5_a; the original is Fu, Hu & Adams, AIAA J. 57(3):1143 (2019), not obtained | Huang, Liang & Fu 2023, Eqs. (18)-(20) |
-| Fu's TENO-based detector: gamma_k = (beta_k + eps)^-q, q = 6, chi_k normalised, smooth iff every chi_k > C_T = 5e-4 | read; = seth_sensor_teno; eps not given there ("a small value"): SETH's 1e-4 stays Li, Chen & Ren's; the original is Fu, CiCP 26:973 (2019), not obtained | Fu 2023, §3.4, Eqs. (21)-(23) |
+| TENO5-A: C_r = 0.24, xi = 1e-3, eta = min over i-1..i+1, g = (1-m)^4 (1+4m), C_T = 10^-floor(alpha_1 - alpha_2 (1-g)), alpha_1 = 10, alpha_2 = 5 | read (arXiv 2303.10020, the preprint of the CiCP paper); = SETH_TENO5_A_* and seth_teno5_a; the original, Fu, Hu & Adams, AIAA J. 57(3):1143 (2019), read 2026-11-17: Eqs. (20)-(22), the same | Huang, Liang & Fu 2023, Eqs. (18)-(20) |
+| Fu's TENO-based detector: gamma_k = (beta_k + eps)^-q, q = 6, chi_k normalised, smooth iff every chi_k > C_T = 5e-4 | read; = seth_sensor_teno; eps not given there ("a small value"); the original, Fu, CiCP 26:973 (2019), read 2026-11-17: eps = 1e-4 in one dimension (SETH's), 1e-3 in several | Fu 2023, §3.4, Eqs. (21)-(23); Fu 2019, Eqs. (4.1)-(4.4) |
 
-Not in the corpus, still read second-hand: Shima et al. 2021 (KEEP-PE, through De Michele & Coppola 2023), Ducros
-et al. 1999 (through an implementation), Pirozzoli 2010/2011, and the two originals above.
+The missing papers, downloaded by the owner and read 2026-11-17 (now in the corpus, ~/papers/mosaic/weno-teno): Fu,
+Hu & Adams 2019 (TENO5-A, Eqs. (20)-(22): SETH's constants and formulas), Fu 2019 (the detector: SETH's four
+indicators, evaluated from the source, equal Eq. (4.1) and the derived ones; eps 1e-4 is the one-dimensional value),
+Shima et al. 2021 and Pirozzoli 2010 (the KEEP-PE kernels, evaluated exactly, equal Pirozzoli Eq. (13) with Shima's
+flux), Ducros et al. 1999 (Eq. (22)), Pirozzoli 2011 JCP and ARFM (no formula taken). No discrepancy; one finding:
+seth_sensor_teno's eps is fixed at the one-dimensional value.
