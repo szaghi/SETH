@@ -27,6 +27,7 @@ public :: ORDERS_AT_FLOOR_OK, CONV_FLOOR_OP, CONV_ORDER_LOSS, INTERP_FLOOR, INTE
 public :: HENRICK_TOL, POINT_FLOOR, POINT_ORDER_LOSS, MP_NG, SPECTRAL_FLOOR, SPECTRAL_SLOPE_LOSS
 public :: TAU_FLOOR, TAU_ORDER_LOSS, CENTRAL_FLOOR_N, BURGERS_FLOOR_N, EULER_FLOOR_N2
 public :: POS_RANGE_EXP, SMALL_STEP, AI_STEP_TOL, SENSOR_SCALES, SENSOR_FLOW_RATIO, CENTRED_ORDER_LOSS
+public :: NP_FLAGS_EPS, NP_TOL
 public :: TOL_BOUNDS, TOL_THETA, TOL_PROPERTIES, TOL_X, TOL_ANTIDISSIPATION, TOL_TABLES, TOL_ADR, TOL_CONSERVATION
 
 #if defined _R_P_IS_R4P
@@ -39,6 +40,12 @@ integer,      parameter :: GOLDEN_SCALE_DEXP = 10  !< 2^50 (12 of them): normal,
 ! coefficients (up to ~1e3): data up to 1e16. Plain WENO-JS's power of the indicator no longer overflows first in R4P
 ! (its weights are ratios to the smallest indicator there), so it has the same bound.
 real(R_P), parameter :: BIG_JUMP          = 1.e16_R_P !< The TENO test's large jump: at the edge of R4P's range.
+real(R_P), parameter :: NP_TOL            = 6.e-5_R_P  !< seth_test_nonpoly: the overrides against their closed forms
+                                                   !< and conservation, the 1e-13 of R8P in ulps (about 450).
+real(R_P), parameter :: NP_FLAGS_EPS      = 1.e-12_R_P !< eps of the flag tests (seth_test_nonpoly, Tables 1-3): R4P's
+                                                   !< indicators of flat data are round-off, ~(6e-8 f)^2 = 4e-15 at f = 1,
+                                                   !< so with SETH_TENO_EPS = 1e-30 even all-ones data gives the mask 5
+                                                   !< (measured); eps >= 1e-14 restores the printed flags.
 real(R_P), parameter :: ROBUST_EXP_MIN    = -30._R_P  !< Robustness magnitudes from 1e-30 (normal; squares underflow) ..
 real(R_P), parameter :: ROBUST_EXP_MAX    = 13._R_P   !< .. 1e13, every scheme ..
 real(R_P), parameter :: ROBUST_EXP_MAX_JS = 13._R_P   !< .. and plain WENO-JS: WENO9-JS's indicators, computed on the raw
@@ -186,6 +193,10 @@ integer,      parameter :: GOLDEN_SCALE_DEXP = 54    !< (12 of them), about 1e-1
 ! data magnitudes
 real(R_P), parameter :: BIG_JUMP          = 1.e30_R_P !< The TENO test's large jump (tau/eps would overflow without the
                                                       !< normalisation by g_max).
+real(R_P), parameter :: NP_TOL            = 1.e-13_R_P !< seth_test_nonpoly: the overrides against their closed forms
+                                                   !< and conservation (issue #6, steps 2.1-2.2, frozen).
+real(R_P), parameter :: NP_FLAGS_EPS      = 1.e-40_R_P !< eps of the flag tests (seth_test_nonpoly): the papers' (the R8P
+                                                   !< SETH_TENO_EPS; kind-ok: a regulariser, not a step).
 real(R_P), parameter :: ROBUST_EXP_MIN    = -200._R_P !< Robustness magnitudes from 1e-200 ..
 real(R_P), parameter :: ROBUST_EXP_MAX    = 140._R_P  !< .. 1e140, every scheme (the squares bound them at 1e154) ..
 real(R_P), parameter :: ROBUST_EXP_MAX_JS = 30._R_P   !< .. 1e30, plain WENO-JS ((eps + IS)^wexp overflows near 1e38).

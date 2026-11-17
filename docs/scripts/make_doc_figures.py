@@ -421,6 +421,67 @@ class Figures:
         fig.tight_layout()
         self.save(fig, 'sensors')
 
+    # ------------------------------------------------------------------------------ non-polynomial (issue #6)
+    FLAG_PROFILES = {'profile1': 'profile 1 (Table 1)', 'profile2': 'profile 2 (Table 2)',
+                     'profile2m': 'profile 2, mirrored in value', 'profile3': 'profile 3 (Table 3)',
+                     'profile3m': 'profile 3, mirrored in value'}
+
+    def nonpoly_flags(self) -> None:
+        """The flags of Liang et al. 2022, Tables 1-3, against seth_teno5_mask (seth_test_nonpoly, spec 2)."""
+        if self.has('nonpoly-flags.dat'):
+            rows = self.rows('nonpoly-flags.dat')
+            prof: dict[str, list[list[str]]] = defaultdict(list)
+            for r in rows:
+                prof[r[0]].append(r)
+            body = []
+            for key, title in self.FLAG_PROFILES.items():
+                rs = prof[key]
+                f = ' '.join(fmt(float(r[2])) for r in rs)
+                got = [''.join(r[3 + k] for r in rs[2:9]) for k in range(3)]
+                ref = [''.join(r[6 + k] for r in rs[2:9]) for k in range(3)]
+                body.append([title, f'`{f}`'] + [f'`{g}`' for g in got] + ['yes' if got == ref else '**no**'])
+            self.table('nonpoly-flags', ['profile (cells 0..10)', 'values', r'$\delta_0$ (cells 2..8)',
+                                         r'$\delta_1$', r'$\delta_2$', 'as printed'], body)
+            keys = ['profile1', 'profile2', 'profile3']
+            fig, axs = plt.subplots(2, 3, figsize=(12, 3.8), gridspec_kw={'height_ratios': [2.2, 1.2]}, sharex=True)
+            for j, key in enumerate(keys):
+                rs = prof[key]
+                c = np.array([int(r[1]) for r in rs])
+                f = np.array([float(r[2]) for r in rs])
+                ax = axs[0, j]
+                ax.step(c, f, where='mid', color=style('teno5')[0], lw=1.2)
+                ax.plot(c, f, 'o', color=style('teno5')[0], ms=3)
+                ax.set_title(self.FLAG_PROFILES[key], fontsize=10)
+                ax.set_ylim(-0.15, 1.15)
+                ax.grid(alpha=0.3)
+                sx = axs[1, j]
+                for k, nm in enumerate(('$\\delta_0$', '$\\delta_1$', '$\\delta_2$')):
+                    d = np.array([int(r[3 + k]) for r in rs])
+                    ref = np.array([int(r[6 + k]) for r in rs])
+                    y = 2 - k
+                    for ci, di, ri in zip(c, d, ref):
+                        fc = style('teno6')[0] if di else 'none'
+                        ec = style('teno6')[0] if di == ri else 'red'
+                        sx.add_patch(mpl.patches.Rectangle((ci - 0.4, y - 0.35), 0.8, 0.7, facecolor=fc,
+                                                           edgecolor=ec, lw=0.8))
+                    sx.text(-0.9, y, nm, fontsize=8, ha='right', va='center')
+                sx.set_ylim(-0.6, 2.6)
+                sx.set_yticks([])
+                sx.set_xlim(-1.6, 10.6)
+                sx.set_xlabel('cell')
+            fig.suptitle('TENO5 flags per cell ($C_T = 10^{-5}$): filled = candidate kept; asserted on cells 2..8',
+                         fontsize=10)
+            fig.tight_layout()
+            self.save(fig, 'nonpoly-flags')
+        if self.has('nonpoly-masks.dat'):
+            rows = self.rows('nonpoly-masks.dat')
+            body = [[r[0]] + r[1:] for r in rows]
+            self.table('nonpoly-masks', ['stencils'] + [f'{m} ({m & 1}{m >> 1 & 1}{m >> 2 & 1})' for m in range(8)],
+                       body, note='Mask $m = \\delta_0 + 2\\delta_1 + 4\\delta_2$, in parentheses '
+                                  '$(\\delta_0\\delta_1\\delta_2)$. *random*: the $10^6$ stencils of spec 1 '
+                                  '(smooth cubics, independent values, jumps, kinks); *constant*: 1000 constants drawn '
+                                  'in $[-10, 10]$.')
+
     SENSOR_NAMES = {'teno': 'TENO-based (Fu)', 'ren': 'Ren et al.', 'lcr': 'Li, Chen & Ren', 'tau': 'Wan & Xia',
                     'ducros': 'Ducros', 'ducros-c': 'Ducros, compression'}
 
@@ -646,6 +707,7 @@ def main() -> int:
         'order-tables': f.order_tables,
         'critical-tables': f.critical_tables,
         'weno-c': f.weno_c,
+        'nonpoly-flags': f.nonpoly_flags,
         'convergence': lambda: f.convergence('convergence', 'convergence.dat',
                                              'whole-domain operator error, Henrick field (critical points included)',
                                              '$L_\\infty(D - u\')$'),

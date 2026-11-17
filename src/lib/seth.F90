@@ -13,6 +13,7 @@ use seth_weno_js_tables
 use seth_wenoz
 use seth_weno_c
 use seth_teno
+use seth_nonpoly
 use seth_positivity
 use seth_mp
 use seth_linear
@@ -35,6 +36,9 @@ public :: seth_weno4_c, seth_weno6_c, seth_weno8_c
 public :: seth_teno5, seth_teno5_opt, seth_teno5_az, seth_teno6, seth_teno6_opt, seth_teno6_neno6, seth_teno8
 public :: seth_teno5_a, seth_teno8_a
 public :: seth_teno5_interp, seth_teno6_interp
+public :: seth_teno5_mask, seth_teno5_zeta, seth_dr_detect, seth_thinc_detect
+public :: seth_thinc_override, seth_dr_override, seth_teno5_dr, seth_teno5_thinc
+public :: SETH_DR_T1, SETH_DR_T2, SETH_THINC_BETA, SETH_NONPOLY_GUARD
 public :: SETH_TENO_EPS, SETH_TENO5_CT, SETH_TENO5_OPT_CT, SETH_TENO5_AZ_CT, SETH_TENO6_CT, SETH_TENO6_OPT_CT
 public :: SETH_TENO6_NENO6_CT, SETH_TENO8_CT
 public :: SETH_TENO5_A_CR, SETH_TENO5_A_XI, SETH_TENO5_A_A1, SETH_TENO5_A_A2

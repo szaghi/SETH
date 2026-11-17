@@ -21,6 +21,8 @@ program seth_bench_weno
 !<      (the flux of direction 1 in rp, its energy component in rm); 26, 27, 28 seth_weno4_c, seth_weno6_c,
 !<      seth_weno8_c (the centred WENO, rmu = 1), 29 seth_weno3_js (the upwind part of seth_weno4_c, its budget's
 !<      reference)
+!< 30.. issue #6 (non-polynomial reconstructions): 30 seth_teno5_mask of both biases (the mask of vp(-2:2) and of the
+!<      mirrored vm(1-m), m = -2..2, in rp and rm), against its budget of 0.70 seth_teno5
 !<
 !< ADAM's variants pack ADAM's rows as FLUME does (v(2,m) = fp(i+m), v(1,m) = fm(i+m+1)). Built with -acc the loops run
 !< on the device (timed with !$acc wait + system_clock); without, on one CPU core. Each variant: 2 warm-up passes, then
@@ -36,7 +38,7 @@ use adam_fnl_weno_width_kernels, only : weno_reconstruct_upwind_s3_dev, weno_rec
 use seth_adam_reference,         only : weno_reconstruct_upwind, compute_kep_flux
 implicit none
 integer(I4P), parameter :: NG = 4_I4P         !< Ghost cells (WENO-7 reads i-3..i+4).
-integer(I4P), parameter :: NV = 29_I4P        !< Variants.
+integer(I4P), parameter :: NV = 30_I4P        !< Variants.
 integer(I4P), parameter :: SAMPLE = 65536_I4P !< Faces checked against the host.
 real(R8P),    parameter :: TOL = 64._R8P*epsilon(1._R8P)
 character(31), parameter :: NAMES(NV) = [character(31) :: 'SETH  weno5_js', 'ADAM  generic S=3', 'ADAM  width s3', &
@@ -50,7 +52,8 @@ character(31), parameter :: NAMES(NV) = [character(31) :: 'SETH  weno5_js', 'ADA
                                          'SETH  weno5_js + mp_bound', 'SETH  linear5', 'SETH  linear7', &
                                          'SETH  sensor_lcr', 'SETH  hybrid lcr+linear5/wenoz5', &
                                          'SETH  keep_pe6', 'ADAM  compute_kep_flux', &
-                                         'SETH  weno4_c', 'SETH  weno6_c', 'SETH  weno8_c', 'SETH  weno3_js']
+                                         'SETH  weno4_c', 'SETH  weno6_c', 'SETH  weno8_c', 'SETH  weno3_js', &
+                                         'SETH  teno5_mask (both biases)']
 real(R8P), allocatable :: fp(:), fm(:), rp(:), rm(:), rp5(:), rm5(:), rp7(:), rm7(:)
 real(R8P), allocatable :: a3(:,:,:), p3(:,:,:,:), d3(:,:,:,:), a4(:,:,:), p4(:,:,:,:), d4(:,:,:,:)
 real(R8P), allocatable :: times(:)
@@ -114,8 +117,8 @@ contains
    !< One pass of variant v over all faces.
    integer(I4P), intent(in) :: v
    real(R8P)                :: vp5(-2:3), vm5(-2:3), vp7(-3:4), vm7(-3:4), w3(1:2,-2:2), w4(1:2,-3:3), vr(1:2)
-   real(R8P)                :: ws(5,-2:3), fk(5), vp4(-1:2), vm4(-1:2)
-   integer(I4P)             :: i, m
+   real(R8P)                :: ws(5,-2:3), fk(5), vp4(-1:2), vm4(-1:2), wa(-2:2), wb(-2:2)
+   integer(I4P)             :: i, m, mka, mkb
    select case(v)
    case(1)
       !$acc parallel loop gang vector present(fp, fm, rp, rm) private(vp5, vm5)
@@ -343,6 +346,16 @@ contains
          enddo
          call seth_weno8_c(vp7, vm7, SETH_WENO_JS_EPS, 1._R8P, rp(i), rm(i))
       enddo
+   case(30)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm) private(wa, wb, mka, mkb)
+      do i=1, n
+         do m=-2, 2
+            wa(m) = fp(i+m) ; wb(m) = fm(i+1-m)
+         enddo
+         call seth_teno5_mask(wa, SETH_TENO_EPS, SETH_TENO5_CT, mka)
+         call seth_teno5_mask(wb, SETH_TENO_EPS, SETH_TENO5_CT, mkb)
+         rp(i) = real(mka, R8P) ; rm(i) = real(mkb, R8P)
+      enddo
    case(9)
       do i=1, n
          do m=-2, 2
@@ -366,8 +379,8 @@ contains
    !< SETH variants against host SETH on a sample; ADAM variants against the SETH variant of their order.
    integer(I4P), intent(in) :: v
    real(R8P)                :: vp5(-2:3), vm5(-2:3), vp7(-3:4), vm7(-3:4), hp, hm, ws(5,-2:3), fk(5)
-   real(R8P)                :: vp4(-1:2), vm4(-1:2)
-   integer(I4P)             :: i, m, k, stride
+   real(R8P)                :: vp4(-1:2), vm4(-1:2), wa(-2:2), wb(-2:2)
+   integer(I4P)             :: i, m, k, stride, mka, mkb
    diff = 0._R8P
    select case(v)
    case(1, 4, 7, 8, 11:)
@@ -418,6 +431,13 @@ contains
             call seth_weno3_js(vp4, vm4, SETH_WENO_JS_EPS, 1._R8P, hp, hm)
          case(27) ; call seth_weno6_c(vp5, vm5, SETH_WENO_JS_EPS, 1._R8P, hp, hm)
          case(28) ; call seth_weno8_c(vp7, vm7, SETH_WENO_JS_EPS, 1._R8P, hp, hm)
+         case(30)
+            do m=-2, 2
+               wa(m) = vp5(m) ; wb(m) = vm5(1-m)
+            enddo
+            call seth_teno5_mask(wa, SETH_TENO_EPS, SETH_TENO5_CT, mka)
+            call seth_teno5_mask(wb, SETH_TENO_EPS, SETH_TENO5_CT, mkb)
+            hp = real(mka, R8P) ; hm = real(mkb, R8P)
          case(16) ; call seth_teno8_a(vp7, vm7, SETH_TENO_EPS, SETH_TENO8_A_CR, SETH_TENO8_A_XI, SETH_TENO8_A_A1, &
                                       SETH_TENO8_A_A2, 1._R8P, hp, hm)
          endselect

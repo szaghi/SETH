@@ -17,7 +17,7 @@ use penf, only : R_P, R4P, R8P
 implicit none
 private
 public :: R_P
-public :: SETH_TENO_EPS, SETH_POSITIVITY_BACKOFF
+public :: SETH_TENO_EPS, SETH_POSITIVITY_BACKOFF, SETH_NONPOLY_GUARD
 
 #if defined _R_P_IS_R4P
 integer, parameter :: KIND_CHECK = 1/merge(1, 0, R_P == R4P) !< Stops the build if PENF's R_P is not R4P.
@@ -29,6 +29,12 @@ real(R_P), parameter :: SETH_TENO_EPS = 1.e-30_R_P !< The papers' 1e-40 is below
                                                    !< divide by it alone (their weights are ratios: seth_z_teno_body).
 real(R_P), parameter :: SETH_POSITIVITY_BACKOFF = 5.e-7_R_P !< About 4 ulps of R4P, as 1e-15 is of R8P: 1 - 1e-15 is 1
                                                             !< in R4P, and the back-off would do nothing.
+real(R_P), parameter :: SETH_NONPOLY_GUARD = 1.e-15_R_P !< The first-order guard of the THINC and DR overrides,
+                                                       !< (f_{i+1}-f_i)(f_i-f_{i-1}) <= 1e-15 (Takagi 2022, Eq. 17;
+                                                       !< Liang 2022, Eq. 33): the papers' number in both kinds. It
+                                                       !< bounds a product of two differences of the data (dimensional,
+                                                       !< scaled by rmu^2 in the kernels), not a step against 1, and is
+                                                       !< a normal R4P number.
 #elif defined _R_P_IS_R16P
 #error "SETH: R16P is not supported (no device code, no caller)"
 #else
@@ -38,5 +44,8 @@ real(R_P), parameter :: SETH_TENO_EPS = 1.e-40_R_P !< eps of the TENO papers (Li
                                                    !< R8P (smallest normal 2.2e-308).
 real(R_P), parameter :: SETH_POSITIVITY_BACKOFF = 1.e-15_R_P !< Relative step by which the positivity limiter backs
                                                              !< theta off (doubled per retry): a few ulps of R8P.
+real(R_P), parameter :: SETH_NONPOLY_GUARD = 1.e-15_R_P !< The first-order guard of the THINC and DR overrides,
+                                                       !< (f_{i+1}-f_i)(f_i-f_{i-1}) <= 1e-15 (Takagi 2022, Eq. 17;
+                                                       !< Liang 2022, Eq. 33), on the data scaled by rmu.
 #endif
 endmodule seth_kind_parameters

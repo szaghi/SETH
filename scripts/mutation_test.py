@@ -88,6 +88,41 @@ MUTANTS = [
      '>= 0._R_P'),
     ('positivity-right-state', 'src/lib/seth_positivity.F90', 'b0(k) = qr(k) + lam*f_low(k)',
      'b0(k) = qr(k) + lam*f_low(k)', 'b0(k) = qr(k) - lam*f_low(k)'),
+    # issue #6: the flag kernel (the bit weights of the mask, the cell's stencil read mirrored)
+    ('teno5-mask-bit-weights', 'src/lib/seth_z_teno_body.INC', 'if (wgt(k) > 0._R_P) mk = mk + 2_I4P**k', '2_I4P**k', '2_I4P**(NC-1-k)'),
+    ('teno5-mask-bit-values', 'src/lib/seth_z_teno_body.INC', 'if (wgt(k) > 0._R_P) mk = mk + 2_I4P**k', '2_I4P**k', '(k + 1_I4P)'),
+    ('teno5-mask-stencil-mirror', 'src/lib/seth_z_teno_body.INC', 'st(m) = v(m)', 'st(m) = v(m)', 'st(m) = v(-m)'),
+    # issue #6: the detectors (one mutant per term of Liang et al. 2022, Eqs. 24 and 32 and Takagi's Eq. 20, per branch of
+    # zeta, Eq. 17, and the right state's masks)
+    ('dr-c1-far-left', 'src/lib/seth_nonpoly.F90', 'c1 = (up(-3) .or. ', 'up(-3) .or. ', ''),
+    ('dr-c1-centre', 'src/lib/seth_nonpoly.F90', 'c1 = (up(-3)', '.and. z(0) == 0 .and. (dn(1)', '.and. z(0) /= 2 .and. (dn(1)'),
+    ('dr-c1-right', 'src/lib/seth_nonpoly.F90', 'c1 = (up(-3)', '(dn(1) .or. dn(2))', '(dn(1))'),
+    ('dr-c2-left', 'src/lib/seth_nonpoly.F90', 'c2 = (up(-2)', '(up(-2) .or. up(-1))', '(up(-1))'),
+    ('dr-c2-centre', 'src/lib/seth_nonpoly.F90', 'c2 = (up(-2)', 'z(0) == 1 .and. z(1) == -1)', 'z(0) == 1)'),
+    ('dr-c2-right', 'src/lib/seth_nonpoly.F90', 'c2 = (up(-2)', ') .and. dn(2)', ')'),
+    ('dr-l2-left', 'src/lib/seth_nonpoly.F90', 'if ((up(-2) .and. up(-1))', 'up(-2) .and. up(-1)', 'up(-2) .or. up(-1)'),
+    ('dr-l2-right', 'src/lib/seth_nonpoly.F90', 'if ((up(-2) .and. up(-1))', 'dn(1) .and. dn(2)', 'dn(1) .or. dn(2)'),
+    ('dr-l2-second-condition', 'src/lib/seth_nonpoly.F90', 'if ((up(-2) .and. up(-1))', 'z(0) == 1 .and. z(1) == -1 .and. dn(2)', '.false.'),
+    ('dr-upwind-set', 'src/lib/seth_nonpoly.F90', 'up(c) = z(c) == 1 .or. z(c) == 2', 'up(c) = z(c) == 1 .or. z(c) == 2', 'up(c) = z(c) == 1'),
+    ('dr-downwind-set', 'src/lib/seth_nonpoly.F90', 'dn(c) = z(c) == -1 .or. z(c) == 2', 'dn(c) = z(c) == -1 .or. z(c) == 2', 'dn(c) = z(c) == -1'),
+    ('dr-right-state', 'src/lib/seth_nonpoly.F90', 'lm = dr_level(mm)', 'lm = dr_level(mm)', 'lm = dr_level(mp)'),
+    ('zeta-both-cut', 'src/lib/seth_nonpoly.F90', 'if (d2 == 0 .and. d1 == 0) then', 'z = 2', 'z = 1'),
+    ('zeta-downwind-cut', 'src/lib/seth_nonpoly.F90', 'elseif (d1 == 0 .and. d2 == 1) then', 'z = 1', 'z = 0'),
+    ('zeta-upwind-cut', 'src/lib/seth_nonpoly.F90', 'elseif (d2 == 0 .and. d1 == 1) then', 'z = -1', 'z = 0'),
+    ('zeta-none-cut', 'src/lib/seth_nonpoly.F90', 'elseif (d2 == 0 .and. d1 == 1) then', 'z = 0', 'z = 2'),
+    ('thinc-upwind-range', 'src/lib/seth_nonpoly.F90', 'do c=-3, -1', 'do c=-3, -1', 'do c=-2, -1'),
+    ('thinc-downwind-range', 'src/lib/seth_nonpoly.F90', 'do c=1, 3', 'do c=1, 3', 'do c=1, 2'),
+    ('thinc-centre', 'src/lib/seth_nonpoly.F90', 'if (up .and. z(0) == 0 .and. dn) l = 1', ' .and. z(0) == 0', ''),
+    ('thinc-right-state', 'src/lib/seth_nonpoly.F90', 'lm = thinc_level(mm)', 'lm = thinc_level(mm)', 'lm = thinc_level(mp)'),
+    # issue #6: the overrides (the steepness levels, the guard, its sign and rmu, THINC's beta/2 and the mirror)
+    ('dr-steepness-levels-swapped', 'src/lib/seth_nonpoly.F90', 'if (lp > 0) rp = dr_face(', 'merge(t2, t1, lp > 1)', 'merge(t1, t2, lp > 1)'),
+    ('dr-guard-removed', 'src/lib/seth_nonpoly.F90', 'pure function dr_face(', '<= SETH_NONPOLY_GUARD', '<= -1._R_P'),
+    ('dr-guard-sign', 'src/lib/seth_nonpoly.F90', 'pure function dr_face(', '(rmu*(fp1 - fi))*(rmu*(fi - fm1))', '-(rmu*(fp1 - fi))*(rmu*(fi - fm1))'),
+    ('dr-guard-rmu', 'src/lib/seth_nonpoly.F90', 'pure function dr_face(', '(rmu*(fp1 - fi))*(rmu*(fi - fm1))', '(fp1 - fi)*(fi - fm1)'),
+    ('thinc-guard-removed', 'src/lib/seth_nonpoly.F90', 'pure function thinc_face(', '<= SETH_NONPOLY_GUARD', '<= -1._R_P'),
+    ('thinc-half-beta', 'src/lib/seth_nonpoly.F90', 'pure function thinc_face(', 't = tanh(0.5_R_P*beta)', 't = tanh(beta)'),
+    ('thinc-right-state-mirror', 'src/lib/seth_nonpoly.F90', 'if (lm > 0) rm = thinc_face(', 'thinc_face(vm(2), vm(1), vm(0)', 'thinc_face(vm(0), vm(1), vm(2)'),
+    ('dr-right-state-mirror', 'src/lib/seth_nonpoly.F90', 'if (lm > 0) rm = dr_face(', 'dr_face(vm(2), vm(1), vm(0)', 'dr_face(vm(-1), vm(0), vm(1)'),
 ]
 
 

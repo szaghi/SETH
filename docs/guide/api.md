@@ -99,6 +99,28 @@ The interpolation kernels take the same arguments as the reconstruction ones; TE
 `eps = SETH_TENO_EPS` ($10^{-40}$); `ct` the cutoff: `SETH_TENO5_CT`, `SETH_TENO5_OPT_CT`, `SETH_TENO5_AZ_CT` (the ceiling of the adaptive one), `SETH_TENO6_CT`, `SETH_TENO6_OPT_CT`,
 `SETH_TENO6_NENO6_CT`, `SETH_TENO8_CT` (see [Schemes](./schemes)).
 
+## Non-polynomial TENO: flags, detectors, overrides
+
+```fortran
+call seth_teno5_dr   (vp, vm, eps, ct, t1, t2, rmu, rp, rm)  ! vp, vm(-5:6): TENO5-DR (Liang et al. 2022), one call per face
+call seth_teno5_thinc(vp, vm, eps, ct, beta, rmu, rp, rm)    ! vp, vm(-5:6): TENO5-THINC (Takagi et al. 2022)
+! the pieces, for a caller building its own composite (a stored-mask, two-pass variant)
+call seth_teno5_mask(v, eps, ct, m)                 ! v(-2:2) centred on a cell: m = delta_0 + 2 delta_1 + 4 delta_2
+z = seth_teno5_zeta(m)                              ! zeta of a mask (Liang et al. 2022, Eq. 17): 2, 1, -1 or 0
+call seth_dr_detect(mp, mm, lp, lm)                 ! mp, mm(-3:3): the masks around the face; lp, lm in 0..2
+call seth_thinc_detect(mp, mm, lp, lm)              ! lp, lm in 0..1
+call seth_dr_override(vp, vm, lp, lm, t1, t2, rmu, rp, rm)    ! vp, vm(-1:2); rp, rm inout
+call seth_thinc_override(vp, vm, lp, lm, beta, rmu, rp, rm)
+```
+
+`eps = SETH_TENO_EPS`, `ct = SETH_TENO5_CT` (the papers' TENO5: the detectors are calibrated on its flags);
+`t1, t2 = SETH_DR_T1, SETH_DR_T2` ($\tanh 0.91$, $\tanh 1.23$); `beta = SETH_THINC_BETA` (1.6); `rmu` scales the
+first-order guard of the overrides, $(f_{i+1}-f_i)(f_i-f_{i-1})\,r_\mu^2 \le$ `SETH_NONPOLY_GUARD` ($10^{-15}$) gives
+the cell value ($r_\mu = 1$: the papers' form). The composite kernels read **twelve cells**, `-5..6`: a solver needs 6
+ghost cells and projects all twelve into the face's characteristic basis ([Conventions](./conventions)). The masks of
+the neighbouring cells are recomputed per face; `mp(c)` is the mask of cell `c` of the left-biased data, `mm(c)` of
+cell `c` of the mirrored right-biased data `vm(1-m)`. Verification: [Non-polynomial](/verification/nonpolynomial/).
+
 ## Linear kernels
 
 ```fortran

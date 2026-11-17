@@ -18,8 +18,16 @@
    !
    ! Cells by offset from the face i+1/2 (cell 0 left of it). The left state is the left-biased reconstruction of vp;
    ! the right state is the same reconstruction of the mirrored right-biased values, st(m) = vm(1-m).
+   ! SETH_TENO_MASK (with SETH_TENO, plain cutoff) builds the flag kernel of issue #6 instead: one left-biased stencil
+   ! v(LO:UMAX) centred on a cell, no candidate values, no weights; the output mk = sum_k delta_k 2**k, delta_k = 1
+   ! where candidate k passes the cutoff. SETH_TENO_FLAGS (test code) keeps the kernel and adds the masks of its two
+   ! states, mp and mm, the same sum. Neither switch changes the code of any other kernel.
+#ifdef SETH_TENO_MASK
+   real(R_P),    intent(in)  :: v(LO:UMAX)  !< Values of the cell's stencil, left-biased (upwind to the left).
+#else
    real(R_P),    intent(in)  :: vp(LO:1-LO) !< Values reconstructed with a left bias.
    real(R_P),    intent(in)  :: vm(LO:1-LO) !< Values reconstructed with a right bias.
+#endif
    real(R_P),    intent(in)  :: eps         !< Regulariser of the smoothness indicators.
 #ifdef SETH_TENO
 #ifdef SETH_TENO_A
@@ -43,13 +51,26 @@
 #else
    integer(I4P), intent(in)  :: p           !< Exponent of tau/beta in the weights (1 or 2).
 #endif
+#ifdef SETH_TENO_MASK
+   integer(I4P), intent(out) :: mk          !< Mask of the cell: sum_k delta_k 2**k.
+#else
    real(R_P),    intent(out) :: rp          !< Left state at the face, from vp.
    real(R_P),    intent(out) :: rm          !< Right state at the face, from vm.
+#endif
+#ifdef SETH_TENO_FLAGS
+   integer(I4P), intent(out) :: mp          !< Mask of the left state: sum_k delta_k 2**k.
+   integer(I4P), intent(out) :: mm          !< Mask of the right state.
+   integer(I4P)              :: ms(1:2)     !< Masks of the two states.
+#endif
    real(R_P)                 :: st(LO:UMAX) !< Stencil of the current side, left-biased.
+#ifndef SETH_TENO_MASK
    real(R_P)                 :: q(0:NC-1)   !< Candidate face values.
+#endif
    real(R_P)                 :: beta(0:NC-1)!< Candidate smoothness indicators.
    real(R_P)                 :: wgt(0:NC-1) !< Weights.
+#ifndef SETH_TENO_MASK
    real(R_P)                 :: r(1:2)      !< States (1 left, 2 right).
+#endif
    real(R_P)                 :: tau         !< Global smoothness measure.
    real(R_P)                 :: betag       !< Global indicator (TENO6).
    real(R_P)                 :: x, wsum     !< Work.
@@ -66,6 +87,12 @@
    !$acc routine seq
    !$omp declare target
 
+#ifdef SETH_TENO_MASK
+   do side=1, 1
+      do m=LO, UMAX
+         st(m) = v(m)
+      enddo
+#else
    do side=1, 2
       if (side == 1) then
          do m=LO, UMAX
@@ -76,6 +103,7 @@
             st(m) = vm(1-m)
          enddo
       endif
+#endif
 #ifdef SETH_TENO_A
       ! the cutoff of this state, from the first differences at the nodes -1..AHI
       epss = (0.9_R_P*cr/(1._R_P - 0.9_R_P*cr))*(xi/rmu)**2
@@ -91,10 +119,12 @@
 #endif
       ! candidates
       do k=0, NC-1
+#ifndef SETH_TENO_MASK
          q(k) = 0._R_P
          do a=0, CW(k)-1
             q(k) = q(k) + CP(a,k)*st(CLO(k)+a)
          enddo
+#endif
          beta(k) = 0._R_P
          do i=0, CW(k)-1
             lsum = 0._R_P
@@ -160,6 +190,18 @@
 #endif
          wsum = wsum + wgt(k)
       enddo
+#ifdef SETH_TENO_MASK
+      mk = 0
+      do k=0, NC-1
+         if (wgt(k) > 0._R_P) mk = mk + 2_I4P**k
+      enddo
+#endif
+#ifdef SETH_TENO_FLAGS
+      ms(side) = 0
+      do k=0, NC-1
+         if (wgt(k) > 0._R_P) ms(side) = ms(side) + 2_I4P**k
+      enddo
+#endif
 #else
 #ifdef _R_P_IS_R4P
       ! R4P: D_k (W + V u_k**p), u_k = a/b_k, W = 1/(1 + r**p), V = r**p/(1 + r**p), r = tau/a (a, b_k as above): the
@@ -215,10 +257,18 @@
       enddo
 #endif
 #endif
+#ifndef SETH_TENO_MASK
       r(side) = 0._R_P
       do k=0, NC-1
          r(side) = r(side) + (wgt(k)/wsum)*q(k)
       enddo
+#endif
    enddo
+#ifndef SETH_TENO_MASK
    rp = r(1)
    rm = r(2)
+#endif
+#ifdef SETH_TENO_FLAGS
+   mp = ms(1)
+   mm = ms(2)
+#endif
