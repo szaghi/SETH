@@ -128,6 +128,11 @@ The pieces of a hybrid scheme: the sensors that choose the linear branch. [Group
 
 </div>
 
+## Non-polynomial reconstructions
+
+TENO5-THINC, TENO5-DR and the Gaussian-RBF TENO: flags, detectors, overrides, stencil targeting, the RBF fluxes and
+their ablation. Planned ([issue #6](https://github.com/szaghi/SETH/issues/6)). [Group page](./nonpolynomial/).
+
 ## Contracts
 
 What must hold exactly, or bit for bit: equivalence with ADAM, invariances, the coefficient tables, the regression

@@ -14,6 +14,7 @@ Writes, into --out (default docs/public/guide):
     conv-schemes.png      every scheme: the bounds of vp and vm and the cells each reads; TENO's candidates
     conv-mirror.png       vm(m) = vp(1 - m) gives rm = rp
     conv-adam-rows.png    SETH's arrays and ADAM's rows v(1:2, 1-S:S-1)
+    conv-nonpoly.png      the -5:6 footprint of the composite non-polynomial kernels: the masks each state reads
     casts/conv-sweep-{light,dark}.{webm,mp4,png}   WENO5 sweeping a field with a jump: the candidates, the weights
                                                     and the two states at every face
 
@@ -230,6 +231,49 @@ def fig_mirror(out: Path) -> None:
     plt.close(fig)
 
 
+def fig_nonpoly(out: Path) -> None:
+    """The footprint of the composite non-polynomial kernels (issue #6): the masks a face reads, both states."""
+    fig, ax = plt.subplots(figsize=(9.6, 7.4))
+    bare(ax)
+    ym, yp, yv = 7.6, 6.6, 2.7  # rows: mesh, vp, vm
+    for m in range(-5, 7):
+        cell(ax, m, ym, 0.45, None, edge=INK)
+        ax.text(m, ym + 0.22, f'{m}', ha='center', va='center', fontsize=9, color=INK)
+    ax.text(-5.75, ym + 0.22, 'offset $m$', ha='right', va='center', fontsize=9, color=GREY)
+    face_line(ax, 0.0, ym + 0.6)
+    for y, arr, col, soft, dr, th, lab in ((yp, 'vp', LEFT, LEFT_SOFT, range(-5, 5), [5], 'vp(-5:6)\nleft state'),
+                                           (yv, 'vm', RIGHT, RIGHT_SOFT, range(-3, 7), [-4], 'vm(-5:6)\nright state')):
+        for m in range(-5, 7):
+            if m in dr:
+                cell(ax, m, y, 0.45, soft, edge=col)
+            elif m in th:
+                cell(ax, m, y, 0.45, None, edge=col, hatch='///')
+            else:
+                cell(ax, m, y, 0.45, None, edge=GREY)
+        ax.text(-5.75, y + 0.22, lab, ha='right', va='center', fontsize=9, color=col)
+    # the masks the left state reads: cells -3..2 (DR), -3..3 (THINC), each from its five values c-2..c+2
+    for j, c in enumerate(range(-3, 4)):
+        yy = yp - 0.25 - 0.42 * j
+        bracket(ax, c - 2, c + 2, yy, LEFT, '')
+        ax.plot([c], [yy + 0.13], 'o', color=LEFT, ms=4)
+        ax.text(6.8, yy, f'mask of cell {c}' + (' (THINC only)' if c == 3 else ''), ha='left', va='center',
+                fontsize=8, color=LEFT)
+    # the right state: the same construction on w(m) = vm(1 - m), so the mirrored cells 1 - c
+    for j, c in enumerate(range(-3, 4)):
+        cm = 1 - c
+        yy = yv - 0.25 - 0.42 * j
+        bracket(ax, cm - 2, cm + 2, yy, RIGHT, '')
+        ax.plot([cm], [yy + 0.13], 'o', color=RIGHT, ms=4)
+        ax.text(6.8, yy, f'mask of cell {cm} (mirrored {c})' + (' (THINC only)' if c == 3 else ''), ha='left',
+                va='center', fontsize=8, color=RIGHT)
+    ax.text(0.5, -0.35, 'shaded: read by TENO5-DR; hatched: read by TENO5-THINC only. Both states together: twelve cells, '
+            '-5..6, so 6 ghost cells', ha='center', va='top', fontsize=8.5, color=INK)
+    ax.set_xlim(-7.4, 11.2)
+    ax.set_ylim(-0.7, ym + 1.0)
+    fig.savefig(out / 'conv-nonpoly.png', dpi=DPI, bbox_inches='tight', pad_inches=0.08)
+    plt.close(fig)
+
+
 def fig_adam_rows(out: Path) -> None:
     """SETH's vp(1-S:S), vm(1-S:S) against ADAM's v(1:2, 1-S:S-1), S = 3."""
     fig, ax = plt.subplots(figsize=(8.6, 4.2))
@@ -404,7 +448,8 @@ def main() -> int:
             fig_schemes(args.out)
             fig_mirror(args.out)
             fig_adam_rows(args.out)
-        print(f'figures ({th}): {args.out}/conv-{{face,schemes,mirror,adam-rows}}.png')
+            fig_nonpoly(args.out)
+        print(f'figures ({th}): {args.out}/conv-{{face,schemes,mirror,adam-rows,nonpoly}}.png')
     if not args.no_cast:
         if shutil.which('ffmpeg') is None:
             print('ffmpeg not found: no animation rendered')

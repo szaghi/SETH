@@ -76,6 +76,17 @@ export default withMermaid({
           { text: 'H2 Central fluxes',         link: '/verification/hybrids/central' },
           { text: 'H3 Hybrids in a solver',    link: '/verification/hybrids/harness' },
         ] },
+        { text: 'Non-polynomial', collapsed: false, items: [
+          { text: 'Overview',                  link: '/verification/nonpolynomial/' },
+          { text: 'NP1 Flags',                 link: '/verification/nonpolynomial/flags' },
+          { text: 'NP2 Detectors',             link: '/verification/nonpolynomial/detectors' },
+          { text: 'NP3 THINC override',        link: '/verification/nonpolynomial/thinc' },
+          { text: 'NP4 DR override',           link: '/verification/nonpolynomial/dr' },
+          { text: 'NP5 Stencil targeting',     link: '/verification/nonpolynomial/targeting' },
+          { text: 'NP6 Gaussian-RBF fluxes',   link: '/verification/nonpolynomial/rbf' },
+          { text: 'NP7 Ablation',              link: '/verification/nonpolynomial/ablation' },
+          { text: 'NP8 Length units',          link: '/verification/nonpolynomial/units' },
+        ] },
         { text: 'Contracts', collapsed: false, items: [
           { text: 'Overview',                  link: '/verification/contracts/' },
           { text: 'C1 Equivalence with ADAM',  link: '/verification/contracts/adam-equivalence' },

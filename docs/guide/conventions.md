@@ -49,6 +49,17 @@ weight on the candidate that does not cross it.</figcaption>
 cells at equal order. TENO5 reads the cells of WENO5 through the same three candidates, numbered as Fu, Hu & Adams
 number them; TENO6 adds a fourth, four cells wide, that reaches cell $3$, so both its arrays are read in full.*
 
+## The composite non-polynomial kernels: twelve cells
+
+![The masks the two states of TENO5-DR and TENO5-THINC read, and the twelve cells -5..6 they need](/guide/conv-nonpoly.png)
+
+*The composite kernels of [issue #6](https://github.com/szaghi/SETH/issues/6) (TENO5-DR, TENO5-THINC, the
+Gaussian-RBF TENO) read the flags of TENO5's cutoff at the neighbouring cells, each from the five values centred on
+that cell: cells $-3..2$ for DR, $-3..3$ for THINC (Liang et al. 2022, Eq. 24; Takagi et al. 2022, Eq. 20). The right
+state is the same construction on the mirrored values. Both states together read $-5..6$: a solver needs **6 ghost
+cells** for them (3 for TENO5, 5 for WENO-9), and projects all twelve cells into the face's characteristic basis.
+Design: `notes/kernel-api-design.md`, section 11.*
+
 ## Mirror symmetry
 
 ![A profile vp and its mirror vm(m) = vp(1-m): the left state of one equals the right state of the other](/guide/conv-mirror.png)
