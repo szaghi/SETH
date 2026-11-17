@@ -29,6 +29,11 @@ program seth_test_golden
 !< v8 (2026-11-17) adds the composite non-polynomial kernels TENO5-DR and TENO5-THINC (issue #6), written by the
 !< optimised gfortran build: v7's 2563 lines are its first lines, character for character; seth_golden_r4_v3 the same
 !< way after r4_v2's 2563 lines (gfortran -O3, R4P).
+!< v9 (2026-11-17) adds the schemes the sweeps leave out, NSCHEMES+1..NALL of the registry (TENO5-ST, the
+!< Gaussian-RBF TENO5, TENO5-ST-DR and the RBF+DR scheme of Liang & Fu 2024), evaluated with rbf_dx = GOLDEN_DX below
+!< (the RBF kernels' s depends on the grid's dx; their results are not scale invariant, so the scaled stencils pin
+!< them too): v8's 2691 lines are its first lines, character for character; seth_golden_r4_v4 the same way after
+!< r4_v3's lines (same builds as v8 and r4_v3).
 use, intrinsic :: iso_fortran_env, only : compiler_version, compiler_options
 use seth
 use seth_test_parameters, only : GOLDEN_FILE, GOLDEN_SCALE_EXP0, GOLDEN_SCALE_DEXP, TOL_GOLDEN, TOL_GOLDEN_WR
@@ -36,6 +41,7 @@ use seth_test_schemes
 implicit none
 character(*), parameter :: GOLDEN = GOLDEN_FILE
 integer(I4P), parameter :: NST = 64_I4P
+real(R_P),    parameter :: GOLDEN_DX = 0.01_R_P !< The dx of the RBF kernels in the golden files from v9 (r4_v4) on.
 real(R_P),    parameter :: TOL = TOL_GOLDEN, TOL_WR = TOL_GOLDEN_WR
 real(R_P)               :: vp(VLO:VHI,NST), vm(VLO:VHI,NST), r(4), g(4), mag, d, worst, worst_wr
 integer(I4P)            :: id, p, k, u, n_values, n_bitwise, n_fail, ios, kk
@@ -44,6 +50,7 @@ character(256)          :: arg, path, line
 logical                 :: write_mode, exists
 
 call stencils(vp, vm)
+rbf_dx = GOLDEN_DX
 write_mode = .false.
 if (command_argument_count() >= 1) then
    call get_command_argument(1, arg)
@@ -57,7 +64,7 @@ if (write_mode) then
    write(u, '(A)') '# SETH golden values: scheme p stencil rp rm wrp wrm (wr = -1: no weights ratio)'
    write(u, '(A)') '# compiler: '//compiler_version()
    write(u, '(A)') '# options: '//compiler_options()
-   do id=1, NSCHEMES
+   do id=1, NALL
       do p=1, merge(2, 1, SCHEMES(id)%family == FAM_Z)
          do k=1, NST
             call evaluate(id, p, k, r)
@@ -123,7 +130,7 @@ contains
    pure function scheme_index(n) result(id)
    character(*), intent(in) :: n
    integer(I4P)             :: id
-   do id=1, NSCHEMES
+   do id=1, NALL
       if (trim(SCHEMES(id)%name) == trim(n)) return
    enddo
    id = -1
@@ -132,7 +139,7 @@ contains
    pure function expected_values() result(n)
    integer(I4P) :: n, id
    n = 0
-   do id=1, NSCHEMES
+   do id=1, NALL
       n = n + 4*NST*merge(2, 1, SCHEMES(id)%family == FAM_Z)
    enddo
    endfunction expected_values
