@@ -86,6 +86,7 @@ export default withMermaid({
           { text: 'NP6 Gaussian-RBF fluxes',   link: '/verification/nonpolynomial/rbf' },
           { text: 'NP7 Ablation',              link: '/verification/nonpolynomial/ablation' },
           { text: 'NP8 Length units',          link: '/verification/nonpolynomial/units' },
+          { text: 'NP9 Two dimensions',        link: '/verification/nonpolynomial/two-d' },
         ] },
         { text: 'Contracts', collapsed: false, items: [
           { text: 'Overview',                  link: '/verification/contracts/' },
