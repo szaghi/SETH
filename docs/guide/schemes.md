@@ -343,8 +343,12 @@ On smooth data $\phi = O(h)$ and the error is $O(h^{2S})$: measured 4.00, 6.03, 
 ([test programs](/verification/unit-tests)). Where a difference of the cells $i-1..i+2$ vanishes (a critical
 point), $\phi = O(1)$ and the state is the upwind one: the orders there are WENO-JS's, 1, 3, 5 at first-order
 critical points. The right state is the same on the mirrored stencil. $r_\mu$ (`rmu`) is the descaler of the
-upwind weights and of the $I_k$ alike: $r_\mu = 1$ is ADAM's arithmetic. $\varepsilon > 0$ (`eps`,
-`SETH_WENO_JS_EPS`) regularises both.
+upwind weights and of the $I_k$ alike: $r_\mu = 1$ gives ADAM's indicators. $\varepsilon > 0$ (`eps`,
+`SETH_WENO_JS_EPS`) regularises both. In R8P $\phi$ takes one division: the larger ratio is chosen by cross
+products, $|I_1 - I_0|(I_2 + I_1) \ge |I_2 - I_1|(I_1 + I_0)$, and only it is divided; the value is ADAM's except
+where the two ratios tie to rounding (then the other, a few ulps away), and it halves the blend's divisions
+([Performance](/guide/performance)). In R4P the products would overflow at large jumps, and $\phi$ keeps ADAM's two
+divisions.
 
 What it is, and what it is not:
 

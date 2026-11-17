@@ -12,10 +12,13 @@ module seth_weno_c
 !<    phi  = max(|I_1 - I_0|/(I_1 + I_0), |I_2 - I_1|/(I_2 + I_1))
 !<    r    = r_c + phi (r_up - r_c)
 !<
+!< In R8P phi is computed with one division (the larger ratio chosen by cross products, PERF of issue #4, 6.3): ADAM's
+!< value but where the two ratios tie to rounding; in R4P with ADAM's two divisions (the products would overflow).
+!<
 !< On smooth data phi = O(h) and the error is O(h^2S); at a jump inside cells -1..2 phi tends to 1 and r to the upwind
 !< state. The right state is the same on the mirrored vm (the central row is symmetric, and mirroring swaps I_0 and
-!< I_2, which phi does not see). `rmu` is the inverse descaler (1: ADAM's form, bitwise in the blend), passed to the
-!< upwind weights and to I_k alike; `eps` > 0 (SETH_WENO_JS_EPS), the regulariser of both. ADAM's S = 1 (WENO_C_2)
+!< I_2, which phi does not see but for rounding at a tie in R8P). `rmu` is the inverse descaler (1: ADAM's
+!< indicators), passed to the upwind weights and to I_k alike; `eps` > 0 (SETH_WENO_JS_EPS), the regulariser of both. ADAM's S = 1 (WENO_C_2)
 !< never reaches the blend and is WENO1: use seth_weno1_js. Same convention as the other kernels: vp, vm by offset from
 !< the face. Pure, `acc routine seq`, `omp declare target`:
 !<
@@ -106,12 +109,28 @@ contains
    real(R_P), intent(in) :: rmu        !< Inverse descaler.
    real(R_P)             :: phi        !< Weight of the upwind state.
    real(R_P)             :: i0, i1, i2
+#ifndef _R_P_IS_R4P
+   real(R_P)             :: n1, n2, d1, d2
+   logical               :: first
+#endif
    !$acc routine seq
    !$omp declare target
 
    i0 = (rmu*(b - a))**2 + eps
    i1 = (rmu*(c - b))**2 + eps
    i2 = (rmu*(d - c))**2 + eps
+#ifndef _R_P_IS_R4P
+   ! R8P: the larger ratio chosen by cross products, one division: the old form's quotient except where the two ratios
+   ! tie to rounding (then the other, a few ulps away). The products stay in range for indicators in 1e-150..1e150,
+   ! beyond the upwind part's own range (it overflows past data of 1e30 with rmu = 1)
+   n1 = abs(i1 - i0) ; d1 = i1 + i0
+   n2 = abs(i2 - i1) ; d2 = i2 + i1
+   first = n1*d2 >= n2*d1
+   phi = merge(n1, n2, first)/merge(d1, d2, first)
+#else
+   ! R4P: two divisions (ADAM's form): the indicators reach 1e32 at a jump of 1e16, and the cross products would
+   ! overflow past 1e19, where an Inf >= Inf tie could pick the smaller ratio at a jump
    phi = max(abs(i1 - i0)/(i1 + i0), abs(i2 - i1)/(i2 + i1))
+#endif
    endfunction blend
 endmodule seth_weno_c

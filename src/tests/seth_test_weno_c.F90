@@ -10,8 +10,8 @@ program seth_test_weno_c
 !<    round-off passes when ORDERS_AT_FLOOR_OK).
 !< 2. Mirror: with vm(m) = vp(1-m) the right state equals the left one to TOL_PROPERTIES max|v|, the tolerance of
 !<    WENO-JS (seth_test_properties), whose two biases sum mirrored tables in another order. Frozen as 4 ulps; changed
-!<    at 15:42 after measuring 4.8e-15 (S = 3) and 8.9e-15 (S = 4): the central sums and the blend mirror bitwise, the
-!<    upwind WENO-JS part does not, as documented there.
+!<    at 15:42 after measuring 4.8e-15 (S = 3) and 8.9e-15 (S = 4): the central sums and the blend mirror bitwise (the
+!<    R8P blend but for rounding at a tie of its two ratios), the upwind WENO-JS part does not, as documented there.
 !< 3. Constant data: both states equal the constant to 4 ulps.
 !< 4. A jump of BIG_JUMP (1e30 in R8P, 1e16 in R4P) anywhere in the stencil: both states finite.
 !< 5. A unit step at every cell boundary of the big stencil, both orientations: the worst overshoot outside [0, 1] at
@@ -19,18 +19,24 @@ program seth_test_weno_c
 !<    for S = 2, 3. For S = 4 (finding, 15:42): a step in the outer cells -3 or 4 lies outside the blend's detector
 !<    (ADAM's, cells -1..2), phi = 0 there, and the central row passes its edge coefficient: overshoot |CEN8_C(4)| =
 !<    1/280 = 3.6e-3; bounded by that plus 1e-3. (S = 3: the edge coefficient 1/60 is positive, a precursor inside
-!<    [0, 1], not an overshoot.) Widening the detector to the whole stencil would change ADAM's scheme: left to the
-!<    owner.
+!<    [0, 1], not an overshoot.) Kept as ported (owner's decision, 2026-11-16).
+!< 6. One division (R8P; night 2026-11-16 weno-c-one-division, frozen 20:51): both states within
+!<    4 eps |r_up - r_c| + 8 eps max|v| of ADAM's two-division blend composed here (seth_weno<2S-1>_js, the central
+!<    row, phi = max of the two ratios), on random stencils at magnitudes 1e-6..1e6 with rmu = 1 and with the
+!<    descaler, and at a BIG_JUMP step anywhere (a wrong choice of ratio there differs by the order of the jump). The
+!<    8 eps max|v| term is the central sum's round-off, which compilers contract differently in the two programs. In
+!<    R4P the kernel keeps ADAM's two divisions: the same bound holds.
 use seth
 use seth_test_parameters, only : BIG_JUMP, CENTRED_ORDER_LOSS, ORDERS_AT_FLOOR_OK, POINT_FLOOR, TOL_PROPERTIES
 use seth_test_rng, only : seed_rng
 use seth_test_functions, only : gfun, gavg
-use seth_z_teno_tables, only : CEN8_C
+use seth_z_teno_tables, only : CEN4_C, CEN6_C, CEN8_C
 use seth_vv_cases, only : vv_report, vv_open
 implicit none
 real(R_P),    parameter :: XF = 0.3_R_P
 integer(I4P), parameter :: NH = 6_I4P
 real(R_P)               :: vp(-4:5), vm(-4:5), rp, rm, up, um, h, err(2,NH), order, floor_, worst, worst_up, x, d
+real(R_P)               :: op, om, bp, bm, sc, rmu
 integer(I4P)            :: s, j, m, side, jump, n_
 integer                 :: uo, us
 logical                 :: passed
@@ -114,6 +120,34 @@ do s=2, 4
    print '(A,I0,A,ES9.2,A,ES9.2)', 'WENO', 2*s, '-C worst overshoot ', worst, ', its upwind WENO-JS ', worst_up
    if (vv_report()) write(us, '(A,I0,A,2ES12.4)') 'weno', 2*s, '_c', worst, worst_up
    if (worst > worst_up + 1.e-3_R_P + merge(abs(CEN8_C(4)), 0._R_P, s == 4)) call fail('overshoot above the bound')
+   ! 6. the kernel against ADAM's two-division blend
+   d = 0._R_P
+   do n_=1, 3000 + 2*s - 1
+      vp = 0._R_P ; vm = 0._R_P
+      if (n_ <= 3000) then ! random stencils, rough, at magnitudes 1e-6..1e6
+         call random_number(x) ; sc = 10._R_P**(12._R_P*x - 6._R_P)
+         do m=1-s, s
+            call random_number(x) ; vp(m) = sc*(x - 0.5_R_P)
+            call random_number(x) ; vm(m) = sc*(x - 0.5_R_P)
+         enddo
+      else                 ! a BIG_JUMP step at every position
+         jump = 1 - s + (n_ - 3000) ! 2-s .. s
+         do m=1-s, s
+            vp(m) = merge(BIG_JUMP, 1._R_P, m >= jump) ; vm(m) = vp(m)
+         enddo
+      endif
+      rmu = 1._R_P
+      if (mod(n_, 2) == 0) rmu = seth_weno_descaling(s, 1._R_P, vp(1-s:s), vm(1-s:s))
+      call kernel(s, vp, vm, rmu, rp, rm)
+      call two_divisions(s, vp, vm, rmu, op, om, bp, bm)
+      x = 8._R_P*epsilon(1._R_P)*max(maxval(abs(vp)), maxval(abs(vm)))
+      if (abs(rp - op) > bp + x .or. abs(rm - om) > bm + x) then
+         call fail('one division: differs from the two-division blend beyond its bound')
+         print '(A,I0,A,4ES12.4)', '   S=', s, ': rp, op, rm, om ', rp, op, rm, om
+      endif
+      d = max(d, abs(rp - op)/(bp + x), abs(rm - om)/(bm + x))
+   enddo
+   print '(A,I0,A,F6.3)', 'WENO', 2*s, '-C against the two-division blend: largest difference over its bound ', d
 enddo
 if (vv_report()) then ; close(uo) ; close(us) ; endif
 if (.not.passed) error stop 'centred WENO test failed'
@@ -130,6 +164,41 @@ contains
    case(4) ; call seth_weno8_c(vp(-3:4), vm(-3:4), SETH_WENO_JS_EPS, rmu, rp, rm)
    endselect
    endsubroutine kernel
+
+   subroutine two_divisions(s, vp, vm, rmu, rp, rm, bp, bm)
+   !< ADAM's blend (two divisions, phi the larger ratio) on SETH's upwind part and central row; bp, bm: 4 eps
+   !< |r_up - r_c| of each state, the bound of a different choice of ratio at a tie.
+   integer(I4P), intent(in)  :: s
+   real(R_P),    intent(in)  :: vp(-4:5), vm(-4:5), rmu
+   real(R_P),    intent(out) :: rp, rm, bp, bm
+   real(R_P)                 :: c(-3:4), up, um, cp, cm
+   integer(I4P)              :: m
+   c = 0._R_P
+   select case(s)
+   case(2) ; c(-1:2) = CEN4_C ; call seth_weno3_js(vp(-1:2), vm(-1:2), SETH_WENO_JS_EPS, rmu, up, um)
+   case(3) ; c(-2:3) = CEN6_C ; call seth_weno5_js(vp(-2:3), vm(-2:3), SETH_WENO_JS_EPS, rmu, up, um)
+   case(4) ; c(-3:4) = CEN8_C ; call seth_weno7_js(vp(-3:4), vm(-3:4), SETH_WENO_JS_EPS, rmu, up, um)
+   endselect
+   cp = 0._R_P ; cm = 0._R_P
+   do m=1-s, s
+      cp = cp + c(m)*vp(m)
+      cm = cm + c(m)*vm(1-m)
+   enddo
+   rp = cp + phi2(vp(-1), vp(0), vp(1), vp(2), rmu)*(up - cp)
+   rm = cm + phi2(vm(2), vm(1), vm(0), vm(-1), rmu)*(um - cm)
+   bp = 4._R_P*epsilon(1._R_P)*abs(up - cp)
+   bm = 4._R_P*epsilon(1._R_P)*abs(um - cm)
+   endsubroutine two_divisions
+
+   pure function phi2(a, b, c, d, rmu) result(phi)
+   !< ADAM's blend coefficient: the larger of the two ratios, each with its own division.
+   real(R_P), intent(in) :: a, b, c, d, rmu
+   real(R_P)             :: phi, i0, i1, i2
+   i0 = (rmu*(b - a))**2 + SETH_WENO_JS_EPS
+   i1 = (rmu*(c - b))**2 + SETH_WENO_JS_EPS
+   i2 = (rmu*(d - c))**2 + SETH_WENO_JS_EPS
+   phi = max(abs(i1 - i0)/(i1 + i0), abs(i2 - i1)/(i2 + i1))
+   endfunction phi2
 
    subroutine upwind(s, vp, vm, rp, rm)
    integer(I4P), intent(in)  :: s

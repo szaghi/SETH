@@ -74,8 +74,9 @@ Against ADAM:
   their upwind parts reach $10^{-10}$ and below ([S6](../shocks/burgers)). The cause is the blend: a small packet on
   a smooth background is damped at $\phi$ times the upwind rate, with the background's $\phi = O(h)$, a damping that
   does not grow with the resolution; the ADR, one wave of unit amplitude with no background, cannot show it.
-- **The mirror is WENO-JS's**, not bitwise: the central sums and the blend mirror exactly, the upwind WENO-JS sums its
-  mirrored tables in another order ([C2](../contracts/properties)). The frozen bound of 4 ulps was raised to WENO-JS's
+- **The mirror is WENO-JS's**, not bitwise: the central sums mirror exactly and the blend too but for rounding at a
+  tie of its two ratios (R8P, one division), the upwind WENO-JS sums its mirrored tables in another order
+  ([C2](../contracts/properties)). The frozen bound of 4 ulps was raised to WENO-JS's
   tolerance for that reason.
 - **In R4P** the pairs above the round-off floor are the coarse, pre-asymptotic ones (the same errors as R8P there):
   WENO6-C's right state measures 4.69, hence `CENTRED_ORDER_LOSS` = 1.06 in R4P.
