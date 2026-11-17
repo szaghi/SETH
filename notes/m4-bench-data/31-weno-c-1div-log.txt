@@ -1,0 +1,31 @@
+bench-gnu: built 21:27:51
+bench-nvf: built 21:28:00
+bench-nvf-oac: built 21:28:17
+gpu old run 1 exit 0 21:29:40 foreign before/after 0/0
+gpu new run 1 exit 0 21:30:00 foreign before/after 0/0
+gpu old run 2 exit 0 21:30:17 foreign before/after 0/0
+gpu new run 2 exit 0 21:30:36 foreign before/after 0/0
+gpu old run 3 exit 0 21:30:54 foreign before/after 0/0
+gpu new run 3 exit 0 21:31:14 foreign before/after 0/0
+gpu old run 4 exit 0 21:31:31 foreign before/after 0/0
+gpu new run 4 exit 0 21:31:51 foreign before/after 0/0
+gnu old run 1 exit 0 21:37:05 load 3.01
+gnu new run 1 exit 0 21:42:21 load 3.04
+gnu old run 2 exit 0 21:47:48 load 4.59
+gnu new run 2 exit 0 21:53:17 load 3.84
+gnu old run 3 exit 0 21:58:49 load 3.92
+gnu new run 3 exit 0 22:04:03 load 2.52
+nvf old run 1 exit 0 22:09:21 load 3.26
+nvf new run 1 exit 0 22:14:26 load 2.17
+nvf old run 2 exit 0 22:19:44 load 5.95
+nvf new run 2 exit 0 22:24:57 load 3.18
+nvf old run 3 exit 0 22:30:13 load 3.50
+nvf new run 3 exit 0 22:35:24 load 3.30
+bench: end
+Mon Nov 16 09:29:20 PM CET 2026
+ 21:29:20 up 11 days, 16:59,  1 user,  load average: 1.14, 1.18, 1.17
+index, utilization.gpu [%], memory.used [MiB]
+0, 8 %, 1707 MiB
+1, 0 %, 0 MiB
+Mon Nov 16 10:35:24 PM CET 2026
+ 22:35:24 up 11 days, 18:00,  1 user,  load average: 3.30, 3.69, 3.74

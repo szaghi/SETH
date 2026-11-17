@@ -60,9 +60,9 @@ kernel the cost budget of the roadmap (issue #4) was set against, on the GPU.
 | `seth_sensor_lcr` | 0.298 | 15.9 | — | — | — |
 | sensor + `seth_linear5` | 0.393 | 18.2 | 0.40 | WENO-Z5 | 0.6 |
 | `seth_keep_pe6` | 0.777 | 31.8 | 1.00 | ADAM's `compute_kep_flux` | 1.0 |
-| `seth_weno4_c` | 0.783 | 13.9 | **1.66** | WENO3-JS (0.473, 8.1) | 1.4 |
-| `seth_weno6_c` | 1.316 | 27.5 | **1.33** | WENO5-JS | 1.3 |
-| `seth_weno8_c` | 2.151 | 39.7 | 1.20 | WENO7-JS | 1.25 |
+| `seth_weno4_c` | 0.740 | 12.5 | **1.56** | WENO3-JS (0.475, 7.8) | 1.4 |
+| `seth_weno6_c` | 1.271 | 27.3 | 1.28 | WENO5-JS | 1.3 |
+| `seth_weno8_c` | 2.085 | 39.4 | 1.16 | WENO7-JS | 1.25 |
 
 Bold: over the budget set before coding, a finding rather than an edit of the budget. On one CPU core the picture
 differs: the adaptive cutoff of TENO5-A costs nothing measurable (80.0 against 79.5) while it costs 41% on the GPU,
@@ -74,6 +74,15 @@ near-constant 0.31–0.35 ns per face on the GPU (a central dot product and two 
 budget set as a ratio is missed by the two cheapest kernels, WENO4-C most; on one core the ratios are 1.71 (WENO4-C),
 1.13 and 1.09 with gfortran, 1.09, 1.12 and 1.04 with nvfortran. The old kernels did not slow down
 (`bench_compare.py`: ok on both machines).
+
+The same evening the blend went to one division per state in R8P (the larger ratio chosen by cross products,
+[Schemes](/guide/schemes#centred-weno-weno4-6-8-c)); the table shows it. Measured against the two-division build in
+the same session, interleaved (four GPU rounds, three per compiler on one core, `notes/m4-bench-data/31-weno-c-1div-*`):
+on the GPU it saves 0.045 ns per face (WENO4-C, WENO6-C) and 0.065 (WENO8-C), and WENO6-C's ratio falls from 1.33 to
+1.28, within its budget; WENO4-C's falls from 1.66 to 1.56, still over. The divisions were about 30% of the blend's
+cost, not most of it, as the change had assumed: the rest is its other FP64 operations (the central sum, the
+indicators), presumably counted at this card's FP64 rate like any other (not measured separately). On one core the
+gain is within the spread of the runs: gfortran 1.60, 1.14, 1.08 (WENO4-C still over), nvfortran 1.08, 1.04, 1.04.
 
 ## Single precision
 

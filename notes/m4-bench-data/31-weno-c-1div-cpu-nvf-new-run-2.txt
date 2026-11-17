@@ -1,0 +1,62 @@
+faces: 16777216, timed passes: 10 per variant
+SETH  weno5_js                 : device vs host SETH, max scaled difference  0.00E+00
+ADAM  generic S=3              : vs SETH weno5_js, max scaled difference  0.00E+00
+ADAM  width s3                 : vs SETH weno5_js, max scaled difference  0.00E+00
+SETH  weno7_js                 : device vs host SETH, max scaled difference  0.00E+00
+ADAM  generic S=4              : vs SETH weno7_js, max scaled difference  0.00E+00
+ADAM  width s4                 : vs SETH weno7_js, max scaled difference  0.00E+00
+SETH  wenoz5 (p=1)             : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno6 (C_T=1e-7)         : device vs host SETH, max scaled difference  0.00E+00
+ADAM  host S=3 (FLUME CPU)     : vs SETH weno5_js, max scaled difference  0.00E+00
+ADAM  host S=4 (FLUME CPU)     : vs SETH weno7_js, max scaled difference  0.00E+00
+SETH  teno5 (C_T=1e-5)         : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno5_opt (C_T=1e-5)     : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno5_az (C_T=1e-5)      : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno8 (C_T=1e-7)         : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno5_a                  : device vs host SETH, max scaled difference  0.00E+00
+SETH  teno8_a                  : device vs host SETH, max scaled difference  0.00E+00
+SETH  weno5_js + descaling     : device vs host SETH, max scaled difference  0.00E+00
+SETH  weno5_js + descaling_ai  : device vs host SETH, max scaled difference  0.00E+00
+SETH  weno5_js + mp_bound      : device vs host SETH, max scaled difference  0.00E+00
+SETH  linear5                  : device vs host SETH, max scaled difference  0.00E+00
+SETH  linear7                  : device vs host SETH, max scaled difference  0.00E+00
+SETH  sensor_lcr               : device vs host SETH, max scaled difference  0.00E+00
+SETH  hybrid lcr+linear5/wenoz5: device vs host SETH, max scaled difference  0.00E+00
+SETH  keep_pe6                 : device vs host SETH, max scaled difference  0.00E+00
+ADAM  compute_kep_flux         : device vs host SETH, max scaled difference  0.00E+00
+SETH  weno4_c                  : device vs host SETH, max scaled difference  0.00E+00
+SETH  weno6_c                  : device vs host SETH, max scaled difference  0.00E+00
+SETH  weno8_c                  : device vs host SETH, max scaled difference  0.00E+00
+SETH  weno3_js                 : device vs host SETH, max scaled difference  0.00E+00
+
+                        variant    median ms       min ms      ns/face vs ADAM gen.
+SETH  weno5_js                       535.722      517.498       31.932         1.78
+ADAM  generic S=3                    952.231      933.766       56.757         1.00
+ADAM  width s3                       546.266      535.570       32.560         1.74
+SETH  weno7_js                       666.825      658.425       39.746         2.33
+ADAM  generic S=4                   1550.628     1506.689       92.425         1.00
+ADAM  width s4                       726.588      711.337       43.308         2.13
+SETH  wenoz5 (p=1)                   456.258      452.707       27.195         2.09
+SETH  teno6 (C_T=1e-7)              1875.028     1839.103      111.760         0.83
+ADAM  host S=3 (FLUME CPU)           870.750      844.377       51.901         1.09
+ADAM  host S=4 (FLUME CPU)          1566.480     1501.325       93.369         0.99
+SETH  teno5 (C_T=1e-5)               644.360      635.125       38.407         2.41
+SETH  teno5_opt (C_T=1e-5)           636.644      625.042       37.947         2.44
+SETH  teno5_az (C_T=1e-5)            644.766      629.504       38.431         2.40
+SETH  teno8 (C_T=1e-7)              2472.087     2428.445      147.348         0.63
+SETH  teno5_a                        734.762      714.293       43.795         2.11
+SETH  teno8_a                       2743.649     2704.925      163.534         0.57
+SETH  weno5_js + descaling           659.169      652.027       39.290         2.35
+SETH  weno5_js + descaling_ai        812.926      789.664       48.454         1.91
+SETH  weno5_js + mp_bound            628.890      617.056       37.485         2.47
+SETH  linear5                         40.306       38.882        2.402        38.47
+SETH  linear7                         47.612       45.112        2.838        32.57
+SETH  sensor_lcr                     277.060      274.343       16.514         5.60
+SETH  hybrid lcr+linear5/wenoz5      350.470      345.643       20.890         4.42
+SETH  keep_pe6                       651.814      649.371       38.851         2.38
+ADAM  compute_kep_flux               656.570      650.104       39.135         2.36
+SETH  weno4_c                        396.121      389.440       23.611         3.91
+SETH  weno6_c                        525.835      515.022       31.342         2.95
+SETH  weno8_c                        689.075      684.707       41.072         2.25
+SETH  weno3_js                       364.525      359.911       21.727         4.25
+seth_bench_weno: checks ok
