@@ -174,3 +174,107 @@ keep ADAM's run-time-table kernels during the migration.
 - Measured: orders Z3 2.9-3.0, Z5 5.0, Z7 7.0, TENO5 5.0, TENO6 6.0, TENO6-opt 4.0; TENO returns its linear scheme on
   smooth data to round-off; no overshoot across a jump; a 1e30 jump stays finite (normalised chi).
 - Not done, left to the owner: WENO-Z9 (tau_9 unsourced), C_T defaults for TENO5/TENO6, TENO8 (M4).
+
+## 11. Composite non-polynomial kernels (issue #6, 2026-11-17)
+
+Input: issue #6 (the plan, decisions D1–D8 taken by the owner on 2026-11-16) and `notes/m5-sources.md` (the primary
+reads of step 0.1). This section **supersedes the row "TENO-THINC: not self-contained per face" of issue #4, section
+8** (owner decision D1): the composite schemes are implemented, at the cost measured in step 2.4.
+
+### 11.1 Three pieces
+
+TENO5-THINC (Takagi et al. 2022), TENO5-DR (Liang, Xiao, Shyy & Fu 2022) and the complete scheme of Liang & Fu 2024
+(stencil targeting, Gaussian-RBF fluxes, DR on top) share one structure: a **flag** per cell, a **detector** that
+reads the flags of the neighbouring cells, an **override** that replaces the face state where the detector fires.
+
+| Piece | Kernel | Input | Output |
+|---|---|---|---|
+| Flag | `seth_teno5_mask(v, eps, ct, m)` | `v(-2:2)`, the five values centred on one cell, upwind to the left | `m = delta_0 + 2 delta_1 + 4 delta_2`, TENO5's cutoff outcome (D2: the mask, not `zeta`) |
+| Detector | `seth_dr_detect(mp, mm, lp, lm)`, `seth_thinc_detect(mp, mm, lp, lm)` | the masks of the cells around the face, by offset from it, both biases, `mp, mm(-3:3)` | integer levels `lp`, `lm` (DR: 0, 1 by Liang 2022 Eq. 24, 2 by Eq. 32; THINC: 0, 1 by Takagi 2022 Eq. 20) |
+| Override | `seth_dr_override(vp, vm, lp, lm, t1, t2, rmu, rp, rm)`, `seth_thinc_override(vp, vm, lp, lm, beta, rmu, rp, rm)` | `vp, vm(-1:2)`, the levels, the states | the states, `inout`, replaced where the level is positive |
+
+The bit `k` of a mask is candidate `k` of `seth_teno5` in SETH's order, which for TENO5 is the papers': `S0 = {-1,0,1}`
+central, `S1 = {0,1,2}` downwind, `S2 = {-2,-1,0}` upwind (`TENO5_CLO = [-1, 0, -2]`). The flag of a cell is the
+cutoff of the left-biased TENO5 reconstruction at its right face, computed from the five values centred on it; the
+detector reads `zeta` (Liang 2022, Eq. 17), a function of the mask, so the mask carries one bit more (`delta_0`) and
+Tables 1–3 of Liang 2022 test it digit for digit.
+
+`seth_teno5_mask` is **the cutoff of `seth_teno5` and nothing else**: the same body (`seth_z_teno_body.INC`) compiled
+with a mask switch that skips the candidate values and the weights, so the flags cannot drift from the kernel's. The
+criterion is calibrated on plain TENO5 (`tau_5 = |beta_1 - beta_2|`, `C_T = 1e-5` in the papers): no detector is
+offered on the flags of TENO5-AZ, TENO5-A, TENO6 or TENO8 (issue #6, section 8).
+
+### 11.2 Cells by offset from the face, mirrored for the right state
+
+As every SETH kernel (section 3), the composite kernels index cells by their offset from the face `i+1/2` (cell 0 on
+its left) and take two arrays, `vp` for the left-biased and `vm` for the right-biased values, unshifted. The left
+state reads the masks of cells `-3..2` (DR; THINC `-3..3`), each from `vp(c-2:c+2)`, so `vp(-5:4)` (THINC `vp(-5:5)`).
+The right state is the left-biased construction on the mirrored data `w(m) = vm(1-m)`, so it reads `vm(-3:6)`
+(THINC `vm(-4:6)`: the mirror of `-5:4` is `-3:6`, of `-5:5` is `-4:6`). With both biases the footprint is **`-5:6`, twelve cells**. The
+detectors take the masks in the same offsets (`mp(-3:3)` of the left state, `mm(-3:3)` of the mirrored right state),
+so one integer routine serves both states.
+
+### 11.3 The default: one self-contained kernel per face (D3, D6)
+
+```fortran
+pure subroutine seth_teno5_dr(vp, vm, eps, ct, t1, t2, rmu, rp, rm)
+!$acc routine seq
+real(R_P), intent(in)  :: vp(-5:6), vm(-5:6) !< left- / right-biased values, cells by offset from the face
+real(R_P), intent(in)  :: eps, ct            !< TENO5's regulariser and cutoff (the papers: C_T = 1e-5)
+real(R_P), intent(in)  :: t1, t2             !< tanh of the two steepness constants (SETH_DR_T1, SETH_DR_T2)
+real(R_P), intent(in)  :: rmu                !< inverse descaler of the first-order guard (1: the paper's form)
+real(R_P), intent(out) :: rp, rm             !< left and right states at the face
+```
+
+`seth_teno5_thinc(vp, vm, eps, ct, beta, rmu, rp, rm)` has the same shape. Each call computes TENO5's two states, the
+masks of the neighbouring cells by `seth_teno5_mask`, the detector and the override: no state is kept between faces,
+the shape of every other SETH kernel (R1–R3 hold unchanged). The price is the recomputation of the neighbours' masks:
+up to six (THINC seven) mask evaluations per state, each about 0.7 of a TENO5 state (budget of step 1.1), against
+the owner's budget of 3 times `seth_teno5` per face (step 2.4, E1).
+
+**Early exit, results unchanged.** The face's own cell decides first. If its `zeta` is 2 or −1 neither DR condition
+can hold (Eqs. 24 and 32 need it 0 or 1, THINC's Eq. 20 needs 0: `notes/m5-sources.md`) and no neighbour is
+evaluated; on smooth data the masks of the downwind cells `1, 2` (DR) or `1, 2, 3` (THINC) rule detection out when
+none has `zeta` in `{-1, 2}`. The order of evaluation changes the cost only: the result is
+the same as with every mask computed, which the two-pass reference of the tests (N1) checks bitwise.
+
+**Basis.** For a system the caller projects all twelve cells into the characteristic basis of the face being
+reconstructed (as it projects the five or six cells of TENO5 today), so the masks of the neighbours are computed in
+that face's basis. Tables 1–3 and every scalar statement of the papers hold per characteristic field. The papers are
+silent on the basis of a neighbour's flags (issue #6, section 1.2, tier U); this choice is the one that keeps the
+kernel self-contained.
+
+**Ghost cells.** A solver needs **6 ghost cells** for these kernels (3 for TENO5, 5 for WENO-9). The test harness
+(`seth_vv_euler`, `NG = 6`) and the registry stencils (`seth_test_schemes`, `VLO:VHI = -5:6`) carry the footprint
+since step 0.3; gate N6 (experiment E4) proves the width: two blocks with 6 ghost cells equal one block bitwise, and a
+harness mutant with 5 differs.
+
+### 11.4 The fallback: stored masks, two passes
+
+If the default exceeds 3 times `seth_teno5` per face (E1), a second variant is implemented: a first pass computes
+each cell's mask once (in the basis of that cell's own face) and stores it, a second pass reads the stored masks and
+reconstructs. It costs one mask per cell instead of six to seven per state, but the caller keeps an integer array
+and its halo, and on a system the masks are computed in another basis than the face's (the papers are silent on
+which is meant, tier U). The two variants coincide on scalar problems (N1). The pieces of section 11.1 are exported
+for this variant and for callers building their own composite.
+
+### 11.5 Parameters and kinds
+
+- The steepness constants enter as `t1 = tanh(0.91)`, `t2 = tanh(1.23)` (`SETH_DR_T1`, `SETH_DR_T2`), literals
+  printed by the generator for each kind and compared with the intrinsic to one ulp (`seth_test_tables`).
+- THINC's `beta = 1.6` (`SETH_THINC_BETA`, Takagi 2022, Eq. 15); the face formula (Eq. 16) needs one `tanh` and no
+  `exp`: `A = tanh(alpha beta/2)/tanh(beta/2)` (derived in `notes/m5-sources.md`; the generator of step 0.4 proves
+  it). The override includes Takagi's first-order guard, Eq. 17 (the same as Liang 2022, Eq. 33): `alpha` is 0/0
+  where `f_{i+1} = f_{i-1}`.
+- The first-order guard `(f_{i+1}-f_i)(f_i-f_{i-1}) <= 1e-15` of both overrides (Takagi Eq. 17, Liang Eq. 33) is
+  dimensional; the kernel multiplies each difference by
+  `rmu` (as `seth_mp_bound`), `rmu = 1` reproducing the paper. In R4P the threshold is the same number (it is above
+  `tiny` in both kinds).
+- The RBF kernel takes `s1 = alpha_1 dx`, `s2 = alpha_2 dx` from the caller (D5): no grid enters the library. Its
+  results depend on the length unit; the guide states the validated range of `s` (D7).
+
+### 11.6 What stays with the caller (R3)
+
+Which variable carries the flags, where stored masks live (variant 11.4), the halo exchange of six cells, the
+projection of twelve cells per face, `dx` for the RBF kernel. SETH ships kernels; a solver's choices are not made in
+the library.
