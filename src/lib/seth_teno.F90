@@ -187,7 +187,8 @@ contains
 
    pure subroutine seth_teno5_a(vp, vm, eps, cr, xi, a1, a2, rmu, rp, rm)
    !< TENO5-A: TENO5 with the adaptive cutoff C_T = 10^-floor(a1 - a2 (1 - g(m))), the sensor on the nodes i-1..i+1
-   !< (SETH_TENO5_A_*: Tang 2024, Eqs. 15-16); rmu = 1 the papers' form.
+   !< (SETH_TENO5_A_*: Tang 2024, Eqs. 15-16; Fu, Hu & Adams 2019, Eqs. 20-22); rmu = 1 the papers' form. TENO-A in
+   !< Tang's sense: the original TENO5-A of Fu, Hu & Adams also changes the linear weights and tau_5 (not here).
    integer(I4P), parameter :: AHI = 1_I4P
    integer(I4P), parameter :: NC = TENO5_NC, LO = TENO5_LO, UMAX = TENO5_UMAX, MAXW = TENO5_MAXW
    integer(I4P), parameter :: CLO(0:NC-1) = TENO5_CLO, CW(0:NC-1) = TENO5_CW

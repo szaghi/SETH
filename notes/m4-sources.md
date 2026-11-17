@@ -161,4 +161,8 @@ Hu & Adams 2019 (TENO5-A, Eqs. (20)-(22): SETH's constants and formulas), Fu 201
 indicators, evaluated from the source, equal Eq. (4.1) and the derived ones; eps 1e-4 is the one-dimensional value),
 Shima et al. 2021 and Pirozzoli 2010 (the KEEP-PE kernels, evaluated exactly, equal Pirozzoli Eq. (13) with Shima's
 flux), Ducros et al. 1999 (Eq. (22)), Pirozzoli 2011 JCP and ARFM (no formula taken). No discrepancy; one finding:
-seth_sensor_teno's eps is fixed at the one-dimensional value.
+seth_sensor_teno's eps is fixed at the one-dimensional value. One correction of wording: SETH's TENO5-A is TENO5
+with the adaptive cutoff (TENO-A as Tang 2024 defines it), while Fu, Hu & Adams's original TENO5-A (§IV.A) also uses
+Arshed-Hoffmann's optimised linear weights (d = 0.5065006634, 0.3699651429, 0.1235341937, third order) and a
+sixth-order tau_5 (Eq. (25)): found by the llm-wiki reader of the paper, confirmed in the PDF (lines of the abstract
+and §IV.A).

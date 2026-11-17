@@ -45,8 +45,9 @@ which cite the paper; the provenance of every formula is in `notes/m2-sources.md
 - Fu, L., Hu, X.Y., Adams, N.A. (2019). Improved five- and six-point targeted essentially nonoscillatory schemes
   with adaptive dissipation. *AIAA J.* 57(3):1143. doi:10.2514/1.J057370 — TENO5-A, the original, Eqs. (20)–(22):
   the sensor, $C_r = 0.24$, $\xi = 10^{-3}$, $\alpha_1 = 10$, $\alpha_2 = 5$ (read in the paper, the Article in
-  Advance; checked by `scripts/check_papers.py`). Its TENO6-A ($C_r = 0.17$, $\alpha_1 = 10.5$, $\alpha_2 = 4.5$) is
-  not in SETH.
+  Advance; checked by `scripts/check_papers.py`). Its TENO5-A also has optimised linear weights and a sixth-order
+  $\tau_5$ (§IV.A, Eq. (25)), and its TENO6-A ($C_r = 0.17$, $\alpha_1 = 10.5$, $\alpha_2 = 4.5$): not in SETH,
+  whose TENO5-A is TENO5 with this cutoff (TENO-A as Tang 2024 defines it).
 - Huang, H., Liang, T., Fu, L. (2023). A five-point TENO scheme with adaptive dissipation based on a new scale sensor.
   *Commun. Comput. Phys.* 33:1106. doi:10.4208/cicp.oa-2022-0286 — the standard TENO5-A, Eqs. (18)–(20): $C_r$, $\xi$,
   $\alpha_1$, $\alpha_2$ (read in the paper, arXiv:2303.10020; checked by `scripts/check_papers.py`). Its new

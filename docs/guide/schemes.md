@@ -301,6 +301,11 @@ $10^{-a_1}$; a jump has $\eta \to 0$, $m = 1$ and $10^{-(a_1 - a_2)}$.
 | `seth_teno5_a` | TENO5 | 0.24, $10^{-3}$, 10, 5 | $10^{-10}$ … $10^{-5}$ | Tang 2024, Eqs. (15)–(16); Huang, Liang & Fu 2023, Eqs. (18)–(20) |
 | `seth_teno8_a` | TENO8 | 0.23, $10^{-3}$, 10.5, 3.5 | $10^{-10}$ … $10^{-7}$ | Liang & Fu 2024b, Eqs. (47)–(49) |
 
+**SETH's TENO5-A is TENO-A in Tang's (2024) sense**: TENO5, with its linear weights and $\tau_5$, and the adaptive
+cutoff. The original TENO5-A of Fu, Hu & Adams (2019, §IV.A) also replaces both: Arshed & Hoffmann's
+dispersion-optimised linear weights, $d = (0.5065006634, 0.3699651429, 0.1235341937)$, which make it third order, and
+a sixth-order $\tau_5$ (their Eq. (25)). Those are not in SETH.
+
 With $a_2 = 0$ either kernel is the fixed-cutoff one at $10^{-\lfloor a_1 \rfloor}$, bitwise (asserted). What SETH
 measures:
 
