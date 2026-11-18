@@ -1,42 +1,62 @@
-# Quick Start
+---
+title: Quick start
+---
 
-```fortran
-use seth
-real(R_P) :: vp(-2:3), vm(-2:3), rp, rm
+# Quick start
 
-! the values around the face i+1/2, cells by offset from it (cell 0 left, cell 1 right):
-! vp reconstructed with a left bias (e.g. f+), vm with a right bias (e.g. f-); the same array for both to get the
-! two states of one field
-call seth_weno5_js(vp, vm, SETH_WENO_JS_EPS, 1._R_P, rp, rm)   ! rp: left state, rm: right state
-```
+One program, compiled against the library, that reconstructs the two states at every face of a step with WENO5-JS
+and with the linear scheme WENO5 falls back to on smooth data.
 
-The WENO-JS kernels take `(vp, vm, eps, rmu, rp, rm)`, with bounds `1-S:S` for WENO-(2S-1); the other families
-replace `rmu` by their own parameter:
-
-| Kernels | Scheme |
-|---|---|
-| `seth_weno1_js`, `seth_weno3_js`, `seth_weno5_js`, `seth_weno7_js`, `seth_weno9_js` | WENO-JS reconstruction from cell averages |
-| `..._interp` | WENO interpolation from point values (Jiang, Shu & Zhang 2013) |
-| `..._wr`, `..._interp_wr` | the same, also returning the weights ratios `wrp`, `wrm` (1 on smooth data, toward 0 near a discontinuity) |
-| `seth_wenoz3`, `seth_wenoz5`, `seth_wenoz7`, `seth_wenoz9` | WENO-Z (Borges et al. weights; Don & Borges' tau_7, Castro's tau_9): `(vp, vm, eps, p, rp, rm)`, `p` = 1 (Z3, Z5, Z7) or 2 (Z9): [why](/guide/schemes#weno-z-weno-z3-5-7-9) |
-| `seth_teno5`, `seth_teno5_opt`, `seth_teno5_az` (also `rmu`, after `ct`), `seth_teno6`, `seth_teno6_opt`, `seth_teno6_neno6`, `seth_teno8`, `seth_teno5_a`, `seth_teno8_a` (adaptive cutoff: `cr, xi, a1, a2, rmu` in place of `ct`) | TENO (Fu, Hu & Adams): `(vp, vm, eps, ct, rp, rm)`, bounds `-2:3` (TENO8: `-3:4`), `eps = SETH_TENO_EPS`, `ct = SETH_TENO5_CT`, `SETH_TENO5_OPT_CT`, `SETH_TENO6_CT`, `SETH_TENO6_OPT_CT`, `SETH_TENO6_NENO6_CT` |
-| `seth_weno4_c`, `seth_weno6_c`, `seth_weno8_c` | Centred WENO (ADAM's): WENO-JS of order $2S-1$ blended with the central reconstruction of order $2S$, the WENO-JS arguments `(vp, vm, eps, rmu, rp, rm)`, bounds `1-S:S`: [what it is](/guide/schemes#centred-weno-weno4-6-8-c) |
-
-- **No tables, no setup:** the coefficients are compile-time constants, so a kernel needs nothing on the device.
-  Every kernel is `pure`, `!$acc routine seq` and `!$omp declare target`: call it from inside your own loops.
-- **`rmu`** is the inverse descaler of the smoothness indicators: `1` for the Jiang-Shu weights, or
-  `seth_weno_descaling(S, 1._R_P, vp, vm)` for scale-invariant weights (Don et al. 2022), or a magnitude of your own.
-- **`eps`**: `SETH_WENO_JS_EPS` is ADAM's value. WENO-7 and WENO-9 keep Balsara & Shu's integer smoothness
-  indicators (`WENO7_JS_D_SCALE = 240`, `WENO9_JS_D_SCALE = 5040`), so the same `eps` is relatively smaller there.
-
-## Tests
+## Build the library
 
 ```bash
-fobis fetch
-fobis build --mode tests-gnu && bash scripts/run_tests.sh
-fobis rule --ex makecoverage-analysis   # coverage into docs/public/coverage.json
+git clone https://github.com/szaghi/SETH && cd SETH
+fobis fetch                       # PENF, into src/third_party/
+fobis build --mode static-gnu     # lib/gnu/static/libseth.a and its modules in lib/gnu/static/mod
 ```
 
-The tests check the WENO-JS kernels against ADAM's original code (bitwise without fused multiply-add), every kernel's
-order on smooth data and boundedness across a jump, TENO's exact return to its linear scheme on smooth data, and the
-exact mirroring of the right state. Where each WENO-Z and TENO formula comes from: `notes/m2-sources.md`.
+Other compilers and the single-precision build: [Installation](./installation).
+
+## The program
+
+`use seth` gives every kernel, its constants and the kinds (`R_P` is the working real kind):
+
+<<< @/examples/snippets/quickstart-use.F90{fortran}
+
+A kernel computes **one face** from the cells around it, indexed by their offset from the face: cell 0 is left of
+it, cell 1 right of it. WENO5 reads six cells, `-2:3`. The same array goes in twice, once for the state left of the
+face (`rp`) and once for the state right of it (`rm`):
+
+<<< @/examples/snippets/quickstart-face.F90{fortran}
+
+- `SETH_WENO_JS_EPS` is the regulariser of the weights; `1._R_P` is `rmu`, the descaler of the smoothness
+  indicators (1: Jiang and Shu's weights).
+- There is no setup and no object: the coefficients are compile-time constants, and every kernel is `pure`, so the
+  call goes inside your own loops, on the host or on a GPU.
+
+<details><summary>The whole program</summary>
+
+<<< @/examples/snippets/quickstart.F90{fortran}
+
+</details>
+
+## Compile and run
+
+```bash
+gfortran -I lib/gnu/static/mod quickstart.F90 lib/gnu/static/libseth.a -o quickstart
+```
+
+<<< @/examples/output/quickstart.txt{text}
+
+The linear scheme overshoots to 1.18 before the step and undershoots to −0.18 after it. WENO5 puts its weight on the
+candidate stencils that do not cross the step and keeps both states within $[0, 1]$; at the face of the step, each
+state takes the value of its own side.
+
+## Where next
+
+| To | Read |
+|---|---|
+| find the kernel, its arguments and its constants | [API](./api) |
+| see the conventions every kernel shares | [Conventions](./conventions) |
+| see what each scheme is | [Schemes](./schemes) |
+| see how SETH is checked | [Verification](/verification/) |

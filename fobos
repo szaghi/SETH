@@ -14,6 +14,7 @@ authors    = Stefano Zaghi
 toolchain = linux-gnu
 matrix    = linux-gnu linux-nvhpc linux-oneapi
 fpm       = true
+docs_examples = docs/examples
 
 # fobis ecosystem check: what proves this project still works against a dependency's working copy
 [ecosystem]

@@ -32,3 +32,18 @@ dependency. Both are cloned as sources and scanned with yours; only the modules 
 [dependencies]
 SETH = { git = "https://github.com/szaghi/SETH", branch = "main" }
 ```
+
+## Tests
+
+```bash
+fobis build --mode tests-gnu && bash scripts/run_tests.sh   # the test programs, gfortran
+fobis rule --ex makecoverage-analysis                       # coverage into docs/public/coverage.json
+```
+
+What the programs check: [Test programs](/verification/unit-tests).
+
+## Documentation examples
+
+The example programs of the documentation are in `docs/examples/src/`.
+`bash scripts/docs_examples.sh` builds the library, compiles each program against it, runs it, and regenerates the
+code and output the pages include; CI fails when they drift from the committed ones.

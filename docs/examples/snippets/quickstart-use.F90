@@ -1,0 +1,2 @@
+use seth
+implicit none
