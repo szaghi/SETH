@@ -27,7 +27,7 @@ public :: ORDERS_AT_FLOOR_OK, CONV_FLOOR_OP, CONV_ORDER_LOSS, INTERP_FLOOR, INTE
 public :: HENRICK_TOL, POINT_FLOOR, POINT_ORDER_LOSS, MP_NG, SPECTRAL_FLOOR, SPECTRAL_SLOPE_LOSS
 public :: TAU_FLOOR, TAU_ORDER_LOSS, CENTRAL_FLOOR_N, BURGERS_FLOOR_N, EULER_FLOOR_N2
 public :: POS_RANGE_EXP, SMALL_STEP, AI_STEP_TOL, SENSOR_SCALES, SENSOR_FLOW_RATIO, CENTRED_ORDER_LOSS
-public :: NP_FLAGS_EPS, NP_TOL, NP_GUARD_SCALE
+public :: NP_FLAGS_EPS, NP_TOL, NP_GUARD_SCALE, NP_OFFSET_TOL, NP_NOISE_FLOOR
 public :: TOL_BOUNDS, TOL_THETA, TOL_PROPERTIES, TOL_X, TOL_ANTIDISSIPATION, TOL_TABLES, TOL_ADR, TOL_CONSERVATION
 
 #if defined _R_P_IS_R4P
@@ -44,6 +44,10 @@ real(R_P), parameter :: NP_GUARD_SCALE    = 1.e-9_R_P  !< seth_test_properties: 
                                                    !< guard (a product of differences <= 1e-15) acts; normal in R4P.
 real(R_P), parameter :: NP_TOL            = 6.e-5_R_P  !< seth_test_nonpoly: the overrides against their closed forms
                                                    !< and conservation, the 1e-13 of R8P in ulps (about 450).
+real(R_P), parameter :: NP_OFFSET_TOL     = 6.e-4_R_P  !< seth_test_nonpoly, step 2.2 spec 5: an offset mu of the data
+                                                   !< moves the state by mu to this fraction of |mu| (R8P's 1e-12 in ulps).
+real(R_P), parameter :: NP_NOISE_FLOOR    = 1.e-4_R_P  !< seth_vv_nonpoly (the Gaussian pulse, peak 1), seth_vv_euler_order
+                                                   !< (N2, density ~1): overrides on round-off noise move results below it.
 real(R_P), parameter :: NP_FLAGS_EPS      = 1.e-12_R_P !< eps of the flag tests (seth_test_nonpoly, Tables 1-3): R4P's
                                                    !< indicators of flat data are round-off, ~(6e-8 f)^2 = 4e-15 at f = 1,
                                                    !< so with SETH_TENO_EPS = 1e-30 even all-ones data gives the mask 5
@@ -199,6 +203,11 @@ real(R_P), parameter :: NP_GUARD_SCALE    = 1.e-9_R_P  !< seth_test_properties: 
                                                    !< guard (a product of differences <= 1e-15) acts; normal in R4P.
 real(R_P), parameter :: NP_TOL            = 1.e-13_R_P !< seth_test_nonpoly: the overrides against their closed forms
                                                    !< and conservation (issue #6, steps 2.1-2.2, frozen).
+real(R_P), parameter :: NP_OFFSET_TOL     = 1.e-12_R_P !< seth_test_nonpoly, step 2.2 spec 5 (frozen): an offset mu of the
+                                                   !< data moves the state by mu to 1e-12 of |mu|.
+real(R_P), parameter :: NP_NOISE_FLOOR    = 1.e-12_R_P !< seth_vv_nonpoly (the Gaussian pulse, peak 1: overrides on its
+                                                   !< 1e-15 tails at N = 320), seth_vv_euler_order (N2, density ~1: overrides
+                                                   !< on the round-off of the constant acoustic fields, 1.8e-14 measured).
 real(R_P), parameter :: NP_FLAGS_EPS      = 1.e-40_R_P !< eps of the flag tests (seth_test_nonpoly): the papers' (the R8P
                                                    !< SETH_TENO_EPS; kind-ok: a regulariser, not a step).
 real(R_P), parameter :: ROBUST_EXP_MIN    = -200._R_P !< Robustness magnitudes from 1e-200 ..

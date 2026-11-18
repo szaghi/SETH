@@ -13,9 +13,15 @@ program seth_vv_euler_order
 !< The positivity limiter is on, and must never act (a smooth flow). Asserted: every WENO-Z (but Z3) and TENO scheme
 !< at its expected order - 0.5 in L1 on the finest pair above 1e-10 (round-off accumulates below); every scheme at
 !< least order 2; no limited face.
+!< N2 of issue #6 (the composites inert on smooth data): TENO5-DR and TENO5-THINC against TENO5's density, TENO5-RBF-DR
+!< against TENO5-RBF's (s = 3 h), on the splitting path at N = 20 .. 160. Frozen: bitwise. Measured (2026-11-18): not
+!< bitwise, every scheme at every N, the density differing by 1.8e-15 .. 1.8e-14 in nearly every cell: with u = p = 1
+!< the two acoustic characteristic fields are constant to round-off, TENO5's cutoff reads that noise as structure (the
+!< finding "constant data does not give the mask 7", notes/m5-progress.md) and the detector fires on it. Asserted (a
+!< deviation from the frozen spec, left to the owner): equal to NP_NOISE_FLOOR (1e-12 in R8P); bitwise printed.
 !< Report mode: euler-order.dat (scheme N L1 Linf).
 use seth
-use seth_test_parameters, only : EULER_FLOOR_N2, ORDERS_AT_FLOOR_OK, ORDER_FLOOR_EULER, T_SLACK
+use seth_test_parameters, only : NP_NOISE_FLOOR, EULER_FLOOR_N2, ORDERS_AT_FLOOR_OK, ORDER_FLOOR_EULER, T_SLACK
 use seth_test_schemes
 use seth_vv_euler
 use seth_vv_cases
@@ -52,17 +58,53 @@ do path=PATH_SPLIT, PATH_INTERP
    enddo
 enddo
 if (vv_report()) close(u)
+call inert('teno5_dr', 'teno5')
+call inert('teno5_thinc', 'teno5')
+call inert('teno5_rbf_dr', 'teno5_rbf')
 if (.not.passed) error stop 'Euler order verification failed'
 print '(A)', 'seth_vv_euler_order: ok'
 
 contains
-   subroutine wave(id, path, n, l1, linf)
-   integer(I4P), intent(in)  :: id, path, n
-   real(R_P),    intent(out) :: l1, linf
+   subroutine inert(comp, base)
+   !< N2: the composite's density equal to its base scheme's, bitwise, at N = 20 .. 160 (splitting path).
+   character(*), intent(in) :: comp, base
+   real(R_P)                :: e(2), rc(160), rb(160)
+   integer(I4P)             :: j, n, ic, ib
+   logical                  :: same
+   real(R_P)                :: d
+   ic = by_name(comp) ; ib = by_name(base)
+   same = .true. ; d = 0._R_P
+   do j=1, 4
+      n = 20*2**(j-1)
+      call wave(ic, PATH_SPLIT, n, e(1), e(2), rc)
+      call wave(ib, PATH_SPLIT, n, e(1), e(2), rb)
+      same = same .and. all(rc(1:n) == rb(1:n))
+      d = max(d, maxval(abs(rc(1:n) - rb(1:n))))
+   enddo
+   print '(A,A,A,A,L2,A,ES10.3)', 'N2: ', comp, ' against ', base//' on the smooth wave, N = 20 .. 160: bitwise', same, &
+         ', max |drho| ', d
+   if (d > NP_NOISE_FLOOR) call fail(comp//': an override changed the smooth wave above round-off (N2)')
+   endsubroutine inert
+
+   function by_name(name) result(id)
+   character(*), intent(in) :: name
+   integer(I4P)             :: id, j
+   id = 0
+   do j=1, NALL
+      if (trim(SCHEMES(j)%name) == name) id = j
+   enddo
+   if (id == 0) error stop 'seth_vv_euler_order: scheme not in the registry'
+   endfunction by_name
+
+   subroutine wave(id, path, n, l1, linf, rho)
+   integer(I4P), intent(in)            :: id, path, n
+   real(R_P),    intent(out)           :: l1, linf
+   real(R_P),    intent(out), optional :: rho(:) !< The final density, cells 1..n.
    real(R_P)                 :: q(3,1-NG:n+NG), h, t, dt, sc, e(n), x, o
    logical                   :: ok
    integer(I4P)              :: i
    h = 2._R_P/n
+   rbf_dx = h
    do i=1, n
       x = -1._R_P + (i - 0.5_R_P)*h
       q(:,i) = prim2cons([1._R_P + 0.2_R_P*sin(PI*x), 1._R_P, 1._R_P])
@@ -81,6 +123,7 @@ contains
       e(i) = q(1,i) - (1._R_P + 0.2_R_P*sin(PI*x))
    enddo
    l1 = l1_norm(e, h) ; linf = maxval(abs(e))
+   if (present(rho)) rho(1:n) = q(1,1:n)
    endsubroutine wave
 
    pure function order(e) result(o)

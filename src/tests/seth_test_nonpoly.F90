@@ -25,11 +25,14 @@ program seth_test_nonpoly
 !<    (the papers') and in [f_i, f_{i+1}] (derived), to round-off; the right state of the mirrored data equals the
 !<    left state bitwise.
 !< 9. THINC: the cell average of the step function through the face value is f_i to NP_TOL (1e-13 in R8P) of the
-!<    data's magnitude (the conservation constraint, by the closed-form integral of tanh).
+!<    data's magnitude (the conservation constraint), by quadrature as frozen (ten-point Gauss-Legendre on each quarter
+!<    of the cell, exact to round-off for tanh of slope beta = 1.6); the closed-form integral of tanh (log cosh) is printed beside it.
 !< 10. DR: the state equals m + h tanh(A + atanh B) to NP_TOL; on linear data f_i +- d it is f_i + d tanh(A) to NP_TOL;
-!<    no NaN or Inf on 10^6 random triples of any sign; the flat and the non-monotone triples give f_i (the guard).
-!< 11. Scaling: f -> sigma f with rmu -> rmu/sigma, sigma = 2^k, bitwise sigma times the state; f -> f + mu equal to
-!<    NP_TOL of |mu| + |f|.
+!<    the denominator 1 + tanh(A) B of Eq. 31 is positive on every monotone triple (spec 4); no NaN or Inf on 10^6
+!<    random triples of any sign; the flat and the non-monotone triples give f_i (the guard).
+!< 11. Scaling: f -> sigma f with rmu -> rmu/sigma, sigma = 2^k, bitwise sigma times the state; f -> f + mu moves the
+!<    state by mu to NP_OFFSET_TOL (1e-12 in R8P, frozen) of |mu|, |mu| in [1, 10] (below 1 the rounding of f + mu,
+!<    eps |f|, is not a fraction of |mu|: the spec's bound is relative to the offset).
 !< Step 2.3, the self-contained kernels seth_teno5_dr and seth_teno5_thinc (issue #6, section 5):
 !< 12. N1: on periodic scalar fields (smooth sines, a square wave, Liang et al.'s static profiles (c)-(e), random
 !<    piecewise cubics with jumps, noise) the kernels equal a two-pass reference written here, bitwise: every cell's
@@ -37,6 +40,8 @@ program seth_test_nonpoly
 !<    by the detector, TENO5's states overridden. The reference shares only seth_teno5, seth_teno5_mask and the
 !<    detectors and overrides with the kernels (no early exit, no neighbour recomputation).
 !< 13. N2: on the smooth fields no face is detected and the states equal seth_teno5's bitwise.
+!<     Specs 12-13 also for seth_teno5_rbf_dr (step 3.4; s1 = s2 = 3 dx): its reference is seth_teno5_rbf's states, the
+!<     stored masks, the DR detector and override; on the smooth fields it equals seth_teno5_rbf bitwise.
 !< Steps 3.1 and 3.2, seth_teno5_st and seth_teno5_rbf (frozen in issue #6, section 6):
 !< 14. ST: order 5.0 +- 0.1 at a point (the generic g of seth_test_functions, cell averages, face at 0.3), both states;
 !<     equal to seth_linear5 to 64 eps of the data on smooth data; beside a jump that leaves the mask (1,1,0) the order
@@ -47,9 +52,10 @@ program seth_test_nonpoly
 !<     with alpha_1 = alpha_2 = 3 fixed and dx -> 0 the order is
 !<     5.0 +- 0.1 (s = 3 dx .. 6 dx shrinks with the grid: the paper's degeneration to the polynomial scheme).
 !< 16. RBF spec 3 (G1, G2): the generated rows: the polynomial rows of the masks 1, 2, 4 are TENO5's candidates, of 7
-!<     linear5's, of 6 TENO5's renormalised weights, exactly; every s^2 row sums to zero; the leading error of the
-!<     five-point row with lambda = 3 fixed equals Liang & Fu's Eq. 29, -dx^5 (lambda^2 g'''/2 + g^(5)/60), within 1 %
-!<     (Richardson on dx, the generic g). And the kernel equals a reference written here (the sensor of Eqs. 30-31,
+!<     linear5's, of 6 TENO5's renormalised weights, exactly; every s^2 row sums to zero; the leading error of each of
+!<     the paper's six rows (masks 7, 3, 5, 1, 2, 4; the row of 6 is D4's, not the paper's) with lambda = 3 fixed
+!<     equals Liang & Fu's Eq. 29 within 1 %, e.g. the five-point row -dx^5 (lambda^2 g'''/2 + g^(5)/60) (Richardson on
+!<     dx, the generic g; R4P: rows whose error is near round-off are reported, not checked). And the kernel equals a reference written here (the sensor of Eqs. 30-31,
 !<     the row of the state's mask, P + s^2 C) to 64 eps on 10^5 random stencils with s1 = s2 = 0.3 (the sensor active).
 !< 17. E7 (step 3.3): how often each mask occurs, by data: smooth cubics, a jump of random place and height on a
 !<     linear function, a kink, independent values; 10^5 stencils each (10^7 in report mode, nonpoly-census.dat). The
@@ -70,11 +76,11 @@ program seth_test_nonpoly
 !< 4. Constant data and a jump of BIG_JUMP: the mask is defined and never 0 (one chi_k >= 1/3 > C_T). Not 7 on
 !<    constant data in general (printed): the indicators of a non-dyadic constant are round-off, far above eps.
 use seth
-use seth_test_parameters, only : BIG_JUMP, NP_FLAGS_EPS, NP_TOL, ORDERS_AT_FLOOR_OK, POINT_FLOOR, POINT_ORDER_LOSS
+use seth_test_parameters, only : BIG_JUMP, NP_FLAGS_EPS, NP_TOL, NP_OFFSET_TOL, ORDERS_AT_FLOOR_OK, POINT_FLOOR, POINT_ORDER_LOSS
 use seth_test_rng, only : seed_rng
 use seth_test_teno_flags, only : teno5_flags
 use seth_vv_cases, only : vv_report, vv_open
-use seth_test_functions, only : gfun, gavg
+use seth_test_functions, only : gfun, gavg, GL_X, GL_W
 use seth_nonpoly_tables, only : NP_RBF_P, NP_RBF_C
 use seth_z_teno_tables, only : TENO5_P, LIN5_C
 implicit none
@@ -506,8 +512,13 @@ contains
    logical, intent(inout) :: ok
    logical                :: rows_ok
    real(R_P), parameter   :: XF = 0.3_R_P, LAM = 3._R_P
-   real(R_P)              :: vp(-2:3), vm(-2:3), w(-2:3), rp, rm, sp, sm, h, e(2), c, pred, g3, g5, worst
-   integer(I4P)           :: k, m, j, n_
+   integer(I4P), parameter :: RMASK(6) = [7_I4P, 3_I4P, 5_I4P, 1_I4P, 2_I4P, 4_I4P] !< the paper's six rows
+   integer(I4P), parameter :: RLEAD(6) = [5_I4P, 4_I4P, 4_I4P, 3_I4P, 3_I4P, 3_I4P] !< their leading dx power
+   real(R_P),    parameter :: RA2(6) = [-1._R_P/2._R_P, -2._R_P/3._R_P, 1._R_P, 1._R_P, -1._R_P, -3._R_P] !< Eq. 29
+   real(R_P),    parameter :: RA0(6) = [-1._R_P/60._R_P, -1._R_P/30._R_P, 1._R_P/20._R_P, 1._R_P/12._R_P, &
+                                        -1._R_P/12._R_P, -1._R_P/4._R_P]
+   real(R_P)              :: vp(-2:3), vm(-2:3), w(-2:3), rp, rm, sp, sm, h, e(2), c, pred, worst
+   integer(I4P)           :: k, m, j, n_, r_, mk, lead
    ! the polynomial rows, exactly
    rows_ok = .true.
    do m=-2, 2
@@ -532,27 +543,29 @@ contains
       if (abs(sum(NP_RBF_C(:,k))) > 16._R_P*epsilon(1._R_P)) rows_ok = .false.
    enddo
    if (.not.rows_ok) then ; print '(A)', 'FAIL 16: a generated row' ; ok = .false. ; endif
-   ! Eq. 29: the leading error of the five-point row, lambda fixed
-   g3 = -0.729_R_P*cos(0.9_R_P*XF + 0.4_R_P) + 0.108_R_P*exp(0.6_R_P*XF) + 0.3_R_P*4.913_R_P*sin(1.7_R_P*XF - 1.1_R_P)
-   g5 = 0.59049_R_P*cos(0.9_R_P*XF + 0.4_R_P) + 0.03888_R_P*exp(0.6_R_P*XF) &
-        - 0.3_R_P*14.19857_R_P*sin(1.7_R_P*XF - 1.1_R_P)
-   pred = -(0.5_R_P*LAM*LAM*g3 + g5/60._R_P)
-   do j=1, 2
-      h = 0.025_R_P/2._R_P**(j-1)
-      do m=-2, 3
-         vp(m) = gavg(XF + (m-1)*h, XF + m*h)
+   ! Eq. 29: the leading error of each of the paper's six rows, lambda fixed, P + s^2 C applied to cell averages of g
+   ! (cell m = [XF + (m-1) h, XF + m h], the face at XF): error / dx^L -> a2 lambda^2 g^(L-2) + a0 g^(L), Richardson
+   ! on h, h/2 removing the dx^(L+1) term; the coefficients as printed (scripts/gen_nonpoly_tables.py, (b))
+   do r_=1, 6
+      mk = RMASK(r_) ; lead = RLEAD(r_)
+      pred = RA2(r_)*LAM*LAM*gdn(lead-2, XF) + RA0(r_)*gdn(lead, XF)
+      do j=1, 2
+         h = 0.025_R_P/2._R_P**(j-1)
+         rp = 0._R_P
+         do m=-2, 2
+            rp = rp + (NP_RBF_P(m,mk) + (LAM*h)**2*NP_RBF_C(m,mk))*gavg(XF + (m-1)*h, XF + m*h)
+         enddo
+         e(j) = (rp - gfun(XF))/h**lead
       enddo
-      call seth_teno5_rbf(vp, vp, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, LAM*h, LAM*h, rp, rm)
-      e(j) = (rp - gfun(XF))/h**5
+      c = 2._R_P*e(2) - e(1)
+      if (ORDERS_AT_FLOOR_OK .and. 8._R_P*epsilon(1._R_P)/0.0125_R_P**lead > 0.002_R_P*abs(pred)) then
+         print '(A,I0,A)', 'RBF row of the mask ', mk, ': its error is near round-off at this precision (not checked)'
+      else
+         print '(A,I0,A,I0,A,2ES13.5,A,F7.3,A)', 'RBF row of the mask ', mk, ', lambda = 3: error / dx^', lead, ' ', &
+               c, pred, ' (', 100._R_P*abs(c/pred - 1._R_P), ' % from Eq. 29)'
+         if (abs(c/pred - 1._R_P) > 0.01_R_P) then ; print '(A,I0)', 'FAIL 16: Eq. 29, mask ', mk ; ok = .false. ; endif
+      endif
    enddo
-   c = 2._R_P*e(2) - e(1) ! Richardson: the O(dx^6) term removed
-   if (abs(e(2))*(0.0125_R_P**5) < POINT_FLOOR*epsilon(1._R_P) .and. ORDERS_AT_FLOOR_OK) then
-      print '(A)', 'RBF five-point row, lambda = 3: its error is below round-off at this precision (not checked)'
-   else
-      print '(A,2ES13.5,A,F7.3,A)', 'RBF five-point row, lambda = 3: error / dx^5 ', c, pred, ' (', &
-            100._R_P*abs(c/pred - 1._R_P), ' % from Eq. 29)'
-      if (abs(c/pred - 1._R_P) > 0.01_R_P) then ; print '(A)', 'FAIL 16: Eq. 29' ; ok = .false. ; endif
-   endif
    ! the kernel against the reference, sensor active
    worst = 0._R_P
    do n_=1, 100000
@@ -594,11 +607,11 @@ contains
 
    subroutine overrides()
    !< Specs 7-11 of the two overrides.
-   real(R_P)    :: f(-1:2), g(-1:2), w(-1:2), rp, rm, sp, sm, x(3), lo, hi, worst(6), fs, fd, y, avg, b, sc, mu, ex
-   real(R_P)    :: rp0, rm0, a1
-   integer(I4P) :: n_, lv, k, nfail, ex2
+   real(R_P)    :: f(-1:2), g(-1:2), w(-1:2), rp, rm, sp, sm, x(3), lo, hi, worst(7), fs, fd, y, avg, b, sc, mu, ex
+   real(R_P)    :: rp0, rm0, a1, avgq
+   integer(I4P) :: n_, lv, k, nfail, ex2, q, nsat
    logical      :: thinc
-   nfail = 0 ; worst = 0._R_P
+   nfail = 0 ; worst = 0._R_P ; nsat = 0
    do n_=1, NR
       call random_number(x) ; x = 6._R_P*(x - 0.5_R_P)
       call random_number(y)
@@ -637,15 +650,31 @@ contains
                nfail = nfail + 1 ; if (nfail <= 3) print '(A,2ES24.16)', 'FAIL 8: mirror ', rp, rm
             endif
             fs = 0.5_R_P*(f(-1) + f(1)) ; fd = 0.5_R_P*(f(1) - f(-1))
-            if (thinc) then ! 9. conservation: d from the face, the average of h over the cell
-               y = (rp - fs)/fd
-               avg = fs + fd*(log(cosh(atanh(y))) - log(cosh(atanh(y) - SETH_THINC_BETA)))/SETH_THINC_BETA
-               worst(2) = max(worst(2), abs(avg - f(0))/maxval(abs(f(-1:1))))
-            else ! 10. the closed form
+            if (thinc) then ! 9. conservation: d from the face, the average of h(X) = fs + fd tanh(a + beta (X - 1))
+               y = (rp - fs)/fd ! over the cell X in [0, 1], by quadrature (frozen) and in closed form (printed)
+               if (abs(y) >= 1._R_P - 4._R_P*epsilon(1._R_P)) then ! the face saturated: d not recoverable from it
+                  nsat = nsat + 1 ; cycle                           ! (R4P only: the face rounds to fs +- fd)
+               endif
+               a1 = atanh(y)
+               avgq = 0._R_P ! four sub-cells: tanh's poles lie pi/(2 beta) off the axis, which limits ten points
+               do ex2=0, 3   ! over the whole cell to ~4e-13; on a quarter of it ~1e-24
+                  do q=1, 5
+                     avgq = avgq + GL_W(q)*(tanh(a1 + SETH_THINC_BETA*(0.125_R_P*(2*ex2 + 1 - GL_X(q)) - 1._R_P)) + &
+                                            tanh(a1 + SETH_THINC_BETA*(0.125_R_P*(2*ex2 + 1 + GL_X(q)) - 1._R_P)))
+                  enddo
+               enddo
+               avgq = fs + 0.125_R_P*fd*avgq
+               avg = fs + fd*(log(cosh(a1)) - log(cosh(a1 - SETH_THINC_BETA)))/SETH_THINC_BETA
+               worst(2) = max(worst(2), abs(avgq - f(0))/maxval(abs(f(-1:1))))
+               worst(7) = max(worst(7), abs(avg - f(0))/maxval(abs(f(-1:1))))
+            else ! 10. the closed form, and the denominator of Eq. 31
                b = (2._R_P*f(0) - (f(1) + f(-1)))/(f(1) - f(-1))
                a1 = atanh(merge(SETH_DR_T2, SETH_DR_T1, lv == 2))
                ex = fs + fd*tanh(a1 + atanh(b))
                worst(3) = max(worst(3), abs(rp - ex)/maxval(abs(f(-1:1))))
+               if (.not.(1._R_P + merge(SETH_DR_T2, SETH_DR_T1, lv == 2)*b > 0._R_P)) then
+                  nfail = nfail + 1 ; if (nfail <= 3) print '(A,ES12.4)', 'FAIL 10: denominator not positive, B = ', b
+               endif
             endif
             ! 11. scaling by 2^k with rmu/2^k, and an offset
             call random_number(y) ; ex2 = int(40._R_P*y) - 20 ; sc = 2._R_P**ex2
@@ -658,18 +687,18 @@ contains
             if (sp /= sc*rp) then
                nfail = nfail + 1 ; if (nfail <= 3) print '(A,2ES24.16)', 'FAIL 11: scaling ', sp/sc, rp
             endif
-            call random_number(mu) ; mu = 20._R_P*(mu - 0.5_R_P)
+            call random_number(mu) ; call random_number(y) ; mu = sign(1._R_P + 9._R_P*mu, y - 0.5_R_P) ! |mu| in [1, 10]
             sp = rp0 ; sm = rm0
             if (thinc) then
                call seth_thinc_override(f + mu, g + mu, lv, lv, SETH_THINC_BETA, 1._R_P, sp, sm)
             else
                call seth_dr_override(f + mu, g + mu, lv, lv, SETH_DR_T1, SETH_DR_T2, 1._R_P, sp, sm)
             endif
-            worst(4) = max(worst(4), abs(sp - mu - rp)/(abs(mu) + maxval(abs(f(-1:1)))))
+            worst(4) = max(worst(4), abs(sp - mu - rp)/abs(mu))
          enddo
       enddo
    enddo
-   if (worst(1) > NP_TOL .or. worst(2) > NP_TOL .or. worst(3) > NP_TOL .or. worst(4) > NP_TOL) nfail = nfail + 1
+   if (worst(1) > NP_TOL .or. worst(2) > NP_TOL .or. worst(3) > NP_TOL .or. worst(4) > NP_OFFSET_TOL) nfail = nfail + 1
    ! 10. linear data f_i +- d: f_i + d tanh(A)
    do n_=1, 1000
       call random_number(x) ; x = 4._R_P*(x - 0.5_R_P)
@@ -704,8 +733,10 @@ contains
    call seth_thinc_override(f, f, 1, 1, SETH_THINC_BETA, 1._R_P, sp, sm)
    if (rp /= 1._R_P .or. rm /= 1._R_P) nfail = nfail + 1
    print '(A,I0,A)', 'overrides on ', NR, ' monotone triples: level 0 unchanged, mirror bitwise, scaling bitwise'
-   print '(A,ES9.2,A,ES9.2,A,ES9.2,A,ES9.2,A,ES9.2)', '  worst: outside [f_i, f_i+1] ', worst(1), &
-         ', THINC conservation ', worst(2), ', DR closed form ', worst(3), ', offset ', worst(4), ', linear ', worst(5)
+   print '(A,I0)', '  THINC faces saturated (d not recoverable from the face; conservation and scaling not checked): ', nsat
+   print '(A,ES9.2,A,ES9.2,A,ES9.2,A,ES9.2,A,ES9.2,A,ES9.2,A)', '  worst: outside [f_i, f_i+1] ', worst(1), &
+         ', THINC conservation ', worst(2), ' (closed form ', worst(7), '), DR closed form ', worst(3), &
+         ', offset / |mu| ', worst(4), ', linear ', worst(5)
    if (nfail > 0) then ; print '(A,I0)', 'FAIL 7-11: ', nfail ; passed = .false. ; endif
    endsubroutine overrides
 
@@ -718,7 +749,8 @@ contains
    logical,       parameter :: SMOOTH(NFIELD) = [.true., .true., .false., .false., .false., .false., .false., .false., &
                                                  .true.]
    real(R_P)    :: u(0:NF-1), vp(-5:6), vm(-5:6), rp, rm, sp, sm, tp, tm, a(-2:3), b(-2:3), w(-2:2), x, hgt
-   integer(I4P) :: ml(0:NF-1), mr(0:NF-1), mp(-3:3), mm(-3:3), f_, j, m, c, lp, lm, nact(2), nfail, k, jp
+   real(R_P), parameter :: S_RBF = 3._R_P*2._R_P/NF !< s = alpha dx, alpha = 3 (SETH_RBF_ALPHA1 = ALPHA2), dx = 2/NF
+   integer(I4P) :: ml(0:NF-1), mr(0:NF-1), mp(-3:3), mm(-3:3), f_, j, m, c, lp, lm, nact(3), nfail, k, jp
    nfail = 0
    do f_=1, NFIELD
       do j=0, NF-1
@@ -752,7 +784,7 @@ contains
          call seth_teno5_mask(w, SETH_TENO_EPS, SETH_TENO5_CT, mr(j))
       enddo
       nact = 0
-      do k=1, 2 ! 1 DR, 2 THINC
+      do k=1, 3 ! 1 DR, 2 THINC, 3 RBF+DR (s = 3 dx, dx = 2/NF; its base the RBF states, not TENO5's)
          do j=0, NF-1 ! face j+1/2
             do m=-5, 6
                vp(m) = u(modulo(j+m, NF)) ; vm(m) = vp(m)
@@ -761,7 +793,11 @@ contains
             do m=-2, 3
                a(m) = vp(m) ; b(m) = vm(m)
             enddo
-            call seth_teno5(a, b, SETH_TENO_EPS, SETH_TENO5_CT, sp, sm)
+            if (k == 3) then
+               call seth_teno5_rbf(a, b, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, S_RBF, S_RBF, sp, sm)
+            else
+               call seth_teno5(a, b, SETH_TENO_EPS, SETH_TENO5_CT, sp, sm)
+            endif
             tp = sp ; tm = sm
             do c=-3, 3
                mp(c) = ml(modulo(j+c, NF)) ; mm(c) = mr(modulo(j+1-c, NF))
@@ -770,10 +806,15 @@ contains
                call seth_dr_detect(mp, mm, lp, lm)
                call seth_dr_override(vp(-1:2), vm(-1:2), lp, lm, SETH_DR_T1, SETH_DR_T2, 1._R_P, sp, sm)
                call seth_teno5_dr(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_DR_T1, SETH_DR_T2, 1._R_P, rp, rm)
-            else
+            elseif (k == 2) then
                call seth_thinc_detect(mp, mm, lp, lm)
                call seth_thinc_override(vp(-1:2), vm(-1:2), lp, lm, SETH_THINC_BETA, 1._R_P, sp, sm)
                call seth_teno5_thinc(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_THINC_BETA, 1._R_P, rp, rm)
+            else
+               call seth_dr_detect(mp, mm, lp, lm)
+               call seth_dr_override(vp(-1:2), vm(-1:2), lp, lm, SETH_DR_T1, SETH_DR_T2, 1._R_P, sp, sm)
+               call seth_teno5_rbf_dr(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, S_RBF, S_RBF, SETH_DR_T1, &
+                                      SETH_DR_T2, 1._R_P, rp, rm)
             endif
             if (lp > 0) nact(k) = nact(k) + 1
             if (lm > 0) nact(k) = nact(k) + 1
@@ -786,11 +827,22 @@ contains
             endif
          enddo
       enddo
-      print '(A,A,A,I4,A,I4)', '  ', FNAME(f_), ' states overridden (of 400): DR ', nact(1), ', THINC ', nact(2)
+      print '(A,A,A,I4,A,I4,A,I4)', '  ', FNAME(f_), ' states overridden (of 400): DR ', nact(1), ', THINC ', nact(2), &
+            ', RBF+DR ', nact(3)
    enddo
    print '(A)', 'self-contained kernels equal to the two-pass stored-mask reference, bitwise (N1); smooth fields inert (N2)'
    if (nfail > 0) then ; print '(A,I0)', 'FAIL 12-13: ', nfail ; passed = .false. ; endif
    endsubroutine self_contained
+
+   pure function gdn(n, x) result(y)
+   !< The n-th derivative of the generic g of seth_test_functions.
+   integer(I4P), intent(in) :: n
+   real(R_P),    intent(in) :: x
+   real(R_P)                :: y
+   real(R_P), parameter     :: HALF_PI = 2._R_P*atan(1._R_P)
+   y = 0.9_R_P**n*sin(0.9_R_P*x + 0.4_R_P + n*HALF_PI) + 0.5_R_P*0.6_R_P**n*exp(0.6_R_P*x) &
+       + 0.3_R_P*1.7_R_P**n*cos(1.7_R_P*x - 1.1_R_P + n*HALF_PI)
+   endfunction gdn
 
    pure function static_c(x) result(y)
    !< Liang et al. 2022, static test (c): Jiang and Shu's multiple waves on [0, 2] (shifted from [-1, 1]).

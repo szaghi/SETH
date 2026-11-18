@@ -16,7 +16,7 @@ module seth_test_functions
 use penf, only : I4P, R_P
 implicit none
 private
-public :: gfun, gder, gder2, gavg
+public :: gfun, gder, gder2, gavg, GL_X, GL_W
 
 real(R_P), parameter :: GL_X(5) = [0.1488743389816312_R_P, 0.4333953941292472_R_P, 0.6794095682990244_R_P, &
                                    0.8650633666889845_R_P, 0.9739065285171717_R_P] !< Gauss-Legendre nodes (> 0).

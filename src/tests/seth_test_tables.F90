@@ -17,10 +17,18 @@ program seth_test_tables
 !< - WENO-JS tables: each interface's weights sum to 1; the candidates and the optimal combination exact below 2S-1
 !<   (cell averages; point values for the interpolation tables); the indicators 0 on constants and WENO<N>_JS_D_SCALE
 !<   on unit slope.
+!< - The non-polynomial tables of issue #6 (seth_nonpoly_tables, written by scripts/gen_nonpoly_tables.py): every
+!<   polynomial row NP_RBF_P(:,mask) zero outside its stencil and exact on cell averages below its width (the masks
+!<   1, 2, 4 three points, 3 and 5 four points, 0 and 7 five points; 6, TENO5's renormalised weights, below 3); the pair
+!<   rows equal to the pair weights of TENO5's candidates (issue #6, section 1.2: (1,1,0) q0/2 + q1/2, (1,0,1)
+!<   3 q0/4 + q2/4) and the row of the mask 6 to 3 q1/4 + q2/4 (decision D4); every s^2 row NP_RBF_C(:,mask) zero
+!<   outside its stencil and summing to zero (Liang & Fu 2024, Eq. 25: the correction vanishes on constants); and the
+!<   DR steepness literals SETH_DR_T1, SETH_DR_T2 within one ulp of the intrinsic tanh(0.91), tanh(1.23) (step 2.2).
 use seth
 use seth_test_parameters, only : ORDERS_AT_FLOOR_OK, TAU_FLOOR, TAU_ORDER_LOSS, TOL_TABLES
 use seth_weno_js_tables
 use seth_z_teno_tables
+use seth_nonpoly_tables, only : NP_RBF_P, NP_RBF_C, SETH_DR_T1, SETH_DR_T2
 use seth_test_functions, only : gfun, gavg
 implicit none
 real(R_P), parameter :: TOL = TOL_TABLES
@@ -74,6 +82,7 @@ call js('weno3_js', 2, WENO3_JS_A, WENO3_JS_P, WENO3_JS_D, WENO3_JS_D_SCALE, WEN
 call js('weno5_js', 3, WENO5_JS_A, WENO5_JS_P, WENO5_JS_D, WENO5_JS_D_SCALE, WENO5_JS_INTERP_A, WENO5_JS_INTERP_P)
 call js('weno7_js', 4, WENO7_JS_A, WENO7_JS_P, WENO7_JS_D, WENO7_JS_D_SCALE, WENO7_JS_INTERP_A, WENO7_JS_INTERP_P)
 call js('weno9_js', 5, WENO9_JS_A, WENO9_JS_P, WENO9_JS_D, WENO9_JS_D_SCALE, WENO9_JS_INTERP_A, WENO9_JS_INTERP_P)
+call nonpoly
 if (.not.passed) error stop 'a compiled table lost a property'
 print '(A)', 'seth_test_tables: ok'
 
@@ -84,6 +93,52 @@ contains
    real(R_P)                :: a
    a = (real(m, R_P)**(n+1) - real(m-1, R_P)**(n+1))/(n+1)
    endfunction avg
+
+   subroutine nonpoly()
+   !< The tables of the non-polynomial kernels (issue #6): rows by mask, the pair weights, the s^2 rows, the DR literals.
+   integer(I4P), parameter :: LO(0:7) = [-2_I4P, -1_I4P, 0_I4P, -1_I4P, -2_I4P, -2_I4P, -2_I4P, -2_I4P] !< stencils
+   integer(I4P), parameter :: HI(0:7) = [ 2_I4P,  1_I4P, 2_I4P,  2_I4P,  0_I4P,  1_I4P,  2_I4P,  2_I4P]
+   integer(I4P), parameter :: EXACT(0:7) = [5_I4P, 3_I4P, 3_I4P, 4_I4P, 3_I4P, 4_I4P, 3_I4P, 5_I4P] !< exact below
+   real(R_P)               :: q(-2:2,0:2), pair(-2:2), e
+   integer(I4P)            :: k, m, n, j
+   character(1)            :: c
+   ! TENO5's candidates on -2:2 (cells by offset from the face's upwind cell)
+   q = 0._R_P
+   do k=0, 2
+      do j=0, 2
+         q(TENO5_CLO(k)+j,k) = TENO5_P(j,k)
+      enddo
+   enddo
+   do k=0, 7
+      write(c, '(I1)') k
+      do m=-2, 2
+         if ((m < LO(k) .or. m > HI(k)) .and. (NP_RBF_P(m,k) /= 0._R_P .or. NP_RBF_C(m,k) /= 0._R_P)) &
+            call fail('nonpoly row of mask '//c//': a cell outside its stencil')
+      enddo
+      do n=0, EXACT(k)-1 ! cell m = [m-1, m] with the face at 0
+         e = -merge(1._R_P, 0._R_P, n == 0)
+         do m=-2, 2
+            e = e + NP_RBF_P(m,k)*avg(m, n)
+         enddo
+         if (abs(e) > TOL) call fail('nonpoly row of mask '//c//': not exact below its width')
+      enddo
+      if (abs(sum(NP_RBF_C(:,k))) > TOL) call fail('nonpoly s^2 row of mask '//c//': does not sum to zero')
+   enddo
+   do k=0, 2
+      if (any(abs(NP_RBF_P(:,2**k) - q(:,k)) > TOL)) call fail('nonpoly single-candidate row differs from TENO5''s')
+   enddo
+   pair = 0.5_R_P*q(:,0) + 0.5_R_P*q(:,1)
+   if (any(abs(NP_RBF_P(:,3) - pair) > TOL)) call fail('nonpoly pair row (1,1,0) /= q0/2 + q1/2')
+   pair = 0.75_R_P*q(:,0) + 0.25_R_P*q(:,2)
+   if (any(abs(NP_RBF_P(:,5) - pair) > TOL)) call fail('nonpoly pair row (1,0,1) /= 3 q0/4 + q2/4')
+   pair = 0.75_R_P*q(:,1) + 0.25_R_P*q(:,2)
+   if (any(abs(NP_RBF_P(:,6) - pair) > TOL)) call fail('nonpoly row (0,1,1) /= 3 q1/4 + q2/4 (D4)')
+   if (any(abs(NP_RBF_P(:,7) - NP_RBF_P(:,0)) > 0._R_P)) call fail('nonpoly rows of the masks 0 and 7 differ')
+   if (abs(SETH_DR_T1 - tanh(0.91_R_P)) > spacing(SETH_DR_T1)) call fail('SETH_DR_T1 is not tanh(0.91) to one ulp')
+   if (abs(SETH_DR_T2 - tanh(1.23_R_P)) > spacing(SETH_DR_T2)) call fail('SETH_DR_T2 is not tanh(1.23) to one ulp')
+   print '(A,2ES10.2)', '   nonpoly: 8 rows, 8 s^2 rows, the pairs, D4, DR literals (ulp offsets) ', &
+         (SETH_DR_T1 - tanh(0.91_R_P))/spacing(SETH_DR_T1), (SETH_DR_T2 - tanh(1.23_R_P))/spacing(SETH_DR_T2)
+   endsubroutine nonpoly
 
    subroutine fail(what)
    character(*), intent(in) :: what
