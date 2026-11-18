@@ -1,0 +1,7 @@
+baseline green in /home/stefano/fortran/SETH/.night/current/mut
+early-exit-thinc-downwind    killed by 12-13:, 12:, seth_test_nonpoly
+dr-composite-right-mirror    killed by 12-13:, 12:, seth_test_golden, seth_test_nonpoly, seth_test_properties, seth_vv_test123
+rbf-dr-base-states           killed by 12-13:, 12:, 13:, seth_test_golden, seth_test_nonpoly, seth_vv_euler_order
+st-p-table                   killed by 16:, seth_test_golden, seth_test_nonpoly, seth_test_properties, seth_test_tables, seth_vv_euler_order
+done
+MUTDONE rc=0

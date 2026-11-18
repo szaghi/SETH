@@ -124,7 +124,12 @@ MUTANTS = [
     ('thinc-right-state-mirror', 'src/lib/seth_nonpoly.F90', 'if (lm > 0) rm = thinc_face(', 'thinc_face(vm(2), vm(1), vm(0)', 'thinc_face(vm(0), vm(1), vm(2)'),
     ('dr-right-state-mirror', 'src/lib/seth_nonpoly.F90', 'if (lm > 0) rm = dr_face(', 'dr_face(vm(2), vm(1), vm(0)', 'dr_face(vm(-1), vm(0), vm(1)'),
     # issue #6: the early exit of the self-contained kernels (THINC's downwind range)
-    ('early-exit-thinc-downwind', 'src/lib/seth_nonpoly.F90', 'do c=1, merge(3_I4P, 2_I4P, thinc)', 'merge(3_I4P, 2_I4P, thinc)', 'merge(2_I4P, 2_I4P, thinc)'),
+    ('early-exit-thinc-downwind', 'src/lib/seth_nonpoly.F90', 'if (c == 3 .and. .not.thinc) exit', 'if (c == 3 .and. .not.thinc) exit', 'if (c == 3) exit'),
+    # issue #6 completion (2026-11-18): the bodies of the composites (the right state's mirrored data in seth_teno5_dr,
+    # the RBF states of seth_teno5_rbf_dr) and a coefficient of the polynomial rows (NP_RBF_P, the pair (1,0,1))
+    ('dr-composite-right-mirror', 'src/lib/seth_nonpoly.F90', 'pure subroutine seth_teno5_dr(', 'w(m) = vm(1-m)', 'w(m) = vm(m)'),
+    ('rbf-dr-base-states', 'src/lib/seth_nonpoly.F90', 'pure subroutine seth_teno5_rbf_dr(', 'call seth_teno5_rbf(a, b, eps, ct, cr, s1, s2, rp, rm)', 'call seth_teno5(a, b, eps, ct, rp, rm)'),
+    ('st-p-table', 'src/lib/seth_nonpoly_tables.F90', 'NP_RBF_P(-2:2,0:7)', '-5._R_P/12._R_P', '-5.000001_R_P/12._R_P'),
     # issue #6: stencil targeting and the RBF fluxes (the row by mask, the sign of the s^2 rows, the sensor's c_r, its
     # node range and s2, a coefficient of the generated C rows)
     ('st-row-by-mask', 'src/lib/seth_z_teno_body.INC', 'r(side) = r(side) + ROWP(m,mr)*st(m)', 'ROWP(m,mr)', 'ROWP(m,7)'),
