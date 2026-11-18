@@ -313,7 +313,8 @@ contains
    l = 0
    mk = 7
    dn = .false.
-   do c=1, merge(3_I4P, 2_I4P, thinc)
+   do c=1, 3 ! a constant extent (device rule R2, docs/guide/performance.md): DR reads the cells 1..2 only
+      if (c == 3 .and. .not.thinc) exit
       mk(c) = cell_mask(w, c, eps, ct)
       z = seth_teno5_zeta(mk(c))
       dn = dn .or. z == -1 .or. z == 2

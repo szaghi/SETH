@@ -1,0 +1,53 @@
+seth_teno5_mask:
+     61, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_teno5_st:
+     77, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_teno5_rbf:
+     95, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_teno5_zeta:
+    118, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_dr_detect:
+    138, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_thinc_detect:
+    150, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_thinc_override:
+    162, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_dr_override:
+    179, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_teno5_dr:
+    196, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_teno5_rbf_dr:
+    229, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_teno5_thinc:
+    266, Generating acc routine seq
+         Generating NVIDIA GPU code
+side_level:
+    299, Generating acc routine seq
+         Generating NVIDIA GPU code
+    318, Reference argument passing prevents parallelization: c
+    327, Reference argument passing prevents parallelization: c
+cell_mask:
+    336, Generating acc routine seq
+         Generating NVIDIA GPU code
+thinc_face:
+    352, Generating acc routine seq
+         Generating NVIDIA GPU code
+dr_face:
+    370, Generating acc routine seq
+         Generating NVIDIA GPU code
+dr_level:
+    386, Generating acc routine seq
+         Generating NVIDIA GPU code
+thinc_level:
+    410, Generating acc routine seq
+         Generating NVIDIA GPU code
