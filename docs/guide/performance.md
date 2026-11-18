@@ -109,7 +109,8 @@ one bias, the unit of its budget (two biases cost twice).
 | `seth_teno5_thinc` | **3.49** | **3.72** | **3.49** | 3.0 |
 | `seth_teno5_rbf_dr` | 2.97 | 2.76 | **3.14** | 3.0 |
 | DR / THINC / RBF+DR, no early exit | 5.96 / 6.77 / 6.16 | 6.29 / 7.14 / 6.20 | 4.44 / 5.01 / 4.67 | — |
-| DR / THINC / RBF+DR, stored masks (two passes) | 1.82 / 1.83 / 2.09 | 1.95 / 1.95 / 1.86 | 1.64 / 1.64 / 1.70 | — |
+| DR / THINC / RBF+DR, stored masks, built from the pieces | 1.82 / 1.83 / 2.09 | 1.95 / 1.95 / 1.86 | 1.64 / 1.64 / 1.70 | — |
+| DR / THINC / RBF+DR, the stored-mask pair (series 43) | 1.84 / 1.86 / 2.11 | 1.98 / 1.97 / 1.86 | **1.95 / 1.95 / 2.02** | — |
 
 ![The non-polynomial kernels against their budgets, and the composites against the density of jumps](/guide/perf-nonpoly.png)
 
@@ -117,9 +118,18 @@ Experiment E1 of the plan: the self-contained kernels recompute the masks of the
 in that face's characteristic basis (the default, owner decision D3). TENO5-DR fits the budget of 3 times TENO5 on the
 GPU and with gfortran and misses it narrowly with nvfortran; TENO5-THINC misses it everywhere, because its detector
 needs three downwind masks per state where DR's needs two; the complete scheme of Liang & Fu, RBF+DR, fits it on the
-GPU and with gfortran and misses it with nvfortran. The stored-mask variant (each cell's two masks once, then the faces), which a caller builds from the exported
-pieces, costs 1.6–2.1 times TENO5 for any detector; on scalar data it is equal bit for bit, on systems it computes
-each mask in its own face's basis and the results differ ([NP4](/verification/nonpolynomial/dr#results)). The pieces
+GPU and with gfortran and misses it with nvfortran; the owner accepted the misses (issue #6, D12, D13). The
+stored-mask variant (each cell's two masks once, then the faces) costs 1.6–2.1 times TENO5 for any detector; on
+scalar data it is equal bit for bit, on systems it computes each mask in its own face's basis and the results differ
+([NP4](/verification/nonpolynomial/dr#results)). It ships as a kernel pair (step 2.6, D12): `seth_teno5_face_masks`
+for the first pass, `seth_teno5_dr_stored`, `seth_teno5_thinc_stored`, `seth_teno5_rbf_dr_stored` for the second
+([Reference](/reference/nonpolynomial#the-stored-mask-pair)). Series 43 times the pair (`43-stored-*`, the same
+programs): on the GPU and with gfortran it costs what the hand-built two-pass costs, within the runs' spread. With
+nvfortran on one core it costs 12 ns per face more (1.95 times TENO5 against 1.64): an interleaved A/B on one pinned
+core puts the whole difference in the first pass, `seth_teno5_face_masks` at 33 ns per face against 20 for the same
+two `seth_teno5_mask` calls written at the call site. The routine is not inlined and not vectorised (`-Minfo`); a
+scalar form of its mirror copy did not change it. The cause is not isolated; the pair stays well under the
+self-contained kernels' 3 to 3.5. The pieces
 fit their budgets except the overrides forced on every face, the cost a scheme pays only where a detector fires; the
 Gaussian-RBF kernel misses its budget on the GPU only (the sensor's divisions). Published whole-solver costs, for
 orientation only: TENO5-THINC 1.17 times TENO5 per time step (Takagi et al. 2022, Table 3), the complete RBF+DR scheme

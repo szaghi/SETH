@@ -58,6 +58,7 @@ on 162).
 - **Test (e) behaves as the paper's Fig. 5**: at $N = 400$ the DR detector fires at the jumps up to $x = 1.53$ and misses
   the two smallest, at 1.17 and 1.56, as the paper's does; it also fires in the under-resolved sine near the right
   end. The frozen specification of step 1.3, which required every jump flagged and nothing else on (e), contradicts
-  the paper's own figure: (e) is reported, not asserted, until the owner decides.
+  the paper's own figure: the owner amended it to counts reported (issue #6, D11, 2026-11-18), and (e) is reported,
+  not asserted.
 - On flat data the flags, and so the detectors, follow rounding noise ([NP1](./flags)): activation counts in uniform
   regions are not meaningful.

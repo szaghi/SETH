@@ -47,10 +47,47 @@ Every kernel on one stencil, a unit jump on a slope (a compiled example, `docs/e
 
 <<< @/examples/snippets/reference_nonpoly-composites.F90{fortran}
 
+## The stored-mask pair
+
+The same three schemes in two passes ([issue #6](https://github.com/szaghi/SETH/issues/6), D12): a first pass
+computes each cell's masks once and the caller stores them; a second pass reconstructs every face from TENO5's six
+cells and the stored masks. The self-contained kernels above recompute up to seven masks per face instead.
+
+```fortran
+call seth_teno5_face_masks(vp, vm, eps, ct, ml, mr)                                ! vp, vm(-2:3); ml, mr integers
+call seth_teno5_dr_stored    (vp, vm, mp, mm, eps, ct, t1, t2, rmu, rp, rm)          ! vp, vm(-2:3), mp, mm(-3:3)
+call seth_teno5_thinc_stored (vp, vm, mp, mm, eps, ct, beta, rmu, rp, rm)
+call seth_teno5_rbf_dr_stored(vp, vm, mp, mm, eps, ct, cr, s1, s2, t1, t2, rmu, rp, rm)
+```
+
+| Kernel | Pass | What it does |
+|---|---|---|
+| `seth_teno5_face_masks` | 1, at every face $i+1/2$ | `ml` the mask of cell $i$ (left state), `mr` the mask of cell $i+1$ on the mirrored data (right state), in the face's basis; the caller stores `msl(i) = ml`, `msr(i+1) = mr` |
+| `seth_teno5_dr_stored` | 2 | TENO5's states, the DR detector on the stored masks, the DR override |
+| `seth_teno5_thinc_stored` | 2 | TENO5's states, the THINC detector, the THINC override |
+| `seth_teno5_rbf_dr_stored` | 2 | the RBF states, the DR detector, the DR override: the complete scheme of Liang & Fu 2024 |
+
+The second pass at face $i+1/2$ reads `mp(c) = msl(i+c)` and `mm(c) = msr(i+1-c)`, $c = -3..3$; the other arguments
+are the self-contained kernels'. On a field of $N$ cells the first pass runs over the faces $-3..N+3$, so the stored
+arrays need three cells of halo beyond the faces reconstructed.
+
+- **When to use it.** It costs 1.8–2.1 times `seth_teno5` per face, against about 3 (DR, RBF+DR) and 3.5 (THINC)
+  for the self-contained kernels, and it does not slow down where jumps are dense: on the GPU, with a jump every 8
+  cells, the self-contained kernels reach 5.3 and 5.8 times TENO5 and the stored-mask variant stays at 1.8
+  ([Performance](/guide/performance#the-non-polynomial-composites-issue-6)). The caller keeps two integer arrays per
+  characteristic field and exchanges their halo.
+- **What changes on a system.** Each mask is computed in the basis of the face where it was stored, not of the face
+  being reconstructed: on the Euler equations the results differ from the self-contained kernels' (both positive on
+  the shock tubes, Shu–Osher and the blast waves, [NP4](/verification/nonpolynomial/dr#results)). On scalar data the
+  two are equal bit for bit.
+
+The pair on a field of 16 cells, equal to `seth_teno5_dr` on every face (the same example):
+
+<<< @/examples/snippets/reference_nonpoly-stored.F90{fortran}
+
 ## The pieces
 
-For a caller that builds its own composite, for instance a two-pass variant that stores each cell's mask once
-instead of recomputing the neighbours' masks per face:
+For a caller that builds its own composite (another detector, another override, another basis for the masks):
 
 ```fortran
 call seth_teno5_mask(v, eps, ct, m)                         ! v(-2:2) centred on a cell: m = delta_0 + 2 delta_1 + 4 delta_2

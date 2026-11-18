@@ -78,7 +78,7 @@ features:
       width: 44
       height: 44
     title: Three compilers, CPU and GPU
-    details: gfortran, nvfortran and ifx, debug and optimised, plus the OpenACC build on the GPU; built with FoBiS or fpm. Mutation runs catch every planted defect, 72 of 72 in four runs.
+    details: gfortran, nvfortran and ifx, debug and optimised, plus the OpenACC build on the GPU; built with FoBiS or fpm. Mutation runs catch every planted defect, 76 of 76 in five runs.
     link: /guide/installation
     linkText: Installation
 ---

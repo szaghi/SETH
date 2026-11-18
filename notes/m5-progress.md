@@ -64,7 +64,34 @@ unmet or met in another form; each line closes one. Commits: the night's steps (
 | 3.4 | N5 | `nonpoly-ablation.dat`: seven schemes, one at a time, on Sod, Lax, 123, Shu-Osher, the blast waves (L1, overshoot, contact cells, detector activations, limited faces) and, from `seth_vv_burgers` and `seth_vv_advection`, on Burgers and the composite profile | 213d389 |
 | 0-4 | DOC1-DOC13 | `schemes.md` (the detector conditions, both override formulas, the sensor, D4, costs, round-off); the compiled reference example; the stencil-targeting figure; the card gallery; ten figures and five animations; the user findings; the stale counts corrected (40 / 37 programs, golden v9, 59 device cases, 72 mutants) | 213d389 |
 
+### Owner decisions D9-D14 and step 2.6 (2026-11-18, `.night/2026-11-18-stored-masks`)
+
+The owner took the decisions of the completion audit on 2026-11-18 (issue #6, section "Decisions found by the
+completion audit"): D9, D10 (the round-off form of the bitwise specs), D11 (step 1.3 (e): counts reported), D13 (the
+budget misses accepted as recorded) and D14 (step 1.2's signature `(-3:3)`) as recommended; D12: the self-contained
+kernels stay the default and the stored-mask variant ships as a kernel pair as well (step 2.6, the lines below).
+
+| Step | Gate | Evidence | Commit |
+|---|---|---|---|
+| 2.6 | N1, N2 | `seth_test_nonpoly` specs 12-13: `seth_teno5_face_masks` equals the test-code reference's stored masks bitwise and the three `*_stored` kernels equal the self-contained ones bitwise on the nine periodic fields; spec 20: on 10^5 stencils with independent left and right data (about 15000 DR detections per side), on constant data and a jump of BIG_JUMP, bitwise and finite | 01-kernels |
+| 2.6 | G8 | `seth_test_device` cases 60-63: the four kernels on the GPU, the masks of 61-63 computed there; bitwise | 01-kernels |
+| 2.6 | G9, G4-G6 | no new golden lines: on scalar data the pair is bitwise the self-contained kernels (N1), which golden v9 and the sweeps already pin | 01-kernels |
+| 2.6 | G7 (systems), E1 | `seth_vv_euler`'s stored-mask path through the library pair (ST+DR and RBF+DR dispatched to `seth_teno5_rbf_dr_stored`); `seth_vv_nonpoly` E1 with RBF+DR: both variants positive on Sod, Lax, Shu-Osher, the blast waves; DR and THINC rows and every other report file identical to the hand-built two-pass to 16 digits | 02-harness |
+| 2.6 | PERF2, PERF3 | bench variants 35, 36, 46 through the library pair; series 43 (`notes/m5-bench-data/43-stored-*`, 4 GPU, 3 gfortran, 3 nvfortran runs, checks ok): DR / THINC / RBF+DR stored 1.84 / 1.86 / 2.11 x TENO5 on the GPU, 1.98 / 1.97 / 1.86 with gfortran (the hand-built two-pass of series 42: 1.82 / 1.83 / 2.09, 1.95 / 1.95 / 1.86), 1.95 / 1.95 / 2.02 with nvfortran against 1.64 / 1.64 / 1.70: 12 ns per face in `seth_teno5_face_masks` (interleaved A/B, finding below); bench_compare ok on the GPU (old kernels +2.7..3.1 %) and the gfortran core | 03-bench |
+| 2.6 | PERF4 | `notes/gpu-kernel-audit.md` row; `-Minfo=accel`: the four routines `acc routine seq`, no device allocation (`notes/gpu-audit-data/minfo-nonpoly-stored-2026-11-18.txt`) | 03-bench |
+| 2.6 | G10 | four mutants (pass 1's mirror, THINC's detector and RBF+DR's base states in pass 2, the right state's masks): 4 of 4 killed, each by `seth_test_nonpoly` specs 12 and 20 (`notes/mutation-run-2026-11-18-stored-masks.txt`); 76 mutants in all | 04-mutants |
+| 2.6 | DOC1-DOC13 | the reference page's section and compiled example (`reference_nonpoly`, the pair on a 16-cell field, 17 of 17 faces bitwise), `schemes.md`, `notes/kernel-api-design.md` 11.4, the E1 table, the user finding (DOC8), the decisions D9-D13 written into the pages, the device and mutation counts | 05-docs |
+| 2.6 | G11 | green on all ten builds (R8P 40/40 x5, R4P 37/37 x5; candidate tree of steps 01-05) | 05-docs |
+
 ## Findings
+
+- **The stored-mask pair's first pass is 12 ns per face slower than the hand-built one with nvfortran on one core**
+  (step 2.6, 2026-11-18). An interleaved A/B on one pinned core (the bench of 0bccbb2 against the pair's) and a
+  pass-by-pass micro-benchmark: pass 2 costs the same (41-42 ns per face), pass 1 `seth_teno5_face_masks` 33 ns
+  against 20 for the same two `seth_teno5_mask` calls at the call site. The same per-face sequence written at the
+  call site with the mirror as five scalar assignments runs at 20; inside the library it does not (tried, reverted).
+  The routine is not inlined and not vectorised (`-Minfo=all`). Cause not isolated; gfortran and the GPU show no
+  difference. The pair still costs 1.95 times TENO5 there, against 3 to 3.5 for the self-contained kernels.
 
 - **Constant data does not give the mask 7** (step 1.1). The indicators of a constant that is not exact in binary are
   round-off, far above eps = 1e-40, and the cutoff drops candidates by the accident of rounding: gfortran gives a

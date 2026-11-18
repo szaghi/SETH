@@ -453,8 +453,13 @@ gain on the shock tubes, the RBF term the gain on Shu–Osher, at an $s$ outside
 
 **What they cost** (ns per face against `seth_teno5`, [Performance](/guide/performance#the-non-polynomial-composites-issue-6)): stencil
 targeting and the RBF rows about TENO5's; the self-contained DR and the complete scheme about three times it, THINC
-three and a half (three downwind masks per state); the stored-mask variant, which a caller can build from the pieces
-(one pass storing every cell's two masks, a second reconstructing the faces), under two.
+three and a half (three downwind masks per state). The **stored-mask pair** computes the same schemes in two passes,
+under two times TENO5: `seth_teno5_face_masks` stores every cell's two masks once, and `seth_teno5_dr_stored`,
+`seth_teno5_thinc_stored`, `seth_teno5_rbf_dr_stored` reconstruct the faces from them
+([Reference](/reference/nonpolynomial#the-stored-mask-pair)). On scalar data it equals the self-contained kernels
+bit for bit; on a system each mask is computed in the basis of the face where it was stored, and the results differ
+([NP4](/verification/nonpolynomial/dr#results)). The self-contained kernels stay the default: no array to keep
+between faces, the shape of every other SETH kernel.
 
 **On round-off.** The cutoff reads data at round-off as structure: a constant that is not exact in binary, the tail
 of a Gaussian 15 decades below its peak, the constant acoustic fields of a density wave. There the detector can fire,
@@ -569,7 +574,7 @@ the central–WENO and central–TENO hybrids of the turbulence literature.
 | WENO-JS | `seth_weno{1,3,5,7,9}_js` (+ `_wr`, `_interp`, `_interp_wr`) | $S = 1..5$, width $S$ | $2S-1$ | `rmu` |
 | WENO-Z | `seth_wenoz{3,5,7,9}` (+ `_interp`) | $S = 2..5$, width $S$ | $2S-1$ | `p` |
 | TENO | `seth_teno5`, `seth_teno6` (+ `_interp`), `seth_teno5_opt`, `seth_teno5_az`, `seth_teno6_opt`, `seth_teno6_neno6`, `seth_teno8`, `seth_teno5_a`, `seth_teno8_a` | 3 to 6, incremental | 5, 6, 8-point 6 (5-opt 4, 6-opt 5, NENO6 4) | `ct` (TENO5-AZ: `ct`, `rmu`; -A: `cr`, `xi`, `a1`, `a2`, `rmu`) |
-| non-polynomial TENO | `seth_teno5_dr`, `seth_teno5_thinc`, `seth_teno5_rbf_dr` (bounds $-5:6$), `seth_teno5_st`, `seth_teno5_rbf`; pieces `seth_teno5_mask`, `seth_dr_detect`, `seth_thinc_detect`, `seth_dr_override`, `seth_thinc_override` | TENO5's | 5 (ST 4 beside a jump) | `ct`; DR `t1`, `t2`, `rmu`; THINC `beta`, `rmu`; RBF `cr`, `s1`, `s2` |
+| non-polynomial TENO | `seth_teno5_dr`, `seth_teno5_thinc`, `seth_teno5_rbf_dr` (bounds $-5:6$), `seth_teno5_st`, `seth_teno5_rbf`; stored-mask pair `seth_teno5_face_masks` + `seth_teno5_{dr,thinc,rbf_dr}_stored` (bounds $-2:3$); pieces `seth_teno5_mask`, `seth_dr_detect`, `seth_thinc_detect`, `seth_dr_override`, `seth_thinc_override` | TENO5's | 5 (ST 4 beside a jump) | `ct`; DR `t1`, `t2`, `rmu`; THINC `beta`, `rmu`; RBF `cr`, `s1`, `s2` |
 | centred WENO | `seth_weno{4,6,8}_c` | WENO-JS ($S = 2..4$) blended with the central row on $2S$ cells | $2S$ | `eps`, `rmu` |
 | positivity | `seth_positivity_euler`, `seth_euler_admissible` | | | |
 

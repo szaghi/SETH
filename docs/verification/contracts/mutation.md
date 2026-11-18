@@ -44,7 +44,12 @@ targeting's row by mask, the RBF rows' sign and table, the sensor's $c_r$, nodes
 2026-11-18, the completion of issue #6: **3 of 3 new mutants killed**, and the early-exit mutant, re-anchored on the
 constant loop extent of `side_level`, killed again (`notes/mutation-run-2026-11-18-nonpoly-completion.txt`): the
 right state's mirrored data in `seth_teno5_dr`, TENO5's states in place of the RBF states inside `seth_teno5_rbf_dr`,
-a coefficient of the pair row $(1,0,1)$ of `NP_RBF_P`. In all, 72 mutants, each caught by at least one test.
+a coefficient of the pair row $(1,0,1)$ of `NP_RBF_P`. The same day, step 2.6, the stored-mask pair: **4 of 4
+killed** (`notes/mutation-run-2026-11-18-stored-masks.txt`), each by `seth_test_nonpoly` (the pair against the
+self-contained kernels, specs 12 and 20): the mirror of `seth_teno5_face_masks`, the DR detector in place of THINC's
+in `seth_teno5_thinc_stored`, TENO5's states in place of the RBF states in `seth_teno5_rbf_dr_stored`, the left
+state's masks read for the right state in `seth_teno5_dr_stored`. In all, 76 mutants, each caught by at least one
+test.
 Each line of the record names the tests that caught the mutant. The interpolation mutants are caught by the golden,
 interpolation, tables, TENO, WENO-Z and properties tests, and now also by the nonlinear cases (Sod, Lax, 123,
 Shu–Osher, blast, Euler order): a kernel wired to the wrong tables changes every downstream result. The four positivity-limiter

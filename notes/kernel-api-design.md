@@ -249,7 +249,7 @@ kernel self-contained.
 since step 0.3; gate N6 (experiment E4) proves the width: two blocks with 6 ghost cells equal one block bitwise, and a
 harness mutant with 5 differs.
 
-### 11.4 The fallback: stored masks, two passes
+### 11.4 The second variant: stored masks, two passes
 
 If the default exceeds 3 times `seth_teno5` per face (E1), a second variant is implemented: a first pass computes
 each cell's mask once (in the basis of that cell's own face) and stores it, a second pass reads the stored masks and
@@ -257,6 +257,25 @@ reconstructs. It costs one mask per cell instead of six to seven per state, but 
 and its halo, and on a system the masks are computed in another basis than the face's (the papers are silent on
 which is meant, tier U). The two variants coincide on scalar problems (N1). The pieces of section 11.1 are exported
 for this variant and for callers building their own composite.
+
+**Shipped as a kernel pair (issue #6, step 2.6, owner decision D12, 2026-11-18).** E1 measured THINC over the budget
+everywhere and DR and RBF+DR over it with nvfortran; the owner kept the self-contained kernels as the default and
+asked for this variant as library kernels too:
+
+```fortran
+pure subroutine seth_teno5_face_masks(vp, vm, eps, ct, ml, mr)   ! pass 1, vp, vm(-2:3)
+pure subroutine seth_teno5_dr_stored(vp, vm, mp, mm, eps, ct, t1, t2, rmu, rp, rm)                  ! pass 2
+pure subroutine seth_teno5_thinc_stored(vp, vm, mp, mm, eps, ct, beta, rmu, rp, rm)
+pure subroutine seth_teno5_rbf_dr_stored(vp, vm, mp, mm, eps, ct, cr, s1, s2, t1, t2, rmu, rp, rm)
+```
+
+Pass 1 runs over the faces, not the cells: at face `i+1/2`, on TENO5's six cells already projected into that face's
+basis, it returns the left-state mask of cell `i` and the mirrored right-state mask of cell `i+1`. So "each mask in
+the basis of its own face" has one meaning: the left mask of a cell in the basis of the face to its right, the right
+mask in the basis of the face to its left. The caller stores `msl(i) = ml`, `msr(i+1) = mr` and passes
+`mp(c) = msl(i+c)`, `mm(c) = msr(i+1-c)`, `c = -3..3`, to pass 2, which reads TENO5's stencil `-2:3` only. Pass 1
+over the faces `-3..N+3` of an `N`-cell block covers the masks the faces `0..N` read. No state is kept in the library
+(R3): the arrays and their halo are the caller's.
 
 ### 11.5 Parameters and kinds
 

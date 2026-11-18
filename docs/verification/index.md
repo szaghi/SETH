@@ -70,9 +70,12 @@ The findings that change how the kernels should be used, each documented on its 
   an advected square wave at 4–5 cells together (DR; THINC 4–8) where TENO5 spreads them to 12–15 over ten periods
   (E2, [NP4](./nonpolynomial/dr)).
 - They cost about three times TENO5 per face (DR 2.7–3.1, the complete RBF+DR scheme 2.8–3.2), THINC three and a
-  half: the per-face kernels recompute the neighbours' flags. A solver that stores each cell's flags and reconstructs
-  the faces in a second pass pays under twice TENO5, and computes each flag in its own face's basis, which changes
-  the result on systems ([Performance](/guide/performance#the-non-polynomial-composites-issue-6)).
+  half: the per-face kernels recompute the neighbours' flags, and on the GPU they slow down further where jumps are
+  dense. The stored-mask pair (`seth_teno5_face_masks`, then `seth_teno5_dr_stored`, `seth_teno5_thinc_stored`,
+  `seth_teno5_rbf_dr_stored`) stores each cell's flags once and pays under twice TENO5 at any density of jumps; the
+  caller keeps the flag arrays and their halo, and each flag is computed in the basis of the face where it was stored,
+  which changes the result on systems ([Reference](/reference/nonpolynomial#the-stored-mask-pair),
+  [Performance](/guide/performance#the-non-polynomial-composites-issue-6)).
 - The Gaussian-RBF kernels take $s = \alpha\Delta x$ from the caller, so their results depend on the length unit
   ([NP8](./nonpolynomial/units)); their linear scheme amplifies long waves, and the validated range is $s \le 0.12$.
   Beyond it the nonlinear scheme is far more anti-dissipative than the linear analysis predicts (22 times at

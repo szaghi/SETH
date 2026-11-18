@@ -61,5 +61,6 @@ cases of the registry carry both ([shock capturing](../shocks/)).
   against 2.73e-3 and DR's 1.39e-3), and not at all on Shu–Osher (0.171 for both). Its detector misses the jumps of a
   square wave and of Liang et al.'s profiles 2 and 3 (the defect Liang et al. report and correct with the DR detector).
 - **It is over the cost budget.** The per-face kernel recomputes seven masks per state on non-smooth faces and three
-  on smooth ones: 3.5 times TENO5 on the GPU against the budget of 3 ([Performance](/guide/performance)); the
-  stored-mask variant costs 1.8 times.
+  on smooth ones: 3.5 times TENO5 on the GPU against the budget of 3 ([Performance](/guide/performance)), a miss the
+  owner accepted (issue #6, D12); the stored-mask pair, `seth_teno5_face_masks` with `seth_teno5_thinc_stored`,
+  costs 1.9 times (series 43).
