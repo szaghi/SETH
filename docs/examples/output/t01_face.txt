@@ -1,0 +1,13 @@
+$ t01_face
+smooth data, sin(2 pi x)
+  exact value at the face    0.587785
+  WENO5-JS   rp, rm          0.587781  0.587789
+  linear5    rp, rm          0.587785  0.587786
+  weights ratios wrp, wrm    0.967025  0.962923
+a step between cells 1 and 2
+  WENO5-JS   rp, rm          1.000000  1.000000
+  linear5    rp, rm          1.050000  1.183333
+  weights ratios wrp, wrm    0.000000  0.000000
+the smooth data and its mirror
+  rp, rm                     0.587781  0.587781
+  equal to round-off        T

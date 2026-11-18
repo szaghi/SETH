@@ -56,6 +56,7 @@ state takes the value of its own side.
 
 | To | Read |
 |---|---|
+| learn the kernels one at a time, from this face to a finite-volume solver | [Tutorial](/tutorial/) |
 | find the kernel, its arguments and its constants | [Reference](/reference/) |
 | see the conventions every kernel shares | [Conventions](./conventions) |
 | see what each scheme is | [Schemes](./schemes) |

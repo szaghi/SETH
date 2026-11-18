@@ -1,0 +1,6 @@
+$ t03_advection
+one period of linear advection, 200 cells, CFL 0.4
+scheme      L1 error  undershoot  overshoot
+WENO5-JS   1.95E-02   2.55E-04   2.55E-04
+TENO5      1.34E-02   2.43E-07   4.00E-11
+linear5    1.62E-02   7.54E-02   7.54E-02

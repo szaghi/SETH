@@ -42,6 +42,7 @@ export default withMermaid({
     nav: [
       { text: 'Home',   link: '/' },
       { text: 'Guide',  link: '/guide/' },
+      { text: 'Tutorial', link: '/tutorial/' },
       { text: 'Reference', link: '/reference/' },
       { text: 'Verification', link: '/verification/' },
       { text: 'API',    link: '/api/' },
@@ -54,6 +55,15 @@ export default withMermaid({
         { text: 'Back to the documentation', link: '/guide/' },
         { text: 'API', items: [{ text: 'Overview', link: '/api/' }] },
         ...apiSidebar,
+      ],
+      '/tutorial/': [
+        { text: 'Tutorial', items: [
+          { text: 'Overview',               link: '/tutorial/' },
+          { text: '1. One face by hand',    link: '/tutorial/01-face' },
+          { text: '2. A line of faces',     link: '/tutorial/02-line' },
+          { text: '3. A conservation law',  link: '/tutorial/03-advection' },
+          { text: '4. The weights',         link: '/tutorial/04-weights' },
+        ] },
       ],
       '/reference/': [
         { text: 'Reference', items: [

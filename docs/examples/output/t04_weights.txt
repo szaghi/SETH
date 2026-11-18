@@ -1,0 +1,10 @@
+$ t04_weights
+the step times a scale: overshoot of the right state, as a fraction of the jump
+     scale     rmu = 1   rmu = descaling
+    1.E+00      0.0000         0.0000
+    1.E-02      0.0000         0.0000
+    1.E-04      0.1774         0.0000
+    1.E-06      0.1833         0.0000
+a step of 1e-7 on the offset 1: overshoot of the right state, as a fraction of the jump
+  descaling (mean |v|)               0.1833
+  mean subtracted, affine descaler    0.0000
