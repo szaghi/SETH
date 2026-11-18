@@ -27,9 +27,14 @@ program seth_test_properties
 !<    descaler (eps + IS rmu^2 = O(1)) WENO-JS is tested up to 1e140, as WENO-Z and TENO are. The centred WENO, whose
 !<    upwind part is WENO-JS, has WENO-JS's ranges (its blend's indicators take rmu too). These are the R8P
 !<    ranges; R4P's (seth_test_parameters' ROBUST_EXP_*) stop where its squares do.
+!< 7. A step of BIG_JUMP (1e30 in R8P) at every cell boundary of the stencil, both orientations (TENO family): finite
+!<    states inside [0, BIG_JUMP] up to TOL_PROPERTIES of the jump (the composites' overrides included).
+!< Every scheme of the registry, those beyond the sweeps (NSCHEMES+1..NALL: the stencil-targeted and Gaussian-RBF
+!< kernels, rbf_dx at its default 0.01, so s = 0.03 is fixed while the data scale) included. The RBF rows scale with
+!< the data (P + s^2 C, s a length), so 5 holds bitwise; their dependence on the length unit is E5 (seth_vv_nonpoly).
 use seth
 use seth_test_parameters, only : AI_STEP_TOL, ROBUST_EXP_MAX, ROBUST_EXP_MAX_JS, ROBUST_EXP_MIN, SMALL_STEP, &
-                                 TOL_PROPERTIES, NP_GUARD_SCALE
+                                 TOL_PROPERTIES, NP_GUARD_SCALE, BIG_JUMP
 use seth_test_rng, only : seed_rng
 use seth_test_schemes
 implicit none
@@ -42,7 +47,7 @@ logical                 :: passed
 
 passed = .true.
 call seed_rng(1004_I4P)
-do id=1, NSCHEMES
+do id=1, NALL
    fam = SCHEMES(id)%family ; s = SCHEMES(id)%s
    wmin = merge(3_I4P, s, fam == FAM_TENO)
    failures = 0
@@ -134,6 +139,20 @@ do id=1, NSCHEMES
    vp = 0._R_P
    call reconstruct(id, vp, vp, rp, rm)
    if (rp /= 0._R_P .or. rm /= 0._R_P) call fail('zero stencil', rp, rm)
+   ! 7. a step of BIG_JUMP at every cell boundary, both orientations
+   if (fam == FAM_TENO) then
+      do k=VLO+1, VHI
+         do n_=0, 1
+            do m=VLO, VHI
+               vp(m) = merge(BIG_JUMP, 0._R_P, (m >= k) .neqv. (n_ == 1)) ; vm(m) = vp(m)
+            enddo
+            call reconstruct(id, vp, vm, rp, rm)
+            if (.not.(rp >= -TOL_PROPERTIES*BIG_JUMP .and. rp <= (1._R_P + TOL_PROPERTIES)*BIG_JUMP .and. &
+                      rm >= -TOL_PROPERTIES*BIG_JUMP .and. rm <= (1._R_P + TOL_PROPERTIES)*BIG_JUMP)) &
+               call fail('a step of BIG_JUMP: a state not finite or outside the data', rp, rm)
+         enddo
+      enddo
+   endif
    ! affine-invariant descaler (Wang & Don 2022): bitwise under 2^k scaling; a step of height 1e-7 on an offset of 1 keeps
    ! the ENO property (states within the data's range to 1e-12 of the jump), which the mean-|v| descaler loses
    if (fam == FAM_JS .and. s >= 3) then
@@ -246,7 +265,8 @@ contains
    !< first-order guard of the DR and THINC overrides, a product of two differences against 1e-15).
    character(*), intent(in) :: name
    logical                  :: yes
-   yes = any(trim(name) == [character(16) :: 'teno5_az', 'teno5_a', 'teno8_a', 'teno5_dr', 'teno5_thinc'])
+   yes = any(trim(name) == [character(16) :: 'teno5_az', 'teno5_a', 'teno8_a', 'teno5_dr', 'teno5_thinc', &
+                                              'teno5_st_dr', 'teno5_rbf_dr'])
    endfunction dimensional
 
    subroutine descaled(name, vp, vm, rp, rm)
@@ -270,6 +290,13 @@ contains
    case('teno5_thinc')
       call seth_teno5_thinc(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_THINC_BETA, &
                             seth_weno_descaling(3_I4P, 1._R_P, vp(-2:3), vm(-2:3)), rp, rm)
+   case('teno5_st_dr')
+      call seth_teno5_rbf_dr(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, 0._R_P, 0._R_P, SETH_DR_T1, SETH_DR_T2, &
+                             seth_weno_descaling(3_I4P, 1._R_P, vp(-2:3), vm(-2:3)), rp, rm)
+   case('teno5_rbf_dr')
+      call seth_teno5_rbf_dr(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, SETH_RBF_ALPHA1*rbf_dx, &
+                             SETH_RBF_ALPHA2*rbf_dx, SETH_DR_T1, SETH_DR_T2, &
+                             seth_weno_descaling(3_I4P, 1._R_P, vp(-2:3), vm(-2:3)), rp, rm)
    endselect
    endsubroutine descaled
 endprogram seth_test_properties

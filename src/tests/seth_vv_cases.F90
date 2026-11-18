@@ -14,7 +14,7 @@ use seth_vv_euler
 use seth_vv_riemann, only : riemann_sample
 implicit none
 private
-public :: vv_dir, vv_report, vv_open, vv_schemes, vv_label
+public :: vv_dir, vv_report, vv_open, vv_schemes, vv_label, vv_nonpoly_ids
 public :: euler_run, l1_norm, riemann_problem, reference_problem, write_frames
 public :: init_shu_osher, init_blast
 
@@ -61,6 +61,23 @@ contains
       ids = [ids, id]
    enddo
    endsubroutine vv_schemes
+
+   subroutine vv_nonpoly_ids(ids)
+   !< The non-polynomial schemes of issue #6 (splitting path): TENO5-DR, -THINC, -ST, -RBF, -ST-DR, -RBF-DR, the last
+   !< four beyond the sweeps (NSCHEMES+1..NALL). G7 runs them against TENO5's recorded bounds.
+   integer(I4P), allocatable, intent(out) :: ids(:)
+   character(16), parameter :: NP(6) = [character(16) :: 'teno5_dr', 'teno5_thinc', 'teno5_st', 'teno5_rbf', &
+                                        'teno5_st_dr', 'teno5_rbf_dr']
+   integer(I4P)             :: k, j
+   allocate(ids(size(NP)))
+   do k=1, size(NP)
+      ids(k) = 0
+      do j=1, NALL
+         if (trim(SCHEMES(j)%name) == trim(NP(k))) ids(k) = j
+      enddo
+      if (ids(k) == 0) error stop 'vv_nonpoly_ids: scheme not in the registry'
+   enddo
+   endsubroutine vv_nonpoly_ids
 
    function vv_label(id) result(s)
    character(:), allocatable :: s

@@ -30,6 +30,7 @@ program seth_test_critical_points
 !< | TENO5-opt         | 4 (>= 3.5)                | its linear scheme's order (Fu et al. 2016)    |
 !< | TENO5-AZ          | 5 at both points (>= 4.5) | Tang 2024, Tables 1-3                         |
 !< | TENO8             | 6 (>= 5.5)                | its sixth-order background (Liang & Fu 2024b) |
+!< | TENO5-DR, -THINC, -ST, -RBF, -ST-DR, -RBF-DR | TENO5's (>= 4.5) | none: the papers of issue #6 measure no critical point; the bound of the scheme they are built on (measured 2026-11-18: 5.00 and, at the second-order point, 2.00, as TENO5) |
 !<
 !< WENO-JS of every order, at both points: Henrick et al.'s rate max(2r - 2 - n_cp, n_cp) (eq. 60: r <= 6, eps = 0;
 !< llm-wiki high-order-capturing-schemes `properties/accuracy-at-critical-points.md`), within HENRICK_TOL (R8P 0.5).
@@ -37,7 +38,8 @@ program seth_test_critical_points
 !< At the second-order point the literature measures 2 for WENO5-Z and disagrees on TENO (Fu 2023: no degeneration;
 !< Zhang et al. 2024b: 2; SETH measures 2): those schemes must reach at least 1.7, a floor that catches a collapse
 !< without deciding the contradiction. The other schemes are printed, not asserted. The interpolation kernels are not
-!< tested here: the literature has no critical-point test for them.
+!< tested here: the literature has no critical-point test for them. The registry's schemes beyond the sweeps
+!< (NSCHEMES+1..NALL: ST, RBF, ST+DR, RBF+DR) are included, the RBF kernels with s = alpha h (rbf_dx = h).
 !< Per kind (seth_test_parameters): in R4P an order of 99 (every h at round-off) is accepted by the two-sided checks
 !< (Henrick's rates, the WENO-JS and WENO-Z p = 1 ranges) as by the one-sided ones, and TENO5-AZ's Tang check at the
 !< second-order point is not made: its errors fall below R4P's round-off where R8P measures Tang's 5.
@@ -57,7 +59,7 @@ integer                 :: ur
 passed = .true.
 if (vv_report()) call vv_open('critical-points.dat', ur, 'scheme p cp1(a>0) cp1(a<0) cp2(a>0) cp2(a<0)')
 print '(A16,A4,4A12)', 'scheme', 'p', '1st-cp a>0', '1st-cp a<0', '2nd-cp a>0', '2nd-cp a<0'
-do id=1, NSCHEMES
+do id=1, NALL
    if (SCHEMES(id)%interp) cycle ! the finite-difference flux setting reconstructs: interpolations elsewhere
    do p=1, merge(2, 1, SCHEMES(id)%family == FAM_Z)
       call orders(id, 1, p, o1)
@@ -86,6 +88,7 @@ do id=1, NSCHEMES
       case('teno8')     ; lo = 5.5_R_P
       case('teno5_a')   ; lo = 4.5_R_P
       case('teno8_a')   ; lo = 5.5_R_P
+      case('teno5_dr', 'teno5_thinc', 'teno5_st', 'teno5_rbf', 'teno5_st_dr', 'teno5_rbf_dr') ; lo = 4.5_R_P ! TENO5's
       endselect
       if (any(o1 < lo) .or. any(o1 > hi .and. .not.at_floor(o1))) then
          print '(A,2ES10.2)', '   ^ first-order critical point outside the literature range: ', lo, hi
@@ -122,6 +125,7 @@ contains
    h0 = 0.1_R_P*2._R_P**max(0, SCHEMES(id)%s - 3)
    do j=1, NH
       h = h0/2._R_P**(j-1)
+      rbf_dx = h ! the Gaussian-RBF kernels: s = alpha h shrinks with the grid (Liang & Fu 2024)
       do m=VLO, VHI ! face 1/2: cell m is node m; face -1/2: cell m is node m-1
          up(m) = f(kind, m*h)
          um(m) = f(kind, (m-1)*h)

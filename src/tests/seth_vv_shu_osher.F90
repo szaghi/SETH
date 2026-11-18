@@ -51,6 +51,17 @@ do path=PATH_SPLIT, PATH_INTERP
    deallocate(l1, pos)
 enddo
 if (vv_report()) close(us)
+! G7 of issue #6: the non-polynomial schemes on the splitting path against TENO5's recorded bound (the reference reused)
+call vv_nonpoly_ids(ids)
+allocate(l1(size(ids)), pos(size(ids)))
+call reference_problem('shu-osher', init_shu_osher, -5._R_P, 5._R_P, BC_TRANSMISSIVE, 1.8_R_P, 0.5_R_P, n, nref, &
+                       3_I4P, ids, PATH_SPLIT, l1, pos, files=.false., qref_in=qref)
+do k=1, size(ids)
+   print '(A18,ES12.4,L3,A,ES12.4)', vv_label(ids(k)), l1(k), pos(k), '   TENO5''s bound', recorded('teno5')
+   if (.not.pos(k)) call fail(vv_label(ids(k))//': not positive')
+   if (.not.vv_report() .and. l1(k) > recorded('teno5')) call fail(vv_label(ids(k))//': L1 above TENO5''s bound')
+enddo
+deallocate(l1, pos)
 if (.not.passed) error stop 'Shu-Osher verification failed'
 print '(A)', 'seth_vv_shu_osher: ok'
 

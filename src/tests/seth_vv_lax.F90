@@ -58,6 +58,20 @@ do path=PATH_SPLIT, PATH_INTERP
    deallocate(l1, pos, l1u, posu, nfb, nfbu, nlim)
 enddo
 if (vv_report()) close(us)
+! G7 of issue #6 (step 2.2 spec 7, steps 3.1, 3.2, 3.4): the non-polynomial schemes on the splitting path, positive
+! (the limiter on) and, in the test run, L1 below TENO5's recorded bound
+call vv_nonpoly_ids(ids)
+allocate(l1(size(ids)), pos(size(ids)), nfb(size(ids)), nlim(size(ids)))
+limiter = .true.
+call riemann_problem('lax', WL, WR, X0, TEND, 0.5_R_P, 200, ids, PATH_SPLIT, l1, pos, nfb, nlim, files=.false.)
+limiter = .false.
+do k=1, size(ids)
+   print '(A18,ES12.4,A,L2,A,I6,A,ES12.4)', vv_label(ids(k)), l1(k), '   positive:', pos(k), '   limited faces:', &
+         nlim(k), '   TENO5''s bound', recorded('teno5')
+   if (.not.pos(k)) call fail(vv_label(ids(k))//': not positive with the limiter')
+   if (.not.vv_report() .and. l1(k) > recorded('teno5')) call fail(vv_label(ids(k))//': L1 above TENO5''s bound')
+enddo
+deallocate(l1, pos, nfb, nlim)
 if (.not.passed) error stop 'lax verification failed'
 print '(A)', 'seth_vv_lax: ok'
 

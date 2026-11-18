@@ -31,12 +31,19 @@ program seth_vv_adr
 !< C_T = 1e-5 there. (4) The ADR is one evaluation of the operator on one mode; for
 !< every scheme with an anti-dissipative band, each mode of the band is advected for 4 periods (u_t + u_x = 0,
 !< SSP-RK3, CFL 0.4) and its amplitude must never exceed the initial one: the band is not a growth of that mode.
-!< Report mode: adr-<scheme>.dat (theta, Re and Im of theta~, of theta~_lin).
+!< G6 of issue #6 (steps 3.1, 3.2): TENO5-ST equals linear5 for theta <= pi/4 (TOL_ADR) and is nowhere anti-dissipative.
+!< TENO5-RBF (s = 3 rbf_dx = 0.03, 0.06, 0.15, 0.3, frozen; its sensor raises s above s1 where it reads a crest as
+!< non-smooth, so the nonlinear ADR is not exactly its row's): inside the validated range of D7 (s <= 0.12: the first
+!< two), the anti-dissipative band's edge within 10 % of the predicted sqrt(30) s and its peak within twice the
+!< predicted (200/3) s^6 (seth_test_nonpoly, spec 18, for the linear row). Outside it reported: measured 2026-11-18, at
+!< s = 0.15 the peak is 1.6e-2, 22 times the prediction, at s = 0.3 0.198 (4 times), the band reaching theta = 1.8.
+!< Report mode: adr-<scheme>.dat (theta, Re and Im of theta~, of theta~_lin); adr-teno5_st.dat, adr-teno5_rbf-s<k>.dat.
 use seth
 use seth_test_parameters, only : TOL_ADR
 use seth_test_schemes
 use seth_weno_js_tables
 use seth_z_teno_tables
+use seth_nonpoly_tables, only : NP_RBF_P, NP_RBF_C
 use seth_vv_cases, only : vv_report, vv_open, vv_schemes, vv_label
 use seth_vv_euler, only : PATH_SPLIT
 implicit none
@@ -92,10 +99,74 @@ do k=1, size(ids)
       enddo
    endif
 enddo
+call nonpoly_adr()
 if (.not.passed) error stop 'ADR verification failed'
 print '(A)', 'seth_vv_adr: ok'
 
 contains
+   subroutine nonpoly_adr()
+   !< G6 of issue #6: TENO5-ST against linear5, TENO5-RBF at s^2 = 9e-4, 3.6e-3, 2.25e-2, 9e-2 against its linear
+   !< five-point row P + s^2 C (s = 3 rbf_dx: the sensor keeps s = s1 on a unit wave).
+   real(R_P), parameter :: SS(4) = [0.03_R_P, 0.06_R_P, 0.15_R_P, 0.3_R_P]
+   real(R_P)            :: cl(-4:5), dx0, wl, wim, imlin, thb
+   integer(I4P)         :: ist, irb, j, n_, ua
+   character(1)         :: cj
+   ist = by_name('teno5_st') ; irb = by_name('teno5_rbf')
+   dx0 = rbf_dx
+   cl = 0._R_P ; cl(-2:2) = NP_RBF_P(:,7)
+   wl = 0._R_P ; wim = -huge(1._R_P)
+   if (vv_report()) call vv_open('adr-teno5_st.dat', ua, &
+                                 'theta Re(theta~) Im(theta~) Re(theta~_lin) Im(theta~_lin) (N = 200, lin: linear5)')
+   do n_=1, N/2-1
+      th = 2._R_P*PI*n_/N
+      z = adr(ist, th) ; zl = xit(cl, th)
+      if (th <= PI/4._R_P) wl = max(wl, abs(z - zl))
+      wim = max(wim, aimag(z))
+      if (vv_report()) write(ua, '(5ES24.15)') th, real(z, R_P), aimag(z), real(zl, R_P), aimag(zl)
+   enddo
+   if (vv_report()) close(ua)
+   print '(A,2ES12.4)', 'teno5_st: |theta~ - linear5| for theta <= pi/4, max Im ', wl, wim
+   if (wl > TOL_ADR .or. wim > TOL_ADR) call fail('teno5_st: not linear5 at theta <= pi/4, or anti-dissipative')
+   do j=1, 4
+      rbf_dx = SS(j)/SETH_RBF_ALPHA1
+      cl = 0._R_P ; cl(-2:2) = NP_RBF_P(:,7) + SS(j)**2*NP_RBF_C(:,7)
+      wl = 0._R_P ; wim = -huge(1._R_P) ; imlin = -huge(1._R_P) ; thb = 0._R_P
+      write(cj, '(I1)') j
+      if (vv_report()) call vv_open('adr-teno5_rbf-s'//cj//'.dat', ua, &
+         'theta Re(theta~) Im(theta~) Re(row) Im(row) (N = 200; lin: the row P + s^2 C, s in the first line)')
+      if (vv_report()) write(ua, '(A,ES24.15)') '# s', SS(j)
+      do n_=1, N/2-1
+         th = 2._R_P*PI*n_/N
+         z = adr(irb, th) ; zl = xit(cl, th)
+         if (th <= PI/4._R_P) wl = max(wl, abs(z - zl))
+         wim = max(wim, aimag(z)) ; imlin = max(imlin, aimag(zl))
+         if (aimag(z) > TOL_ADR) thb = th
+         if (vv_report()) write(ua, '(5ES24.15)') th, real(z, R_P), aimag(z), real(zl, R_P), aimag(zl)
+      enddo
+      if (vv_report()) close(ua)
+      print '(A,F6.3,A,ES11.3,A,2ES11.3,A,ES11.3,A,F7.4)', 'teno5_rbf s =', SS(j), ': |theta~ - row| (theta <= pi/4)', &
+            wl, '; max Im nonlinear, row', wim, imlin, '; predicted peak', 200._R_P/3._R_P*SS(j)**6, &
+            '; band edge theta', thb
+      if (j <= 2 .and. 200._R_P/3._R_P*SS(j)**6 <= 10._R_P*TOL_ADR) then
+         print '(A)', '   (the predicted band is below the round-off of this precision: not checked)'
+      elseif (j <= 2) then ! inside the validated range (D7)
+         if (abs(thb/(sqrt(30._R_P)*SS(j)) - 1._R_P) > 0.1_R_P) call fail('teno5_rbf: band edge not sqrt(30) s')
+         if (wim > 2._R_P*200._R_P/3._R_P*SS(j)**6) call fail('teno5_rbf: band peak above twice the prediction')
+      endif
+   enddo
+   rbf_dx = dx0
+   endsubroutine nonpoly_adr
+
+   function by_name(name) result(id)
+   character(*), intent(in) :: name
+   integer(I4P)             :: id, j
+   id = 0
+   do j=1, NALL
+      if (trim(SCHEMES(j)%name) == name) id = j
+   enddo
+   if (id == 0) error stop 'seth_vv_adr: scheme not in the registry'
+   endfunction by_name
+
    function growth(id, nm) result(amax)
    !< Largest amplitude of mode nm advected by u_t + u_x = 0 for 4 periods (periodic, SSP-RK3, CFL 0.4, left state).
    integer(I4P), intent(in) :: id, nm

@@ -18,16 +18,18 @@ program seth_vv_burgers
 !<    below 1e-2 (no maximum principle is claimed for WENO, but large oscillations would show here). Asserted: the
 !<    smooth-region L1 at N = 320 is at least 50 times smaller than the whole-domain one for the quick schemes; the
 !<    overshoots bounded.
+!< The non-polynomial schemes of issue #6 (TENO5-DR, -THINC, -ST, -RBF with s = 3 h, -ST-DR, -RBF-DR) run in every
+!< mode: TENO5's order 4.5 before the shock, and the overshoot and pollution bounds after it.
 !< Report mode: the error tables, the profiles at both times, and 61 frames from t = 0 to 1.5/pi (WENO5-JS, TENO6).
 use seth
 use seth_test_parameters, only : BURGERS_FLOOR_N, ORDERS_AT_FLOOR_OK, ORDER_FLOOR, TOL_BISECT, TOL_KINK, T_SLACK
 use seth_test_schemes
 use seth_vv_scalar
-use seth_vv_cases, only : vv_report, vv_open, vv_schemes, vv_label, l1_norm
+use seth_vv_cases, only : vv_report, vv_open, vv_schemes, vv_label, l1_norm, vv_nonpoly_ids
 use seth_vv_euler, only : PATH_SPLIT
 implicit none
 real(R_P), parameter      :: PI = acos(-1._R_P), CFL = 0.4_R_P
-integer(I4P), allocatable :: ids(:)
+integer(I4P), allocatable :: ids(:), npi(:)
 integer(I4P)              :: k, j, nl, u1, u2, ns
 real(R_P), allocatable    :: e1(:,:), einf(:,:), es(:,:), et(:,:), osh(:,:)
 real(R_P)                 :: o
@@ -35,6 +37,9 @@ logical                   :: passed
 
 passed = .true.
 call vv_schemes(PATH_SPLIT, .not.vv_report(), ids)
+call vv_nonpoly_ids(npi) ! issue #6: the non-polynomial schemes in every run (G7; step 3.1: Burgers decides whether
+if (vv_report()) npi = npi(3:) ! ST's pair weights cost robustness); report mode sweeps DR and THINC already
+ids = [ids, npi]
 nl = merge(5, 4, vv_report())
 allocate(e1(size(ids),nl), einf(size(ids),nl), es(size(ids),nl), et(size(ids),nl), osh(size(ids),nl))
 if (vv_report()) then
@@ -59,6 +64,8 @@ do k=1, size(ids)
    select case(vv_label(ids(k)))
    case('teno5') ; if (o < 4.5_R_P .and. .not.at_floor(o)) call fail('TENO5 below order 4.5 before the shock')
    case('teno6') ; if (o < 5.5_R_P .and. .not.at_floor(o)) call fail('TENO6 below order 5.5 before the shock')
+   case('teno5_dr', 'teno5_thinc', 'teno5_st', 'teno5_rbf', 'teno5_st_dr', 'teno5_rbf_dr') ! TENO5's order
+      if (o < 4.5_R_P .and. .not.at_floor(o)) call fail(vv_label(ids(k))//' below order 4.5 before the shock')
    end select
    if (o < 2._R_P .and. .not.at_floor(o)) call fail(vv_label(ids(k))//' does not converge before the shock')
    ! TENO5-AZ (Tang 2024) is the one exception: its cutoff min(1e-5, tau) with tau = |beta_0 + beta_2 - 2 beta_1|
@@ -181,6 +188,7 @@ contains
    real(R_P)                           :: u(0:n-1), e(0:n-1), es_(0:n-1), h, x, ys
    integer(I4P)                        :: i
    h = 2._R_P/n
+   rbf_dx = h ! the Gaussian-RBF kernels: s = alpha h
    call evolve(id, n, tend, u, timeacc=.true.)
    ys = modulo(1._R_P + 0.5_R_P*tend + 1._R_P, 2._R_P) - 1._R_P ! the shock position (after it forms)
    do i=0, n-1

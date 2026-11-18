@@ -50,6 +50,20 @@ do path=PATH_SPLIT, PATH_INTERP
    deallocate(l1, pos, l1u, posu, nlim)
 enddo
 if (vv_report()) close(us)
+! G7 of issue #6: the non-polynomial schemes on the splitting path (the limiter on) against TENO5's recorded bound
+call vv_nonpoly_ids(ids)
+allocate(l1(size(ids)), pos(size(ids)), nlim(size(ids)))
+limiter = .true.
+call reference_problem('blast', init_blast, 0._R_P, 1._R_P, BC_REFLECTIVE, 0.038_R_P, 0.5_R_P, n, nref, 3_I4P, &
+                       ids, PATH_SPLIT, l1, pos, nlim=nlim, files=.false., qref_in=qref)
+limiter = .false.
+do k=1, size(ids)
+   print '(A18,ES12.4,L3,A,I7,A,ES12.4)', vv_label(ids(k)), l1(k), pos(k), '   limited faces:', nlim(k), &
+         '   TENO5''s bound', recorded('teno5')
+   if (.not.pos(k)) call fail(vv_label(ids(k))//': not positive with the limiter')
+   if (.not.vv_report() .and. l1(k) > recorded('teno5')) call fail(vv_label(ids(k))//': L1 above TENO5''s bound')
+enddo
+deallocate(l1, pos, nlim)
 if (.not.passed) error stop 'blast-wave verification failed'
 print '(A)', 'seth_vv_blast: ok'
 
