@@ -206,8 +206,8 @@ contains
    real(R_P)                          :: wl(3), wr(3), ql(3), qr(3), pl(3), pr(3)
    real(R_P)                          :: ws(5,-2:3), fk(5), sv, laml(3), lamr(3), a
    logical                            :: flagged(0:n), raw(0:n)
-   real(R_P)                          :: u5(-2:2), v5(-2:2)
-   integer(I4P)                       :: msl(3,-3:n+3), msr(3,-2:n+4), mpk(-3:3), mmk(-3:3), lpk, lmk
+   real(R_P)                          :: u6(-2:3), v6(-2:3)
+   integer(I4P)                       :: msl(3,-3:n+3), msr(3,-2:n+4), mpk(-3:3), mmk(-3:3)
    integer(I4P)                       :: i, m, k
    rbf_dx = h ! the RBF kernels' s = alpha dx (seth_test_schemes)
    call ghosts(q, n, bc)
@@ -267,13 +267,11 @@ contains
             w(:,m) = matmul(l, q(:,i+m))
             g(:,m) = matmul(l, fn(:,i+m))
          enddo
-         do k=1, 3
-            do m=-2, 2
-               u5(m) = 0.5_R_P*(g(k,m) + alpha(k)*w(k,m))          ! the left-biased mask of cell i
-               v5(m) = 0.5_R_P*(g(k,1-m) - alpha(k)*w(k,1-m))      ! the right-biased mask of cell i+1, mirrored
+         do k=1, 3 ! the left mask of cell i, the right mask of cell i+1, in face i+1/2's basis
+            do m=-2, 3
+               u6(m) = 0.5_R_P*(g(k,m) + alpha(k)*w(k,m)) ; v6(m) = 0.5_R_P*(g(k,m) - alpha(k)*w(k,m))
             enddo
-            call seth_teno5_mask(u5, SCHEMES(id)%eps, SCHEMES(id)%par, msl(k,i))
-            call seth_teno5_mask(v5, SCHEMES(id)%eps, SCHEMES(id)%par, msr(k,i+1))
+            call seth_teno5_face_masks(u6, v6, SCHEMES(id)%eps, SCHEMES(id)%par, msl(k,i), msr(k,i+1))
          enddo
       enddo
    endif
@@ -307,18 +305,30 @@ contains
          do k=1, 3
             vp = 0.5_R_P*(g(k,:) + alpha(k)*w(k,:))
             vm = 0.5_R_P*(g(k,:) - alpha(k)*w(k,:))
-            if (stored_masks .and. SCHEMES(id)%wide) then ! pass 2: TENO5, the stored masks, detector, override
-               call seth_teno5(vp(-2:3), vm(-2:3), SCHEMES(id)%eps, SCHEMES(id)%par, rp, rm)
+            if (stored_masks .and. SCHEMES(id)%wide) then ! pass 2: the library's *_stored kernel on the stored masks
                do m=-3, 3
                   mpk(m) = msl(k,i+m) ; mmk(m) = msr(k,i+1-m)
                enddo
-               if (trim(SCHEMES(id)%name) == 'teno5_thinc') then
-                  call seth_thinc_detect(mpk, mmk, lpk, lmk)
-                  call seth_thinc_override(vp(-1:2), vm(-1:2), lpk, lmk, SETH_THINC_BETA, 1._R_P, rp, rm)
-               else
-                  call seth_dr_detect(mpk, mmk, lpk, lmk)
-                  call seth_dr_override(vp(-1:2), vm(-1:2), lpk, lmk, SETH_DR_T1, SETH_DR_T2, 1._R_P, rp, rm)
-               endif
+               do m=-2, 3
+                  u6(m) = vp(m) ; v6(m) = vm(m)
+               enddo
+               select case(trim(SCHEMES(id)%name))
+               case('teno5_dr')
+                  call seth_teno5_dr_stored(u6, v6, mpk, mmk, SCHEMES(id)%eps, SCHEMES(id)%par, SETH_DR_T1, SETH_DR_T2, &
+                                            1._R_P, rp, rm)
+               case('teno5_thinc')
+                  call seth_teno5_thinc_stored(u6, v6, mpk, mmk, SCHEMES(id)%eps, SCHEMES(id)%par, SETH_THINC_BETA, &
+                                               1._R_P, rp, rm)
+               case('teno5_st_dr') ! the RBF+DR kernel with s1 = s2 = 0, as the registry's
+                  call seth_teno5_rbf_dr_stored(u6, v6, mpk, mmk, SCHEMES(id)%eps, SCHEMES(id)%par, SETH_RBF_CR, &
+                                                0._R_P, 0._R_P, SETH_DR_T1, SETH_DR_T2, 1._R_P, rp, rm)
+               case('teno5_rbf_dr')
+                  call seth_teno5_rbf_dr_stored(u6, v6, mpk, mmk, SCHEMES(id)%eps, SCHEMES(id)%par, SETH_RBF_CR, &
+                                                SETH_RBF_ALPHA1*rbf_dx, SETH_RBF_ALPHA2*rbf_dx, SETH_DR_T1, SETH_DR_T2, &
+                                                1._R_P, rp, rm)
+               case default
+                  error stop 'euler_run: no stored-mask kernel for this scheme'
+               endselect
             else
                call reconstruct(id, vp, vm, rp, rm, par=par)
             endif

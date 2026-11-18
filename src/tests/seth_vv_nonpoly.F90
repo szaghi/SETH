@@ -11,8 +11,9 @@ program seth_vv_nonpoly
 !<    reported beside them.
 !< 2. Experiment E1 (step 2.4): the self-contained kernels recompute the neighbours' masks in the characteristic basis
 !<    of the face being reconstructed; the stored-mask variant (seth_vv_euler's `stored_masks`) computes each cell's
-!<    masks once, in the basis of that cell's own face. On scalar data the two are equal bitwise (seth_test_nonpoly,
-!<    N1); on Euler they differ where the bases differ. Sod, Lax (N = 200, against the exact solution), Shu-Osher
+!<    masks once, in the basis of that cell's own face, through the library's pair (seth_teno5_face_masks and the
+!<    *_stored kernels, step 2.6). On scalar data the two are equal bitwise (seth_test_nonpoly, N1); on Euler they
+!<    differ where the bases differ. TENO5-DR, TENO5-THINC and the RBF+DR scheme of Liang & Fu 2024. Sod, Lax (N = 200, against the exact solution), Shu-Osher
 !<    (N = 200 on [-5, 5]) and the blast waves (N = 400): L1 against the exact solution where there is one, the largest
 !<    density difference between the two variants, positivity. Asserted: both variants positive (the blast with the
 !<    limiter); the rest is reported (an experiment: neither variant is better on every case, measured 2026-11-17).
@@ -79,7 +80,7 @@ use seth_test_schemes, only : SCHEMES, NALL, reconstruct, rbf_dx
 implicit none
 integer(I4P), parameter :: NS = 3_I4P
 character(16), parameter :: NAMES(NS) = [character(16) :: 'teno5', 'teno5_dr', 'teno5_thinc']
-integer(I4P)            :: ids(NS), k, j, ue, uc
+integer(I4P)            :: ids(NS), k, j, ue, uc, id_rbf_dr
 integer(I4P)            :: nsig = 0_I4P !< overrides at faces above NP_NOISE_FLOOR (adv_rhs; the pulse of section 8)
 real(R_P)               :: l1(NS), wid(NS), l1s(2), dq
 logical                 :: passed, pos(NS), posd, poss
@@ -128,6 +129,11 @@ do k=2, NS
    call e1_ref('shu-osher', ids(k))
    call e1_ref('blast', ids(k))
 enddo
+id_rbf_dr = scheme_id('teno5_rbf_dr') ! the complete scheme of Liang & Fu 2024, both variants through the library pair
+call e1_tube('sod', id_rbf_dr, SOD_L, SOD_R, 0.2_R_P)
+call e1_tube('lax', id_rbf_dr, LAX_L, LAX_R, 0.13_R_P)
+call e1_ref('shu-osher', id_rbf_dr)
+call e1_ref('blast', id_rbf_dr)
 if (vv_report()) then ; close(ue) ; close(uc) ; endif
 if (.not.passed) error stop 'seth_vv_nonpoly failed'
 print '(A)', 'seth_vv_nonpoly: ok'
@@ -318,7 +324,7 @@ contains
    do i=1, NC
       x = (i - 0.5_R_P)*h ; w0(:,i) = merge(SOD_L, SOD_R, x < 0.5_R_P)
    enddo
-   tf = [(0.2_R_P*f/(NF - 1), f=0, NF-1)] ; tf(1) = 1.e-12_R_P
+   tf = [(0.2_R_P*f/(NF - 1), f=0, NF-1)] ; tf(1) = 1.e-12_R_P ! kind-ok: a first frame just after 0
    us = star_velocity(SOD_L, SOD_R)
    w = riemann_sample(SOD_L, SOD_R, GAMMA, us - 1.e-6_R_P) ; rl = w(1)
    w = riemann_sample(SOD_L, SOD_R, GAMMA, us + 1.e-6_R_P) ; rr = w(1)
@@ -376,7 +382,7 @@ contains
    do i=1, NSO
       w0(:,i) = init_shu_osher(-5._R_P + (i - 0.5_R_P)*h)
    enddo
-   tf = [(1.8_R_P*f/(NF - 1), f=0, NF-1)] ; tf(1) = 1.e-12_R_P
+   tf = [(1.8_R_P*f/(NF - 1), f=0, NF-1)] ; tf(1) = 1.e-12_R_P ! kind-ok: a first frame just after 0
    call euler_run(scheme_id('teno5_rbf'), PATH_SPLIT, w0(:,1:NSO), NSO, h, BC_TRANSMISSIVE, 1.8_R_P, 0.5_R_P, &
                   q(:,1-NG:NSO+NG), pz, fr(:,1:NSO,:), tf, NF)
    call write_frames('nonpoly-shu-osher-frames-teno5_rbf.dat', -5._R_P, h, NSO, tf, fr(:,1:NSO,:))
@@ -385,7 +391,7 @@ contains
    do i=1, NB
       w0(:,i) = init_blast((i - 0.5_R_P)*h)
    enddo
-   tf = [(0.038_R_P*f/(NF - 1), f=0, NF-1)] ; tf(1) = 1.e-12_R_P
+   tf = [(0.038_R_P*f/(NF - 1), f=0, NF-1)] ; tf(1) = 1.e-12_R_P ! kind-ok: a first frame just after 0
    limiter = .true.
    call euler_run(scheme_id('teno5_dr'), PATH_SPLIT, w0, NB, h, BC_REFLECTIVE, 0.038_R_P, 0.5_R_P, q, pz, fr, tf, NF)
    limiter = .false.
