@@ -40,16 +40,18 @@ export default withMermaid({
     logo: { light: '/logo-nav.svg', dark: '/logo-nav-dark.svg', alt: 'SETH' },
     siteTitle: 'SETH',
     nav: [
-      { text: 'Home',   link: '/' },
-      { text: 'Guide',  link: '/guide/' },
-      { text: 'Tutorial', link: '/tutorial/' },
-      { text: 'Cookbook', link: '/cookbook/' },
-      { text: 'Reference', link: '/reference/' },
+      { text: 'Start',        link: '/guide/' },
+      { text: 'Tutorial',     link: '/tutorial/' },
+      { text: 'Cookbook',     link: '/cookbook/' },
+      { text: 'Reference',    link: '/reference/' },
       { text: 'Verification', link: '/verification/' },
-      { text: 'API',    link: '/api/' },
-      { text: 'GitHub', link: 'https://github.com/szaghi/SETH' },
+      { text: 'API',          link: '/api/' },
+      { text: 'GitHub',       link: 'https://github.com/szaghi/SETH' },
     ],
 
+    // One sidebar for the whole site, in reading order: it is also the chain of the Previous / Next links at the foot
+    // of every page, so reading straight through goes start -> tutorial -> recipes -> reference -> verification.
+    // A collapsed group opens by itself on its own pages. scripts/check_docs.py fails when a page is missing here.
     sidebar: {
       // the module pages written by formal (docs:build runs it first), with its own sidebar
       '/api/': [
@@ -57,55 +59,58 @@ export default withMermaid({
         { text: 'API', items: [{ text: 'Overview', link: '/api/' }] },
         ...apiSidebar,
       ],
-      '/tutorial/': [
-        { text: 'Tutorial', items: [
-          { text: 'Overview',               link: '/tutorial/' },
-          { text: '1. One face by hand',    link: '/tutorial/01-face' },
-          { text: '2. A line of faces',     link: '/tutorial/02-line' },
-          { text: '3. A conservation law',  link: '/tutorial/03-advection' },
-          { text: '4. The weights',         link: '/tutorial/04-weights' },
-          { text: '5. TENO and its cutoff', link: '/tutorial/05-teno' },
-          { text: '6. A nonlinear flux',    link: '/tutorial/06-burgers' },
-          { text: '7. A system',            link: '/tutorial/07-euler' },
-          { text: '8. Positivity',          link: '/tutorial/08-positivity' },
-          { text: '9. A hybrid',            link: '/tutorial/09-hybrid' },
+      '/': [
+        { text: 'Start here', items: [
+          { text: 'About',        link: '/guide/' },
+          { text: 'Installation', link: '/guide/installation' },
+          { text: 'Quick start',  link: '/guide/quickstart' },
+          { text: 'Conventions',  link: '/guide/conventions' },
+        ] },
+        { text: 'Tutorial', collapsed: false, items: [
+          { text: 'All chapters',            link: '/tutorial/' },
+          { text: '1. One face by hand',     link: '/tutorial/01-face' },
+          { text: '2. A line of faces',      link: '/tutorial/02-line' },
+          { text: '3. A conservation law',   link: '/tutorial/03-advection' },
+          { text: '4. The weights',          link: '/tutorial/04-weights' },
+          { text: '5. TENO and its cutoff',  link: '/tutorial/05-teno' },
+          { text: '6. A nonlinear flux',     link: '/tutorial/06-burgers' },
+          { text: '7. A system',             link: '/tutorial/07-euler' },
+          { text: '8. Positivity',           link: '/tutorial/08-positivity' },
+          { text: '9. A hybrid',             link: '/tutorial/09-hybrid' },
           { text: '10. Non-polynomial TENO', link: '/tutorial/10-nonpoly' },
-          { text: '11. On the GPU',         link: '/tutorial/11-gpu' },
+          { text: '11. On the GPU',          link: '/tutorial/11-gpu' },
         ] },
-      ],
-      '/cookbook/': [
-        { text: 'Cookbook', items: [
-          { text: 'Overview',                        link: '/cookbook/' },
-          { text: 'Choose a scheme',                 link: '/cookbook/choose' },
-          { text: 'Point values or cell averages',   link: '/cookbook/point-values' },
-          { text: 'Flag the shocks',                 link: '/cookbook/shock-flags' },
-          { text: 'Bound a reconstruction',          link: '/cookbook/mp-bound' },
-          { text: 'A central branch for Euler',      link: '/cookbook/central' },
-          { text: 'Single precision',                link: '/cookbook/precision' },
-          { text: 'Time a kernel on a GPU',          link: '/cookbook/performance' },
+        { text: 'Cookbook', collapsed: false, items: [
+          { text: 'All recipes',                   link: '/cookbook/' },
+          { text: 'Choose a scheme',               link: '/cookbook/choose' },
+          { text: 'Point values or cell averages', link: '/cookbook/point-values' },
+          { text: 'Flag the shocks',               link: '/cookbook/shock-flags' },
+          { text: 'Bound a reconstruction',        link: '/cookbook/mp-bound' },
+          { text: 'A central branch for Euler',    link: '/cookbook/central' },
+          { text: 'Single precision',              link: '/cookbook/precision' },
+          { text: 'Time a kernel on a GPU',        link: '/cookbook/performance' },
         ] },
-      ],
-      '/reference/': [
-        { text: 'Reference', items: [
-          { text: 'Overview and feature map', link: '/reference/' },
-          { text: 'WENO-JS',                  link: '/reference/weno-js' },
-          { text: 'WENO-Z',                   link: '/reference/weno-z' },
-          { text: 'TENO',                     link: '/reference/teno' },
-          { text: 'Centred WENO',             link: '/reference/weno-c' },
-          { text: 'Non-polynomial TENO',      link: '/reference/nonpolynomial' },
-          { text: 'Linear schemes',           link: '/reference/linear' },
-          { text: 'Sensors',                  link: '/reference/sensors' },
-          { text: 'Central fluxes',           link: '/reference/central' },
-          { text: 'Limiters',                 link: '/reference/limiters' },
-          { text: 'Kinds and constants',      link: '/reference/kinds' },
+        { text: 'Reference', collapsed: false, items: [
+          { text: 'Feature map',         link: '/reference/' },
+          { text: 'WENO-JS',             link: '/reference/weno-js' },
+          { text: 'WENO-Z',              link: '/reference/weno-z' },
+          { text: 'TENO',                link: '/reference/teno' },
+          { text: 'Centred WENO',        link: '/reference/weno-c' },
+          { text: 'Non-polynomial TENO', link: '/reference/nonpolynomial' },
+          { text: 'Linear schemes',      link: '/reference/linear' },
+          { text: 'Sensors',             link: '/reference/sensors' },
+          { text: 'Central fluxes',      link: '/reference/central' },
+          { text: 'Limiters',            link: '/reference/limiters' },
+          { text: 'Kinds and constants', link: '/reference/kinds' },
+          { text: 'Schemes: the theory', link: '/guide/schemes' },
+          { text: 'Precision',           link: '/guide/precision' },
+          { text: 'Performance',         link: '/guide/performance' },
         ] },
-      ],
-      '/verification/': [
-        { text: 'Verification', items: [
+        { text: 'Verification', collapsed: true, items: [
           { text: 'Catalog',       link: '/verification/' },
           { text: 'Test programs', link: '/verification/unit-tests' },
         ] },
-        { text: 'Accuracy', collapsed: false, items: [
+        { text: 'Verification: Accuracy', collapsed: true, items: [
           { text: 'Overview',                    link: '/verification/accuracy/' },
           { text: 'A1 Order of accuracy',        link: '/verification/accuracy/order-of-accuracy' },
           { text: 'A2 Critical points',          link: '/verification/accuracy/critical-points' },
@@ -113,7 +118,7 @@ export default withMermaid({
           { text: 'A4 Euler order of accuracy',  link: '/verification/accuracy/euler-order' },
           { text: 'A5 Centred WENO',             link: '/verification/accuracy/centred-weno' },
         ] },
-        { text: 'Shock capturing', collapsed: false, items: [
+        { text: 'Verification: Shock capturing', collapsed: true, items: [
           { text: 'Overview',                  link: '/verification/shocks/' },
           { text: 'S1 Sod',                    link: '/verification/shocks/sod' },
           { text: 'S2 Lax',                    link: '/verification/shocks/lax' },
@@ -123,18 +128,18 @@ export default withMermaid({
           { text: 'S6 Burgers',                link: '/verification/shocks/burgers' },
           { text: 'S7 Composite profile',      link: '/verification/shocks/advection' },
         ] },
-        { text: 'Spectral', collapsed: false, items: [
+        { text: 'Verification: Spectral', collapsed: true, items: [
           { text: 'Overview',                  link: '/verification/spectral/' },
           { text: 'F1 Linear backgrounds',     link: '/verification/spectral/linear-spectra' },
           { text: 'F2 Dispersion relation',    link: '/verification/spectral/adr' },
         ] },
-        { text: 'Hybrids', collapsed: false, items: [
+        { text: 'Verification: Hybrids', collapsed: true, items: [
           { text: 'Overview',                  link: '/verification/hybrids/' },
           { text: 'H1 Sensors',                link: '/verification/hybrids/sensors' },
           { text: 'H2 Central fluxes',         link: '/verification/hybrids/central' },
           { text: 'H3 Hybrids in a solver',    link: '/verification/hybrids/harness' },
         ] },
-        { text: 'Non-polynomial', collapsed: false, items: [
+        { text: 'Verification: Non-polynomial', collapsed: true, items: [
           { text: 'Overview',                  link: '/verification/nonpolynomial/' },
           { text: 'NP1 Flags',                 link: '/verification/nonpolynomial/flags' },
           { text: 'NP2 Detectors',             link: '/verification/nonpolynomial/detectors' },
@@ -146,7 +151,7 @@ export default withMermaid({
           { text: 'NP8 Length units',          link: '/verification/nonpolynomial/units' },
           { text: 'NP9 Two dimensions',        link: '/verification/nonpolynomial/two-d' },
         ] },
-        { text: 'Contracts', collapsed: false, items: [
+        { text: 'Verification: Contracts', collapsed: true, items: [
           { text: 'Overview',                  link: '/verification/contracts/' },
           { text: 'C1 Equivalence with ADAM',  link: '/verification/contracts/adam-equivalence' },
           { text: 'C2 Properties',             link: '/verification/contracts/properties' },
@@ -156,40 +161,12 @@ export default withMermaid({
           { text: 'C6 Mutation testing',       link: '/verification/contracts/mutation' },
           { text: 'C7 Positivity limiter',     link: '/verification/contracts/positivity' },
         ] },
-      ],
-      '/guide/': [
-        {
-          text: 'Introduction',
-          items: [
-            { text: 'About',        link: '/guide/' },
-            { text: 'Installation', link: '/guide/installation' },
-            { text: 'Quick Start',  link: '/guide/quickstart' },
-          ],
-        },
-        {
-          text: 'Reference',
-          items: [
-            { text: 'Conventions',  link: '/guide/conventions' },
-            { text: 'Schemes',      link: '/guide/schemes' },
-            { text: 'Reference',    link: '/reference/' },
-            { text: 'Precision',    link: '/guide/precision' },
-          ],
-        },
-        {
-          text: 'Quality',
-          items: [
-            { text: 'Verification', link: '/verification/' },
-            { text: 'Performance',  link: '/guide/performance' },
-            { text: 'Sources',      link: '/guide/sources' },
-          ],
-        },
-        {
-          text: 'Project',
-          items: [
-            { text: 'Contributing', link: '/guide/contributing' },
-            { text: 'Changelog',    link: '/guide/changelog' },
-          ],
-        },
+        { text: 'Project', collapsed: true, items: [
+          { text: 'Tooling',      link: '/guide/tooling' },
+          { text: 'Sources',      link: '/guide/sources' },
+          { text: 'Contributing', link: '/guide/contributing' },
+          { text: 'Changelog',    link: '/guide/changelog' },
+        ] },
       ],
     },
 

@@ -14,14 +14,14 @@ hero:
       text: Quick start
       link: /guide/quickstart
     - theme: alt
-      text: Guide
-      link: /guide/
+      text: Tutorial
+      link: /tutorial/
+    - theme: alt
+      text: Reference
+      link: /reference/
     - theme: alt
       text: Verification
       link: /verification/
-    - theme: alt
-      text: API Reference
-      link: /api/
     - theme: alt
       text: View on GitHub
       link: https://github.com/szaghi/SETH
@@ -33,9 +33,9 @@ features:
       width: 44
       height: 44
     title: Every scheme, one kernel each
-    details: WENO-JS 1/3/5/7/9, WENO-Z 3/5/7/9, TENO5, TENO5-opt, TENO5-AZ, TENO5-A, TENO6, TENO6-opt, NENO6, TENO8 and TENO8-A, for reconstruction from cell averages and interpolation from point values, and the centred WENO4/6/8-C (reconstruction), optionally returning the weights ratios.
-    link: /guide/schemes
-    linkText: Schemes
+    details: WENO-JS 1/3/5/7/9, WENO-Z 3/5/7/9, TENO5, TENO5-opt, TENO5-AZ, TENO5-A, TENO6, TENO6-opt, NENO6, TENO8 and TENO8-A, for reconstruction from cell averages and interpolation from point values; the centred WENO4/6/8-C; the non-polynomial TENO (DR and THINC overrides, stencil targeting, Gaussian RBF); and the pieces of a hybrid (linear schemes, sensors, central fluxes).
+    link: /reference/
+    linkText: Feature map
   - icon:
       light: /icons/hpc.svg
       dark: /icons/hpc-dark.svg
@@ -69,7 +69,7 @@ features:
       width: 44
       height: 44
     title: Verification you can read
-    details: Thirty-one programs, also the test suite. Orders at a point, at critical points and over whole domains, invariances, golden values, Sod, Lax, 123, Shu–Osher and the blast wave, Burgers against its exact solution, spectral properties; figures and animations on every case page.
+    details: Forty programs, also the test suite. Orders at a point, at critical points and over whole domains, invariances, golden values, Sod, Lax, 123, Shu–Osher and the blast wave, Burgers against its exact solution, spectral properties, the non-polynomial schemes in 1-D and 2-D; figures and animations on every case page.
     link: /verification/
     linkText: Verification
   - icon:
@@ -78,7 +78,7 @@ features:
       width: 44
       height: 44
     title: Three compilers, CPU and GPU
-    details: gfortran, nvfortran and ifx, debug and optimised, plus the OpenACC build on the GPU; built with FoBiS or fpm. A mutation run catches 25 of 25 planted defects.
+    details: gfortran, nvfortran and ifx, debug and optimised, plus the OpenACC build on the GPU; built with FoBiS or fpm. Mutation runs catch every planted defect, 69 of 69 in three runs.
     link: /guide/installation
     linkText: Installation
 ---
@@ -125,7 +125,7 @@ const authors = [
 git clone https://github.com/szaghi/SETH && cd SETH
 fobis fetch                                                   # PENF, into src/third_party/
 fobis build --mode static-gnu                                 # lib/gnu/static/libseth.a
-fobis build --mode tests-gnu && bash scripts/run_tests.sh     # the 34 verification programs
+fobis build --mode tests-gnu && bash scripts/run_tests.sh     # the 40 test programs
 ```
 
 ```ini [FoBiS dependency]
@@ -154,8 +154,8 @@ call seth_weno5_js(vp, vm, SETH_WENO_JS_EPS, 1._R_P, rp, rm)   ! WENO-JS 5: rp l
 call seth_teno5(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, rp, rm)  ! TENO5
 ```
 
-<p class="seth-lead">The <a href="./guide/quickstart">quick start</a> lists every kernel and its parameters;
-<a href="./guide/conventions">conventions</a> explains the stencil layout and the kinds.</p>
+<p class="seth-lead">The <a href="./tutorial/">tutorial</a> goes from this face to the Euler equations on a GPU;
+the <a href="./reference/">reference</a> lists every kernel, its arguments and its constants.</p>
 
 ## Authors
 

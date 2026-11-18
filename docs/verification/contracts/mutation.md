@@ -36,6 +36,11 @@ the earlier run of the 21 kernel mutants: `notes/mutation-run-2026-11-15-final.t
 central rows, the blend's `max`, its descaler, its first pair. Two candidates were left out as equivalent mutants:
 the mirrored state's cells in reverse order, and the central row read unmirrored (the row is symmetric, and the
 blend does not see the swap).
+2026-11-17, the non-polynomial kernels of issue #6: **38 of 38 new mutants killed**
+(`notes/mutation-run-2026-11-17-nonpoly.txt`): the mask's bit weights and stencil, every term of the detectors and
+overrides (Liang et al. 2022, Eqs. 24 and 32; Takagi et al. 2022, Eq. 20), each branch of $\zeta$, the steepness
+levels, both guards with their sign and `rmu`, THINC's $\beta/2$ and both mirrors, the early exit, stencil
+targeting's row by mask, the RBF rows' sign and table, the sensor's $c_r$, nodes and $s_2$.
 Each line of the record names the tests that caught the mutant. The interpolation mutants are caught by the golden,
 interpolation, tables, TENO, WENO-Z and properties tests, and now also by the nonlinear cases (Sod, Lax, 123,
 Shu–Osher, blast, Euler order): a kernel wired to the wrong tables changes every downstream result. The four positivity-limiter
