@@ -2,7 +2,7 @@
 program seth_test_device
 !< SETH test: every kernel executed on the device (OpenACC) agrees with the same kernel on the host.
 !<
-!< Each of the 56 cases runs one kernel inside `!$acc parallel loop` over N deterministic stencils (smooth cubics,
+!< Each of the 59 cases runs one kernel inside `!$acc parallel loop` over N deterministic stencils (smooth cubics,
 !< jumps, an integer LCG), then the same loop on the host, and compares: states within 1e-13 of the stencil's
 !< magnitude, weights ratios within 1e-9 (the device and the host compile the kernel separately and may contract
 !< multiply-adds differently; the tolerances are those of seth_test_golden, for the same reasons). One case calls
@@ -15,7 +15,7 @@ use seth_test_parameters, only : EPS_ZT, POS_RANGE_EXP, POSITIVITY_FLOOR, TOL_DE
                                  TOL_DEVICE_WR
 implicit none
 integer(I4P), parameter :: N = 4096_I4P
-integer(I4P), parameter :: NK = 56_I4P
+integer(I4P), parameter :: NK = 59_I4P
 character(26), parameter :: NAMES(NK) = [ &
    'seth_weno1_js             ', &
    'seth_weno1_js_wr          ', &
@@ -72,7 +72,10 @@ character(26), parameter :: NAMES(NK) = [ &
    'seth_teno5_thinc          ', &
    'seth_teno5_st             ', &
    'seth_teno5_rbf            ', &
-   'seth_teno5_rbf_dr         ']
+   'seth_teno5_rbf_dr         ', &
+   'seth_dr/thinc_detect+zeta ', &
+   'seth_dr_override          ', &
+   'seth_thinc_override       ']
 real(R_P)               :: v(-5:6,N), w(-5:6,N), rp(N), rm(N), wrp(N), wrm(N), hp(N), hm(N), hwp(N), hwm(N)
 real(R_P)               :: mag, ds, dw, worst_s, worst_w
 integer(I4P)            :: k, i, nbit, nfail
@@ -1003,6 +1006,78 @@ do k=1, NK
          call seth_teno5_rbf_dr(a, b, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, 0.09_R_P, 0.09_R_P, SETH_DR_T1, &
                                 SETH_DR_T2, 1._R_P, rp(i), rm(i))
       enddo
+      endblock
+   case(57) ! seth_dr_detect, seth_thinc_detect, seth_teno5_zeta on the masks of seth_teno5_mask: the levels coded in
+      block ! rp (DR: lp + 3 lm), rm (THINC: lp + 2 lm, + 4 (zeta + 1) of the cell 0); a detector must fire somewhere
+      real(R_P)    :: a(-2:2), b(-2:2)
+      integer(I4P) :: mp(-3:3), mm(-3:3), lp, lm, tp, tm, c, m
+      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, mp, mm, lp, lm, tp, tm, c, m)
+      do i=1, N
+         wrp(i) = -1._R_P ; wrm(i) = -1._R_P
+         do c=-3, 3
+            do m=-2, 2
+               a(m) = v(c+m,i) ; b(m) = w(1-c-m,i)
+            enddo
+            call seth_teno5_mask(a, SETH_TENO_EPS, SETH_TENO5_CT, mp(c))
+            call seth_teno5_mask(b, SETH_TENO_EPS, SETH_TENO5_CT, mm(c))
+         enddo
+         call seth_dr_detect(mp, mm, lp, lm)
+         call seth_thinc_detect(mp, mm, tp, tm)
+         rp(i) = real(lp + 3*lm, R_P) ; rm(i) = real(tp + 2*tm + 4*(seth_teno5_zeta(mp(0)) + 1), R_P)
+      enddo
+      hp = rp ; hm = rm ; hwp = wrp ; hwm = wrm
+
+      do i=1, N
+         wrp(i) = -1._R_P ; wrm(i) = -1._R_P
+         do c=-3, 3
+            do m=-2, 2
+               a(m) = v(c+m,i) ; b(m) = w(1-c-m,i)
+            enddo
+            call seth_teno5_mask(a, SETH_TENO_EPS, SETH_TENO5_CT, mp(c))
+            call seth_teno5_mask(b, SETH_TENO_EPS, SETH_TENO5_CT, mm(c))
+         enddo
+         call seth_dr_detect(mp, mm, lp, lm)
+         call seth_thinc_detect(mp, mm, tp, tm)
+         rp(i) = real(lp + 3*lm, R_P) ; rm(i) = real(tp + 2*tm + 4*(seth_teno5_zeta(mp(0)) + 1), R_P)
+      enddo
+      print '(A,I5,A,I5,A)', '   detectors on the device: DR fires on ', count(mod(nint(hp), 3) > 0), &
+            ' stencils, THINC on ', count(mod(nint(hm), 2) > 0), ' (left states)'
+      if (count(mod(nint(hp), 3) > 0) == 0 .or. count(mod(nint(hm), 2) > 0) == 0) then
+         print '(A)', '   FAILED: a detector never fires on the test stencils' ; passed = .false.
+      endif
+      endblock
+   case(58, 59) ! seth_dr_override (levels 0, 1, 2 by stencil), seth_thinc_override (0, 1), states preset to the mean
+      block      ! of f_i and f_{i+1}; at least one state changed by each override
+      real(R_P)    :: a(-1:2), b(-1:2)
+      integer(I4P) :: lv
+      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, lv)
+      do i=1, N
+         a = v(-1:2,i) ; b = w(-1:2,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
+         rp(i) = 0.5_R_P*(a(0) + a(1)) ; rm(i) = 0.5_R_P*(b(0) + b(1))
+         if (k == 58) then
+            lv = mod(i, 3_I4P)
+            call seth_dr_override(a, b, lv, lv, SETH_DR_T1, SETH_DR_T2, 1._R_P, rp(i), rm(i))
+         else
+            lv = mod(i, 2_I4P)
+            call seth_thinc_override(a, b, lv, lv, SETH_THINC_BETA, 1._R_P, rp(i), rm(i))
+         endif
+      enddo
+      hp = rp ; hm = rm ; hwp = wrp ; hwm = wrm
+
+      do i=1, N
+         a = v(-1:2,i) ; b = w(-1:2,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
+         rp(i) = 0.5_R_P*(a(0) + a(1)) ; rm(i) = 0.5_R_P*(b(0) + b(1))
+         if (k == 58) then
+            lv = mod(i, 3_I4P)
+            call seth_dr_override(a, b, lv, lv, SETH_DR_T1, SETH_DR_T2, 1._R_P, rp(i), rm(i))
+         else
+            lv = mod(i, 2_I4P)
+            call seth_thinc_override(a, b, lv, lv, SETH_THINC_BETA, 1._R_P, rp(i), rm(i))
+         endif
+      enddo
+      if (count(hp /= 0.5_R_P*(v(0,:) + v(1,:))) == 0) then
+         print '(A)', '   FAILED: the override never acted on the device' ; passed = .false.
+      endif
       endblock
    endselect
    nbit = 0 ; nfail = 0 ; worst_s = 0._R_P ; worst_w = 0._R_P
