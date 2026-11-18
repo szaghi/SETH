@@ -38,7 +38,7 @@ This is finite differences: the cells hold point values and the face fluxes are 
 
 ::: tip What you learned
 For a system, the kernel is called once per characteristic field, on the projected stencil. The projection is the
-caller's: SETH reconstructs scalars. The cost of the projection is what a hybrid saves where the flow is smooth.
+caller's: SETH reconstructs scalars. The cost of the projection is what a [hybrid](./09-hybrid) saves where the flow is smooth.
 :::
 
 <details><summary>The whole program</summary>

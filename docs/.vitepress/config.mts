@@ -67,6 +67,9 @@ export default withMermaid({
           { text: '6. A nonlinear flux',    link: '/tutorial/06-burgers' },
           { text: '7. A system',            link: '/tutorial/07-euler' },
           { text: '8. Positivity',          link: '/tutorial/08-positivity' },
+          { text: '9. A hybrid',            link: '/tutorial/09-hybrid' },
+          { text: '10. Non-polynomial TENO', link: '/tutorial/10-nonpoly' },
+          { text: '11. On the GPU',         link: '/tutorial/11-gpu' },
         ] },
       ],
       '/reference/': [

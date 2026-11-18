@@ -44,3 +44,5 @@ and keeps the run alive where it is. Reference: [Limiters](/reference/limiters);
 <<< @/examples/snippets/t08_positivity.F90{fortran}
 
 </details>
+
+Next: [9. A hybrid](./09-hybrid).

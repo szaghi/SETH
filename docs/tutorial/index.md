@@ -8,6 +8,15 @@ Chapters that take you from the two states at one face to a solver of the Euler 
 complete program in `docs/examples/src/`. The code on these pages is that program, and the output is what it printed
 when the documentation was built (`bash scripts/docs_examples.sh` regenerates both, and CI fails when they drift).
 
+```mermaid
+flowchart LR
+  A[1 one face] --> B[2 a line] --> C[3 a conservation law] --> D[4 the weights] --> E[5 TENO]
+  C --> F[6 Burgers] --> G[7 Euler] --> H[8 positivity]
+  C --> I[9 hybrid]
+  E --> J[10 non-polynomial]
+  C --> K[11 GPU]
+```
+
 | Chapter | You learn |
 |---|---|
 | [1. One face by hand](./01-face) | what a kernel computes: `vp`, `vm`, the two states `rp`, `rm`, the weights ratios, the mirror |
@@ -18,6 +27,9 @@ when the documentation was built (`bash scripts/docs_examples.sh` regenerates bo
 | [6. A nonlinear flux](./06-burgers) | Burgers' equation: the splitting's $\alpha$, a shock without oscillations |
 | [7. A system](./07-euler) | the Euler equations: characteristic variables, and why component-wise oscillates |
 | [8. Positivity](./08-positivity) | the positivity-preserving flux limiter on the Woodward–Colella blast waves |
+| [9. A hybrid](./09-hybrid) | a sensor per face: the linear scheme where smooth, TENO5 elsewhere |
+| [10. Non-polynomial TENO](./10-nonpoly) | the DR and THINC overrides: a jump kept within two or three cells |
+| [11. On the GPU](./11-gpu) | the solver's loops on the device with OpenACC, the kernels unchanged |
 
 ## Building the examples
 
