@@ -42,6 +42,13 @@ program seth_test_nonpoly
 !< 13. N2: on the smooth fields no face is detected and the states equal seth_teno5's bitwise.
 !<     Specs 12-13 also for seth_teno5_rbf_dr (step 3.4; s1 = s2 = 3 dx): its reference is seth_teno5_rbf's states, the
 !<     stored masks, the DR detector and override; on the smooth fields it equals seth_teno5_rbf bitwise.
+!<     Specs 12-13 also for the library's stored-mask pair (step 2.6, D12): seth_teno5_face_masks at every face gives
+!<     the reference's stored masks bitwise, and seth_teno5_dr_stored, seth_teno5_thinc_stored, seth_teno5_rbf_dr_stored
+!<     on them equal the self-contained kernels bitwise.
+!< 20. Step 2.6, the stored-mask pair on independent left and right data (the split fluxes of a system): 10^5 random
+!<     stencils vp, vm(-5:6) (steps of random place and height plus noise, each side its own), the masks of the faces
+!<     -3..3 from seth_teno5_face_masks on the stencil itself: the three *_stored kernels equal the self-contained ones
+!<     bitwise, with detections on both states; constant data and a jump of BIG_JUMP: equal and finite.
 !< Steps 3.1 and 3.2, seth_teno5_st and seth_teno5_rbf (frozen in issue #6, section 6):
 !< 14. ST: order 5.0 +- 0.1 at a point (the generic g of seth_test_functions, cell averages, face at 0.3), both states;
 !<     equal to seth_linear5 to 64 eps of the data on smooth data; beside a jump that leaves the mask (1,1,0) the order
@@ -72,7 +79,8 @@ program seth_test_nonpoly
 !<     speed). (a) sin(10 pi x), (b) sin(24 pi x), N = 120: no activation of either detector (the paper's statement).
 !<     (c), (d), N = 100 and 400: every jump of the function (above 0.1) has a DR activation within 1.5 cells, and every
 !<     DR activation lies within 1.5 cells of a jump of the function or of its derivative. (e), N = 200 and 400: counts
-!<     only (its frozen spec contradicts the paper's own Fig. 5: left to the owner). Report: nonpoly-static.dat.
+!<     only (the frozen spec contradicted the paper's own Fig. 5; amended by the owner to counts reported, D11,
+!<     2026-11-18). Report: nonpoly-static.dat.
 !< 4. Constant data and a jump of BIG_JUMP: the mask is defined and never 0 (one chi_k >= 1/3 > C_T). Not 7 on
 !<    constant data in general (printed): the indicators of a non-dyadic constant are round-off, far above eps.
 use seth
@@ -179,6 +187,9 @@ print '(A)', 'constant data and a big jump: mask in 1..7'
 
 ! 12.-13. the self-contained kernels against the two-pass reference
 call self_contained()
+
+! 20. the stored-mask pair on independent left and right data
+call stored_pair()
 
 ! 14.-15. stencil targeting and the RBF fluxes
 call targeting()
@@ -759,6 +770,8 @@ contains
    real(R_P)    :: u(0:NF-1), vp(-5:6), vm(-5:6), rp, rm, sp, sm, tp, tm, a(-2:3), b(-2:3), w(-2:2), x, hgt
    real(R_P), parameter :: S_RBF = 3._R_P*2._R_P/NF !< s = alpha dx, alpha = 3 (SETH_RBF_ALPHA1 = ALPHA2), dx = 2/NF
    integer(I4P) :: ml(0:NF-1), mr(0:NF-1), mp(-3:3), mm(-3:3), f_, j, m, c, lp, lm, nact(3), nfail, k, jp
+   integer(I4P) :: fml(0:NF-1), fmr(0:NF-1), qmp(-3:3), qmm(-3:3)
+   real(R_P)    :: qp, qm
    nfail = 0
    do f_=1, NFIELD
       do j=0, NF-1
@@ -791,6 +804,16 @@ contains
          enddo
          call seth_teno5_mask(w, SETH_TENO_EPS, SETH_TENO5_CT, mr(j))
       enddo
+      ! pass 1 of the library's pair: at every face j+1/2, the left mask of cell j and the right mask of cell j+1
+      do j=0, NF-1
+         do m=-2, 3
+            a(m) = u(modulo(j+m, NF))
+         enddo
+         call seth_teno5_face_masks(a, a, SETH_TENO_EPS, SETH_TENO5_CT, fml(j), fmr(modulo(j+1, NF)))
+      enddo
+      if (any(fml /= ml) .or. any(fmr /= mr)) then
+         nfail = nfail + 1 ; print '(A,A)', 'FAIL 12: seth_teno5_face_masks differs from the reference on ', FNAME(f_)
+      endif
       nact = 0
       do k=1, 3 ! 1 DR, 2 THINC, 3 RBF+DR (s = 3 dx, dx = 2/NF; its base the RBF states, not TENO5's)
          do j=0, NF-1 ! face j+1/2
@@ -809,20 +832,31 @@ contains
             tp = sp ; tm = sm
             do c=-3, 3
                mp(c) = ml(modulo(j+c, NF)) ; mm(c) = mr(modulo(j+1-c, NF))
+               qmp(c) = fml(modulo(j+c, NF)) ; qmm(c) = fmr(modulo(j+1-c, NF))
             enddo
             if (k == 1) then
                call seth_dr_detect(mp, mm, lp, lm)
                call seth_dr_override(vp(-1:2), vm(-1:2), lp, lm, SETH_DR_T1, SETH_DR_T2, 1._R_P, sp, sm)
                call seth_teno5_dr(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_DR_T1, SETH_DR_T2, 1._R_P, rp, rm)
+               call seth_teno5_dr_stored(a, b, qmp, qmm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_DR_T1, SETH_DR_T2, 1._R_P, &
+                                         qp, qm)
             elseif (k == 2) then
                call seth_thinc_detect(mp, mm, lp, lm)
                call seth_thinc_override(vp(-1:2), vm(-1:2), lp, lm, SETH_THINC_BETA, 1._R_P, sp, sm)
                call seth_teno5_thinc(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_THINC_BETA, 1._R_P, rp, rm)
+               call seth_teno5_thinc_stored(a, b, qmp, qmm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_THINC_BETA, 1._R_P, &
+                                            qp, qm)
             else
                call seth_dr_detect(mp, mm, lp, lm)
                call seth_dr_override(vp(-1:2), vm(-1:2), lp, lm, SETH_DR_T1, SETH_DR_T2, 1._R_P, sp, sm)
                call seth_teno5_rbf_dr(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, S_RBF, S_RBF, SETH_DR_T1, &
                                       SETH_DR_T2, 1._R_P, rp, rm)
+               call seth_teno5_rbf_dr_stored(a, b, qmp, qmm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, S_RBF, S_RBF, &
+                                             SETH_DR_T1, SETH_DR_T2, 1._R_P, qp, qm)
+            endif
+            if (qp /= rp .or. qm /= rm) then
+               nfail = nfail + 1
+               if (nfail <= 3) print '(A,A,I2,I5,4ES24.16)', 'FAIL 12: stored pair ', FNAME(f_), k, j, qp, rp, qm, rm
             endif
             if (lp > 0) nact(k) = nact(k) + 1
             if (lm > 0) nact(k) = nact(k) + 1
@@ -839,8 +873,72 @@ contains
             ', RBF+DR ', nact(3)
    enddo
    print '(A)', 'self-contained kernels equal to the two-pass stored-mask reference, bitwise (N1); smooth fields inert (N2)'
+   print '(A)', 'the stored-mask pair (seth_teno5_face_masks, *_stored) equal to both, bitwise'
    if (nfail > 0) then ; print '(A,I0)', 'FAIL 12-13: ', nfail ; passed = .false. ; endif
    endsubroutine self_contained
+
+   subroutine stored_pair()
+   !< Spec 20: the stored-mask pair against the self-contained kernels on independent left and right data.
+   integer(I4P), parameter :: NR = 100000_I4P
+   real(R_P),    parameter :: S_RBF = 0.06_R_P
+   real(R_P)    :: vp(-5:6), vm(-5:6), a(-2:3), b(-2:3), x(4), rp, rm, qp, qm
+   integer(I4P) :: msl(-3:3), msr(-2:4), mp(-3:3), mm(-3:3), it, c, m, k, lp, lm, nfail, nact(2)
+   nfail = 0 ; nact = 0
+   do it=1, NR + 2
+      if (it <= NR) then ! a step of random place and height plus noise, each side its own
+         call random_number(x)
+         do m=-5, 6
+            vp(m) = merge(4._R_P*x(2) - 2._R_P, 0._R_P, m > int(12._R_P*x(1)) - 6)
+            vm(m) = merge(4._R_P*x(4) - 2._R_P, 0._R_P, m > int(12._R_P*x(3)) - 6)
+         enddo
+         do m=-5, 6
+            call random_number(x)
+            vp(m) = vp(m) + 0.05_R_P*x(1)*x(2) ; vm(m) = vm(m) + 0.05_R_P*x(3)*x(4)
+         enddo
+      elseif (it == NR + 1) then ! constant data
+         vp = 0.7_R_P ; vm = 0.7_R_P
+      else ! a jump of BIG_JUMP
+         vp = 0._R_P ; vm = 0._R_P ; vp(1:) = BIG_JUMP ; vm(:0) = BIG_JUMP
+      endif
+      do c=-3, 3 ! pass 1 at the faces c+1/2: the left mask of cell c, the right mask of cell c+1
+         do m=-2, 3
+            a(m) = vp(c+m) ; b(m) = vm(c+m)
+         enddo
+         call seth_teno5_face_masks(a, b, SETH_TENO_EPS, SETH_TENO5_CT, msl(c), msr(c+1))
+      enddo
+      do c=-3, 3
+         mp(c) = msl(c) ; mm(c) = msr(1-c)
+      enddo
+      do m=-2, 3
+         a(m) = vp(m) ; b(m) = vm(m)
+      enddo
+      do k=1, 3
+         if (k == 1) then
+            call seth_teno5_dr(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_DR_T1, SETH_DR_T2, 1._R_P, rp, rm)
+            call seth_teno5_dr_stored(a, b, mp, mm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_DR_T1, SETH_DR_T2, 1._R_P, qp, qm)
+            call seth_dr_detect(mp, mm, lp, lm)
+            if (lp > 0) nact(1) = nact(1) + 1
+            if (lm > 0) nact(2) = nact(2) + 1
+         elseif (k == 2) then
+            call seth_teno5_thinc(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_THINC_BETA, 1._R_P, rp, rm)
+            call seth_teno5_thinc_stored(a, b, mp, mm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_THINC_BETA, 1._R_P, qp, qm)
+         else
+            call seth_teno5_rbf_dr(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, S_RBF, S_RBF, SETH_DR_T1, &
+                                   SETH_DR_T2, 1._R_P, rp, rm)
+            call seth_teno5_rbf_dr_stored(a, b, mp, mm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, S_RBF, S_RBF, &
+                                          SETH_DR_T1, SETH_DR_T2, 1._R_P, qp, qm)
+         endif
+         if (qp /= rp .or. qm /= rm .or. .not.(abs(qp) <= huge(qp) .and. abs(qm) <= huge(qm))) then
+            nfail = nfail + 1
+            if (nfail <= 3) print '(A,I2,I7,4ES24.16)', 'FAIL 20: ', k, it, qp, rp, qm, rm
+         endif
+      enddo
+   enddo
+   print '(A,I0,A,I0,A,I0,A)', 'stored-mask pair on ', NR, ' random stencils with independent sides: DR detected ', &
+         nact(1), ' left and ', nact(2), ' right states; equal to the self-contained kernels bitwise'
+   if (minval(nact) == 0) then ; print '(A)', 'FAIL 20: no detection on one side' ; nfail = nfail + 1 ; endif
+   if (nfail > 0) then ; print '(A,I0)', 'FAIL 20: ', nfail ; passed = .false. ; endif
+   endsubroutine stored_pair
 
    pure function gdn(n, x) result(y)
    !< The n-th derivative of the generic g of seth_test_functions.

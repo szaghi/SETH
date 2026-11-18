@@ -2,7 +2,7 @@
 program seth_test_device
 !< SETH test: every kernel executed on the device (OpenACC) agrees with the same kernel on the host.
 !<
-!< Each of the 59 cases runs one kernel inside `!$acc parallel loop` over N deterministic stencils (smooth cubics,
+!< Each of the 63 cases runs one kernel inside `!$acc parallel loop` over N deterministic stencils (smooth cubics,
 !< jumps, an integer LCG), then the same loop on the host, and compares: states within 1e-13 of the stencil's
 !< magnitude, weights ratios within 1e-9 (the device and the host compile the kernel separately and may contract
 !< multiply-adds differently; the tolerances are those of seth_test_golden, for the same reasons). One case calls
@@ -15,7 +15,7 @@ use seth_test_parameters, only : EPS_ZT, POS_RANGE_EXP, POSITIVITY_FLOOR, TOL_DE
                                  TOL_DEVICE_WR
 implicit none
 integer(I4P), parameter :: N = 4096_I4P
-integer(I4P), parameter :: NK = 59_I4P
+integer(I4P), parameter :: NK = 63_I4P
 character(26), parameter :: NAMES(NK) = [ &
    'seth_weno1_js             ', &
    'seth_weno1_js_wr          ', &
@@ -75,7 +75,11 @@ character(26), parameter :: NAMES(NK) = [ &
    'seth_teno5_rbf_dr         ', &
    'seth_dr/thinc_detect+zeta ', &
    'seth_dr_override          ', &
-   'seth_thinc_override       ']
+   'seth_thinc_override       ', &
+   'seth_teno5_face_masks     ', &
+   'seth_teno5_dr_stored      ', &
+   'seth_teno5_thinc_stored   ', &
+   'seth_teno5_rbf_dr_stored  ']
 real(R_P)               :: v(-5:6,N), w(-5:6,N), rp(N), rm(N), wrp(N), wrm(N), hp(N), hm(N), hwp(N), hwm(N)
 real(R_P)               :: mag, ds, dw, worst_s, worst_w
 integer(I4P)            :: k, i, nbit, nfail
@@ -1078,6 +1082,78 @@ do k=1, NK
       if (count(hp /= 0.5_R_P*(v(0,:) + v(1,:))) == 0) then
          print '(A)', '   FAILED: the override never acted on the device' ; passed = .false.
       endif
+      endblock
+   case(60) ! seth_teno5_face_masks: the two masks of the face coded in rp (left, cell 0) and rm (right, cell 1)
+      block
+      real(R_P)    :: a(-2:3), b(-2:3)
+      integer(I4P) :: ml, mr
+      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, ml, mr)
+      do i=1, N
+         a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
+         call seth_teno5_face_masks(a, b, SETH_TENO_EPS, SETH_TENO5_CT, ml, mr)
+         rp(i) = real(ml, R_P) ; rm(i) = real(mr, R_P)
+      enddo
+      hp = rp ; hm = rm ; hwp = wrp ; hwm = wrm
+
+      do i=1, N
+         a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
+         call seth_teno5_face_masks(a, b, SETH_TENO_EPS, SETH_TENO5_CT, ml, mr)
+         rp(i) = real(ml, R_P) ; rm(i) = real(mr, R_P)
+      enddo
+      endblock
+   case(61:63) ! the stored-mask pair: the masks of the faces -3..3 by seth_teno5_face_masks, then seth_teno5_dr_stored,
+      block    ! seth_teno5_thinc_stored, seth_teno5_rbf_dr_stored (s1 = s2 = 0.09)
+      real(R_P)    :: a(-2:3), b(-2:3)
+      integer(I4P) :: msl(-3:3), msr(-2:4), mp(-3:3), mm(-3:3), c, m
+      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, msl, msr, mp, mm, c, m)
+      do i=1, N
+         wrp(i) = -1._R_P ; wrm(i) = -1._R_P
+         do c=-3, 3 ! pass 1 at the faces c+1/2 of the stencil
+            do m=-2, 3
+               a(m) = v(c+m,i) ; b(m) = w(c+m,i)
+            enddo
+            call seth_teno5_face_masks(a, b, SETH_TENO_EPS, SETH_TENO5_CT, msl(c), msr(c+1))
+         enddo
+         do c=-3, 3
+            mp(c) = msl(c) ; mm(c) = msr(1-c)
+         enddo
+         a = v(-2:3,i) ; b = w(-2:3,i)
+         if (k == 61) then
+            call seth_teno5_dr_stored(a, b, mp, mm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_DR_T1, SETH_DR_T2, 1._R_P, &
+                                      rp(i), rm(i))
+         elseif (k == 62) then
+            call seth_teno5_thinc_stored(a, b, mp, mm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_THINC_BETA, 1._R_P, &
+                                         rp(i), rm(i))
+         else
+            call seth_teno5_rbf_dr_stored(a, b, mp, mm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, 0.09_R_P, 0.09_R_P, &
+                                          SETH_DR_T1, SETH_DR_T2, 1._R_P, rp(i), rm(i))
+         endif
+      enddo
+      hp = rp ; hm = rm ; hwp = wrp ; hwm = wrm
+
+      do i=1, N
+         wrp(i) = -1._R_P ; wrm(i) = -1._R_P
+         do c=-3, 3 ! pass 1 at the faces c+1/2 of the stencil
+            do m=-2, 3
+               a(m) = v(c+m,i) ; b(m) = w(c+m,i)
+            enddo
+            call seth_teno5_face_masks(a, b, SETH_TENO_EPS, SETH_TENO5_CT, msl(c), msr(c+1))
+         enddo
+         do c=-3, 3
+            mp(c) = msl(c) ; mm(c) = msr(1-c)
+         enddo
+         a = v(-2:3,i) ; b = w(-2:3,i)
+         if (k == 61) then
+            call seth_teno5_dr_stored(a, b, mp, mm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_DR_T1, SETH_DR_T2, 1._R_P, &
+                                      rp(i), rm(i))
+         elseif (k == 62) then
+            call seth_teno5_thinc_stored(a, b, mp, mm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_THINC_BETA, 1._R_P, &
+                                         rp(i), rm(i))
+         else
+            call seth_teno5_rbf_dr_stored(a, b, mp, mm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, 0.09_R_P, 0.09_R_P, &
+                                          SETH_DR_T1, SETH_DR_T2, 1._R_P, rp(i), rm(i))
+         endif
+      enddo
       endblock
    endselect
    nbit = 0 ; nfail = 0 ; worst_s = 0._R_P ; worst_w = 0._R_P

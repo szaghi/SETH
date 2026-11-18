@@ -18,6 +18,10 @@ module seth_nonpoly
 !<    call seth_teno5_st(vp, vm, eps, ct, rp, rm)                     ! vp, vm(-2:3): stencil targeting
 !<    call seth_teno5_rbf(vp, vm, eps, ct, cr, s1, s2, rp, rm)        ! vp, vm(-2:3): Gaussian-RBF fluxes
 !<    call seth_teno5_rbf_dr(vp, vm, eps, ct, cr, s1, s2, t1, t2, rmu, rp, rm) ! vp, vm(-5:6): Liang & Fu 2024
+!<    call seth_teno5_face_masks(vp, vm, eps, ct, ml, mr)                      ! vp, vm(-2:3): stored masks, pass 1
+!<    call seth_teno5_dr_stored(vp, vm, mp, mm, eps, ct, t1, t2, rmu, rp, rm)  ! vp, vm(-2:3), mp, mm(-3:3): pass 2
+!<    call seth_teno5_thinc_stored(vp, vm, mp, mm, eps, ct, beta, rmu, rp, rm)
+!<    call seth_teno5_rbf_dr_stored(vp, vm, mp, mm, eps, ct, cr, s1, s2, t1, t2, rmu, rp, rm)
 !<
 !< `v(-2:2)` the five values centred on one cell, upwind to the left (the caller mirrors the data for the other bias),
 !< `eps` and `ct` TENO5's regulariser and cutoff (the papers: SETH_TENO_EPS, C_T = 1e-5, SETH_TENO5_CT), `m` the
@@ -36,7 +40,14 @@ module seth_nonpoly
 !< composite schemes in one call per face (notes/kernel-api-design.md, section 11.3): TENO5's two states, the masks
 !< of the neighbouring cells recomputed from the twelve values vp, vm(-5:6) (in the basis the caller projected them
 !< into: the face's own), the detector, the override. The downwind cells are tested first and the face's own cell next;
-!< detection is ruled out as soon as it cannot hold, without changing the result (an early exit). Sources:
+!< detection is ruled out as soon as it cannot hold, without changing the result (an early exit). The stored-mask
+!< variant (notes/kernel-api-design.md, section 11.4; issue #6, D12) is the same scheme in two passes: a first pass
+!< over the faces computes, at each face i+1/2 and in its basis, the left-state mask of cell i and the right-state mask
+!< of cell i+1 (seth_teno5_face_masks, TENO5's stencil -2:3); the caller stores them, msl(i) and msr(i+1), and a second
+!< pass reconstructs each face from TENO5's stencil and the stored masks mp(c) = msl(i+c), mm(c) = msr(i+1-c),
+!< c = -3..3 (the *_stored kernels): one mask per cell and state instead of up to seven per face, an integer array and
+!< its halo kept by the caller. On scalar data the two variants are equal bit for bit; on a system the stored masks
+!< are computed in the basis of the face where they were stored, not of the face being reconstructed. Sources:
 !< notes/m5-sources.md.
 use penf, only : I4P, R_P
 use seth_z_teno_tables
@@ -49,6 +60,8 @@ public :: seth_teno5_mask, seth_teno5_zeta, seth_dr_detect, seth_thinc_detect
 public :: seth_thinc_override, seth_dr_override
 public :: seth_teno5_dr, seth_teno5_thinc
 public :: seth_teno5_st, seth_teno5_rbf, seth_teno5_rbf_dr
+public :: seth_teno5_face_masks, seth_teno5_dr_stored, seth_teno5_thinc_stored
+public :: seth_teno5_rbf_dr_stored
 public :: SETH_DR_T1, SETH_DR_T2, SETH_THINC_BETA, SETH_NONPOLY_GUARD
 public :: SETH_RBF_CR, SETH_RBF_ALPHA1, SETH_RBF_ALPHA2
 
@@ -295,6 +308,107 @@ contains
       call seth_thinc_override(c, d, lp, lm, beta, rmu, rp, rm)
    endif
    endsubroutine seth_teno5_thinc
+
+   pure subroutine seth_teno5_face_masks(vp, vm, eps, ct, ml, mr)
+   !< Pass 1 of the stored-mask variant, at the face i+1/2 on TENO5's stencil in the face's basis: ml the mask of cell
+   !< i for the left state (seth_teno5_mask on vp(-2:2)), mr the mask of cell i+1 for the right state (on the mirrored
+   !< data vm(1-m), m = -2..2). The caller stores msl(i) = ml, msr(i+1) = mr.
+   real(R_P),    intent(in)  :: vp(-2:3) !< Left-biased values, cells by offset from the face (-2..2 read).
+   real(R_P),    intent(in)  :: vm(-2:3) !< Right-biased values (-1..3 read).
+   real(R_P),    intent(in)  :: eps, ct  !< TENO5's regulariser and cutoff (the papers: SETH_TENO_EPS, 1e-5).
+   integer(I4P), intent(out) :: ml       !< Mask of cell i, left state.
+   integer(I4P), intent(out) :: mr       !< Mask of cell i+1, right state (mirrored data).
+   real(R_P)                 :: w(-2:2)
+   integer(I4P)              :: m
+   !$acc routine seq
+   !$omp declare target
+   do m=-2, 2
+      w(m) = vp(m)
+   enddo
+   call seth_teno5_mask(w, eps, ct, ml)
+   do m=-2, 2
+      w(m) = vm(1-m)
+   enddo
+   call seth_teno5_mask(w, eps, ct, mr)
+   endsubroutine seth_teno5_face_masks
+
+   pure subroutine seth_teno5_dr_stored(vp, vm, mp, mm, eps, ct, t1, t2, rmu, rp, rm)
+   !< TENO5-DR from stored masks (pass 2): seth_teno5, the DR detector on mp, mm, the DR override. With the masks of
+   !< seth_teno5_face_masks on scalar data, equal bit for bit to seth_teno5_dr.
+   real(R_P),    intent(in)  :: vp(-2:3) !< Left-biased values, cells by offset from the face.
+   real(R_P),    intent(in)  :: vm(-2:3) !< Right-biased values.
+   integer(I4P), intent(in)  :: mp(-3:3) !< Stored masks of the left state, mp(c) = msl(i+c) (-3..2 read).
+   integer(I4P), intent(in)  :: mm(-3:3) !< Stored masks of the right state, mm(c) = msr(i+1-c) (-3..2 read).
+   real(R_P),    intent(in)  :: eps, ct  !< TENO5's regulariser and cutoff (the papers: SETH_TENO_EPS, 1e-5).
+   real(R_P),    intent(in)  :: t1, t2   !< tanh of the two steepness constants (SETH_DR_T1, SETH_DR_T2).
+   real(R_P),    intent(in)  :: rmu      !< Inverse descaler of the guard (1: the paper's form).
+   real(R_P),    intent(out) :: rp, rm   !< Left and right states at the face.
+   real(R_P)                 :: c(-1:2), d(-1:2)
+   integer(I4P)              :: m, lp, lm
+   !$acc routine seq
+   !$omp declare target
+   call seth_teno5(vp, vm, eps, ct, rp, rm)
+   call seth_dr_detect(mp, mm, lp, lm)
+   if (lp > 0 .or. lm > 0) then
+      do m=-1, 2
+         c(m) = vp(m) ; d(m) = vm(m)
+      enddo
+      call seth_dr_override(c, d, lp, lm, t1, t2, rmu, rp, rm)
+   endif
+   endsubroutine seth_teno5_dr_stored
+
+   pure subroutine seth_teno5_thinc_stored(vp, vm, mp, mm, eps, ct, beta, rmu, rp, rm)
+   !< TENO5-THINC from stored masks (pass 2): seth_teno5, the THINC detector on mp, mm, the THINC override. With the
+   !< masks of seth_teno5_face_masks on scalar data, equal bit for bit to seth_teno5_thinc.
+   real(R_P),    intent(in)  :: vp(-2:3) !< Left-biased values, cells by offset from the face.
+   real(R_P),    intent(in)  :: vm(-2:3) !< Right-biased values.
+   integer(I4P), intent(in)  :: mp(-3:3) !< Stored masks of the left state, mp(c) = msl(i+c).
+   integer(I4P), intent(in)  :: mm(-3:3) !< Stored masks of the right state, mm(c) = msr(i+1-c).
+   real(R_P),    intent(in)  :: eps, ct  !< TENO5's regulariser and cutoff (the papers: SETH_TENO_EPS, 1e-5).
+   real(R_P),    intent(in)  :: beta     !< Steepness of the THINC function (SETH_THINC_BETA).
+   real(R_P),    intent(in)  :: rmu      !< Inverse descaler of the guard (1: the paper's form).
+   real(R_P),    intent(out) :: rp, rm   !< Left and right states at the face.
+   real(R_P)                 :: c(-1:2), d(-1:2)
+   integer(I4P)              :: m, lp, lm
+   !$acc routine seq
+   !$omp declare target
+   call seth_teno5(vp, vm, eps, ct, rp, rm)
+   call seth_thinc_detect(mp, mm, lp, lm)
+   if (lp > 0 .or. lm > 0) then
+      do m=-1, 2
+         c(m) = vp(m) ; d(m) = vm(m)
+      enddo
+      call seth_thinc_override(c, d, lp, lm, beta, rmu, rp, rm)
+   endif
+   endsubroutine seth_teno5_thinc_stored
+
+   pure subroutine seth_teno5_rbf_dr_stored(vp, vm, mp, mm, eps, ct, cr, s1, s2, t1, t2, rmu, rp, rm)
+   !< The complete scheme of Liang & Fu 2024 from stored masks (pass 2): seth_teno5_rbf's states, the DR detector on
+   !< mp, mm (TENO5's masks, as in seth_teno5_rbf_dr), the DR override. With the masks of seth_teno5_face_masks on
+   !< scalar data, equal bit for bit to seth_teno5_rbf_dr.
+   real(R_P),    intent(in)  :: vp(-2:3) !< Left-biased values, cells by offset from the face.
+   real(R_P),    intent(in)  :: vm(-2:3) !< Right-biased values.
+   integer(I4P), intent(in)  :: mp(-3:3) !< Stored masks of the left state, mp(c) = msl(i+c) (-3..2 read).
+   integer(I4P), intent(in)  :: mm(-3:3) !< Stored masks of the right state, mm(c) = msr(i+1-c) (-3..2 read).
+   real(R_P),    intent(in)  :: eps, ct  !< TENO5's regulariser and cutoff (the paper: SETH_TENO_EPS, 1e-5).
+   real(R_P),    intent(in)  :: cr       !< The RBF sensor's threshold (SETH_RBF_CR).
+   real(R_P),    intent(in)  :: s1, s2   !< alpha_1 dx, alpha_2 dx.
+   real(R_P),    intent(in)  :: t1, t2   !< tanh of the two steepness constants (SETH_DR_T1, SETH_DR_T2).
+   real(R_P),    intent(in)  :: rmu      !< Inverse descaler of the guard (1: the paper's form).
+   real(R_P),    intent(out) :: rp, rm   !< Left and right states at the face.
+   real(R_P)                 :: c(-1:2), d(-1:2)
+   integer(I4P)              :: m, lp, lm
+   !$acc routine seq
+   !$omp declare target
+   call seth_teno5_rbf(vp, vm, eps, ct, cr, s1, s2, rp, rm)
+   call seth_dr_detect(mp, mm, lp, lm)
+   if (lp > 0 .or. lm > 0) then
+      do m=-1, 2
+         c(m) = vp(m) ; d(m) = vm(m)
+      enddo
+      call seth_dr_override(c, d, lp, lm, t1, t2, rmu, rp, rm)
+   endif
+   endsubroutine seth_teno5_rbf_dr_stored
 
    pure function side_level(w, eps, ct, thinc) result(l)
    !< The detection level of one state from its left-biased data w(-5:5) (the right state's mirrored). The downwind

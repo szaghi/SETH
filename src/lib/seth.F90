@@ -39,6 +39,7 @@ public :: seth_teno5_interp, seth_teno6_interp
 public :: seth_teno5_mask, seth_teno5_zeta, seth_dr_detect, seth_thinc_detect
 public :: seth_thinc_override, seth_dr_override, seth_teno5_dr, seth_teno5_thinc
 public :: seth_teno5_st, seth_teno5_rbf, seth_teno5_rbf_dr, SETH_RBF_CR, SETH_RBF_ALPHA1, SETH_RBF_ALPHA2
+public :: seth_teno5_face_masks, seth_teno5_dr_stored, seth_teno5_thinc_stored, seth_teno5_rbf_dr_stored
 public :: SETH_DR_T1, SETH_DR_T2, SETH_THINC_BETA, SETH_NONPOLY_GUARD
 public :: SETH_TENO_EPS, SETH_TENO5_CT, SETH_TENO5_OPT_CT, SETH_TENO5_AZ_CT, SETH_TENO6_CT, SETH_TENO6_OPT_CT
 public :: SETH_TENO6_NENO6_CT, SETH_TENO8_CT
