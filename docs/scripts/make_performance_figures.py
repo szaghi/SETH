@@ -16,6 +16,9 @@ figure_theme.py, the harness of the ADAM and FLUME docs):
 
     perf-kernels.png        ns per face, SETH against ADAM's per-width and generic kernels, GPU and one CPU core
     perf-device-rules.png   ns per face (log scale) of the same kernel following or breaking the two device rules
+    perf-nonpoly.png        the non-polynomial kernels of issue #6: ns per face over seth_teno5's, GPU and both CPU
+                            compilers, against their budgets; and the composites' cost against the spacing of the
+                            jumps of the field (notes/m5-bench-data/42-nonpoly-*, 42-fields-*)
 
 GPU: the median over the runs of the median of each run, with the spread of the runs as an error bar (WENO-JS and
 ADAM: runs 1 to 4; WENO-Z5 and TENO6: run 4, after their indicators became sums of squares). CPU: WENO-5 and WENO-7
@@ -46,6 +49,7 @@ import seth_palette as P  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 M3 = ROOT / 'notes/m3-bench-data'
+M5 = ROOT / 'notes/m5-bench-data'
 AUDIT = ROOT / 'notes/gpu-audit-data'
 DPI = 130
 # seth_palette: SETH in the identity's blue, ADAM in neutral greys; follows the rules blue, half-follows light blue,
@@ -127,6 +131,86 @@ def fig_kernels(out: Path) -> None:
     plt.close(fig)
 
 
+NP_KERNELS = [  # bench variant, label, budget against seth_teno5 (issue #6, PERF1; None: no budget)
+    ('SETH teno5_mask (one bias)', 'mask, one bias', 0.70),
+    ('SETH dr_detect (stored masks)', 'DR detector', 0.10),
+    ('SETH thinc_detect (stored masks)', 'THINC detector', 0.10),
+    ('SETH dr_override (level 1)', 'DR override', 0.15),
+    ('SETH thinc_override (level 1)', 'THINC override', 0.30),
+    ('SETH teno5_st', 'TENO5-ST', 1.05),
+    ('SETH teno5_rbf (s1 = s2 = 0.09)', 'TENO5-RBF', 1.25),
+    ('SETH teno5_dr', 'TENO5-DR', 3.0),
+    ('SETH teno5_thinc', 'TENO5-THINC', 3.0),
+    ('SETH teno5_rbf_dr', 'TENO5-RBF+DR', 3.0),
+    ('SETH teno5_dr, stored masks', 'DR, stored masks', None),
+    ('SETH teno5_thinc, stored masks', 'THINC, stored masks', None),
+    ('SETH teno5_rbf_dr, stored masks', 'RBF+DR, stored masks', None),
+]
+TENO5 = 'SETH teno5 (C_T=1e-5)'
+
+
+def lookup(run: dict[str, float], name: str) -> float:
+    """A variant's ns per face; the benchmark truncates its names to 31 characters (30 after collapsing spaces)."""
+    hits = [v for k, v in run.items() if k == name or (len(k) >= 28 and name.startswith(k))]
+    return hits[0] if hits else float('nan')
+
+
+def np_ratios(files: list[Path]) -> dict[str, float]:
+    """Per variant, the median over the runs of (ns per face / seth_teno5's ns per face of the same run)."""
+    runs = [table(f) for f in files]
+    return {name: float(np.median([lookup(r, name) / r[TENO5] for r in runs])) for name, _, _ in NP_KERNELS}
+
+
+def fig_nonpoly(out: Path) -> None:
+    """Issue #6: the cost of every non-polynomial kernel against its budget, and against the density of jumps."""
+    dev = {'GPU (RTX 4070)': sorted(M5.glob('42b-nonpoly-gpu-run-*.txt')),
+           'gfortran core': sorted(M5.glob('42-nonpoly-cpu-gnu-run-*.txt')),
+           'nvfortran core': sorted(M5.glob('42-nonpoly-cpu-nvf-run-*.txt'))}
+    if not all(dev.values()):
+        print('perf-nonpoly: skipped, no series 42')
+        return
+    rat = {d: np_ratios(f) for d, f in dev.items()}
+    cols = (SETH, MILD, SLOW)
+    fig, axs = plt.subplots(1, 2, figsize=(12.0, 4.2), gridspec_kw={'width_ratios': [2.4, 1.0]})
+    ax = axs[0]
+    x = np.arange(len(NP_KERNELS))
+    for j, (d, r) in enumerate(rat.items()):
+        ax.bar(x + (j - 1) * 0.27, [r[n] for n, _, _ in NP_KERNELS], 0.26, color=cols[j], edgecolor='k', lw=0.3,
+               label=d)
+    for i, (_, _, b) in enumerate(NP_KERNELS):
+        if b is not None:
+            ax.plot([i - 0.42, i + 0.42], [b, b], '-', color='k', lw=1.4)
+    ax.plot([], [], '-', color='k', lw=1.4, label='budget')
+    ax.set_xticks(x, [lab for _, lab, _ in NP_KERNELS], rotation=40, ha='right', fontsize=7.5)
+    ax.set_yscale('log')
+    ax.set_ylabel('ns per face / seth_teno5\'s')
+    ax.set_title('the pieces and the kernels, a jump every 2048 cells', fontsize=10)
+    ax.legend(fontsize=7, ncol=4, loc='upper left')
+    # PERF7: against the spacing of the jumps
+    ax = axs[1]
+    fields = {'GPU (RTX 4070)': 'gpu', 'gfortran core': 'cpu-gnu'}
+    spacings = [0, 2048, 64, 8]
+    for j, (d, tag) in enumerate(fields.items()):
+        for name, lab, ls in (('SETH teno5_dr', 'DR', '-'), ('SETH teno5_thinc', 'THINC', '--'),
+                              ('SETH teno5_dr, stored masks', 'DR, stored', ':')):
+            ys = []
+            for js in spacings:
+                f = M5 / (f'42-fields-{tag}-js{js}.txt' if js != 2048 else f'42-nonpoly-{tag}-run-1.txt')
+                t = table(f) if f.exists() else {}
+                ys.append(lookup(t, name) / t[TENO5] if TENO5 in t else np.nan)
+            ax.plot(range(len(spacings)), ys, ls, marker='o', ms=3, color=cols[j], lw=1.1, label=f'{lab}, {d}')
+    ax.set_xticks(range(len(spacings)), ['smooth', '2048', '64', '8'])
+    ax.set_xlabel('cells between jumps')
+    ax.set_title('the composites against the density of jumps', fontsize=10)
+    ax.legend(fontsize=6.5)
+    for a in axs:
+        a.grid(axis='y', alpha=0.25, which='both')
+        a.set_axisbelow(True)
+    fig.tight_layout()
+    fig.savefig(out / 'perf-nonpoly.png', dpi=DPI)
+    plt.close(fig)
+
+
 def fig_device_rules(out: Path) -> None:
     """The same kernel following or breaking the two device rules: GPU and one CPU core, log scale."""
     gpu = table(AUDIT / 'gpu1-after-fix-with-auto.txt')
@@ -185,7 +269,8 @@ def main() -> int:
         with theme(th):
             fig_kernels(args.out)
             fig_device_rules(args.out)
-        print(f'figures ({th}): {args.out}/perf-{{kernels,device-rules}}.png')
+            fig_nonpoly(args.out)
+        print(f'figures ({th}): {args.out}/perf-{{kernels,device-rules,nonpoly}}.png')
     return 0
 
 

@@ -31,13 +31,19 @@ program seth_bench_weno
 !<      and override; both passes timed. On this scalar field its states equal the self-contained kernels' (checked);
 !<      37 seth_teno5_st (budget 1.05 seth_teno5), 38 seth_teno5_rbf with s1 = s2 = 0.09 (budget 1.25), 39 the
 !<      complete scheme seth_teno5_rbf_dr (s1 = s2 = 0.09; budget 3.0, the self-contained kernels')
+!< 40.. issue #6, the pieces alone (2026-11-18): 40 seth_teno5_mask of one bias (the budget's unit: 0.70 seth_teno5,
+!<      which reconstructs both states), 41 seth_dr_detect and 42 seth_thinc_detect on the stored masks of variants 35
+!<      and 36 (budget 0.10), 43 seth_dr_override at level 1 on every face (0.15) and 44 seth_thinc_override at level 1
+!<      on every face (0.30), the states preset to the mean of f_i and f_{i+1}; 45 seth_teno5_rbf_dr without the early
+!<      exit and 46 with stored masks (step 4.1: with and without the early exit)
 !<
 !< ADAM's variants pack ADAM's rows as FLUME does (v(2,m) = fp(i+m), v(1,m) = fm(i+m+1)). Built with -acc the loops run
 !< on the device (timed with !$acc wait + system_clock); without, on one CPU core. Each variant: 2 warm-up passes, then
 !< `reps` timed passes; the median and the minimum are reported. Checks: the SETH results equal the host SETH results
 !< on a sample of faces, and every ADAM variant equals the SETH one of its order, to round-off (64 eps of the data).
 !<
-!< Usage: seth_bench_weno [n_faces [reps]]   (defaults 16777216 and 20)
+!< Usage: seth_bench_weno [n_faces [reps [jump_spacing]]]   (defaults 16777216, 20 and 2048: the field jumps every
+!< jump_spacing cells; 0: no jump, a smooth field; the composites' cost against the fraction of faces near a jump, PERF7)
 use, intrinsic :: iso_fortran_env, only : int64
 use seth
 use seth_weno_js_tables
@@ -46,7 +52,7 @@ use adam_fnl_weno_width_kernels, only : weno_reconstruct_upwind_s3_dev, weno_rec
 use seth_adam_reference,         only : weno_reconstruct_upwind, compute_kep_flux
 implicit none
 integer(I4P), parameter :: NG = 6_I4P         !< Ghost cells (the composites of issue #6 read i-5..i+6).
-integer(I4P), parameter :: NV = 39_I4P        !< Variants.
+integer(I4P), parameter :: NV = 46_I4P        !< Variants.
 integer(I4P), parameter :: SAMPLE = 65536_I4P !< Faces checked against the host.
 real(R8P),    parameter :: TOL = 64._R8P*epsilon(1._R8P)
 character(31), parameter :: NAMES(NV) = [character(31) :: 'SETH  weno5_js', 'ADAM  generic S=3', 'ADAM  width s3', &
@@ -64,13 +70,17 @@ character(31), parameter :: NAMES(NV) = [character(31) :: 'SETH  weno5_js', 'ADA
                                          'SETH  teno5_mask (both biases)', 'SETH  teno5_dr', 'SETH  teno5_thinc', &
                                          'SETH  teno5_dr, no early exit', 'SETH  teno5_thinc, no early exit', &
                                          'SETH  teno5_dr, stored masks', 'SETH  teno5_thinc, stored masks', &
-                                         'SETH  teno5_st', 'SETH  teno5_rbf (s1 = s2 = 0.09)', 'SETH  teno5_rbf_dr']
+                                         'SETH  teno5_st', 'SETH  teno5_rbf (s1 = s2 = 0.09)', 'SETH  teno5_rbf_dr', &
+                                         'SETH  teno5_mask (one bias)', 'SETH  dr_detect (stored masks)', &
+                                         'SETH  thinc_detect (stored masks)', 'SETH  dr_override (level 1)', &
+                                         'SETH  thinc_override (level 1)', 'SETH  teno5_rbf_dr, no early exit', &
+                                         'SETH  teno5_rbf_dr, stored masks']
 real(R8P), allocatable :: fp(:), fm(:), rp(:), rm(:), rp5(:), rm5(:), rp7(:), rm7(:)
 real(R8P), allocatable :: a3(:,:,:), p3(:,:,:,:), d3(:,:,:,:), a4(:,:,:), p4(:,:,:,:), d4(:,:,:,:)
 real(R8P), allocatable :: times(:)
 integer(I4P), allocatable :: ml(:), mr(:) !< Stored masks of the stored-mask variants (cells -2..n+4).
 real(R8P)              :: med(NV), tmin(NV), diff, vmax
-integer(I4P)           :: n, reps, v, r, i, c
+integer(I4P)           :: n, reps, v, r, i, c, js
 integer(int64)         :: t0, t1, rate
 character(32)          :: arg
 logical                :: passed
@@ -78,11 +88,17 @@ logical                :: passed
 n = 16777216_I4P ; reps = 20_I4P
 if (command_argument_count() >= 1) then ; call get_command_argument(1, arg) ; read(arg,*) n ; endif
 if (command_argument_count() >= 2) then ; call get_command_argument(2, arg) ; read(arg,*) reps ; endif
+js = 2048_I4P
+if (command_argument_count() >= 3) then ; call get_command_argument(3, arg) ; read(arg,*) js ; endif
 allocate(fp(1-NG:n+NG), fm(1-NG:n+NG), rp(n), rm(n), rp5(n), rm5(n), rp7(n), rm7(n), times(reps))
 allocate(ml(-2:n+4), mr(-2:n+4))
 do c=1-NG, n+NG
-   fp(c) = 1._R8P + 0.5_R8P*sin(0.01_R8P*c) + merge(1._R8P, 0._R8P, mod(c+1000000, 4096) < 2048)
-   fm(c) = 0.5_R8P*cos(0.013_R8P*c) - merge(0.7_R8P, 0._R8P, mod(c+1000000, 4096) < 2048)
+   fp(c) = 1._R8P + 0.5_R8P*sin(0.01_R8P*c)
+   fm(c) = 0.5_R8P*cos(0.013_R8P*c)
+   if (js > 0) then
+      fp(c) = fp(c) + merge(1._R8P, 0._R8P, mod(c+1000000, 2*js) < js)
+      fm(c) = fm(c) - merge(0.7_R8P, 0._R8P, mod(c+1000000, 2*js) < js)
+   endif
 enddo
 allocate(a3(1:2,0:2,1:3), p3(1:2,0:2,0:2,1:3), d3(0:2,0:2,0:2,1:3))
 allocate(a4(1:2,0:3,1:4), p4(1:2,0:3,0:3,1:4), d4(0:3,0:3,0:3,1:4))
@@ -93,7 +109,7 @@ a4(:,:,4) = WENO7_JS_A ; p4(:,:,:,4) = WENO7_JS_P ; d4(:,:,:,4) = WENO7_JS_D
 
 call system_clock(count_rate=rate)
 passed = .true.
-print '(A,I0,A,I0,A)', 'faces: ', n, ', timed passes: ', reps, ' per variant'
+print '(A,I0,A,I0,A,I0,A)', 'faces: ', n, ', timed passes: ', reps, ' per variant, a jump every ', js, ' cells (0: none)'
 med = -1._R8P ; tmin = -1._R8P
 do v=1, NV
 #ifdef _OPENACC
@@ -203,6 +219,74 @@ contains
             vpw(m) = fp(i+m) ; vmw(m) = fm(i+m)
          enddo
          call composite_full(v == 34, vpw, vmw, rp(i), rm(i))
+      enddo
+   case(40)
+      !$acc parallel loop gang vector present(fp, rp, rm) private(wa, mka)
+      do i=1, n
+         do m=-2, 2
+            wa(m) = fp(i+m)
+         enddo
+         call seth_teno5_mask(wa, SETH_TENO_EPS, SETH_TENO5_CT, mka)
+         rp(i) = real(mka, R8P) ; rm(i) = rp(i)
+      enddo
+   case(41, 42)
+      !$acc parallel loop gang vector present(rp, rm, ml, mr) private(mpw, mmw, lpw, lmw)
+      do i=1, n
+         do m=-3, 3
+            mpw(m) = ml(i+m) ; mmw(m) = mr(i+1-m)
+         enddo
+         if (v == 41) then
+            call seth_dr_detect(mpw, mmw, lpw, lmw)
+         else
+            call seth_thinc_detect(mpw, mmw, lpw, lmw)
+         endif
+         rp(i) = real(lpw, R8P) ; rm(i) = real(lmw, R8P)
+      enddo
+   case(43, 44)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm) private(vp4, vm4)
+      do i=1, n
+         do m=-1, 2
+            vp4(m) = fp(i+m) ; vm4(m) = fm(i+m)
+         enddo
+         rp(i) = 0.5_R8P*(vp4(0) + vp4(1)) ; rm(i) = 0.5_R8P*(vm4(0) + vm4(1))
+         if (v == 43) then
+            call seth_dr_override(vp4, vm4, 1_I4P, 1_I4P, SETH_DR_T1, SETH_DR_T2, 1._R8P, rp(i), rm(i))
+         else
+            call seth_thinc_override(vp4, vm4, 1_I4P, 1_I4P, SETH_THINC_BETA, 1._R8P, rp(i), rm(i))
+         endif
+      enddo
+   case(45)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm) private(vpw, vmw)
+      do i=1, n
+         do m=-5, 6
+            vpw(m) = fp(i+m) ; vmw(m) = fm(i+m)
+         enddo
+         call rbf_dr_full(vpw, vmw, rp(i), rm(i))
+      enddo
+   case(46)
+      !$acc parallel loop gang vector present(fp, fm, ml, mr) private(wa, wb, mka, mkb)
+      do i=-2, n+4 ! pass 1: the two masks of every cell
+         do m=-2, 2
+            wa(m) = fp(i+m) ; wb(m) = fm(i-m)
+         enddo
+         call seth_teno5_mask(wa, SETH_TENO_EPS, SETH_TENO5_CT, mka)
+         call seth_teno5_mask(wb, SETH_TENO_EPS, SETH_TENO5_CT, mkb)
+         ml(i) = mka ; mr(i) = mkb
+      enddo
+      !$acc parallel loop gang vector present(fp, fm, rp, rm, ml, mr) private(vp5, vm5, vp4, vm4, mpw, mmw, lpw, lmw)
+      do i=1, n ! pass 2: the faces, from the stored masks
+         do m=-2, 3
+            vp5(m) = fp(i+m) ; vm5(m) = fm(i+m)
+         enddo
+         call seth_teno5_rbf(vp5, vm5, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, 0.09_R8P, 0.09_R8P, rp(i), rm(i))
+         do m=-3, 3
+            mpw(m) = ml(i+m) ; mmw(m) = mr(i+1-m)
+         enddo
+         do m=-1, 2
+            vp4(m) = fp(i+m) ; vm4(m) = fm(i+m)
+         enddo
+         call seth_dr_detect(mpw, mmw, lpw, lmw)
+         call seth_dr_override(vp4, vm4, lpw, lmw, SETH_DR_T1, SETH_DR_T2, 1._R8P, rp(i), rm(i))
       enddo
    case(1)
       !$acc parallel loop gang vector present(fp, fm, rp, rm) private(vp5, vm5)
@@ -532,6 +616,26 @@ contains
             else
                call seth_teno5_thinc(vpw, vmw, SETH_TENO_EPS, SETH_TENO5_CT, SETH_THINC_BETA, 1._R8P, hp, hm)
             endif
+         case(40)
+            call seth_teno5_mask(vp5(-2:2), SETH_TENO_EPS, SETH_TENO5_CT, mka)
+            hp = real(mka, R8P) ; hm = hp
+         case(41, 42)
+            call host_levels(v == 42, i, mka, mkb)
+            hp = real(mka, R8P) ; hm = real(mkb, R8P)
+         case(43, 44)
+            vp4 = vp5(-1:2) ; vm4 = vm5(-1:2)
+            hp = 0.5_R8P*(vp4(0) + vp4(1)) ; hm = 0.5_R8P*(vm4(0) + vm4(1))
+            if (v == 43) then
+               call seth_dr_override(vp4, vm4, 1_I4P, 1_I4P, SETH_DR_T1, SETH_DR_T2, 1._R8P, hp, hm)
+            else
+               call seth_thinc_override(vp4, vm4, 1_I4P, 1_I4P, SETH_THINC_BETA, 1._R8P, hp, hm)
+            endif
+         case(45, 46)
+            do m=-5, 6
+               vpw(m) = fp(i+m) ; vmw(m) = fm(i+m)
+            enddo
+            call seth_teno5_rbf_dr(vpw, vmw, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, 0.09_R8P, 0.09_R8P, &
+                                   SETH_DR_T1, SETH_DR_T2, 1._R8P, hp, hm)
          case(30)
             do m=-2, 2
                wa(m) = vp5(m) ; wb(m) = vm5(1-m)
@@ -591,6 +695,60 @@ contains
       x(j+1) = t
    enddo
    endsubroutine sort
+   subroutine host_levels(thinc, i, lp, lm)
+   !< The detector levels of face i from masks computed here on the host (the reference of variants 41, 42).
+   logical,      intent(in)  :: thinc
+   integer(I4P), intent(in)  :: i
+   integer(I4P), intent(out) :: lp, lm
+   real(R8P)                 :: u(-2:2)
+   integer(I4P)              :: mp(-3:3), mm(-3:3), k, m
+   do k=-3, 3
+      do m=-2, 2
+         u(m) = fp(i+k+m)
+      enddo
+      call seth_teno5_mask(u, SETH_TENO_EPS, SETH_TENO5_CT, mp(k))
+      do m=-2, 2
+         u(m) = fm(i+1-k-m)
+      enddo
+      call seth_teno5_mask(u, SETH_TENO_EPS, SETH_TENO5_CT, mm(k))
+   enddo
+   if (thinc) then
+      call seth_thinc_detect(mp, mm, lp, lm)
+   else
+      call seth_dr_detect(mp, mm, lp, lm)
+   endif
+   endsubroutine host_levels
+
+   pure subroutine rbf_dr_full(vp, vm, rp, rm)
+   !< seth_teno5_rbf_dr (s1 = s2 = 0.09) without the early exit: the RBF states, every mask of cells -3..2 of both
+   !< states, the library's DR detector and override (variant 45); equal to seth_teno5_rbf_dr (checked).
+   !$acc routine seq
+   real(R8P), intent(in)  :: vp(-5:6), vm(-5:6)
+   real(R8P), intent(out) :: rp, rm
+   real(R8P)              :: a(-2:3), b(-2:3), u(-2:2), c(-1:2), d(-1:2)
+   integer(I4P)           :: mp(-3:3), mm(-3:3), k, m, lp, lm
+   do m=-2, 3
+      a(m) = vp(m) ; b(m) = vm(m)
+   enddo
+   call seth_teno5_rbf(a, b, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, 0.09_R8P, 0.09_R8P, rp, rm)
+   mp = 7 ; mm = 7
+   do k=-3, 2
+      do m=-2, 2
+         u(m) = vp(k+m)
+      enddo
+      call seth_teno5_mask(u, SETH_TENO_EPS, SETH_TENO5_CT, mp(k))
+      do m=-2, 2
+         u(m) = vm(1-k-m)
+      enddo
+      call seth_teno5_mask(u, SETH_TENO_EPS, SETH_TENO5_CT, mm(k))
+   enddo
+   do m=-1, 2
+      c(m) = vp(m) ; d(m) = vm(m)
+   enddo
+   call seth_dr_detect(mp, mm, lp, lm)
+   call seth_dr_override(c, d, lp, lm, SETH_DR_T1, SETH_DR_T2, 1._R8P, rp, rm)
+   endsubroutine rbf_dr_full
+
    pure subroutine composite_full(thinc, vp, vm, rp, rm)
    !< TENO5-DR or TENO5-THINC without the early exit: every mask of cells -3..3 of both states, the library's detector
    !< and override (variants 33, 34); equal to seth_teno5_dr / seth_teno5_thinc (checked).
