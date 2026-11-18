@@ -92,6 +92,7 @@ kernels stay the default and the stored-mask variant ships as a kernel pair as w
   call site with the mirror as five scalar assignments runs at 20; inside the library it does not (tried, reverted).
   The routine is not inlined and not vectorised (`-Minfo=all`). Cause not isolated; gfortran and the GPU show no
   difference. The pair still costs 1.95 times TENO5 there, against 3 to 3.5 for the self-contained kernels.
+  Accepted by the owner as recorded (2026-11-18): not to be optimised unless reopened.
 
 - **Constant data does not give the mask 7** (step 1.1). The indicators of a constant that is not exact in binary are
   round-off, far above eps = 1e-40, and the cutoff drops candidates by the accident of rounding: gfortran gives a

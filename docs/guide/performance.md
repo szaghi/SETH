@@ -129,7 +129,7 @@ nvfortran on one core it costs 12 ns per face more (1.95 times TENO5 against 1.6
 core puts the whole difference in the first pass, `seth_teno5_face_masks` at 33 ns per face against 20 for the same
 two `seth_teno5_mask` calls written at the call site. The routine is not inlined and not vectorised (`-Minfo`); a
 scalar form of its mirror copy did not change it. The cause is not isolated; the pair stays well under the
-self-contained kernels' 3 to 3.5. The pieces
+self-contained kernels' 3 to 3.5, and the owner accepted the cost as recorded (2026-11-18). The pieces
 fit their budgets except the overrides forced on every face, the cost a scheme pays only where a detector fires; the
 Gaussian-RBF kernel misses its budget on the GPU only (the sensor's divisions). Published whole-solver costs, for
 orientation only: TENO5-THINC 1.17 times TENO5 per time step (Takagi et al. 2022, Table 3), the complete RBF+DR scheme
