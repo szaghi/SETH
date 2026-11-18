@@ -142,4 +142,4 @@ only), then with the limiter:
 ## Notes
 
 - The positivity-preserving flux limiter is a SETH kernel, `seth_positivity_euler` ([C7](../contracts/positivity),
-  [API](/guide/api#positivity-limiter)); the harness uses it.
+  [Reference](/reference/limiters#positivity-limiter)); the harness uses it.

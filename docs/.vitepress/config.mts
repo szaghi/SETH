@@ -42,6 +42,7 @@ export default withMermaid({
     nav: [
       { text: 'Home',   link: '/' },
       { text: 'Guide',  link: '/guide/' },
+      { text: 'Reference', link: '/reference/' },
       { text: 'Verification', link: '/verification/' },
       { text: 'API',    link: '/api/' },
       { text: 'GitHub', link: 'https://github.com/szaghi/SETH' },
@@ -53,6 +54,21 @@ export default withMermaid({
         { text: 'Back to the documentation', link: '/guide/' },
         { text: 'API', items: [{ text: 'Overview', link: '/api/' }] },
         ...apiSidebar,
+      ],
+      '/reference/': [
+        { text: 'Reference', items: [
+          { text: 'Overview and feature map', link: '/reference/' },
+          { text: 'WENO-JS',                  link: '/reference/weno-js' },
+          { text: 'WENO-Z',                   link: '/reference/weno-z' },
+          { text: 'TENO',                     link: '/reference/teno' },
+          { text: 'Centred WENO',             link: '/reference/weno-c' },
+          { text: 'Non-polynomial TENO',      link: '/reference/nonpolynomial' },
+          { text: 'Linear schemes',           link: '/reference/linear' },
+          { text: 'Sensors',                  link: '/reference/sensors' },
+          { text: 'Central fluxes',           link: '/reference/central' },
+          { text: 'Limiters',                 link: '/reference/limiters' },
+          { text: 'Kinds and constants',      link: '/reference/kinds' },
+        ] },
       ],
       '/verification/': [
         { text: 'Verification', items: [
@@ -125,7 +141,7 @@ export default withMermaid({
           items: [
             { text: 'Conventions',  link: '/guide/conventions' },
             { text: 'Schemes',      link: '/guide/schemes' },
-            { text: 'API',          link: '/guide/api' },
+            { text: 'Reference',    link: '/reference/' },
             { text: 'Precision',    link: '/guide/precision' },
           ],
         },

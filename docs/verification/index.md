@@ -45,7 +45,7 @@ The findings that change how the kernels should be used, each documented on its 
 - The higher-order interpolations need a positivity safeguard near vacuum, and every interpolation on strong blast
   waves; on the Woodward–Colella blast so do WENO9-JS, WENO8-C and the WENO-Z (but Z3) and TENO reconstructions
   ([S3](./shocks/test123), [S5](./shocks/blast)). SETH provides one: `seth_positivity_euler`, the flux limiter of
-  Hu, Adams & Shu ([API](/guide/api#positivity-limiter), [C7](./contracts/positivity)). The flux matters as much as
+  Hu, Adams & Shu ([Reference](/reference/limiters#positivity-limiter), [C7](./contracts/positivity)). The flux matters as much as
   the scheme: with Roe's flux splitting with entropy fix instead of global Lax–Friedrichs, WENO-Z5, TENO5-opt, TENO6,
   TENO6-opt, TENO6-NENO6 and TENO8 stay positive on the blast, TENO5 at its published cutoff still does not
   ([S5](./shocks/blast#the-flux-issue-5), [issue #5](https://github.com/szaghi/SETH/issues/5)).

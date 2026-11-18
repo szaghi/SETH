@@ -6,7 +6,7 @@
 
 ## Case and scope
 
-`seth_positivity_euler` is the positivity-preserving flux limiter of Hu, Adams & Shu (2013) at one face ([API](/guide/api#positivity-limiter);
+`seth_positivity_euler` is the positivity-preserving flux limiter of Hu, Adams & Shu (2013) at one face ([Reference](/reference/limiters#positivity-limiter);
 llm-wiki high-order-capturing-schemes `methods/positivity-preserving-flux-limiter.md`). It must return a flux whose
 one-sided states are admissible, with the largest admissible blending factor, and leave admissible fluxes untouched.
 
@@ -42,7 +42,7 @@ The kernel guarantees its floors on the one-sided states as it evaluates them. T
 with nvfortran `-fast` the two evaluations differ (a fused multiply-add) by $\epsilon(|q| + |\lambda f|)$; near vacuum
 the pressure of the test's state then falls up to $8\cdot10^{-16}$ below the floor, and in one case of 60 000 (density
 $10^{-7}$ at $|u| = 400$, next to a cell $10^9$ times denser) to $-10^{-12}$. The check allows that round-off
-(`adm_ro`); the [API](/guide/api#positivity-limiter) says what it means for the choice of the floors.
+(`adm_ro`); the [Reference](/reference/limiters#positivity-limiter) says what it means for the choice of the floors.
 
 About 26 000 limited cases per run (8 300–9 100 per layout); seeds 1006 (default), 7, 99, 12345 checked.
 

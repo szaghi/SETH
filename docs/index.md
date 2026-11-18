@@ -61,7 +61,7 @@ features:
       height: 44
     title: Positivity near vacuum
     details: seth_positivity_euler, the flux limiter of Hu, Adams & Shu (2013) for the Euler equations in 1-D to 3-D. The blending factor in closed form, the largest that keeps density and pressure above their floors, on the host and on the GPU.
-    link: /guide/api#positivity-limiter
+    link: /reference/limiters#positivity-limiter
     linkText: Positivity limiter
   - icon:
       light: /icons/verification.svg

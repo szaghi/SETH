@@ -14,7 +14,7 @@ fobis build --mode tests-gnu-r4 && bash scripts/run_tests.sh --exe-dir exe-r4
 The modes add `-D_R_P_IS_R4P`, which PENF and SETH must both see; a build where they disagree stops at compile time.
 There are no generic interfaces: every kernel is compiled once, for that kind, and a program uses one kind (the two
 builds export the same module and procedure names). The kind-dependent literals (regularisers, back-off steps) live in `seth_kind_parameters`, one set
-per kind ([API](/guide/api)).
+per kind ([Kinds and constants](/reference/kinds)).
 
 ## What changes in R4P
 

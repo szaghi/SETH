@@ -56,7 +56,7 @@ state takes the value of its own side.
 
 | To | Read |
 |---|---|
-| find the kernel, its arguments and its constants | [API](./api) |
+| find the kernel, its arguments and its constants | [Reference](/reference/) |
 | see the conventions every kernel shares | [Conventions](./conventions) |
 | see what each scheme is | [Schemes](./schemes) |
 | see how SETH is checked | [Verification](/verification/) |

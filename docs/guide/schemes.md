@@ -419,7 +419,7 @@ exactly on a generic polynomial): integrating the derivatives of the point-value
 WENO-Z7's $\tau$ from 7 to 5 and TENO6's from 6 to 4 (`notes/interpolation-plan.md`). Verification: every page of
 the [Verification](/verification/) section covers the interpolations, and the [123](/verification/shocks/test123)
 and [blast](/verification/shocks/blast) cases show that the WENO-Z and TENO interpolations need a positivity
-safeguard near vacuum and on strong shocks (`seth_positivity_euler`, [API](/guide/api#positivity-limiter)).
+safeguard near vacuum and on strong shocks (`seth_positivity_euler`, [Reference](/reference/limiters#positivity-limiter)).
 
 ## Monotonicity-preserving bound
 
@@ -512,4 +512,4 @@ the central–WENO and central–TENO hybrids of the turbulence literature.
 | centred WENO | `seth_weno{4,6,8}_c` | WENO-JS ($S = 2..4$) blended with the central row on $2S$ cells | $2S$ | `eps`, `rmu` |
 | positivity | `seth_positivity_euler`, `seth_euler_admissible` | | | |
 
-Arguments and constants: [API](/guide/api). Stencil layout: [Conventions](/guide/conventions).
+Arguments and constants: [Reference](/reference/). Stencil layout: [Conventions](/guide/conventions).

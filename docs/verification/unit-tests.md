@@ -25,7 +25,7 @@ its derivation next to it; the R8P set keeps every test as it was. What R4P chan
   $10^{-7}$ on 1 (one ulp), densities of $10^{-8}$ next to $O(1)$ cells (their one-sided states round to negative
   pressures, which no limiter can prevent), cell averages that cancel on fine grids.
 - **One R4P property.** The affine-invariant descaler alone does not keep WENO-JS ENO on a small step over a large
-  offset (subtract the mean, [API](/guide/api)). The cost hybrid of TENO6 with LCR on Shu–Osher, once 3 to 9 times
+  offset (subtract the mean, [WENO-JS](/reference/weno-js#descalers)). The cost hybrid of TENO6 with LCR on Shu–Osher, once 3 to 9 times
   pure TENO6 in R4P (2.1 in R8P), was the harness's transmissive inflow drifting under the central background, in both
   kinds; with the inflow held fixed it is within 1.05 in R4P and 1.11 in R8P on every compiler
   ([H3](./hybrids/harness)).
