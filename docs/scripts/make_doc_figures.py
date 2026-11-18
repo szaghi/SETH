@@ -609,6 +609,81 @@ class Figures:
                        note='$\\sin 2\\pi x$ advected 100 periods, SSP-RK3; the growth rate is $\\log(A(t)/A(0))/t$; '
                             'the prediction is the $\\lambda$ term of Eq. 29, $\\Delta x^5 k^4 \\lambda^2/2$.')
 
+    NP2D = ['teno5', 'teno5_st', 'teno5_rbf', 'teno5_thinc', 'teno5_dr', 'teno5_st_dr', 'teno5_rbf_dr']
+    NP2D_CASES = {'contact': 'oblique contact, one period', 'kh': 'Kelvin–Helmholtz, $t = 0.5$',
+                  'config3': '2-D Riemann problem, configuration 3, $t = 0.3$'}
+    NP2D_WINDOW = {'config3': (0.15, 0.65)}  # the region of the small-scale structures (the lobe on the diagonal)
+
+    def nonpoly_2d(self) -> None:
+        """seth_vv_2d in report mode: the density fields at N = 400, one figure per case, a panel per scheme."""
+        if self.has('nonpoly2d-summary.dat'):
+            short = {'contact': 'oblique contact', 'kh': 'Kelvin–Helmholtz', 'config3': 'configuration 3'}
+            body = [[short.get(r[0], r[0]), label(r[1]), r[2], 'yes' if r[3] == 'T' else '**no**',
+                     fmt(float(r[4])) if r[0] != 'config3' else '— (transmissive)',
+                     fmt(float(r[5])) if r[0] != 'kh' else '—']
+                    for r in self.rows('nonpoly2d-summary.dat')]
+            self.table('nonpoly-2d', ['case', 'scheme', '$N$', 'positive', 'conservation', 'symmetry'], body)
+        self.nonpoly_2d_fields()
+        for case, title in self.NP2D_CASES.items():
+            have = [sc for sc in self.NP2D if (self.data / f'nonpoly2d-{case}-{sc}.dat').exists()]
+            if not have:
+                continue
+            fields = {sc: self.load(f'nonpoly2d-{case}-{sc}.dat') for sc in have}
+            lo = min(float(d.min()) for d in fields.values())
+            hi = max(float(d.max()) for d in fields.values())
+            ncol = min(4, len(have))
+            nrow = -(-len(have) // ncol)
+            fig, axs = plt.subplots(nrow, ncol, figsize=(3.2 * ncol + 0.8, 3.3 * nrow + 0.4), squeeze=False)
+            for ax in axs.flat:
+                ax.set_axis_off()
+            for ax, (sc, d) in zip(axs.flat, fields.items()):
+                im = ax.imshow(d, origin='lower', extent=(0, 1, 0, 1), vmin=lo, vmax=hi,
+                               cmap='viridis' if not self.dark else 'magma', interpolation='nearest')
+                ax.set_title(label(sc), fontsize=9)
+                if case in self.NP2D_WINDOW:
+                    ax.set_xlim(*self.NP2D_WINDOW[case])
+                    ax.set_ylim(*self.NP2D_WINDOW[case])
+            # one colour scale for every scheme: the panels compare by eye
+            fig.colorbar(im, ax=axs.ravel().tolist(), shrink=0.8, label='density')
+            n = next(iter(fields.values())).shape[0]
+            win = self.NP2D_WINDOW.get(case)
+            where = f', window $[{win[0]}, {win[1]}]^2$' if win else ''
+            fig.suptitle(f'{title}: density, $N = {n}${where}', fontsize=10)
+            self.save(fig, f'nonpoly-2d-{case}')
+
+    def nonpoly_2d_fields(self) -> None:
+        """Measures of the N = 400 density fields: the contact's width and bounds, configuration 3's ripples."""
+        body = []
+        for sc in self.NP2D:
+            con, cf3 = (self.data / f'nonpoly2d-{c}-{sc}.dat' for c in ('contact', 'config3'))
+            if not (con.exists() and cf3.exists()):
+                continue
+            d = self.load(con.name)
+            # cells strictly between 5 % and 95 % of the jump 1 -> 1.5, per row (each row crosses two jumps)
+            width = ((d > 1.025) & (d < 1.475)).sum(axis=1).mean() / 2
+            over = max(float(d.max()) - 1.5, 0.0) + max(1.0 - float(d.min()), 0.0)
+            q = self.load(cf3.name)
+            n = q.shape[0]
+            q = q[int(0.55 * n):int(0.80 * n), int(0.55 * n):int(0.80 * n)]  # behind the shock, smooth
+            ext = 0
+            for ax in (0, 1):  # local extrema along x and y: sign changes of slopes above the data's 5 digits
+                g = np.diff(q, axis=ax)
+                sg = np.sign(np.where(np.abs(g) > 1e-4, g, 0.0))
+                ext += int((np.abs(np.diff(sg, axis=ax)) == 2).sum())
+            k = 7  # ripple: rms of the field minus its 7 x 7 running mean
+            pad = np.pad(q, k // 2, mode='edge')
+            mean = np.lib.stride_tricks.sliding_window_view(pad, (k, k)).mean(axis=(-1, -2))
+            rip = float(np.sqrt(((q - mean) ** 2).mean()))
+            body.append([label(sc), f'{width:.1f}', fmt(over) if over > 0 else '0', str(ext), f'{rip:.1e}'])
+        if body:
+            self.table('nonpoly-2d-fields', ['scheme', 'contact: cells per jump', 'contact: over/undershoot',
+                                             'config. 3: local extrema', 'config. 3: ripple (rms)'], body,
+                       note='Contact after one period: the cells strictly between 5 % and 95 % of the jump, per row '
+                            'and jump; the over/undershoot to the 5 digits of the stored fields. Configuration 3, '
+                            'the box $[0.55, 0.80]^2$ behind the shock, where the flow is smooth: the local extrema '
+                            'along $x$ and $y$ (slopes above $10^{-4}$) and the rms of the density minus its '
+                            '$7\\times 7$ running mean.')
+
     CASE_NAMES = {'sod': 'Sod', 'lax': 'Lax', 'shu-osher': 'Shu–Osher', 'blast': 'blast waves'}
 
     def nonpoly_solver(self) -> None:
@@ -861,6 +936,7 @@ def main() -> int:
         'nonpoly-static': f.nonpoly_static,
         'nonpoly-ablation': f.nonpoly_ablation,
         'nonpoly-e6': f.nonpoly_e6,
+        'nonpoly-2d': f.nonpoly_2d,
         'convergence': lambda: f.convergence('convergence', 'convergence.dat',
                                              'whole-domain operator error, Henrick field (critical points included)',
                                              '$L_\\infty(D - u\')$'),

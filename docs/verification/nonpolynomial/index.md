@@ -22,4 +22,4 @@ harness carries that footprint since 2026-11-17, with every earlier result uncha
 | [NP8 Length units](./units) | P | Shu–Osher on [0, 10] and rescaled to [0, 1] (E5): TENO5 equal to round-off, the RBF scheme's dependence on the length unit measured, and the s of every published case. |
 | [NP9 Two dimensions](./two-d) | P, C | The minimal 2-D harness: an oblique contact, Kelvin–Helmholtz and configuration 3; conservation, positivity, symmetry about the diagonal. |
 
-All nine cases are implemented; the 2-D figures (NP9) wait for the report run at $N = 400$.
+All nine cases are implemented, with their figures; the 2-D fields (NP9) come from the report run at $N = 400$.

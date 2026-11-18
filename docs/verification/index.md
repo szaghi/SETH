@@ -67,6 +67,9 @@ The findings that change how the kernels should be used, each documented on its 
 - TENO5-DR halves TENO5's density error on the Sod and Lax tubes with flux splitting; on the Roe path its gain on Sod
   nearly vanishes ([NP4](./nonpolynomial/dr)). Whether a neighbour's flags are computed in the face's basis or in
   their own changes the result on systems, with neither better everywhere (experiment E1).
+- In 2-D the DR and THINC overrides keep an oblique contact 2–3 cells wide against TENO5's 6, but leave ripples in
+  smooth flow: behind the shock of configuration 3, 17–28 times TENO5's local extrema and up to 2.6 times its rms
+  ripple, about $5\cdot10^{-4}$ in density ([NP9](./nonpolynomial/two-d)).
 
 ## Accuracy
 
@@ -138,7 +141,8 @@ The pieces of a hybrid scheme: the sensors that choose the linear branch. [Group
 ## Non-polynomial reconstructions
 
 TENO5-THINC, TENO5-DR and the Gaussian-RBF TENO: flags, detectors, overrides, stencil targeting, the RBF fluxes and
-their ablation. Planned ([issue #6](https://github.com/szaghi/SETH/issues/6)). [Group page](./nonpolynomial/).
+their ablation, and a minimal 2-D harness ([issue #6](https://github.com/szaghi/SETH/issues/6)).
+[Group page](./nonpolynomial/).
 
 ## Contracts
 
