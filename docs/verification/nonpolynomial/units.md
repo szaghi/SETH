@@ -2,7 +2,7 @@
 
 | ID | Group | Type | Backends | Figure | Program |
 |---|---|---|---|---|---|
-| NP8 | Non-polynomial | P | CPU (gfortran, nvfortran, ifx) | — | `seth_vv_nonpoly` |
+| NP8 | Non-polynomial | P | CPU (gfortran, nvfortran, ifx) | the two profiles | `seth_vv_nonpoly` |
 
 ## Case and scope
 
@@ -28,6 +28,8 @@ $s$, and another result. TENO5 has no length scale. Experiment E5 of [issue #6](
 ## Results
 
 <!--@include: ../_tables/nonpoly-units.md-->
+
+![Shu-Osher at N = 200 on [-5, 5] and on the domain scaled by 1/8: TENO5 and TENO5-RBF](/verification/nonpoly-units.png)
 
 ## Findings
 

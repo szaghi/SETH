@@ -15,6 +15,9 @@ Writes, into --out (default docs/public/guide):
     conv-mirror.png       vm(m) = vp(1 - m) gives rm = rp
     conv-adam-rows.png    SETH's arrays and ADAM's rows v(1:2, 1-S:S-1)
     conv-nonpoly.png      the -5:6 footprint of the composite non-polynomial kernels: the masks each state reads
+    conv-targeting.png    stencil targeting (seth_teno5_st, Liang & Fu 2024): the stencil each mask of TENO5's cutoff
+                          selects, the left state; the mask (0,1,1), which no stencil of the paper covers, takes
+                          TENO5's renormalised weights (decision D4)
     casts/conv-sweep-{light,dark}.{webm,mp4,png}   WENO5 sweeping a field with a jump: the candidates, the weights
                                                     and the two states at every face
 
@@ -429,6 +432,44 @@ def draw_sweep_frame(c: dict[str, str], xc: np.ndarray, ub: np.ndarray, h: float
 
 
 # ------------------------------------------------------------------------------------------------------- main
+def fig_targeting(out: Path) -> None:
+    """Stencil targeting: the mask (delta_0, delta_1, delta_2) of TENO5's cutoff selects a row (seth_nonpoly_tables)."""
+    rows = [  # mask label, cells read (offset from the face, left state), weights in words, the paper's?
+        ('(1,1,1)', range(-2, 3), 'five points: the linear fifth-order row', True),
+        ('(1,1,0)', range(-1, 3), '$q_0/2 + q_1/2$: cells $i-1..i+2$', True),
+        ('(1,0,1)', range(-2, 2), '$3q_0/4 + q_2/4$: cells $i-2..i+1$', True),
+        ('(1,0,0)', range(-1, 2), '$q_0$, the central candidate', True),
+        ('(0,1,0)', range(0, 3), '$q_1$, the downwind candidate', True),
+        ('(0,0,1)', range(-2, 1), '$q_2$, the upwind candidate', True),
+        ('(0,1,1)', range(-2, 3), '$3q_1/4 + q_2/4$: TENO5\'s weights (D4, not in the paper)', False),
+    ]
+    fig, ax = plt.subplots(figsize=(9.0, 5.0))
+    bare(ax)
+    y0 = 0.62 * len(rows)
+    for m in range(-2, 3):
+        cell(ax, m, y0 + 0.1, 0.4, None, edge=INK)
+        ax.text(m, y0 + 0.3, f'{m}', ha='center', va='center', fontsize=9, color=INK)
+    ax.text(-2.75, y0 + 0.3, 'offset $m$', ha='right', va='center', fontsize=9, color=GREY)
+    face_line(ax, -0.1, y0 + 0.62)
+    for j, (mask, cells, text, paper) in enumerate(rows):
+        y = y0 - 0.62 * (j + 1)
+        for m in range(-2, 3):
+            if m in cells:
+                cell(ax, m, y, 0.4, LEFT_SOFT if paper else None, edge=LEFT, hatch=None if paper else '///')
+            else:
+                cell(ax, m, y, 0.4, None, edge=GREY, lw=0.5)
+        ax.text(-2.75, y + 0.2, mask, ha='right', va='center', fontsize=9, color=LEFT, family='monospace')
+        ax.text(2.8, y + 0.2, text, ha='left', va='center', fontsize=8.5, color=INK if paper else GREY)
+    ax.text(-2.75, y0 + 0.75, 'mask $(\\delta_0, \\delta_1, \\delta_2)$', ha='right', va='bottom', fontsize=8.5,
+            color=GREY)
+    ax.text(0.0, -0.45, 'left state; the right state reads the mirrored cells. Shaded: Liang & Fu 2024, section 3.1; '
+            'hatched: SETH\'s choice', ha='center', va='top', fontsize=8, color=INK)
+    ax.set_xlim(-4.6, 9.2)
+    ax.set_ylim(-0.8, y0 + 1.1)
+    fig.savefig(out / 'conv-targeting.png', dpi=DPI, bbox_inches='tight', pad_inches=0.08)
+    plt.close(fig)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument('--out', type=Path, default=ROOT / 'docs/public/guide')
@@ -449,7 +490,8 @@ def main() -> int:
             fig_mirror(args.out)
             fig_adam_rows(args.out)
             fig_nonpoly(args.out)
-        print(f'figures ({th}): {args.out}/conv-{{face,schemes,mirror,adam-rows,nonpoly}}.png')
+            fig_targeting(args.out)
+        print(f'figures ({th}): {args.out}/conv-{{face,schemes,mirror,adam-rows,nonpoly,targeting}}.png')
     if not args.no_cast:
         if shutil.which('ffmpeg') is None:
             print('ffmpeg not found: no animation rendered')

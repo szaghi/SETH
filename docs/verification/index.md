@@ -60,10 +60,25 @@ The findings that change how the kernels should be used, each documented on its 
 - The centred WENO6-C and WENO8-C leave such packets too, without any anti-dissipation: their blend damps a small
   disturbance on a smooth flow at a rate that does not grow with the resolution. WENO8-C is not ENO for a jump in its
   two outer cells ([A5](./accuracy/centred-weno), [S6](./shocks/burgers)).
-- The composite non-polynomial kernels (TENO5-DR, TENO5-THINC) read twelve cells, `-5..6`: a solver needs **6 ghost
-  cells** and projects all twelve into the face's characteristic basis ([NP1](./nonpolynomial/flags),
+- The composite non-polynomial kernels (TENO5-DR, TENO5-THINC, TENO5-RBF+DR) read twelve cells, `-5..6`: a solver
+  needs **6 ghost cells** and projects all twelve into the face's characteristic basis ([NP1](./nonpolynomial/flags),
   [Conventions](/guide/conventions)). TENO5's flags are rounding noise on flat data (any value in R4P, non-dyadic
-  constants in R8P), so detector activations in uniform regions mean nothing; the states are unaffected.
+  constants in R8P), on the far tails of a smooth profile and on a constant characteristic field: the detectors fire
+  there, and move the state by about the round-off ($10^{-14}$ measured on the Gaussian pulse of Liang et al.'s
+  Table 4 and on the Euler density wave, [NP4](./nonpolynomial/dr)). Activation counts in such regions mean nothing.
+- The overrides change nothing on a gradient two cells wide or wider (bitwise TENO5's, E3). They keep the two jumps of
+  an advected square wave at 4–5 cells together (DR; THINC 4–8) where TENO5 spreads them to 12–15 over ten periods
+  (E2, [NP4](./nonpolynomial/dr)).
+- They cost about three times TENO5 per face (DR 2.7–3.1, the complete RBF+DR scheme 2.8–3.2), THINC three and a
+  half: the per-face kernels recompute the neighbours' flags. A solver that stores each cell's flags and reconstructs
+  the faces in a second pass pays under twice TENO5, and computes each flag in its own face's basis, which changes
+  the result on systems ([Performance](/guide/performance#the-non-polynomial-composites-issue-6)).
+- The Gaussian-RBF kernels take $s = \alpha\Delta x$ from the caller, so their results depend on the length unit
+  ([NP8](./nonpolynomial/units)); their linear scheme amplifies long waves, and the validated range is $s \le 0.12$.
+  Beyond it the nonlinear scheme is far more anti-dissipative than the linear analysis predicts (22 times at
+  $s = 0.15$, the $s$ of the paper's own Shu–Osher run), and the amplitude of a sine nearly triples in 100 periods at
+  $s = 0.3$ ([NP6](./nonpolynomial/rbf)). Stencil targeting alone is safe: equal to linear5 on smooth data, never
+  anti-dissipative, as robust as TENO5 behind the Burgers shock ([NP5](./nonpolynomial/targeting)).
 - TENO5-DR halves TENO5's density error on the Sod and Lax tubes with flux splitting; on the Roe path its gain on Sod
   nearly vanishes ([NP4](./nonpolynomial/dr)). Whether a neighbour's flags are computed in the face's basis or in
   their own changes the result on systems, with neither better everywhere (experiment E1).
@@ -144,6 +159,28 @@ TENO5-THINC, TENO5-DR and the Gaussian-RBF TENO: flags, detectors, overrides, st
 their ablation, and a minimal 2-D harness ([issue #6](https://github.com/szaghi/SETH/issues/6)).
 [Group page](./nonpolynomial/).
 
+<div class="seth-gallery seth-catalog">
+
+[![Flags](/verification/nonpoly-flags.png)<strong>NP1 Flags</strong><span>the 3-bit mask of TENO5's cutoff, Liang et al.'s Tables 1–3 digit for digit</span><em>property</em>](./nonpolynomial/flags)
+
+[![Detectors](/verification/nonpoly-static.png)<strong>NP2 Detectors</strong><span>Eqs. 24, 32 and Takagi's Eq. 20 on every mask combination; the static tests (a)–(e)</span><em>property</em>](./nonpolynomial/detectors)
+
+[![THINC](/verification/nonpoly-e2.png)<strong>NP3 THINC override</strong><span>bounded, conservative by quadrature, equal to a two-pass reference</span><em>property</em>](./nonpolynomial/thinc)
+
+[![DR](/verification/nonpoly-contact.png)<strong>NP4 DR override</strong><span>Sod and Lax contacts, the Gaussian pulse of Table 4, the halo of 6 cells, E1–E3</span><em>property</em>](./nonpolynomial/dr)
+
+[![Stencil targeting](/guide/conv-targeting.png)<strong>NP5 Stencil targeting</strong><span>order 5, order 4 beside a jump, the pair rows, the census of the masks</span><em>property</em>](./nonpolynomial/targeting)
+
+[![Gaussian RBF](/verification/nonpoly-adr-rbf.png)<strong>NP6 Gaussian-RBF fluxes</strong><span>Eq. 29 on all six rows, the anti-dissipative band, the validated range of s</span><em>property</em>](./nonpolynomial/rbf)
+
+[<strong>NP7 Ablation</strong><span>seven schemes on every 1-D case: which piece buys what</span><em>physics</em>](./nonpolynomial/ablation)
+
+[![Length units](/verification/nonpoly-units.png)<strong>NP8 Length units</strong><span>TENO5 unit-free bit for bit, the RBF scheme not</span><em>property</em>](./nonpolynomial/units)
+
+[![Two dimensions](/verification/nonpoly-2d-contact.png)<strong>NP9 Two dimensions</strong><span>oblique contact, Kelvin–Helmholtz, configuration 3: conservation, positivity, symmetry</span><em>physics, contract</em>](./nonpolynomial/two-d)
+
+</div>
+
 ## Contracts
 
 What must hold exactly, or bit for bit: equivalence with ADAM, invariances, the coefficient tables, the regression
@@ -157,11 +194,11 @@ baseline, the device, and the suite's own ability to catch defects. [Group page]
 
 [<strong>Coefficient tables</strong><span>derived in exact arithmetic, cross-checked against papers and ADAM, re-verified when compiled</span><em>contract</em>](./contracts/tables)
 
-[<strong>Golden regression</strong><span>8192 values of every kernel on exact binary inputs; v1 kept bitwise inside v2</span><em>contract</em>](./contracts/golden)
+[<strong>Golden regression</strong><span>11776 values of every kernel on exact binary inputs; each version kept bitwise inside the next</span><em>contract</em>](./contracts/golden)
 
 [<strong>Device</strong><span>every kernel in an OpenACC loop on the GPU against the host</span><em>contract</em>](./contracts/device)
 
-[<strong>Mutation testing</strong><span>25 deliberate defects, each caught by at least one test</span><em>contract</em>](./contracts/mutation)
+[<strong>Mutation testing</strong><span>72 deliberate defects, each caught by at least one test</span><em>contract</em>](./contracts/mutation)
 
 [<strong>Positivity limiter</strong><span>Hu, Adams & Shu's limiter as a SETH kernel: admissible, maximal, untouched where not needed</span><em>contract</em>](./contracts/positivity)
 

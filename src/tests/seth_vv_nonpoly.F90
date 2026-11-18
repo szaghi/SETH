@@ -24,10 +24,14 @@ program seth_vv_nonpoly
 !<    mutant) it differs. The halo width of the composite kernels is 6, proved. Report:
 !<    nonpoly-halo.dat.
 !< 5. N5, the ablation (step 3.4): TENO5, ST, RBF, THINC, DR, ST+DR, RBF+DR (the RBF kernels with s = 3 dx, Liang &
-!<    Fu's alpha = 3) on Sod and Lax (N = 200, against the exact solution: L1 of the density),
-!<    Shu-Osher (N = 200 on [-5, 5], t = 1.8, against WENO5-JS on 3200 cells: L1) and the blast waves (N = 400, the
-!<    limiter on, against WENO5-JS on 6400 cells: L1, faces limited). Report mode only (the references cost minutes);
-!<    asserted there: positivity (the blast with the limiter); reported: nonpoly-ablation.dat.
+!<    Fu's alpha = 3), one scheme at a time, on Sod, Lax and the 123 problem (N = 200, against the exact solution: L1
+!<    of the density, its overshoot beyond the exact extrema, the cells across the contact of Sod and Lax; 123 with the
+!<    limiter), Shu-Osher (N = 200 on [-5, 5], t = 1.8, against WENO5-JS on 3200 cells: L1) and the blast waves
+!<    (N = 400, the limiter on, against WENO5-JS on 6400 cells: L1); every case the detector activations (states whose
+!<    detector fires, per characteristic field, summed over the run: seth_vv_euler's count_activations) and the faces
+!<    limited. Report mode only (the references cost minutes); asserted there: positivity; reported:
+!<    nonpoly-ablation.dat. Burgers and the composite advection of the seven schemes are in seth_vv_burgers and
+!<    seth_vv_advection (burgers-shock.dat, advection.dat), merged into the page's table.
 !< 6. E5 (step 3.3): Shu-Osher on [-5, 5] and the same flow rescaled by 1/8 (x and t: a power of 2, so that every
 !<    operation scales exactly; with 1/10 the rounding of h/10 flips TENO cutoffs and moves the profile by 1e-4), N = 200:
 !<    TENO5's density profiles equal bitwise (asserted: the scheme has no length scale); TENO5-RBF's differ by the change
@@ -56,6 +60,15 @@ program seth_vv_nonpoly
 !<    overrides are printed. Reported:
 !<    the L_inf errors of TENO5, TENO5-DR, TENO5-THINC beside the paper's Table 4 (nonpoly-pulse.dat; finite volumes
 !<    here, the paper's discretisation of the case is not stated, so its digits are compared, not asserted).
+!< 9. Report mode only, the data of the figures and animations of docs/verification/nonpolynomial/: Sod and Lax at
+!<    N = 100, the density profiles of TENO5, DR, THINC and RBF+DR (nonpoly-contact-<case>.dat); Sod's contact in time,
+!<    61 frames to t = 0.2 (nonpoly-sod-frames-<scheme>.dat) and the cells across it per frame (nonpoly-e2-sod.dat);
+!<    the square wave of E2 over 10 periods, 5 frames a period, with the faces where each composite's state differs
+!<    from TENO5's (nonpoly-square-frames-<scheme>.dat); E5's density profiles on both domains (nonpoly-units-
+!<    profiles.dat); Shu-Osher under TENO5-RBF, N = 200, 61 frames (shu-osher-frames-teno5_rbf.dat, nonpoly-prefixed:
+!<    nonpoly-shu-osher-frames-teno5_rbf.dat); the blast waves under TENO5-DR, N = 400 with the limiter, 61 frames, and
+!<    per frame the faces the DR detector flags on the density (nonpoly-blast-frames-teno5_dr.dat,
+!<    nonpoly-blast-flags-teno5_dr.dat; the scheme detects on the characteristic fields, the figure on the density).
 !< Section 3 (N4, N6) also runs TENO5-RBF-DR (s = 3 dx), its overrides counted against TENO5-RBF.
 use seth
 use seth_vv_euler
@@ -102,6 +115,9 @@ call e6()
 
 ! 8. step 2.2 spec 6: the Gaussian pulse of Liang et al. 2022, Table 4
 call pulse()
+
+! 9. the data of the figures and animations of the non-polynomial pages (report mode only)
+if (vv_report()) call figures()
 
 ! 2. E1: default against stored masks
 print '(A)', 'E1: self-contained (masks in the face''s basis) against stored masks (each in its own face''s basis)'
@@ -266,6 +282,162 @@ contains
    rbf_dx = dx0
    endsubroutine halo
 
+   subroutine figures()
+   !< Section 9: the data of the figures and animations (report mode).
+   integer(I4P), parameter  :: NF = 61_I4P, NC = 100_I4P, NSO = 200_I4P, NB = 400_I4P
+   character(16), parameter :: FN(4) = [character(16) :: 'teno5', 'teno5_dr', 'teno5_thinc', 'teno5_rbf_dr']
+   real(R_P)                :: w0(3,NB), q(3,1-NG:NB+NG), fr(3,NB,NF), tf(NF), h, x, xc, rl, rr, lo, hi, w(3), us
+   real(R_P)                :: prof(NC,4), wid(NF,3)
+   real(R_P)                :: u(NC), uw(NC), r(NC), u1(NC), u2(NC), ex(NC)
+   integer(I4P)             :: k, i, f, j, uf, step, nsteps, ib, flg(NB)
+   logical                  :: pz
+   ! (a) Sod and Lax, N = 100: the density profiles
+   do j=1, 2
+      h = 1._R_P/NC
+      do i=1, NC
+         x = (i - 0.5_R_P)*h
+         w0(:,i) = merge(merge(SOD_L, LAX_L, j == 1), merge(SOD_R, LAX_R, j == 1), x < 0.5_R_P)
+      enddo
+      do k=1, 4
+         call euler_run(scheme_id(FN(k)), PATH_SPLIT, w0(:,1:NC), NC, h, BC_TRANSMISSIVE, &
+                        merge(0.2_R_P, 0.13_R_P, j == 1), 0.5_R_P, q(:,1-NG:NC+NG), pz)
+         prof(:,k) = q(1,1:NC)
+      enddo
+      call vv_open('nonpoly-contact-'//trim(merge('sod', 'lax', j == 1))//'.dat', uf, &
+                   'x rho-exact rho: teno5 teno5_dr teno5_thinc teno5_rbf_dr (N = 100)')
+      do i=1, NC
+         x = (i - 0.5_R_P)*h
+         w = riemann_sample(merge(SOD_L, LAX_L, j == 1), merge(SOD_R, LAX_R, j == 1), GAMMA, &
+                            (x - 0.5_R_P)/merge(0.2_R_P, 0.13_R_P, j == 1))
+         write(uf, '(6ES16.8)') x, w(1), prof(i,:)
+      enddo
+      close(uf)
+   enddo
+   ! (b) Sod's contact in time, 61 frames, and the cells across it per frame
+   h = 1._R_P/NC
+   do i=1, NC
+      x = (i - 0.5_R_P)*h ; w0(:,i) = merge(SOD_L, SOD_R, x < 0.5_R_P)
+   enddo
+   tf = [(0.2_R_P*f/(NF - 1), f=0, NF-1)] ; tf(1) = 1.e-12_R_P
+   us = star_velocity(SOD_L, SOD_R)
+   w = riemann_sample(SOD_L, SOD_R, GAMMA, us - 1.e-6_R_P) ; rl = w(1)
+   w = riemann_sample(SOD_L, SOD_R, GAMMA, us + 1.e-6_R_P) ; rr = w(1)
+   lo = min(rl, rr) + 0.05_R_P*abs(rl - rr) ; hi = max(rl, rr) - 0.05_R_P*abs(rl - rr)
+   do k=1, 3
+      call euler_run(scheme_id(FN(k)), PATH_SPLIT, w0(:,1:NC), NC, h, BC_TRANSMISSIVE, 0.2_R_P, 0.5_R_P, &
+                     q(:,1-NG:NC+NG), pz, fr(:,1:NC,:), tf, NF)
+      call write_frames('nonpoly-sod-frames-'//trim(FN(k))//'.dat', 0._R_P, h, NC, tf, fr(:,1:NC,:))
+      do f=1, NF
+         xc = 0.5_R_P + us*tf(f)
+         wid(f,k) = 0._R_P
+         do i=1, NC
+            x = (i - 0.5_R_P)*h
+            if (abs(x - xc) < 0.1_R_P .and. fr(1,i,f) > lo .and. fr(1,i,f) < hi) wid(f,k) = wid(f,k) + 1._R_P
+         enddo
+      enddo
+   enddo
+   call vv_open('nonpoly-e2-sod.dat', uf, &
+                't cells-across-the-contact (5 %..95 % of the jump): teno5 teno5_dr teno5_thinc')
+   do f=1, NF
+      write(uf, '(ES14.6,3(1X,I0))') tf(f), nint(wid(f,:))
+   enddo
+   close(uf)
+   ! (c) the square wave of E2, 10 periods, 5 frames a period, the faces where the state differs from TENO5's
+   h = 1._R_P/NC ; nsteps = nint(1._R_P/(0.4_R_P*h))
+   do i=1, NC
+      x = (i - 0.5_R_P)*h ; ex(i) = merge(1._R_P, 0._R_P, x > 0.3_R_P .and. x < 0.7_R_P)
+   enddo
+   do k=1, 3
+      call vv_open('nonpoly-square-frames-'//trim(FN(k))//'.dat', uf, &
+                   'frames: line 1 x(1..N); then per frame: t u(1..N) u_exact(1..N) overridden-face-i+1/2(1..N)')
+      write(uf, '(*(ES16.8))') ((i - 0.5_R_P)*h, i=1, NC)
+      u = ex
+      do step=0, 10*nsteps
+         if (step > 0) then
+            call adv_rhs(scheme_id(FN(k)), ids(1), 1_I4P, 6_I4P, NC, h, u, r, ib) ; u1 = u + r/nsteps
+            call adv_rhs(scheme_id(FN(k)), ids(1), 1_I4P, 6_I4P, NC, h, u1, r, ib)
+            u2 = 0.75_R_P*u + 0.25_R_P*(u1 + r/nsteps)
+            call adv_rhs(scheme_id(FN(k)), ids(1), 1_I4P, 6_I4P, NC, h, u2, r, ib)
+            u = u/3._R_P + 2._R_P/3._R_P*(u2 + r/nsteps)
+         endif
+         if (mod(step, nsteps/5) == 0) then
+            do i=1, NC ! the exact solution at t (the square wave translated, periodic)
+               x = modulo((i - 0.5_R_P)*h - real(step, R_P)/nsteps, 1._R_P)
+               uw(i) = merge(1._R_P, 0._R_P, x > 0.3_R_P .and. x < 0.7_R_P)
+            enddo
+            call overridden(scheme_id(FN(k)), ids(1), u, flg(1:NC))
+            write(uf, '(*(ES16.8))') real(step, R_P)/nsteps, u, uw, real(flg(1:NC), R_P)
+         endif
+      enddo
+      close(uf)
+   enddo
+   ! (e) Shu-Osher under TENO5-RBF, N = 200, 61 frames
+   h = 10._R_P/NSO
+   do i=1, NSO
+      w0(:,i) = init_shu_osher(-5._R_P + (i - 0.5_R_P)*h)
+   enddo
+   tf = [(1.8_R_P*f/(NF - 1), f=0, NF-1)] ; tf(1) = 1.e-12_R_P
+   call euler_run(scheme_id('teno5_rbf'), PATH_SPLIT, w0(:,1:NSO), NSO, h, BC_TRANSMISSIVE, 1.8_R_P, 0.5_R_P, &
+                  q(:,1-NG:NSO+NG), pz, fr(:,1:NSO,:), tf, NF)
+   call write_frames('nonpoly-shu-osher-frames-teno5_rbf.dat', -5._R_P, h, NSO, tf, fr(:,1:NSO,:))
+   ! (f) the blast waves under TENO5-DR, N = 400, the limiter on, 61 frames; the DR detector on the density
+   h = 1._R_P/NB
+   do i=1, NB
+      w0(:,i) = init_blast((i - 0.5_R_P)*h)
+   enddo
+   tf = [(0.038_R_P*f/(NF - 1), f=0, NF-1)] ; tf(1) = 1.e-12_R_P
+   limiter = .true.
+   call euler_run(scheme_id('teno5_dr'), PATH_SPLIT, w0, NB, h, BC_REFLECTIVE, 0.038_R_P, 0.5_R_P, q, pz, fr, tf, NF)
+   limiter = .false.
+   call write_frames('nonpoly-blast-frames-teno5_dr.dat', 0._R_P, h, NB, tf, fr)
+   call vv_open('nonpoly-blast-flags-teno5_dr.dat', uf, &
+                'per frame: t, the DR level (0, 1, 2) of the left state at face i+1/2, i = 1..N, on the density')
+   do f=1, NF
+      call dr_flags(fr(1,:,f), flg)
+      write(uf, '(ES14.6,*(1X,I0))') tf(f), flg
+   enddo
+   close(uf)
+   endsubroutine figures
+
+   subroutine overridden(id, base, u, flg)
+   !< 1 at the faces i+1/2 (periodic) where the scheme's left state differs from the base scheme's, 0 elsewhere.
+   integer(I4P), intent(in)  :: id, base
+   real(R_P),    intent(in)  :: u(:)
+   integer(I4P), intent(out) :: flg(size(u))
+   real(R_P)                 :: vp(-5:6), rp, rm, sp, sm
+   integer(I4P)              :: i, m, n
+   n = size(u)
+   do i=1, n
+      do m=-5, 6
+         vp(m) = u(modulo(i - 1 + m, n) + 1)
+      enddo
+      call reconstruct(id, vp, vp, rp, rm)
+      call reconstruct(base, vp, vp, sp, sm)
+      flg(i) = merge(1_I4P, 0_I4P, rp /= sp)
+   enddo
+   endsubroutine overridden
+
+   subroutine dr_flags(rho, flg)
+   !< The DR level of the left state at every face i+1/2 from the masks of the density (constant continuation).
+   real(R_P),    intent(in)  :: rho(:)
+   integer(I4P), intent(out) :: flg(size(rho))
+   real(R_P)                 :: w(-2:2)
+   integer(I4P)              :: mk(-3:size(rho)+4), mp(-3:3), i, m, c, n, lm
+   n = size(rho)
+   do i=-3, n+4
+      do m=-2, 2
+         w(m) = rho(min(max(i + m, 1), n))
+      enddo
+      call seth_teno5_mask(w, SETH_TENO_EPS, SETH_TENO5_CT, mk(i))
+   enddo
+   do i=1, n
+      do c=-3, 3
+         mp(c) = mk(i + c)
+      enddo
+      call seth_dr_detect(mp, mp, flg(i), lm)
+   enddo
+   endsubroutine dr_flags
+
    subroutine pulse()
    !< Step 2.2 spec 6: Liang et al. 2022, section 4.1 and Table 4.
    integer(I4P), parameter :: NN(5) = [80_I4P, 160_I4P, 320_I4P, 640_I4P, 1280_I4P]
@@ -338,45 +510,79 @@ contains
    endfunction scheme_id
 
    subroutine ablation()
-   !< N5: seven schemes on four cases.
-   integer(I4P), parameter  :: NA = 7_I4P
+   !< N5: seven schemes on five Euler cases, one scheme at a time (activations counted per scheme).
+   integer(I4P), parameter  :: NA = 7_I4P, NE = 200_I4P
    character(16), parameter :: AN(NA) = [character(16) :: 'teno5', 'teno5_st', 'teno5_rbf', 'teno5_thinc', 'teno5_dr', &
                                          'teno5_st_dr', 'teno5_rbf_dr']
-   character(9), parameter  :: CN(4) = [character(9) :: 'sod', 'lax', 'shu-osher', 'blast']
-   integer(I4P)             :: aid(NA), k, j, ua, nlim(NA), nfb(NA)
-   real(R_P)                :: l1(NA)
-   logical                  :: pos(NA)
+   character(9), parameter  :: CN(5) = [character(9) :: 'sod', 'lax', '123', 'shu-osher', 'blast']
+   real(R_P), parameter     :: W123L(3) = [1._R_P, -2._R_P, 0.4_R_P], W123R(3) = [1._R_P, 2._R_P, 0.4_R_P]
+   integer(I4P)             :: k, j, i, ua, nl(1), nf(1)
+   real(R_P)                :: l1(1), osh, cw, h, x, w(3), wl(3), wr(3), tend, rmax, rmin, xc, us, rl, rr, lo, hi
+   real(R_P)                :: w0(3,NE), q(3,1-NG:NE+NG)
+   logical                  :: pos(1)
    real(R_P), allocatable   :: qref(:,:)
-   do k=1, NA
-      aid(k) = scheme_id(AN(k))
-   enddo
-   if (vv_report()) call vv_open('nonpoly-ablation.dat', ua, 'case scheme L1(rho) limited-faces positive')
-   print '(A)', '5. N5, the ablation: L1(rho) (Sod, Lax: exact; Shu-Osher, blast: reference), limited faces'
-   do k=1, 4
-      nlim = 0
-      select case(k)
-      case(1)
-         call riemann_problem('sod', SOD_L, SOD_R, 0.5_R_P, 0.2_R_P, 0.5_R_P, 200_I4P, aid, PATH_SPLIT, l1, pos, nfb, &
-                              files=.false.)
-      case(2)
-         call riemann_problem('lax', LAX_L, LAX_R, 0.5_R_P, 0.13_R_P, 0.5_R_P, 200_I4P, aid, PATH_SPLIT, l1, pos, nfb, &
-                              files=.false.)
-      case(3)
-         call reference_problem('shu-osher', init_shu_osher, -5._R_P, 5._R_P, BC_TRANSMISSIVE, 1.8_R_P, 0.5_R_P, &
-                                200_I4P, 3200_I4P, 3_I4P, aid, PATH_SPLIT, l1, pos, files=.false., qref_in=qref)
-         deallocate(qref)
-      case default
-         limiter = .true.
-         call reference_problem('blast', init_blast, 0._R_P, 1._R_P, BC_REFLECTIVE, 0.038_R_P, 0.5_R_P, 400_I4P, &
-                                6400_I4P, 3_I4P, aid, PATH_SPLIT, l1, pos, nlim=nlim, files=.false., qref_in=qref)
-         limiter = .false.
-      endselect
+   if (vv_report()) call vv_open('nonpoly-ablation.dat', ua, &
+      'case scheme L1(rho) overshoot contact-cells activations limited-faces positive (overshoot, contact: -1 n/a)')
+   print '(A)', '5. N5, the ablation: L1(rho), overshoot, cells across the contact, detector activations, limited faces'
+   count_activations = .true.
+   do k=1, 5
       do j=1, NA
-         print '(A12,A16,ES12.4,I6,L3)', trim(CN(k)), AN(j), l1(j), nlim(j), pos(j)
-         if (vv_report()) write(ua, '(A,1X,A,ES24.15,1X,I0,1X,L1)') trim(CN(k)), trim(AN(j)), l1(j), nlim(j), pos(j)
-         if (.not.pos(j)) then ; print '(A)', 'FAIL N5: not positive' ; passed = .false. ; endif
+         nactivations = 0 ; nlimited = 0 ; osh = -1._R_P ; cw = -1._R_P
+         select case(k)
+         case(1:3) ! the exact solution: L1, overshoot beyond its extrema, the contact (Sod, Lax)
+            select case(k)
+            case(1) ; wl = SOD_L ; wr = SOD_R ; tend = 0.2_R_P
+            case(2) ; wl = LAX_L ; wr = LAX_R ; tend = 0.13_R_P
+            case default ; wl = W123L ; wr = W123R ; tend = 0.15_R_P
+            endselect
+            h = 1._R_P/NE
+            do i=1, NE
+               x = (i - 0.5_R_P)*h ; w0(:,i) = merge(wl, wr, x < 0.5_R_P)
+            enddo
+            limiter = k == 3
+            call euler_run(scheme_id(AN(j)), PATH_SPLIT, w0, NE, h, BC_TRANSMISSIVE, tend, 0.5_R_P, q, pos(1))
+            limiter = .false.
+            l1(1) = 0._R_P ; rmax = -huge(1._R_P) ; rmin = huge(1._R_P)
+            do i=1, NE
+               x = (i - 0.5_R_P)*h
+               w = riemann_sample(wl, wr, GAMMA, (x - 0.5_R_P)/tend)
+               l1(1) = l1(1) + abs(q(1,i) - w(1))*h
+               rmax = max(rmax, w(1)) ; rmin = min(rmin, w(1))
+            enddo
+            osh = max(maxval(q(1,1:NE)) - rmax, rmin - minval(q(1,1:NE)), 0._R_P)
+            if (k <= 2) then
+               us = star_velocity(wl, wr) ; xc = 0.5_R_P + us*tend
+               w = riemann_sample(wl, wr, GAMMA, us - 1.e-6_R_P) ; rl = w(1)
+               w = riemann_sample(wl, wr, GAMMA, us + 1.e-6_R_P) ; rr = w(1)
+               lo = min(rl, rr) + 0.05_R_P*abs(rl - rr) ; hi = max(rl, rr) - 0.05_R_P*abs(rl - rr)
+               cw = 0._R_P
+               do i=1, NE
+                  x = (i - 0.5_R_P)*h
+                  if (abs(x - xc) < 0.1_R_P .and. q(1,i) > lo .and. q(1,i) < hi) cw = cw + 1._R_P
+               enddo
+            endif
+            nl(1) = nlimited
+         case(4)
+            call reference_problem('shu-osher', init_shu_osher, -5._R_P, 5._R_P, BC_TRANSMISSIVE, 1.8_R_P, 0.5_R_P, &
+                                   NE, 3200_I4P, 3_I4P, [scheme_id(AN(j))], PATH_SPLIT, l1, pos, files=.false., &
+                                   qref_in=qref)
+            nl(1) = nlimited
+         case default
+            limiter = .true.
+            call reference_problem('blast', init_blast, 0._R_P, 1._R_P, BC_REFLECTIVE, 0.038_R_P, 0.5_R_P, 400_I4P, &
+                                   6400_I4P, 3_I4P, [scheme_id(AN(j))], PATH_SPLIT, l1, pos, nlim=nl, files=.false., &
+                                   qref_in=qref)
+            limiter = .false.
+         endselect
+         nf(1) = int(nactivations, I4P)
+         print '(A12,A16,2ES12.4,F5.0,I9,I6,L3)', trim(CN(k)), AN(j), l1(1), osh, cw, nf(1), nl(1), pos(1)
+         if (vv_report()) write(ua, '(A,1X,A,2ES24.15,1X,I0,1X,I0,1X,I0,1X,L1)') trim(CN(k)), trim(AN(j)), l1(1), osh, &
+                                                                           nint(cw), nf(1), nl(1), pos(1)
+         if (.not.pos(1)) then ; print '(A)', 'FAIL N5: not positive' ; passed = .false. ; endif
       enddo
+      if (allocated(qref)) deallocate(qref)
    enddo
+   count_activations = .false.
    if (vv_report()) close(ua)
    endsubroutine ablation
 
@@ -441,7 +647,7 @@ contains
    subroutine units()
    !< E5: Shu-Osher on [-5, 5] and on [0, 1] (x, t / 10), N = 200.
    integer(I4P), parameter :: N = 200_I4P
-   real(R_P)               :: w0(3,N), qa(3,1-NG:N+NG), qb(3,1-NG:N+NG), h, d(2)
+   real(R_P)               :: w0(3,N), qa(3,1-NG:N+NG), qb(3,1-NG:N+NG), h, d(2), pr(N,3)
    integer(I4P)            :: i, k, uu
    logical                 :: pa, pb
    character(16), parameter :: UN(2) = [character(16) :: 'teno5', 'teno5_rbf']
@@ -455,12 +661,20 @@ contains
       call euler_run(scheme_id(UN(k)), PATH_SPLIT, w0, N, h, BC_TRANSMISSIVE, 1.8_R_P, 0.5_R_P, qa, pa)
       call euler_run(scheme_id(UN(k)), PATH_SPLIT, w0, N, h/8._R_P, BC_TRANSMISSIVE, 1.8_R_P/8._R_P, 0.5_R_P, qb, pb)
       d(k) = maxval(abs(qa(1,1:N) - qb(1,1:N)))
+      pr(:,k) = qa(1,1:N) ; if (k == 2) pr(:,3) = qb(1,1:N)
       print '(A16,ES12.4,A,F6.3,A,F6.4)', UN(k), d(k), '   s = 3 dx: ', 3._R_P*h, ' against ', 3._R_P*h/8._R_P
       if (vv_report()) write(uu, '(A,3ES16.7)') trim(UN(k)), d(k), 3._R_P*h, 3._R_P*h/8._R_P
       if (.not.(pa .and. pb)) then ; print '(A)', 'FAIL E5: not positive' ; passed = .false. ; endif
    enddo
    if (d(1) /= 0._R_P) then ; print '(A)', 'FAIL E5: TENO5 depends on the length unit' ; passed = .false. ; endif
-   if (vv_report()) close(uu)
+   if (vv_report()) then
+      close(uu)
+      call vv_open('nonpoly-units-profiles.dat', uu, 'x rho: teno5 teno5_rbf teno5_rbf-on-the-scaled-domain (x on [-5, 5])')
+      do i=1, N
+         write(uu, '(4ES16.8)') -5._R_P + (i - 0.5_R_P)*h, pr(i,:)
+      enddo
+      close(uu)
+   endif
    endsubroutine units
 
    subroutine e2_e3()

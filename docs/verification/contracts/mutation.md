@@ -41,6 +41,10 @@ blend does not see the swap).
 overrides (Liang et al. 2022, Eqs. 24 and 32; Takagi et al. 2022, Eq. 20), each branch of $\zeta$, the steepness
 levels, both guards with their sign and `rmu`, THINC's $\beta/2$ and both mirrors, the early exit, stencil
 targeting's row by mask, the RBF rows' sign and table, the sensor's $c_r$, nodes and $s_2$.
+2026-11-18, the completion of issue #6: **3 of 3 new mutants killed**, and the early-exit mutant, re-anchored on the
+constant loop extent of `side_level`, killed again (`notes/mutation-run-2026-11-18-nonpoly-completion.txt`): the
+right state's mirrored data in `seth_teno5_dr`, TENO5's states in place of the RBF states inside `seth_teno5_rbf_dr`,
+a coefficient of the pair row $(1,0,1)$ of `NP_RBF_P`. In all, 72 mutants, each caught by at least one test.
 Each line of the record names the tests that caught the mutant. The interpolation mutants are caught by the golden,
 interpolation, tables, TENO, WENO-Z and properties tests, and now also by the nonlinear cases (Sod, Lax, 123,
 Shu–Osher, blast, Euler order): a kernel wired to the wrong tables changes every downstream result. The four positivity-limiter

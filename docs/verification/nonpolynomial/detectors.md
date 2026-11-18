@@ -2,7 +2,7 @@
 
 | ID | Group | Type | Backends | Figure | Program |
 |---|---|---|---|---|---|
-| NP2 | Non-polynomial | P, C | CPU (gfortran, nvfortran, ifx) | — | `seth_test_nonpoly` |
+| NP2 | Non-polynomial | P, C | CPU (gfortran, nvfortran, ifx), device | the static tests at $N = 400$ | `seth_test_nonpoly`, `seth_test_device` |
 
 ## Case and scope
 
@@ -42,6 +42,12 @@ THINC detector Eq. 20 on all $8^7$; on Tables 1–3 they give the levels Liang e
 static tests:
 
 <!--@include: ../_tables/nonpoly-static.md-->
+
+![Liang et al.'s static tests (c), (d), (e) at N = 400, where the DR and THINC detectors fire](/verification/nonpoly-static.png)
+
+On the device (`seth_test_device`, case 57) the two detectors and $\zeta$, on the masks of 4096 stencils computed
+there, equal the host's bit for bit, and the test asserts that each detector fires on some of them (DR on 264, THINC
+on 162).
 
 ## Findings
 

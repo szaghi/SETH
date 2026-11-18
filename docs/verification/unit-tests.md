@@ -1,6 +1,6 @@
 # Test programs
 
-`fobis build --mode tests-gnu && bash scripts/run_tests.sh` runs 37 programs (`fpm test` the same set). Every one
+`fobis build --mode tests-gnu && bash scripts/run_tests.sh` runs 40 programs (`fpm test` the same set). Every one
 exits non-zero on a violated assertion. They pass with gfortran 16.2, nvfortran 26.9 and ifx 2026.2, debug (all
 checks and floating-point traps on) and optimised, and in the OpenACC build on the GPU. Random stencils come from a
 fixed, printed seed (`SETH_TEST_SEED` overrides it), so a failure reproduces.
@@ -11,7 +11,7 @@ The tests compute in the library's kind `R_P`. Their kind-sensitive literals (to
 magnitudes) live in `src/tests/seth_test_parameters.F90`, one set per kind, and `scripts/check_literals.py` fails on
 any left in a program. The R4P build (`fobis build --mode tests-gnu-r4 && bash scripts/run_tests.sh --exe-dir exe-r4`)
 leaves out the three comparisons with ADAM, which are R8P only, has its own golden file
-(`src/tests/golden/seth_golden_r4_v2.txt`), and passes its 34 programs on gfortran, nvfortran and ifx and in the
+(`src/tests/golden/seth_golden_r4_v4.txt`), and passes its 37 programs on gfortran, nvfortran and ifx and in the
 OpenACC build on the GPU. Its expectations are measured in R4P, the worst of the three compilers plus 5 %, each with
 its derivation next to it; the R8P set keeps every test as it was. What R4P changes:
 
@@ -57,7 +57,7 @@ its derivation next to it; the R8P set keeps every test as it was. What R4P chan
 | `seth_test_advection` | the derivative's order in a finite-difference scheme; TENO equal to its linear scheme over a period; the composite profile bounded | [A1](./accuracy/order-of-accuracy), [S7](./shocks/advection) |
 | `seth_test_spectral` | modified wavenumber of every linear background | [F1](./spectral/linear-spectra) |
 | `seth_test_tables` | the compiled coefficient tables re-verified | [C3](./contracts/tables) |
-| `seth_test_golden` | 8192 golden values | [C4](./contracts/golden) |
+| `seth_test_golden` | 11776 golden values (v9) | [C4](./contracts/golden) |
 | `seth_test_device` | every kernel on the device against the host, the positivity limiter included | [C5](./contracts/device), [C7](./contracts/positivity) |
 | `seth_test_positivity` | the positivity limiter: admissible, maximal, untouched where not needed | [C7](./contracts/positivity) |
 | `seth_vv_sod`, `seth_vv_lax`, `seth_vv_test123` | shock tubes against the exact solution; positivity with and without the limiter | [S1](./shocks/sod), [S2](./shocks/lax), [S3](./shocks/test123) |
@@ -65,7 +65,10 @@ its derivation next to it; the R8P set keeps every test as it was. What R4P chan
 | `seth_vv_burgers` | Burgers against the exact solution, before and after the shock | [S6](./shocks/burgers) |
 | `seth_vv_euler_order` | the design order through the complete Euler solver | [A4](./accuracy/euler-order) |
 | `seth_vv_advection` | the composite profile over four periods | [S7](./shocks/advection) |
-| `seth_vv_adr` | the approximate dispersion relation of every nonlinear scheme | [F2](./spectral/adr) |
+| `seth_vv_adr` | the approximate dispersion relation of every nonlinear scheme; TENO5-ST against linear5, TENO5-RBF's band at four $s$ | [F2](./spectral/adr) |
+| `seth_test_nonpoly` | the pieces of issue #6 against their frozen specifications: masks, Liang et al.'s Tables 1–3, the detectors on every mask combination, the overrides (bounds, conservation by quadrature, closed forms, scaling), N1 and N2 of the three composites, stencil targeting, the RBF rows (Eq. 29 on six rows), the census of the masks, the static tests | [NP1](./nonpolynomial/flags)–[NP6](./nonpolynomial/rbf) |
+| `seth_vv_nonpoly` | TENO5-DR and TENO5-THINC in the 1-D Euler harness: Sod and Lax contacts, N4 and N6 on periodic advection, E1–E3, E5, E6, the Gaussian pulse of Table 4 | [NP4](./nonpolynomial/dr), [NP8](./nonpolynomial/units) |
+| `seth_vv_2d` | the minimal 2-D Euler harness at $N = 48$: conservation, positivity, the oblique contact's symmetry | [NP9](./nonpolynomial/two-d) |
 
 The mutation run (`scripts/mutation_test.py`, [C6](./contracts/mutation)) checks the suite itself.
 

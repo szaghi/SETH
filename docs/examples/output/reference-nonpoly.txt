@@ -1,0 +1,8 @@
+$ reference_nonpoly
+        TENO5-DR  0.092271  0.927729
+     TENO5-THINC  0.010000  1.010000
+        TENO5-ST  0.010000  1.010000
+       TENO5-RBF  0.009784  1.010216
+    TENO5-RBF+DR  0.092271  0.927729
+cell 0: mask 4, zeta  1; DR levels of the face 1 1
+pieces equal to seth_teno5_dr, bitwise: T

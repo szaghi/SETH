@@ -43,6 +43,10 @@ call seth_teno5_rbf_dr(vp, vm, eps, ct, cr, s1, s2, t1, t2, rmu, rp, rm)  ! vp, 
 - **Length units.** The RBF kernels' results depend on `dx`: the correction is $s^2$ times a row, $s$ in the grid's
   units. The validated range is $s \le 0.12$ ([NP6](/verification/nonpolynomial/rbf), [NP8](/verification/nonpolynomial/units)).
 
+Every kernel on one stencil, a unit jump on a slope (a compiled example, `docs/examples/src/reference_nonpoly.F90`):
+
+<<< @/examples/snippets/reference_nonpoly-composites.F90{fortran}
+
 ## The pieces
 
 For a caller that builds its own composite, for instance a two-pass variant that stores each cell's mask once
@@ -65,6 +69,12 @@ call seth_thinc_override(vp, vm, lp, lm, beta, rmu, rp, rm)
 | `seth_thinc_detect` | the THINC levels of the two states (0 or 1) |
 | `seth_dr_override` | where a level is 1 or 2, replaces the state by DR's interpolation |
 | `seth_thinc_override` | where a level is 1, replaces the state by the face value of the THINC function |
+
+TENO5-DR built from its pieces, equal to `seth_teno5_dr` bit for bit (the same example):
+
+<<< @/examples/snippets/reference_nonpoly-pieces.F90{fortran}
+
+<<< @/examples/output/reference-nonpoly.txt{text}
 
 `mp(c)` is the mask of cell `c` of the left-biased data, `mm(c)` the mask of cell `c` of the mirrored right-biased
 data `vm(1-m)`. The constants `SETH_DR_T1` and `SETH_DR_T2` live in `seth_nonpoly_tables`, `SETH_NONPOLY_GUARD` in

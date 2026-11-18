@@ -305,10 +305,18 @@ contains
 
    subroutine static_tests()
    !< Spec 19.
-   integer              :: us
+   integer              :: us, up, j
    logical              :: ok
    ok = .true.
    if (vv_report()) call vv_open('nonpoly-static.dat', us, 'case N detector x-of-each-activation...')
+   if (vv_report()) then ! the three functions, for the figure: 2000 points on [0, 2]
+      call vv_open('nonpoly-static-profile.dat', up, 'x f_c f_d f_e (Liang et al. 2022, static tests (c), (d), (e))')
+      do j=0, 1999
+         write(up, '(4ES16.8)') 2._R_P*(j + 0.5_R_P)/2000._R_P, static_c(2._R_P*(j + 0.5_R_P)/2000._R_P), &
+                                static_d(2._R_P*(j + 0.5_R_P)/2000._R_P), static_e(2._R_P*(j + 0.5_R_P)/2000._R_P)
+      enddo
+      close(up)
+   endif
    call static_one('a', 120, 0, us, ok)
    call static_one('b', 120, 0, us, ok)
    call static_one('c', 100, 1, us, ok) ; call static_one('c', 400, 1, us, ok)

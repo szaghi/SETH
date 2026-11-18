@@ -2,7 +2,7 @@
 
 | ID | Group | Type | Backends | Figure | Program |
 |---|---|---|---|---|---|
-| NP4 | Non-polynomial | P, C | CPU (gfortran, nvfortran, ifx), device | — | `seth_test_nonpoly`, `seth_vv_nonpoly`, the registry's cases |
+| NP4 | Non-polynomial | P, C | CPU (gfortran, nvfortran, ifx), device | contact zooms, E2 (square wave, Sod), E3; animations | `seth_test_nonpoly`, `seth_vv_nonpoly`, `seth_vv_euler_order`, the registry's cases |
 
 ## Case and scope
 
@@ -10,7 +10,8 @@ TENO5-DR (Liang, Xiao, Shyy & Fu 2022) replaces TENO5's state where its detector
 by a two-steepness interpolation through the three cell values, sharper than any polynomial. This case verifies the
 override on its own (steps 2.1–2.2 of [issue #6](https://github.com/szaghi/SETH/issues/6)), the self-contained kernel
 `seth_teno5_dr` (step 2.3), its cost (experiment E1, step 2.4), conservation (N4), the halo width (N6, E4), contact
-spreading in time (E2) and the steepening of smooth gradients (E3).
+spreading in time (E2), the steepening of smooth gradients (E3), and the paper's own accuracy test, the Gaussian pulse
+of its Table 4 (step 2.2, spec 6).
 
 $$\hat f_{i+1/2} = \frac{f_{i+1}+f_{i-1}}{2} + \frac{f_{i+1}-f_{i-1}}{2}\,\frac{\tanh A + B}{1 + B\tanh A},\qquad
 B = \frac{2f_i - f_{i+1} - f_{i-1}}{f_{i+1}-f_{i-1}}$$
@@ -25,8 +26,9 @@ $i-3..i+2$ ([Detectors](./detectors)).
 |---|---|---|
 | Override | `seth_dr_override`: $\tanh A$ passed as `SETH_DR_T1`, `SETH_DR_T2` (generated, the nearest doubles) | [`seth_nonpoly.F90`](https://github.com/szaghi/SETH/blob/main/src/lib/seth_nonpoly.F90) |
 | Kernel | `seth_teno5_dr(vp, vm(-5:6), …)`: TENO5, the masks of the neighbouring cells recomputed per face, the detector (downwind cells first: an early exit with the same result), the override | |
-| Specs | on $10^6$ strictly monotone triples: level 0 bitwise inert; the state in $[f_i, f_{i+1}]$; mirror and $2^k$ scaling bitwise; equal to $m + h\tanh(A + \operatorname{atanh} B)$ to $10^{-13}$; linear data give $f_i + d\tanh A$; finite on $10^6$ triples of any sign; the guard | [`seth_test_nonpoly.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_test_nonpoly.F90) |
-| N1, N2 | the kernel equals a two-pass, stored-mask reference bitwise on nine periodic scalar fields; inert on the smooth ones | |
+| Specs | on $10^6$ strictly monotone triples: level 0 bitwise inert; the state in $[f_i, f_{i+1}]$; mirror and $2^k$ scaling bitwise; equal to $m + h\tanh(A + \operatorname{atanh} B)$ to $10^{-13}$; the denominator $1 + B\tanh A$ positive; an offset $\mu$ of the data moves the state by $\mu$ to $10^{-12}|\mu|$; linear data give $f_i + d\tanh A$; finite on $10^6$ triples of any sign; the guard; `SETH_DR_T1`, `SETH_DR_T2` within one ulp of $\tanh 0.91$, $\tanh 1.23$ (`seth_test_tables`) | [`seth_test_nonpoly.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_test_nonpoly.F90) |
+| N1, N2 | the kernel equals a two-pass, stored-mask reference bitwise on nine periodic scalar fields; inert on the smooth ones; the same for `seth_teno5_rbf_dr` against TENO5-RBF; on the Euler density wave (`seth_vv_euler_order`, $N = 20..160$) the density of DR, THINC and RBF+DR against their base schemes' | [`seth_vv_euler_order.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_vv_euler_order.F90) |
+| Spec 6 | Liang et al. 2022, §4.1: $e^{-300(x-0.5)^2}$ on $[0, 1]$, periodic, one period, exact cell averages, SSP-RK3 at CFL $0.1\,(80/N)^{2/3}$ (the paper's time step is not stated), $N = 80, 160, 320$ in the suite, 640 and 1280 in report mode | [`seth_vv_nonpoly.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_vv_nonpoly.F90) |
 | Solver | the 1-D Euler harness, characteristic Lax–Friedrichs splitting, SSP-RK3, CFL 0.5; Sod and Lax at $N = 100$ (step 2.2, spec 7); the cases of the registry ([shock capturing](../shocks/)) | [`seth_vv_nonpoly.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_vv_nonpoly.F90) |
 | E1 | the same faces with the masks stored once per cell, each in the characteristic basis of its own face (the harness's `stored_masks`), against the default (every mask in the basis of the face being reconstructed) | [`seth_vv_euler.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_vv_euler.F90) |
 | N4, N6 | linear advection, periodic, a square wave on a sine, $N = 200$, one period: the sum of $u$ conserved to $10^{-13}$; the domain split in two blocks with $G$ ghost cells refilled from each other at every stage: $G = 6$ bitwise equal to one block, $G = 5$ (the sixth cell unfilled) different | [`seth_vv_nonpoly.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_vv_nonpoly.F90) |
@@ -49,6 +51,20 @@ TENO5's, strictly fewer cells):
 
 <!--@include: ../_tables/nonpoly-contact.md-->
 
+![Sod and Lax at N = 100, the density across the contact: exact, TENO5, TENO5-DR, TENO5-THINC, TENO5-RBF+DR](/verification/nonpoly-contact.png)
+
+<div class="seth-casts">
+<figure class="seth-cast seth-cast-wide" style="--ar: 2">
+  <video class="light-only" autoplay loop muted playsinline poster="/verification/casts/nonpoly-sod-light.png"><source src="/verification/casts/nonpoly-sod-light.webm" type="video/webm"><source src="/verification/casts/nonpoly-sod-light.mp4" type="video/mp4"></video>
+  <video class="dark-only" autoplay loop muted playsinline poster="/verification/casts/nonpoly-sod-dark.png"><source src="/verification/casts/nonpoly-sod-dark.webm" type="video/webm"><source src="/verification/casts/nonpoly-sod-dark.mp4" type="video/mp4"></video>
+  <figcaption>Sod's density in time, N = 100: TENO5, TENO5-DR, TENO5-THINC.</figcaption>
+</figure>
+</div>
+
+The Gaussian pulse of Liang et al. 2022, Table 4 (spec 6):
+
+<!--@include: ../_tables/nonpoly-pulse.md-->
+
 Experiment E1: the default kernel against the stored-mask variant, $N = 200$ (Sod, Lax), Shu–Osher on $[-5, 5]$ and the
 blast waves at $N = 400$:
 
@@ -62,13 +78,42 @@ Experiment E2, the contact in time:
 
 ![The width of a square wave over 10 periods, TENO5, TENO5-DR, TENO5-THINC](/verification/nonpoly-e2.png)
 
+![The cells across Sod's contact in time, N = 100, TENO5, TENO5-DR, TENO5-THINC](/verification/nonpoly-e2-sod.png)
+
+<div class="seth-casts">
+<figure class="seth-cast seth-cast-wide" style="--ar: 2">
+  <video class="light-only" autoplay loop muted playsinline poster="/verification/casts/nonpoly-square-light.png"><source src="/verification/casts/nonpoly-square-light.webm" type="video/webm"><source src="/verification/casts/nonpoly-square-light.mp4" type="video/mp4"></video>
+  <video class="dark-only" autoplay loop muted playsinline poster="/verification/casts/nonpoly-square-dark.png"><source src="/verification/casts/nonpoly-square-dark.webm" type="video/webm"><source src="/verification/casts/nonpoly-square-dark.mp4" type="video/mp4"></video>
+  <figcaption>The square wave over 10 periods, N = 100; under it, the faces where TENO5-DR and TENO5-THINC override TENO5's state.</figcaption>
+</figure>
+</div>
+
 <!--@include: ../_tables/nonpoly-e2.md-->
 
 Experiment E3, smooth gradients:
 
+![L1 after one period against the width of the gradients, TENO5, TENO5-DR, TENO5-THINC](/verification/nonpoly-e3.png)
+
 <!--@include: ../_tables/nonpoly-e3.md-->
 
+<div class="seth-casts">
+<figure class="seth-cast seth-cast-wide" style="--ar: 2">
+  <video class="light-only" autoplay loop muted playsinline poster="/verification/casts/nonpoly-blast-light.png"><source src="/verification/casts/nonpoly-blast-light.webm" type="video/webm"><source src="/verification/casts/nonpoly-blast-light.mp4" type="video/mp4"></video>
+  <video class="dark-only" autoplay loop muted playsinline poster="/verification/casts/nonpoly-blast-dark.png"><source src="/verification/casts/nonpoly-blast-dark.webm" type="video/webm"><source src="/verification/casts/nonpoly-blast-dark.mp4" type="video/mp4"></video>
+  <figcaption>The blast waves under TENO5-DR, N = 400, the limiter on; under them, where the DR detector fires on the density (the scheme detects on each characteristic field).</figcaption>
+</figure>
+</div>
+
 ## Findings
+
+- **The paper's accuracy test holds to round-off, not bit for bit.** On the Gaussian pulse TENO5-DR is TENO5 bit for
+  bit at $N = 80$ and 160; at $N = 320$ and beyond the detector fires on the tails, where $|u| \approx 10^{-15}$, the
+  scheme's round-off read as structure by TENO5's cutoff (its indicators, $\sim 10^{-30}$, lie far above
+  $\varepsilon = 10^{-40}$), and the solution moves by $8\cdot10^{-15}$. The frozen specification (zero overrides,
+  bitwise TENO5) is asserted to a noise floor of $10^{-12}$, a deviation left to the owner. The $L_\infty$ errors match
+  the paper's to 0.3–1 % from $N = 160$ (15 % at $N = 80$, where the discretisations differ most). The same holds on
+  the Euler density wave: with $u = p = 1$ the acoustic characteristic fields are constant to round-off, and DR,
+  THINC and RBF+DR differ from their base schemes by $2\cdot10^{-14}$ at most.
 
 - **TENO5-DR halves TENO5's error on the shock tubes**, and its contact is one to two cells narrower; on the cases
   of the registry it is at least as good as TENO5 everywhere it is measured (Sod, Lax, 123, Shu–Osher, the composite

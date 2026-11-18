@@ -2,7 +2,7 @@
 
 | ID | Group | Type | Backends | Figure | Program |
 |---|---|---|---|---|---|
-| NP5 | Non-polynomial | P, C | CPU (gfortran, nvfortran, ifx), device | — | `seth_test_nonpoly` |
+| NP5 | Non-polynomial | P, C | CPU (gfortran, nvfortran, ifx), device | the six stencils | `seth_test_nonpoly`, `seth_test_critical_points`, `seth_test_properties`, `seth_vv_adr`, `seth_vv_burgers`, the shock cases |
 
 ## Case and scope
 
@@ -19,13 +19,16 @@ the Gaussian-RBF scheme ([NP6](./rbf)), generated and checked by `scripts/gen_no
 | one candidate kept | its three cells | that candidate | §3.1 |
 | (0,1,1) | $-2..2$ | $3q_1/4 + q_2/4$, TENO5's renormalised weights | not in the paper: owner decision D4 |
 
+![The stencil each mask of TENO5's cutoff selects, the left state](/guide/conv-targeting.png)
+
 ## Models and numerics
 
 | Item | Choice | Code |
 |---|---|---|
 | Kernel | the body of `seth_teno5` with `SETH_TENO_ROWS`: TENO5's cutoff, then the row of each state's mask (the preprocessed code of every other kernel unchanged) | [`seth_nonpoly.F90`](https://github.com/szaghi/SETH/blob/main/src/lib/seth_nonpoly.F90) |
 | Spec 14 | order 5.0 ± 0.1 at a point (the generic $g$, cell averages, face at 0.3), both states; equal to `seth_linear5` on smooth data; beside a jump between the cells $-2$ and $-1$ (mask (1,1,0)) the order of the smooth side's error 4.0 ± 0.2 where TENO5's is 3.0 ± 0.2; no overshoot across a unit jump | [`seth_test_nonpoly.F90`](https://github.com/szaghi/SETH/blob/main/src/tests/seth_test_nonpoly.F90) |
-| Spec 16 | the rows: masks 1, 2, 4 are TENO5's candidates, 7 is `seth_linear5`'s row, 6 TENO5's renormalised weights, exactly | |
+| Spec 16 | the rows: masks 1, 2, 4 are TENO5's candidates, 7 is `seth_linear5`'s row, 6 TENO5's renormalised weights, exactly; in `seth_test_tables` every row zero outside its stencil, exact below its width, the pairs equal to $q_0/2 + q_1/2$ and $3q_0/4 + q_2/4$ | |
+| G4–G7 | the orders at critical points (`seth_test_critical_points`, the literature bound of TENO5); the invariances, a $10^{30}$ step at every cell boundary (`seth_test_properties`); the ADR against linear5 (`seth_vv_adr`); Burgers, Sod, Lax, 123, Shu–Osher, the blast waves and the composite advection against TENO5's bounds | the programs named |
 | E7 | the masks by data, $10^7$ stencils each: smooth cubics, a jump of random place and height ($10^{-6}..10^2$) on a linear function, a kink, independent values | |
 
 ## Program
@@ -49,6 +52,11 @@ Experiment E7, how often each mask occurs:
 
 - **Stencil targeting buys one order beside a jump**: with the upwind candidate cut, TENO5 falls to third order
   (its weights 2/3, 1/3 of the two remaining candidates) where the four-point row of stencil targeting keeps fourth.
+- **Its pair weights cost no robustness** (the question step 3.1 left to G6 and Burgers): at critical points it
+  measures TENO5's orders (5.00, and 2.00 at the second-order point); its ADR is linear5's for
+  $\theta \le \pi/4$ ($6\cdot10^{-16}$) and nowhere anti-dissipative; behind the Burgers shock its smooth-region
+  $L_1$ is $3.5\cdot10^{-9}$ against TENO5's $3.9\cdot10^{-9}$; on every shock case of the suite it stays within
+  TENO5's recorded bound.
 - **The mask (0,1,1) occurs, but only on noise-like data** (0.05 % of independent values; never on smooth data, a
   single jump or a kink): the choice of decision D4 matters there only.
 - **TENO5 never cuts a candidate at a kink** of these data ($C_T = 10^{-5}$): stencil targeting, like TENO5, treats a

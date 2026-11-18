@@ -60,7 +60,7 @@ implicit none
 private
 public :: GAMMA, NG, PATH_SPLIT, PATH_INTERP, PATH_ROE, BC_PERIODIC, BC_TRANSMISSIVE, BC_REFLECTIVE, BC_INFLOW
 public :: prim2cons, cons2prim, euler_dt, euler_step, nfallback, corrections, limiter, nlimited, positive_state
-public :: roe_fix, nsonic, stored_masks
+public :: roe_fix, nsonic, stored_masks, count_activations, nactivations
 public :: SENS_TENO, SENS_REN, SENS_LCR, SENS_TAU, hyb_sensor
 public :: HYB_NONE, HYB_COST, HYB_KEP, HYB_LEFT_KEP, HYB_RANDOM, hybrid, hyb_buffer, hyb_split, nflagged, nhybfaces
 
@@ -76,6 +76,9 @@ integer(I4P) :: nfallback = 0 !< Interpolated face states replaced by first-orde
 logical      :: corrections = .true. !< PATH_INTERP: add the flux corrections (off: the second-order flux F0).
 logical      :: limiter = .false.    !< Positivity-preserving flux limiter (Hu, Adams & Shu 2013).
 integer(I4P) :: nlimited = 0         !< Faces where the limiter blended in the first-order flux (theta < 1).
+logical      :: count_activations = .false. !< Count, on the splitting path, the states of a composite (`wide`) scheme
+                                            !< whose detector fires, per characteristic field (issue #6, N5's table).
+integer(I8P) :: nactivations = 0_I8P  !< Those states, summed over the run.
 logical      :: roe_fix = .true.     !< PATH_ROE: the entropy fix (local Lax-Friedrichs at sign changes).
 integer(I8P) :: nsonic = 0           !< PATH_ROE: characteristic fields evaluated with local Lax-Friedrichs.
 logical      :: stored_masks = .false. !< PATH_SPLIT, the composite kernels (registry flag `wide`): the stored-mask
@@ -319,6 +322,8 @@ contains
             else
                call reconstruct(id, vp, vm, rp, rm, par=par)
             endif
+            if (count_activations .and. SCHEMES(id)%wide) call activations(trim(SCHEMES(id)%name) == 'teno5_thinc', &
+                                                                          vp, vm)
             fc(k) = rp + rm
          enddo
          fhat(:,i) = matmul(r, fc)
@@ -436,4 +441,29 @@ contains
       if (.not.(q(1,i)*q(3,i) - 0.5_R_P*q(2,i)**2 > 0._R_P)) then ; ok = .false. ; return ; endif
    enddo
    endfunction positive_state
+   subroutine activations(thinc, vp, vm)
+   !< Add to nactivations the states (0, 1 or 2) of the face whose detector fires on vp, vm (TENO5's masks of the cells
+   !< -3..3, the right state's mirrored), the detector of the scheme: THINC's or DR's (DR, ST+DR, RBF+DR).
+   logical,   intent(in) :: thinc
+   real(R_P), intent(in) :: vp(VLO:VHI), vm(VLO:VHI)
+   real(R_P)             :: u(-2:2)
+   integer(I4P)          :: mp(-3:3), mm(-3:3), c, m, lp, lm
+   do c=-3, 3
+      do m=-2, 2
+         u(m) = vp(c+m)
+      enddo
+      call seth_teno5_mask(u, SETH_TENO_EPS, SETH_TENO5_CT, mp(c))
+      do m=-2, 2
+         u(m) = vm(1-c-m)
+      enddo
+      call seth_teno5_mask(u, SETH_TENO_EPS, SETH_TENO5_CT, mm(c))
+   enddo
+   if (thinc) then
+      call seth_thinc_detect(mp, mm, lp, lm)
+   else
+      call seth_dr_detect(mp, mm, lp, lm)
+   endif
+   nactivations = nactivations + merge(1_I8P, 0_I8P, lp > 0) + merge(1_I8P, 0_I8P, lm > 0)
+   endsubroutine activations
+
 endmodule seth_vv_euler

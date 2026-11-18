@@ -2,3 +2,4 @@
 |---|---|---|---|---|
 | TENO5-DR | 4312 | 1.836e-14 | yes | yes |
 | TENO5-THINC | 7303 | 1.717e-14 | yes | yes |
+| TENO5-RBF+DR | 4313 | 1.788e-14 | yes | yes |

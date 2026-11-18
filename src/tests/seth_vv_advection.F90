@@ -11,18 +11,20 @@ program seth_vv_advection
 !< of 5% after four periods would be an instability); the
 !< low-dissipation claims of the literature on this problem: WENO-Z5 (Borges et al. 2008) and TENO5 (Fu, Hu & Adams
 !< 2016) have a smaller L1 error than WENO5-JS.
+!< The non-polynomial schemes of issue #6 (TENO5-DR, -THINC, -ST, -RBF with s = 3 h, -ST-DR, -RBF-DR) run in every mode,
+!< held to the same bounds.
 !< Report mode: advection.dat (scheme L1 max min), the final profiles, 81 frames over the four periods (WENO5-JS,
 !< WENO-Z5, TENO5, TENO6).
 use seth
 use seth_test_parameters, only : T_SLACK
 use seth_test_schemes
 use seth_vv_scalar
-use seth_vv_cases, only : vv_report, vv_open, vv_schemes, vv_label, l1_norm
+use seth_vv_cases, only : vv_report, vv_open, vv_schemes, vv_label, l1_norm, vv_nonpoly_ids
 use seth_vv_euler, only : PATH_SPLIT
 implicit none
 integer(I4P), parameter   :: N = 200_I4P, NF = 80_I4P
 real(R_P), parameter      :: TEND = 8._R_P, CFL = 0.4_R_P
-integer(I4P), allocatable :: ids(:)
+integer(I4P), allocatable :: ids(:), npi(:)
 real(R_P)                 :: u0(0:N-1), u(0:N-1), h, l1, js5, fr(0:N-1,0:NF)
 real(R_P), allocatable    :: l1s(:)
 integer(I4P)              :: k, i, ua, uf, f
@@ -34,6 +36,10 @@ do i=0, N-1
    u0(i) = jiang_shu(-1._R_P + (i + 0.5_R_P)*h)
 enddo
 call vv_schemes(PATH_SPLIT, .not.vv_report(), ids)
+call vv_nonpoly_ids(npi) ! issue #6: the non-polynomial schemes in every run (G7, N5), the RBF ones with s = 3 h
+if (vv_report()) npi = npi(3:) ! report mode sweeps DR and THINC already
+ids = [ids, npi]
+rbf_dx = h
 allocate(l1s(size(ids)))
 if (vv_report()) call vv_open('advection.dat', ua, 'scheme L1 max min (composite profile, N = 200, t = 8)')
 js5 = -1._R_P

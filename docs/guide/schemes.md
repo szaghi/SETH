@@ -379,26 +379,87 @@ What it is, and what it is not:
 ## Non-polynomial TENO: TENO5-DR, TENO5-THINC, stencil targeting, Gaussian-RBF
 
 Four schemes of the TENO line ([issue #6](https://github.com/szaghi/SETH/issues/6)) keep TENO5's cutoff and use its
-flags, $\delta_k$ of each cell, the 3-bit mask $\delta_0 + 2\delta_1 + 4\delta_2$ of `seth_teno5_mask`:
+flags: $\delta_k$ of each cell, packed into the 3-bit mask $\delta_0 + 2\delta_1 + 4\delta_2$ by `seth_teno5_mask`
+($k$ in TENO5's order: 0 the central candidate, 1 the downwind one, 2 the upwind one). The flags are those of plain
+TENO5, $C_T = 10^{-5}$: the papers calibrate their criteria on them, so no detector is offered on the flags of
+TENO5-AZ or TENO5-A.
 
-- **TENO5-DR** (Liang, Xiao, Shyy & Fu 2022) and **TENO5-THINC** (Takagi, Fu, Wakimura & Xiao 2022): a detector reads
-  $\zeta$ of the cells around the face (Eq. 17: 2 where both one-sided candidates are cut, 1 the downwind, $-1$ the
-  upwind) and, where a discontinuity sits inside the cell, replaces TENO5's state: by the face value of a
-  hyperbolic-tangent step through the cell (THINC, $\beta = 1.6$, Eq. 16) or by the two-steepness interpolation
-  $m + h\tanh(A + \operatorname{atanh}B)$, $A = 0.91$ or $1.23$ (DR, Eq. 31); both fall to the cell value where
-  $(f_{i+1}-f_i)(f_i-f_{i-1}) \le 10^{-15}$. The kernels `seth_teno5_dr`, `seth_teno5_thinc` read twelve cells,
-  $-5..6$ (6 ghost cells), and recompute the neighbours' flags per face ([Verification](/verification/nonpolynomial/)).
-- **Stencil targeting** (Liang & Fu 2024, §3.1): the mask selects one polynomial row, the widest stencil that avoids
-  the flagged cells: five points, the four points $-2..1$ ($3q_0/4 + q_2/4$) or $-1..2$ ($q_0/2 + q_1/2$), or one
-  candidate. Fourth order beside a jump where TENO5 is third (`seth_teno5_st`).
-- **Gaussian-RBF** (Liang & Fu 2024, Eqs. 25, 30–32): each row of stencil targeting plus $s^2$ times a correction
-  row (the Gaussian RBF expanded to $s^2 = \lambda^2\Delta x^2$), $s = s_1 + s_2(1 - g(m))$ from a sensor
-  (`seth_teno5_rbf`). The caller passes $s_k = \alpha_k \Delta x$ ($\alpha_1 = \alpha_2 = 3$ in the paper): the results
-  depend on the length unit, and the linear scheme grows waves with $\theta^2 < 30 s^2$; the validated range is
-  $s \le 0.12$ ([NP6](/verification/nonpolynomial/rbf)).
-- **The complete scheme** of Liang & Fu 2024 (`seth_teno5_rbf_dr`): the RBF rows with the DR override on top. Measured
-  piece by piece ([NP7](/verification/nonpolynomial/ablation)): the DR override buys the gain on the shock tubes, the
-  RBF term the gain on Shu–Osher, at an $s$ outside its validated range.
+**The detectors.** Each reads $\zeta$ of the cells around the face (Liang et al. 2022, Eq. 17):
+$\zeta = 2$ where both one-sided candidates are cut, $1$ where only the downwind one is, $-1$ where only the upwind
+one is, $0$ otherwise (`seth_teno5_zeta`). Write $U = \{1, 2\}$ (a jump on the cell's upwind side) and
+$D = \{-1, 2\}$ (on its downwind side); cell $0$ is the face's upwind cell. For the left state:
+
+| Detector | Level | Condition |
+|---|---|---|
+| DR, Eq. 24 | 1 | (I) $\zeta_c \in U$ for some $c \in \{-3,-2,-1\}$, $\zeta_0 = 0$, $\zeta_c \in D$ for some $c \in \{1, 2\}$; or (II) $\zeta_c \in U$ for some $c \in \{-2,-1\}$, $\zeta_0 = 1$, $\zeta_1 = -1$, $\zeta_2 \in D$ |
+| DR, Eq. 32 | 2 | $\zeta_{-2}, \zeta_{-1} \in U$, and either $\zeta_0 = 0$, $\zeta_1, \zeta_2 \in D$ or $\zeta_0 = 1$, $\zeta_1 = -1$, $\zeta_2 \in D$ |
+| THINC (Takagi et al. 2022, Eq. 20) | 1 | $\zeta_c \in U$ for some $c \in \{-3..-1\}$, $\zeta_0 = 0$, $\zeta_c \in D$ for some $c \in \{1..3\}$ |
+
+The right state applies the same conditions to the mirrored cells (`seth_dr_detect`, `seth_thinc_detect`). DR reads
+the masks of the cells $-3..2$, THINC of $-3..3$; with the five values behind each mask the data footprint is
+$-5..6$: **twelve cells and 6 ghost cells**, proved by a two-block run that equals the single block bitwise with 6 and
+differs with 5 ([NP4](/verification/nonpolynomial/dr)).
+
+**The overrides.** With $\bar f = (f_{i+1} + f_{i-1})/2$, $\Delta = (f_{i+1} - f_{i-1})/2$ and
+$\alpha = (f_i - \bar f)/\Delta$, at a detected face the state becomes
+
+$$
+\text{DR (Eq. 31):}\quad f_{i+1/2} = \bar f + \Delta \tanh(A + \operatorname{atanh}\alpha)
+= \bar f + \Delta\,\frac{t + \alpha}{1 + t\alpha},\qquad t = \tanh A,\ A = 0.91 \text{ (level 1)}, 1.23 \text{ (level 2)},
+$$
+
+$$
+\text{THINC (Eq. 16):}\quad f_{i+1/2} = \bar f + \Delta\,\frac{a + T}{1 + aT},\qquad T = \tanh\frac{\beta}{2},\
+a = \frac{1}{T}\tanh\frac{\beta\alpha}{2},\ \beta = 1.6,
+$$
+
+the face value of a hyperbolic-tangent step through the cell that keeps its average $f_i$. Both fall to $f_i$ where
+$(f_{i+1} - f_i)(f_i - f_{i-1}) \le 10^{-15}$ (Eq. 33, Takagi's Eq. 17): a dimensional guard, which `rmu` (the
+inverse of the data's scale) makes scale invariant. The constants ship as `SETH_DR_T1` $= \tanh 0.91$,
+`SETH_DR_T2` $= \tanh 1.23$, `SETH_THINC_BETA` $= 1.6$. The self-contained kernels `seth_teno5_dr` and
+`seth_teno5_thinc` do it all per face: TENO5's states, the masks of the neighbours recomputed on the twelve values
+the caller passes (projected in the basis of the face being reconstructed, for a system), the detector, the override.
+They first test the downwind cells, which on smooth data rule detection out after two masks.
+
+**Stencil targeting** (Liang & Fu 2024, §3.1, `seth_teno5_st`): the mask selects one polynomial row, the widest
+stencil that avoids the flagged cells. $(1,1,1)$: the five points; $(1,1,0)$: $q_0/2 + q_1/2$ on $-1..2$; $(1,0,1)$:
+$3q_0/4 + q_2/4$ on $-2..1$; one flag: that candidate. The paper's conditions leave $(0,1,1)$ uncovered: SETH gives it
+TENO5's own renormalised weights $3q_1/4 + q_2/4$ (decision D4); it occurs only on noise, 0.05 % of random
+stencils and never on smooth data, a jump or a kink ([NP5](/verification/nonpolynomial/targeting)). Fourth order
+beside a jump, where TENO5 is third.
+
+![The stencil each mask of TENO5's cutoff selects in stencil targeting, the left state](/guide/conv-targeting.png)
+
+**Gaussian-RBF** (Liang & Fu 2024, Eqs. 25, 30–32, `seth_teno5_rbf`): each row of stencil targeting plus $s^2$
+times a correction row whose entries sum to zero (the Gaussian RBF expanded to $s^2 = \lambda^2\Delta x^2$), with $s$
+from a sensor on the nodes $j = i-1..i+1$:
+
+$$
+\eta_j = \frac{|2\,\delta_{j-1/2}\,\delta_{j+1/2}| + \varepsilon}{\delta_{j-1/2}^2 + \delta_{j+1/2}^2 + \varepsilon},\quad
+m = 1 - \min\!\Big(1, \frac{\min_j \eta_j}{c_r}\Big),\quad g = (1 - m)^4 (1 + 4m),\quad s = s_1 + s_2\,(1 - g),
+$$
+
+$\delta_{j+1/2} = f_{j+1} - f_j$, $c_r = 0.4$ (`SETH_RBF_CR`), $\varepsilon = 10^{-40}$. The caller passes
+$s_k = \alpha_k \Delta x$ ($\alpha_1 = \alpha_2 = 3$ in the paper, `SETH_RBF_ALPHA1`, `SETH_RBF_ALPHA2`): no grid
+enters the library, and **the results depend on the length unit** ([NP8](/verification/nonpolynomial/units)). The
+linear scheme grows waves with $\theta^2 < 30 s^2$ (the $\lambda^2$ term of Eq. 29 is anti-dissipative): the
+validated range is $s \le 0.12$, where the growth stays within twice the prediction and below TENO6's $2\cdot10^{-4}$.
+Outside it the nonlinear scheme is more anti-dissipative than its row predicts (its sensor raises $s$ above $s_1$):
+22 times at $s = 0.15$, the $s$ of the paper's own Shu–Osher run ([NP6](/verification/nonpolynomial/rbf)).
+
+**The complete scheme** of Liang & Fu 2024 (`seth_teno5_rbf_dr`): the RBF rows with the DR override on top, on the
+same twelve cells. Measured piece by piece ([NP7](/verification/nonpolynomial/ablation)): the DR override buys the
+gain on the shock tubes, the RBF term the gain on Shu–Osher, at an $s$ outside its validated range.
+
+**What they cost** (ns per face against `seth_teno5`, [Performance](/guide/performance#the-non-polynomial-composites-issue-6)): stencil
+targeting and the RBF rows about TENO5's; the self-contained DR and the complete scheme about three times it, THINC
+three and a half (three downwind masks per state); the stored-mask variant, which a caller can build from the pieces
+(one pass storing every cell's two masks, a second reconstructing the faces), under two.
+
+**On round-off.** The cutoff reads data at round-off as structure: a constant that is not exact in binary, the tail
+of a Gaussian 15 decades below its peak, the constant acoustic fields of a density wave. There the detector can fire,
+and the override moves the state by about the round-off ($10^{-14}$ measured); the frozen "bitwise equal to TENO5 on
+smooth data" holds on scalar fields and not on these ([NP4](/verification/nonpolynomial/dr)).
 
 ## Interpolation with WENO-Z and TENO
 
