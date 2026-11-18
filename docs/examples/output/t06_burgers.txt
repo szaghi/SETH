@@ -1,0 +1,8 @@
+$ t06_burgers
+u_t + (u^2/2)_x = 0, u0 = 0.5 + sin(2 pi x), 100 cells, t = 0.5 (shock from t = 1/(2 pi))
+scheme     extrema  total variation  mass conserved
+WENO5-JS         2           2.8088               T
+WENO-Z7          2           2.8862               T
+TENO5            2           2.8171               T
+linear5          8           3.9735               T
+ initial         2           3.9974

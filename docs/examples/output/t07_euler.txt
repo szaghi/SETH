@@ -1,0 +1,6 @@
+$ t07_euler
+Sod's shock tube, 200 points, t = 0.2, TENO5
+  exact velocity behind the shock, u* =  0.92745
+  splitting         L1(rho)   max u - u*   TV(u) - 2 u*
+    characteristic 2.496E-03      0.00061        0.01272
+    component-wise 3.242E-03      0.00646        0.16388

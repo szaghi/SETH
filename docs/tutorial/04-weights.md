@@ -49,3 +49,5 @@ large offset, subtract the stencil's mean first. Reference: [Descalers](/referen
 <<< @/examples/snippets/t04_weights.F90{fortran}
 
 </details>
+
+Next: [5. TENO and its cutoff](./05-teno).

@@ -1,0 +1,15 @@
+$ t05_teno
+faces (of 64) where TENO5 is not its linear scheme
+  data                  C_T =    1.E-03    1.E-05    1.E-07  max |TENO5 - linear|
+  sine, 16 cells per wave             0.        0.        0.     round-off
+  sine, 4 cells per wave              0.        0.        0.     round-off
+  Gaussian, sigma 2.6 cells          32.       30.       28.      2.17E-04
+  two steps                          10.       10.       10.      4.00E-01
+error of the derivative at a second-order critical point
+        h       TENO5  order    TENO5-AZ  order
+  0.04000   1.328E-04          9.240E-05
+  0.02000   3.326E-05   2.00   5.288E-11  20.74
+  0.01000   8.325E-06   2.00   1.660E-12   4.99
+  0.00500   2.082E-06   2.00   5.197E-14   5.00
+  0.00250   5.207E-07   2.00   1.626E-15   5.00
+  0.00125   1.302E-07   2.00   5.084E-17   5.00

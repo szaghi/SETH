@@ -1,0 +1,6 @@
+$ t08_positivity
+Woodward and Colella blast waves: p = 1000, 0.01, 100 on [0, 0.1], [0.1, 0.9], [0.9, 1], reflecting walls
+TENO5, characteristic splitting, 400 points, to t = 0.038
+  without the limiter: a negative density or pressure at t =  0.01097
+  with the limiter:    reached t = 0.038, min rho  1.47E-01, min p  1.86E+01
+  face fluxes limited (theta < 1), over all stages: 225

@@ -63,6 +63,10 @@ export default withMermaid({
           { text: '2. A line of faces',     link: '/tutorial/02-line' },
           { text: '3. A conservation law',  link: '/tutorial/03-advection' },
           { text: '4. The weights',         link: '/tutorial/04-weights' },
+          { text: '5. TENO and its cutoff', link: '/tutorial/05-teno' },
+          { text: '6. A nonlinear flux',    link: '/tutorial/06-burgers' },
+          { text: '7. A system',            link: '/tutorial/07-euler' },
+          { text: '8. Positivity',          link: '/tutorial/08-positivity' },
         ] },
       ],
       '/reference/': [

@@ -10,7 +10,8 @@
 #                              (its command is in the file's first line)
 #
 # The library is built by FoBiS (mode static-gnu: gfortran, host, the archive carries PENF) and every example is
-# compiled against it exactly as a user program would be: `gfortran -I<mods> prog.F90 libseth.a`. OpenACC and OpenMP
+# compiled against it exactly as a user program would be: `gfortran -I<mods> prog.F90 libseth.a` (with -fcheck=bounds:
+# an example that reads out of bounds fails the build). OpenACC and OpenMP
 # directives in an example are comments here: the programs run on the host. The examples must print only values that
 # do not depend on the machine (explicit formats, a few significant digits; no timings, no device names). Each run
 # happens in a scratch directory with a minimal environment and no standard input. The docs-examples check fails when
@@ -50,7 +51,7 @@ for src in "$ex"/src/*.F90; do
 done
 
 for src in "$ex"/src/*.F90; do
-  "$fc" -cpp -O2 -I"$lib/mod" -J"$build/mod" -o "$build/bin/$(basename "$src" .F90)" "$src" "$lib/libseth.a"
+  "$fc" -cpp -O2 -fcheck=bounds,do,mem,pointer -I"$lib/mod" -J"$build/mod" -o "$build/bin/$(basename "$src" .F90)" "$src" "$lib/libseth.a"
 done
 
 run() { # run [-s] ID COMMAND
