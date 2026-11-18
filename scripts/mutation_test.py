@@ -130,6 +130,12 @@ MUTANTS = [
     ('dr-composite-right-mirror', 'src/lib/seth_nonpoly.F90', 'pure subroutine seth_teno5_dr(', 'w(m) = vm(1-m)', 'w(m) = vm(m)'),
     ('rbf-dr-base-states', 'src/lib/seth_nonpoly.F90', 'pure subroutine seth_teno5_rbf_dr(', 'call seth_teno5_rbf(a, b, eps, ct, cr, s1, s2, rp, rm)', 'call seth_teno5(a, b, eps, ct, rp, rm)'),
     ('st-p-table', 'src/lib/seth_nonpoly_tables.F90', 'NP_RBF_P(-2:2,0:7)', '-5._R_P/12._R_P', '-5.000001_R_P/12._R_P'),
+    # issue #6 step 2.6: the stored-mask pair (the mirror of pass 1, the detector and the base states of pass 2, the
+    # right state's masks)
+    ('stored-face-masks-mirror', 'src/lib/seth_nonpoly.F90', 'pure subroutine seth_teno5_face_masks(', 'w(m) = vm(1-m)', 'w(m) = vm(m)'),
+    ('stored-thinc-detector', 'src/lib/seth_nonpoly.F90', 'pure subroutine seth_teno5_thinc_stored(', 'call seth_thinc_detect(mp, mm, lp, lm)', 'call seth_dr_detect(mp, mm, lp, lm)'),
+    ('stored-rbf-dr-base-states', 'src/lib/seth_nonpoly.F90', 'pure subroutine seth_teno5_rbf_dr_stored(', 'call seth_teno5_rbf(vp, vm, eps, ct, cr, s1, s2, rp, rm)', 'call seth_teno5(vp, vm, eps, ct, rp, rm)'),
+    ('stored-dr-right-masks', 'src/lib/seth_nonpoly.F90', 'pure subroutine seth_teno5_dr_stored(', 'call seth_dr_detect(mp, mm, lp, lm)', 'call seth_dr_detect(mp, mp, lp, lm)'),
     # issue #6: stencil targeting and the RBF fluxes (the row by mask, the sign of the s^2 rows, the sensor's c_r, its
     # node range and s2, a coefficient of the generated C rows)
     ('st-row-by-mask', 'src/lib/seth_z_teno_body.INC', 'r(side) = r(side) + ROWP(m,mr)*st(m)', 'ROWP(m,mr)', 'ROWP(m,7)'),

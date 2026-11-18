@@ -1,0 +1,6 @@
+baseline green in /home/stefano/fortran/SETH/.night/current/mut
+stored-face-masks-mirror     killed by 12-13:, 12:, 20:, seth_test_nonpoly
+stored-thinc-detector        killed by 12-13:, 12:, 20:, seth_test_nonpoly
+stored-rbf-dr-base-states    killed by 12-13:, 12:, 20:, seth_test_nonpoly
+stored-dr-right-masks        killed by 12-13:, 12:, 20:, seth_test_nonpoly
+done
