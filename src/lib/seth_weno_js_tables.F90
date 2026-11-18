@@ -6,7 +6,7 @@ module seth_weno_js_tables
 !< ADAM's, verbatim. Every table was checked in exact rational arithmetic by the generator (weights sum, constant
 !< reproduction, exactness of the optimal combination up to degree 2S-2, smoothness indicators on constant and
 !< unit-slope data). Layout as ADAM's: interface 1 is the face i-1/2 of the centre cell, interface 2 the face i+1/2;
-!< P(interface, cell c, candidate k) multiplies the value of cell k-c. WENO<N>_JS_D_SCALE is the value of the
+!< P(interface, cell c, candidate k) multiplies the value of cell k-c. `WENO<N>_JS_D_SCALE` is the value of the
 !< smoothness indicators on unit-slope data: 1 up to WENO-5; WENO-7 and WENO-9 keep Balsara & Shu's (2000) integer
 !< forms, so the same regulariser eps acts relative to IS/scale (eps/scale in normalised terms).
 use penf, only : R_P

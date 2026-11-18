@@ -10,7 +10,7 @@ module seth_kep
 !<    F_{i+1/2} = 2 sum_{l=1}^{L} a_l sum_{m=0}^{l-1} f(i-m, i-m+l),
 !<
 !< a_l the coefficients of the central first derivative of order 2L, with the two-point flux of Shima et al. (2021,
-!< KEEP-PE), <a> = (a_c + a_r)/2:
+!< KEEP-PE), `<a> = (a_c + a_r)/2`:
 !<
 !<    mass      f_rho  = <rho> <u_n>
 !<    momentum  f_rhou = f_rho <u> + <p> n

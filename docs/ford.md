@@ -7,11 +7,11 @@ email: stefano.zaghi@gmail.com
 src_dir: ../src
 exclude_dir: ../src/third_party
              ../src/tests
-output_dir: ./docs/ford
+             ../src/bench
 project_github: https://github.com/szaghi/SETH
+docmark: <
 display: public
-         private
-proc_internals: true
+proc_internals: false
 coloured_edges: true
 graph_maxdepth: 6
 ---

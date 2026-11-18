@@ -180,8 +180,11 @@ contains
 
    pure logical function seth_euler_admissible(nv, gamma, q, eps_rho, eps_p) result(ok)
    !< rho >= eps_rho and p >= eps_p for the conservative state q = (rho, m(1:nv-2), E) of an ideal gas.
-   integer(I4P), intent(in) :: nv
-   real(R_P),    intent(in) :: gamma, q(nv), eps_rho, eps_p
+   integer(I4P), intent(in) :: nv      !< Number of conservative variables, 3 to 5: nv - 2 space dimensions.
+   real(R_P),    intent(in) :: gamma   !< Ratio of specific heats.
+   real(R_P),    intent(in) :: q(nv)   !< Conservative state (rho, rho u_1, ..., rho u_d, E).
+   real(R_P),    intent(in) :: eps_rho !< Density floor.
+   real(R_P),    intent(in) :: eps_p   !< Pressure floor.
    real(R_P)                :: ke
    integer(I4P)             :: k
    !$acc routine seq

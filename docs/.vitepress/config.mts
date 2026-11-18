@@ -1,4 +1,10 @@
+import { existsSync, readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { withMermaid } from 'vitepress-plugin-mermaid'
+
+// formal's sidebar of the API pages (docs/api/_sidebar.json), when the API has been generated
+const apiSidebarFile = resolve(__dirname, '../api/_sidebar.json')
+const apiSidebar = existsSync(apiSidebarFile) ? JSON.parse(readFileSync(apiSidebarFile, 'utf-8')) : []
 
 export default withMermaid({
   title: 'SETH',
@@ -37,11 +43,17 @@ export default withMermaid({
       { text: 'Home',   link: '/' },
       { text: 'Guide',  link: '/guide/' },
       { text: 'Verification', link: '/verification/' },
+      { text: 'API',    link: '/api/' },
       { text: 'GitHub', link: 'https://github.com/szaghi/SETH' },
     ],
 
-    // Add your guide pages here.
     sidebar: {
+      // the module pages written by formal (docs:build runs it first), with its own sidebar
+      '/api/': [
+        { text: 'Back to the documentation', link: '/guide/' },
+        { text: 'API', items: [{ text: 'Overview', link: '/api/' }] },
+        ...apiSidebar,
+      ],
       '/verification/': [
         { text: 'Verification', items: [
           { text: 'Catalog',       link: '/verification/' },

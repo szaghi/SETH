@@ -168,7 +168,8 @@ contains
    integer(I4P), intent(in)    :: lp, lm   !< Levels of the two states (seth_thinc_detect).
    real(R_P),    intent(in)    :: beta     !< Steepness (SETH_THINC_BETA).
    real(R_P),    intent(in)    :: rmu      !< Inverse descaler of the guard (1: the paper's form).
-   real(R_P),    intent(inout) :: rp, rm   !< States: replaced where the level is 1.
+   real(R_P),    intent(inout) :: rp       !< Left state at the face: replaced where lp is 1.
+   real(R_P),    intent(inout) :: rm       !< Right state at the face: replaced where lm is 1.
    !$acc routine seq
    !$omp declare target
    if (lp > 0) rp = thinc_face(vp(-1), vp(0), vp(1), beta, rmu)
@@ -184,7 +185,8 @@ contains
    integer(I4P), intent(in)    :: lp, lm   !< Levels of the two states (seth_dr_detect).
    real(R_P),    intent(in)    :: t1, t2   !< tanh of the two steepness constants (SETH_DR_T1, SETH_DR_T2).
    real(R_P),    intent(in)    :: rmu      !< Inverse descaler of the guard (1: the paper's form).
-   real(R_P),    intent(inout) :: rp, rm   !< States: replaced where the level is 1 or 2.
+   real(R_P),    intent(inout) :: rp       !< Left state at the face: replaced where lp is 1 or 2.
+   real(R_P),    intent(inout) :: rm       !< Right state at the face: replaced where lm is 1 or 2.
    !$acc routine seq
    !$omp declare target
    if (lp > 0) rp = dr_face(vp(-1), vp(0), vp(1), merge(t2, t1, lp > 1), rmu)
