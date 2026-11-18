@@ -32,6 +32,8 @@ they land.
 | 3.1–3.4 | G9 (ST, RBF, RBF+DR) | `seth_test_golden`: golden v9 / r4_v4 add TENO5-ST, TENO5-RBF, TENO5-ST-DR and TENO5-RBF-DR (rbf_dx = 0.01) on the 64 stencils; v8's and r4_v3's 2691 lines their first lines, character for character | |
 
 | 1.1–3.4 | G10 (mutants) | `notes/mutation-run-2026-11-17-nonpoly.txt`: the 38 mutants of issue #6 (mask bits, every term of Eqs. 24, 32 and 20, the branches of zeta, the steepness levels, the guards with their sign and rmu, THINC's beta/2, both mirrors, the early exit, the row by mask, the s^2 rows' sign and table, the sensor's c_r, nodes and s2) all killed | |
+| 4.3 | the 2-D harness (D8) | `seth_vv_2d` in the suite (N = 48, TENO5, TENO5-DR, RBF+DR): L R = I, positivity, conservation, the contact symmetric (configuration 3's symmetry reported: nvfortran breaks it at 2.6e-8) on ten builds | |
+| 4.3 | the 2-D fields (NP9) | report run N = 400, seven schemes, 21 runs positive, symmetric bit for bit (gfortran); `docs/verification/nonpolynomial/two-d.md`: the contact 2-3 cells (DR, THINC) against 6; ripples behind configuration 3's shock, 382-608 local extrema against TENO5's 22 | |
 
 ## Findings
 
