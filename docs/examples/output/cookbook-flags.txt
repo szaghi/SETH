@@ -1,0 +1,3 @@
+$ cookbook_schemes flags
+faces 0..40 of a sine plus a step at x = 0.5 (and its periodic image at x = 0): | flagged
+  |||...............|||||...............|||

@@ -43,6 +43,7 @@ export default withMermaid({
       { text: 'Home',   link: '/' },
       { text: 'Guide',  link: '/guide/' },
       { text: 'Tutorial', link: '/tutorial/' },
+      { text: 'Cookbook', link: '/cookbook/' },
       { text: 'Reference', link: '/reference/' },
       { text: 'Verification', link: '/verification/' },
       { text: 'API',    link: '/api/' },
@@ -70,6 +71,18 @@ export default withMermaid({
           { text: '9. A hybrid',            link: '/tutorial/09-hybrid' },
           { text: '10. Non-polynomial TENO', link: '/tutorial/10-nonpoly' },
           { text: '11. On the GPU',         link: '/tutorial/11-gpu' },
+        ] },
+      ],
+      '/cookbook/': [
+        { text: 'Cookbook', items: [
+          { text: 'Overview',                        link: '/cookbook/' },
+          { text: 'Choose a scheme',                 link: '/cookbook/choose' },
+          { text: 'Point values or cell averages',   link: '/cookbook/point-values' },
+          { text: 'Flag the shocks',                 link: '/cookbook/shock-flags' },
+          { text: 'Bound a reconstruction',          link: '/cookbook/mp-bound' },
+          { text: 'A central branch for Euler',      link: '/cookbook/central' },
+          { text: 'Single precision',                link: '/cookbook/precision' },
+          { text: 'Time a kernel on a GPU',          link: '/cookbook/performance' },
         ] },
       ],
       '/reference/': [

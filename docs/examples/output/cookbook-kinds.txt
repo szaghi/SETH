@@ -1,0 +1,6 @@
+$ cookbook_kinds
+R_P: 64 bits, 15 decimal digits
+  epsilon(1._R_P)    2.220E-16
+  tiny(1._R_P)       2.225-308
+  SETH_TENO_EPS      1.000E-40
+  SETH_WENO_JS_EPS   1.000E-06

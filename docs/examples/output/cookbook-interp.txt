@@ -1,0 +1,8 @@
+$ cookbook_schemes interp
+the face value of sin(2 pi x) from its point values at the cell centres
+        h  reconstruction  order  interpolation  order
+  0.05000       2.005E-03             3.214E-04
+  0.02500       5.916E-04   1.76      1.013E-05   4.99
+  0.01250       1.507E-04   1.97      3.158E-07   5.00
+  0.00625       3.776E-05   2.00      9.814E-09   5.01
+  0.00313       9.442E-06   2.00      3.047E-10   5.01

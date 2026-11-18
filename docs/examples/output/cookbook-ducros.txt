@@ -1,0 +1,6 @@
+$ cookbook_euler ducros
+velocity gradient            phi (Ducros)   psi (compression only)
+compression                   1.0000            1.0000
+expansion                     1.0000            0.0000
+rotation                      0.0000            0.0000
+shear                         0.0000            0.0000
