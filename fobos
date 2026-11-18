@@ -334,9 +334,11 @@ rule_2 = fobis build --mode tests-gnu-coverage
 rule_3 = bash scripts/run_tests.sh
 
 [rule-makecoverage-analysis]
-help   = Coverage analysis: the badge JSON in docs/public/coverage.json (what CI runs)
+help   = Coverage analysis: the badge JSON in docs/public/coverage.json, then the docs check (what CI runs)
 rule_1 = fobis rule --ex makecoverage
 rule_2 = bash scripts/compute-coverage.sh
+# the pages against the code: every public name, module, test, example, mode and script documented, every name real
+rule_3 = python3 scripts/check_docs.py
 
 [rule-makedoc]
 help   = Build the documentation: formal API + VitePress
