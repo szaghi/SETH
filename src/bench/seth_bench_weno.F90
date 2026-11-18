@@ -26,16 +26,17 @@ program seth_bench_weno
 !<      32 seth_teno5_thinc (self-contained, -5:6, the papers' constants), against 3.0 seth_teno5 (owner decision D3);
 !<      33, 34 the same without the early exit (every mask of cells -3..2 or -3..3 of both states computed, then the
 !<      library's detector and override: the work the early exit saves); 35, 36 the stored-mask variant (notes/
-!<      kernel-api-design.md, section 11.4): a first pass stores every cell's two masks (left-biased, and on the
-!<      mirrored right-biased data), a second reconstructs each face from TENO5, the stored masks, the library's detector
-!<      and override; both passes timed. On this scalar field its states equal the self-contained kernels' (checked);
+!<      kernel-api-design.md, section 11.4), the library's pair since 2026-11-18 (issue #6, step 2.6): a first pass,
+!<      seth_teno5_face_masks at every face, stores the left mask of cell i and the right mask of cell i+1, a second
+!<      reconstructs each face with seth_teno5_dr_stored / seth_teno5_thinc_stored; both passes timed. On this scalar
+!<      field its states equal the self-contained kernels' (checked);
 !<      37 seth_teno5_st (budget 1.05 seth_teno5), 38 seth_teno5_rbf with s1 = s2 = 0.09 (budget 1.25), 39 the
 !<      complete scheme seth_teno5_rbf_dr (s1 = s2 = 0.09; budget 3.0, the self-contained kernels')
 !< 40.. issue #6, the pieces alone (2026-11-18): 40 seth_teno5_mask of one bias (the budget's unit: 0.70 seth_teno5,
 !<      which reconstructs both states), 41 seth_dr_detect and 42 seth_thinc_detect on the stored masks of variants 35
 !<      and 36 (budget 0.10), 43 seth_dr_override at level 1 on every face (0.15) and 44 seth_thinc_override at level 1
 !<      on every face (0.30), the states preset to the mean of f_i and f_{i+1}; 45 seth_teno5_rbf_dr without the early
-!<      exit and 46 with stored masks (step 4.1: with and without the early exit)
+!<      exit and 46 with stored masks (seth_teno5_face_masks, seth_teno5_rbf_dr_stored; step 4.1)
 !<
 !< ADAM's variants pack ADAM's rows as FLUME does (v(2,m) = fp(i+m), v(1,m) = fm(i+m+1)). Built with -acc the loops run
 !< on the device (timed with !$acc wait + system_clock); without, on one CPU core. Each variant: 2 warm-up passes, then
@@ -78,7 +79,7 @@ character(31), parameter :: NAMES(NV) = [character(31) :: 'SETH  weno5_js', 'ADA
 real(R8P), allocatable :: fp(:), fm(:), rp(:), rm(:), rp5(:), rm5(:), rp7(:), rm7(:)
 real(R8P), allocatable :: a3(:,:,:), p3(:,:,:,:), d3(:,:,:,:), a4(:,:,:), p4(:,:,:,:), d4(:,:,:,:)
 real(R8P), allocatable :: times(:)
-integer(I4P), allocatable :: ml(:), mr(:) !< Stored masks of the stored-mask variants (cells -2..n+4).
+integer(I4P), allocatable :: ml(:), mr(:) !< Stored masks of the stored-mask variants (cells -3..n+4).
 real(R8P)              :: med(NV), tmin(NV), diff, vmax
 integer(I4P)           :: n, reps, v, r, i, c, js
 integer(int64)         :: t0, t1, rate
@@ -91,7 +92,7 @@ if (command_argument_count() >= 2) then ; call get_command_argument(2, arg) ; re
 js = 2048_I4P
 if (command_argument_count() >= 3) then ; call get_command_argument(3, arg) ; read(arg,*) js ; endif
 allocate(fp(1-NG:n+NG), fm(1-NG:n+NG), rp(n), rm(n), rp5(n), rm5(n), rp7(n), rm7(n), times(reps))
-allocate(ml(-2:n+4), mr(-2:n+4))
+allocate(ml(-3:n+4), mr(-3:n+4))
 do c=1-NG, n+NG
    fp(c) = 1._R8P + 0.5_R8P*sin(0.01_R8P*c)
    fm(c) = 0.5_R8P*cos(0.013_R8P*c)
@@ -183,33 +184,28 @@ contains
          endif
       enddo
    case(35, 36)
-      !$acc parallel loop gang vector present(fp, fm, ml, mr) private(wa, wb, mka, mkb)
-      do i=-2, n+4 ! pass 1: the two masks of every cell
-         do m=-2, 2
-            wa(m) = fp(i+m) ; wb(m) = fm(i-m)
-         enddo
-         call seth_teno5_mask(wa, SETH_TENO_EPS, SETH_TENO5_CT, mka)
-         call seth_teno5_mask(wb, SETH_TENO_EPS, SETH_TENO5_CT, mkb)
-         ml(i) = mka ; mr(i) = mkb
-      enddo
-      !$acc parallel loop gang vector present(fp, fm, rp, rm, ml, mr) private(vp5, vm5, vp4, vm4, mpw, mmw, lpw, lmw)
-      do i=1, n ! pass 2: the faces, from the stored masks
+      !$acc parallel loop gang vector present(fp, fm, ml, mr) private(vp5, vm5, mka, mkb)
+      do i=-3, n+3 ! pass 1, seth_teno5_face_masks: at each face i+1/2, the left mask of cell i, the right of cell i+1
          do m=-2, 3
             vp5(m) = fp(i+m) ; vm5(m) = fm(i+m)
          enddo
-         call seth_teno5(vp5, vm5, SETH_TENO_EPS, SETH_TENO5_CT, rp(i), rm(i))
+         call seth_teno5_face_masks(vp5, vm5, SETH_TENO_EPS, SETH_TENO5_CT, mka, mkb)
+         ml(i) = mka ; mr(i+1) = mkb
+      enddo
+      !$acc parallel loop gang vector present(fp, fm, rp, rm, ml, mr) private(vp5, vm5, mpw, mmw)
+      do i=1, n ! pass 2, seth_teno5_dr_stored / seth_teno5_thinc_stored: the faces, from the stored masks
+         do m=-2, 3
+            vp5(m) = fp(i+m) ; vm5(m) = fm(i+m)
+         enddo
          do m=-3, 3
             mpw(m) = ml(i+m) ; mmw(m) = mr(i+1-m)
          enddo
-         do m=-1, 2
-            vp4(m) = fp(i+m) ; vm4(m) = fm(i+m)
-         enddo
          if (v == 35) then
-            call seth_dr_detect(mpw, mmw, lpw, lmw)
-            call seth_dr_override(vp4, vm4, lpw, lmw, SETH_DR_T1, SETH_DR_T2, 1._R8P, rp(i), rm(i))
+            call seth_teno5_dr_stored(vp5, vm5, mpw, mmw, SETH_TENO_EPS, SETH_TENO5_CT, SETH_DR_T1, SETH_DR_T2, &
+                                      1._R8P, rp(i), rm(i))
          else
-            call seth_thinc_detect(mpw, mmw, lpw, lmw)
-            call seth_thinc_override(vp4, vm4, lpw, lmw, SETH_THINC_BETA, 1._R8P, rp(i), rm(i))
+            call seth_teno5_thinc_stored(vp5, vm5, mpw, mmw, SETH_TENO_EPS, SETH_TENO5_CT, SETH_THINC_BETA, 1._R8P, &
+                                         rp(i), rm(i))
          endif
       enddo
    case(33, 34)
@@ -264,29 +260,24 @@ contains
          call rbf_dr_full(vpw, vmw, rp(i), rm(i))
       enddo
    case(46)
-      !$acc parallel loop gang vector present(fp, fm, ml, mr) private(wa, wb, mka, mkb)
-      do i=-2, n+4 ! pass 1: the two masks of every cell
-         do m=-2, 2
-            wa(m) = fp(i+m) ; wb(m) = fm(i-m)
-         enddo
-         call seth_teno5_mask(wa, SETH_TENO_EPS, SETH_TENO5_CT, mka)
-         call seth_teno5_mask(wb, SETH_TENO_EPS, SETH_TENO5_CT, mkb)
-         ml(i) = mka ; mr(i) = mkb
-      enddo
-      !$acc parallel loop gang vector present(fp, fm, rp, rm, ml, mr) private(vp5, vm5, vp4, vm4, mpw, mmw, lpw, lmw)
-      do i=1, n ! pass 2: the faces, from the stored masks
+      !$acc parallel loop gang vector present(fp, fm, ml, mr) private(vp5, vm5, mka, mkb)
+      do i=-3, n+3 ! pass 1, seth_teno5_face_masks: at each face i+1/2, the left mask of cell i, the right of cell i+1
          do m=-2, 3
             vp5(m) = fp(i+m) ; vm5(m) = fm(i+m)
          enddo
-         call seth_teno5_rbf(vp5, vm5, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, 0.09_R8P, 0.09_R8P, rp(i), rm(i))
+         call seth_teno5_face_masks(vp5, vm5, SETH_TENO_EPS, SETH_TENO5_CT, mka, mkb)
+         ml(i) = mka ; mr(i+1) = mkb
+      enddo
+      !$acc parallel loop gang vector present(fp, fm, rp, rm, ml, mr) private(vp5, vm5, mpw, mmw)
+      do i=1, n ! pass 2, seth_teno5_rbf_dr_stored: the faces, from the stored masks
+         do m=-2, 3
+            vp5(m) = fp(i+m) ; vm5(m) = fm(i+m)
+         enddo
          do m=-3, 3
             mpw(m) = ml(i+m) ; mmw(m) = mr(i+1-m)
          enddo
-         do m=-1, 2
-            vp4(m) = fp(i+m) ; vm4(m) = fm(i+m)
-         enddo
-         call seth_dr_detect(mpw, mmw, lpw, lmw)
-         call seth_dr_override(vp4, vm4, lpw, lmw, SETH_DR_T1, SETH_DR_T2, 1._R8P, rp(i), rm(i))
+         call seth_teno5_rbf_dr_stored(vp5, vm5, mpw, mmw, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, 0.09_R8P, &
+                                       0.09_R8P, SETH_DR_T1, SETH_DR_T2, 1._R8P, rp(i), rm(i))
       enddo
    case(1)
       !$acc parallel loop gang vector present(fp, fm, rp, rm) private(vp5, vm5)

@@ -1,0 +1,65 @@
+seth_teno5_mask:
+     74, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_teno5_st:
+     90, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_teno5_rbf:
+    108, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_teno5_zeta:
+    131, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_dr_detect:
+    151, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_thinc_detect:
+    163, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_thinc_override:
+    175, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_dr_override:
+    192, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_teno5_dr:
+    209, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_teno5_rbf_dr:
+    242, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_teno5_thinc:
+    279, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_teno5_face_masks:
+    312, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_teno5_dr_stored:
+    335, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_teno5_thinc_stored:
+    360, Generating acc routine seq
+         Generating NVIDIA GPU code
+seth_teno5_rbf_dr_stored:
+    385, Generating acc routine seq
+         Generating NVIDIA GPU code
+side_level:
+    413, Generating acc routine seq
+         Generating NVIDIA GPU code
+    432, Reference argument passing prevents parallelization: c
+    441, Reference argument passing prevents parallelization: c
+cell_mask:
+    450, Generating acc routine seq
+         Generating NVIDIA GPU code
+thinc_face:
+    466, Generating acc routine seq
+         Generating NVIDIA GPU code
+dr_face:
+    484, Generating acc routine seq
+         Generating NVIDIA GPU code
+dr_level:
+    500, Generating acc routine seq
+         Generating NVIDIA GPU code
+thinc_level:
+    524, Generating acc routine seq
+         Generating NVIDIA GPU code
