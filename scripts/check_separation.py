@@ -42,8 +42,6 @@ WAIVERS: dict[str, list[tuple[str, str]]] = {
     't03_advection.F90': [('.', "SETH tutorial chapter 3 writes its SSP-RK3 by hand to show what a time step is (the "
                                  'later chapters take it from SELAH)')],
     't11_gpu.F90': [('.', "SETH tutorial chapter 11 runs on device memory: its step waits for SELAH's device build")],
-    'cookbook_dissipation.F90': [('.', "GIDEON's cookbook example writes its SSP-RK3 by hand: pending the migration "
-                                       "SETH's examples had (2026-11-19), the owner's decision")],
     'seth_test_tables.F90': [(r'NP_RBF_P|pair\s*=', 'a row of the non-polynomial tables is a 3/4, 1/4 average of '
                                                        'two stencils: a space-operator coefficient, not a time step')],
 }
