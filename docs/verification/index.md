@@ -3,9 +3,14 @@
 Every capability of SETH is backed by a verification case: a Fortran program in `src/tests/` that runs the kernels
 and asserts the result against something it shares no code with, such as an exact solution, a fine reference, a
 published number, a theorem or ADAM's own code. The same programs are the test suite (`bash scripts/run_tests.sh`
-runs all 37, on six compiler builds and on the GPU), and with `SETH_VV_DIR` set they run every scheme on the report
+runs all 40 (37 in single precision), on six compiler builds and on the GPU), and with `SETH_VV_DIR` set they run every scheme on the report
 grids and write the data from which these pages are drawn (`scripts/run_vv.sh`). The figures are real SETH results
 and can be regenerated after any change of the kernels.
+
+The cases that advance a solution in time take the time integrator from [SELAH](https://szaghi.github.io/SELAH/),
+never a hand-written step: the SSP-RK3 of these pages is SELAH's SSP(3,3) (`SCHEME_SSP_33`, in its two-register
+Shu–Osher form), driven stage by stage around SETH's residuals. SETH is a source of space operators, SELAH of the
+time operators (SELAH issue #2).
 
 Each card names what its page verifies. Every page has the same sections: case and scope, models and numerics with
 links to the code, initial and boundary conditions, the program and how to run it, results, findings. The tag of a
