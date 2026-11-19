@@ -41,7 +41,6 @@ WAIVERS: dict[str, list[tuple[str, str]]] = {
                                                     'index, not a neighbour')],
     't03_advection.F90': [('.', "SETH tutorial chapter 3 writes its SSP-RK3 by hand to show what a time step is (the "
                                  'later chapters take it from SELAH)')],
-    't11_gpu.F90': [('.', "SETH tutorial chapter 11 runs on device memory: its step waits for SELAH's device build")],
     'seth_test_tables.F90': [(r'NP_RBF_P|pair\s*=', 'a row of the non-polynomial tables is a 3/4, 1/4 average of '
                                                        'two stencils: a space-operator coefficient, not a time step')],
 }
