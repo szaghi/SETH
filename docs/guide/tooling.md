@@ -20,7 +20,8 @@ The build modes of `fobos` and the scripts of the repository, each with what it 
 | `tests-gnu`, `tests-nvf`, `tests-intel` | the test programs, optimised, into `exe/` |
 | `tests-gnu-debug`, `tests-nvf-debug`, `tests-intel-debug` | the test programs with every runtime check |
 | `tests-gnu-coverage` | the test programs instrumented for coverage (`fobis rule --ex makecoverage-analysis`) |
-| `tests-nvf-oac` | the test programs with OpenACC, on the GPU of compute capability `$GPU_CC` (`--varset cc80`, `cc89`, `cc90`) |
+| `tests-nvf-oac` | the test programs with OpenACC, on the GPU of compute capability `$GPU_CC` (`--varset cc80`, `cc89`, `cc90`); the programs that step with SELAH, host programs, link SELAH built for the host (`static-selah-nvf`) |
+| `static-selah-nvf`, `static-selah-nvf-r4` | SELAH's library from `src/third_party/SELAH`, nvfortran, host (no `-acc`), into `lib/nvf/`: built by `tests-nvf-oac` and `tests-nvf-oac-r4` (FoBiS `dependon`); under `-acc` SELAH's directives need its device build, whose registers are device memory, and those programs' fields are host memory |
 | `tests-gnu-r4`, `tests-gnu-debug-r4`, `tests-nvf-r4`, `tests-nvf-oac-r4`, `tests-intel-r4` | the test programs in single precision, into `exe-r4/` |
 | `bench-nvf-oac`, `bench-nvf`, `bench-gnu` | the kernel benchmark against ADAM's kernels, on the GPU or one CPU core ([Performance](./performance)) |
 | `bench-arrays-nvf-oac`, `bench-arrays-nvf`, `bench-arrays-gnu` | the benchmark of the device-kernel rules: automatic arrays and loop extents |

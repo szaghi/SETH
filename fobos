@@ -34,7 +34,7 @@ SELAH    = https://github.com/szaghi/SELAH :: branch=main
 
 [modes]
 # the first mode is the default (fobis build, scripts/install.sh): the library any gfortran can build
-modes = static-gnu shared-gnu static-selah-gnu example-t11-nvf-oac
+modes = static-gnu shared-gnu static-selah-gnu static-selah-nvf static-selah-nvf-r4 example-t11-nvf-oac
         static-nvf shared-nvf
         static-intel shared-intel
         tests-gnu tests-gnu-debug tests-gnu-coverage
@@ -86,6 +86,32 @@ output    = libselah.a
 build_dir = lib/gnu/static-selah/
 include   = src/third_party/FUNDAL/src/lib/
 preproc   = -DFUNDAL_NO_MPI
+
+[static-selah-nvf]
+help      = SELAH's static library from src/third_party/SELAH, nvfortran, optimised, host (no -acc): the time integrator
+            of the OpenACC tests, whose fields are host memory
+template  = template-nvf template-release
+target    = src/third_party/SELAH/src/lib/selah.F90
+mklib     = static
+output    = libselah.a
+build_dir = lib/nvf/static-selah/
+include   = src/third_party/FUNDAL/src/lib/
+preproc   = -DFUNDAL_NO_MPI
+# off: FoBiS 3.8 reads a dependon's module directory from its output, and the heritage notice would be read with it
+cflags_heritage = False
+
+[static-selah-nvf-r4]
+help      = SELAH's static library from src/third_party/SELAH, nvfortran, optimised, host (no -acc), R4P: the time integrator
+            of the OpenACC tests in single precision, whose fields are host memory
+template  = template-nvf template-release
+target    = src/third_party/SELAH/src/lib/selah.F90
+mklib     = static
+output    = libselah.a
+build_dir = lib/nvf/static-selah-r4/
+include   = src/third_party/FUNDAL/src/lib/
+preproc   = -DFUNDAL_NO_MPI -D_R_P_IS_R4P
+# off: FoBiS 3.8 reads a dependon's module directory from its output, and the heritage notice would be read with it
+cflags_heritage = False
 
 # tutorial chapter 11 on the GPU: the program with SETH, PENF, FUNDAL and SELAH compiled by nvfortran with OpenACC,
 # SELAH and FUNDAL in their device build (the capture docs/examples/device/t11_gpu.txt)
@@ -156,16 +182,10 @@ help      = Tests, nvfortran, OpenACC on the GPU of compute capability $GPU_CC
 template  = template-tests template-nvf template-release
 cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel
 lflags    = -acc -gpu=$GPU_CC
-# the programs that advance in time with SELAH's stepper, and the modules they share (16 programs, 4 modules): under
-# -acc SELAH's kernels need its device build (-DDEV_OAC, device registers), which these host fields cannot use; the
-# device tests (seth_test_device) are not among them
-exclude   = src/tests/seth_test_advection.F90 src/tests/seth_test_convergence.F90 src/tests/seth_vv_2d.F90
-            src/tests/seth_vv_adr.F90 src/tests/seth_vv_advection.F90 src/tests/seth_vv_blast.F90
-            src/tests/seth_vv_burgers.F90 src/tests/seth_vv_cases.F90 src/tests/seth_vv_euler.F90
-            src/tests/seth_vv_euler2d.F90 src/tests/seth_vv_euler_order.F90 src/tests/seth_vv_hybrid.F90
-            src/tests/seth_vv_lax.F90 src/tests/seth_vv_nonpoly.F90 src/tests/seth_vv_roe.F90
-            src/tests/seth_vv_scalar.F90 src/tests/seth_vv_sensors.F90 src/tests/seth_vv_shu_osher.F90
-            src/tests/seth_vv_sod.F90 src/tests/seth_vv_test123.F90
+# the time integrator of the programs that use it: SELAH built for the host (their fields are host memory),
+# linked; under -acc without its device build SELAH's directives would not compile (FUNDAL's host branch)
+dependon  = fobos:static-selah-nvf
+exclude_dirs = $EXDIRS src/third_party/SELAH/ src/third_party/FUNDAL/
 
 [tests-intel]
 help      = Tests, ifx, optimised (fortran-toolchains matrix: family intel)
@@ -285,16 +305,15 @@ help      = Tests, nvfortran, OpenACC on the GPU of compute capability $GPU_CC, 
 template  = template-r4-tests template-tests template-nvf template-release
 cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel
 lflags    = -acc -gpu=$GPU_CC
-# the R4P exclusions (ADAM's code) and the SELAH users (as tests-nvf-oac)
-exclude   = src/tests/seth_adam_reference.F90 src/tests/seth_test_weno_js_adam.F90
-            src/tests/seth_test_central_adam.F90 src/tests/seth_test_weno_c_adam.F90
-            src/tests/seth_test_advection.F90 src/tests/seth_test_convergence.F90 src/tests/seth_vv_2d.F90
-            src/tests/seth_vv_adr.F90 src/tests/seth_vv_advection.F90 src/tests/seth_vv_blast.F90
-            src/tests/seth_vv_burgers.F90 src/tests/seth_vv_cases.F90 src/tests/seth_vv_euler.F90
-            src/tests/seth_vv_euler2d.F90 src/tests/seth_vv_euler_order.F90 src/tests/seth_vv_hybrid.F90
-            src/tests/seth_vv_lax.F90 src/tests/seth_vv_nonpoly.F90 src/tests/seth_vv_roe.F90
-            src/tests/seth_vv_scalar.F90 src/tests/seth_vv_sensors.F90 src/tests/seth_vv_shu_osher.F90
-            src/tests/seth_vv_sod.F90 src/tests/seth_vv_test123.F90
+# the R4P exclusions: ADAM's code
+exclude   = src/tests/seth_adam_reference.F90
+            src/tests/seth_test_weno_js_adam.F90
+            src/tests/seth_test_central_adam.F90
+            src/tests/seth_test_weno_c_adam.F90
+# the time integrator of the programs that use it: SELAH built for the host (their fields are host memory),
+# linked; under -acc without its device build SELAH's directives would not compile (FUNDAL's host branch)
+dependon  = fobos:static-selah-nvf-r4
+exclude_dirs = $EXDIRS src/third_party/SELAH/ src/third_party/FUNDAL/
 
 [tests-intel-r4]
 help      = Tests, ifx, optimised, single precision (R_P = R4P)
