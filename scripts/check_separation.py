@@ -10,8 +10,8 @@ one from coming back unnoticed. It reads the fobos [project] name to know which 
   that combines neighbour values a(i+-m), a(j+-m), a(k+-m) with an arithmetic operator, outside the procedures named
   fill_ghosts (a ghost fill copies values, it is the test problem's boundary condition) and outside calls (a call
   gathers a window for GIDEON); a scalar on the left (a norm, a total variation) is a diagnostic, not a residual;
-- GIDEON and SETH (space operators): no Runge-Kutta combination in src/tests/: the SSP-RK3 stages (0.75 u + 0.25 ...,
-  u/3 + 2/3 ...) or the classic RK4 sum (k1 + 2 k2 + 2 k3 + k4).
+- GIDEON and SETH (space operators): no Runge-Kutta combination in src/tests/ and docs/examples/src/: the SSP-RK3
+  stages (0.75 u + 0.25 ..., u/3 + 2/3 ...) or the classic RK4 sum (k1 + 2 k2 + 2 k3 + k4).
 
 The patterns are regular expressions, not a Fortran parser: a false positive is waived by name in WAIVERS below, with
 the reason. `--self-test` plants a copy of each kind in a scratch file and checks that the rule catches it.
@@ -39,6 +39,11 @@ RK4 = re.compile(r'\bk1\b\s*\+\s*2\w*\s*\*\s*k2\b')
 WAIVERS: dict[str, list[tuple[str, str]]] = {
     'selah_adam_reference.F90': [(r'bk\(i,k\+1\)', "ADAM's tableau conversion, copied verbatim: k is a stage "
                                                     'index, not a neighbour')],
+    't03_advection.F90': [('.', "SETH tutorial chapter 3 writes its SSP-RK3 by hand to show what a time step is (the "
+                                 'later chapters take it from SELAH)')],
+    't11_gpu.F90': [('.', "SETH tutorial chapter 11 runs on device memory: its step waits for SELAH's device build")],
+    'cookbook_dissipation.F90': [('.', "GIDEON's cookbook example writes its SSP-RK3 by hand: pending the migration "
+                                       "SETH's examples had (2026-11-19), the owner's decision")],
     'seth_test_tables.F90': [(r'NP_RBF_P|pair\s*=', 'a row of the non-polynomial tables is a 3/4, 1/4 average of '
                                                        'two stencils: a space-operator coefficient, not a time step')],
 }
@@ -100,7 +105,8 @@ def check(root: Path) -> list[str]:
         files = sorted((root / 'src/tests').glob('*.[fF]90')) + sorted((root / 'docs/examples/src').glob('*.[fF]90'))
         return [f for p in files for f in stencils(p)]
     if name in ('GIDEON', 'SETH'):
-        return [f for p in sorted((root / 'src/tests').glob('*.[fF]90')) for f in rk_steps(p)]
+        files = sorted((root / 'src/tests').glob('*.[fF]90')) + sorted((root / 'docs/examples/src').glob('*.[fF]90'))
+        return [f for p in files for f in rk_steps(p)]
     sys.exit(f'check_separation: project {name} has no rule (SELAH, GIDEON, SETH)')
 
 
