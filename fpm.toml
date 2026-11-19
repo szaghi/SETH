@@ -10,6 +10,10 @@ description = "Smoothness-weighted ENO, TENO and Hybrids: high-order non-oscilla
 [dependencies]
 PENF = { git="https://github.com/szaghi/PENF.git", branch="master" }
 
+# the tests take their time integrators from SELAH (SELAH issue #2); FUNDAL comes with SELAH's own manifest
+[dev-dependencies]
+SELAH = { git="https://github.com/szaghi/SELAH.git", branch="main" }
+
 [library]
 source-dir = "src/lib"
 

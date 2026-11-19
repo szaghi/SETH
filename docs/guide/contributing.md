@@ -20,7 +20,9 @@ is welcome. The project follows a KISS (Keep It Simple and Stupid) philosophy.
    ```bash
    git checkout -b fix/my_contribution
    ```
-3. Test your changes with `fobis build && bash scripts/run_tests.sh`
+3. Test your changes with `fobis fetch && fobis build --mode tests-gnu && bash scripts/run_tests.sh` (the fetch clones
+   PENF, and FUNDAL and SELAH for the tests). A test that advances a solution in time takes its integrator from SELAH,
+   never a hand-written step: SETH is a source of space operators, SELAH of the time operators (SELAH issue #2)
 4. Check for unnecessary whitespace: `git diff --check`
 5. Submit a pull request with a clear commit message
 

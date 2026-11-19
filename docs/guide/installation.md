@@ -4,13 +4,18 @@
 
 ```bash
 git clone https://github.com/szaghi/SETH && cd SETH
-fobis fetch                      # PENF, into src/third_party/
+fobis fetch                      # PENF, and for the tests FUNDAL and SELAH, into src/third_party/
 fobis build --mode static-gnu    # lib/gnu/static/libseth.a (shared-gnu: libseth.so)
 ```
 
 `fobis build --lmodes` lists the modes: static and shared libraries and tests for gfortran (`-gnu`), nvfortran
 (`-nvf`) and ifx (`-intel`), and `tests-nvf-oac`, the OpenACC build (`--varset cc80|cc89|cc90` picks the compute
-capability; cc89 by default).
+capability; cc89 by default; `iac`: cc80 with CUDA 12.9, the CNR-IAC A30 nodes).
+
+The tests have two more dependencies, which the library modes never compile: [SELAH](https://github.com/szaghi/SELAH),
+the source of the time integrators a verification case needs (SETH implements space operators only), and
+[FUNDAL](https://github.com/szaghi/FUNDAL), which SELAH uses. Every test mode adds FUNDAL's include directory
+(SELAH's kernels include `fundal.H`) and `-DFUNDAL_NO_MPI`.
 
 ### As a FoBiS dependency
 

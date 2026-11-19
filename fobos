@@ -22,10 +22,15 @@ check = fobis fetch
         fobis build --mode tests-gnu
         bash scripts/run_tests.sh
 
-# PENF is compiled from its sources by the compiler of the mode (no per-compiler PENF build to keep in step)
+# PENF is compiled from its sources by the compiler of the mode (no per-compiler PENF build to keep in step).
+# FUNDAL and SELAH serve the tests only (SELAH issue #2: the time integrators of the tests come from SELAH, the one
+# source of the time operators; SETH is a source of space operators): the library modes build seth.F90's tree, which
+# uses neither. fobis fetch is not recursive, so SELAH's own dependencies (PENF, FUNDAL) are listed here
 [dependencies]
 deps_dir = src/third_party
 PENF     = https://github.com/szaghi/PENF :: branch=master
+FUNDAL   = https://github.com/szaghi/FUNDAL :: branch=main
+SELAH    = https://github.com/szaghi/SELAH :: branch=main
 
 [modes]
 # the first mode is the default (fobis build, scripts/install.sh): the library any gfortran can build
@@ -44,6 +49,8 @@ modes = static-gnu shared-gnu
 
 [common-variables]
 $EXDIRS = PENF/src/tests/ PENF/src/third_party/ PENF/scripts/ PENF/docs/
+          FUNDAL/src/tests/ FUNDAL/src/examples/ FUNDAL/docs/ FUNDAL/compilers_proofs/ FUNDAL/scripts/
+          SELAH/src/tests/ SELAH/src/bench/ SELAH/src/third_party/ SELAH/docs/ SELAH/scripts/ SELAH/notes/
 $STD_GNU = -std=f2018
 $STD_INT = -standard-semantics -std18
 # NVIDIA compute capability of the OpenACC modes; override with --varset (e.g. --varset cc90)
@@ -51,6 +58,10 @@ $GPU_CC = cc89
 
 [varset:cc80]
 $GPU_CC = cc80
+
+# CNR-IAC medooza's A30 nodes: their drivers (545, 575) cannot run CUDA 13, so cc80 with CUDA 12.9 (as SELAH's)
+[varset:iac]
+$GPU_CC = cc80,cuda12.9
 
 [varset:cc89]
 $GPU_CC = cc89
@@ -314,6 +325,8 @@ preproc = -D_R_P_IS_R4P
 
 [template-r4-tests]
 template  = template-r4
+# the left template wins: template-r4's preproc would drop template-tests' -DFUNDAL_NO_MPI
+preproc   = -D_R_P_IS_R4P -DFUNDAL_NO_MPI
 build_dir = exe-r4/
 # ADAM's code and the comparisons with it are R8P only (scripts/check_literals.py reads this list too)
 exclude   = src/tests/seth_adam_reference.F90 src/tests/seth_test_weno_js_adam.F90 src/tests/seth_test_central_adam.F90 src/tests/seth_test_weno_c_adam.F90
@@ -325,6 +338,9 @@ build_dir = exe-bench-r4/
 [template-tests]
 src       = src/lib/ src/tests/
 build_dir = exe/
+# SELAH's kernels include FUNDAL's fundal.H; FUNDAL's MPI handler is compiled empty (the tests are per rank)
+include   = src/third_party/FUNDAL/src/lib/
+preproc   = -DFUNDAL_NO_MPI
 
 # ── rules ────────────────────────────────────────────────────────────────────
 [rule-makecoverage]
