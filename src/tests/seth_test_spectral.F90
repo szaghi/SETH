@@ -21,7 +21,7 @@ use seth
 use seth_test_parameters, only : ORDERS_AT_FLOOR_OK, SPECTRAL_FLOOR, SPECTRAL_SLOPE_LOSS, TOL_ANTIDISSIPATION
 use seth_weno_js_tables
 use seth_z_teno_tables
-use seth_vv_cases, only : vv_report, vv_open
+use seth_vv_report, only : vv_report, vv_open
 implicit none
 integer(I4P), parameter :: NX = 20000_I4P
 real(R_P),    parameter :: PI = acos(-1._R_P)

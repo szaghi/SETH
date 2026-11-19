@@ -31,7 +31,7 @@ program seth_test_sensor_fields
 !< Report mode: sensor-fields.dat (case parameter sensor flagged-fraction) for the documentation's table.
 use seth
 use seth_test_parameters, only : EPS_FIELD_SENSOR
-use seth_vv_cases, only : vv_report, vv_open
+use seth_vv_report, only : vv_report, vv_open
 implicit none
 real(R_P),    parameter :: PI = acos(-1._R_P), GAM = 1.4_R_P, THR = 0.2_R_P
 integer(I4P), parameter :: NS = 6

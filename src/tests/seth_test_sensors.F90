@@ -25,7 +25,7 @@ program seth_test_sensors
 !< Report mode: sensors-cp.dat and sensors-scaling.dat too.
 use seth
 use seth_test_parameters, only : SENSOR_SCALES, TOL_X
-use seth_vv_cases, only : vv_report, vv_open
+use seth_vv_report, only : vv_report, vv_open
 implicit none
 integer(I4P), parameter :: N = 192_I4P, NS = 4_I4P
 real(R_P),    parameter :: PI = acos(-1._R_P)

@@ -46,7 +46,7 @@ program seth_test_critical_points
 use seth
 use seth_test_parameters, only : CP2_AZ_TANG, EPS_ZT, HENRICK_TOL, ORDERS_AT_FLOOR_OK
 use seth_test_schemes
-use seth_vv_cases, only : vv_report, vv_open
+use seth_vv_report, only : vv_report, vv_open
 implicit none
 integer(I4P), parameter :: NH = 8_I4P
 real(R_P),    parameter :: FLOOR_ = 10._R_P*epsilon(1._R_P)

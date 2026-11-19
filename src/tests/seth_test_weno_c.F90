@@ -31,7 +31,7 @@ use seth_test_parameters, only : BIG_JUMP, CENTRED_ORDER_LOSS, ORDERS_AT_FLOOR_O
 use seth_test_rng, only : seed_rng
 use seth_test_functions, only : gfun, gavg
 use seth_z_teno_tables, only : CEN4_C, CEN6_C, CEN8_C
-use seth_vv_cases, only : vv_report, vv_open
+use seth_vv_report, only : vv_report, vv_open
 implicit none
 real(R_P),    parameter :: XF = 0.3_R_P
 integer(I4P), parameter :: NH = 6_I4P

@@ -27,7 +27,7 @@ use seth
 use seth_test_parameters, only : EPS_ZT, INTERP_CP_ORDER_LOSS, INTERP_FLOOR, ORDERS_AT_FLOOR_OK
 use seth_test_schemes
 use seth_test_functions, only : gfun, gder, gder2
-use seth_vv_cases, only : vv_report, vv_open
+use seth_vv_report, only : vv_report, vv_open
 implicit none
 real(R_P),    parameter :: PI = acos(-1._R_P)
 integer(I4P), parameter :: NLEV = 6_I4P, NH = 7_I4P

@@ -23,7 +23,7 @@ program seth_vv_2d
 use seth
 use seth_vv_euler, only : NG
 use seth_vv_euler2d
-use seth_vv_cases, only : vv_report, vv_open
+use seth_vv_report, only : vv_report, vv_open
 use seth_test_schemes, only : SCHEMES, NALL
 use seth_test_parameters, only : NP_TOL
 implicit none

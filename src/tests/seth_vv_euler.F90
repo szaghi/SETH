@@ -56,6 +56,7 @@ module seth_vv_euler
 !< `nflagged` and `nhybfaces` count the flagged and the evaluated faces.
 use seth
 use seth_test_schemes, only : reconstruct, VLO, VHI, SCHEMES, rbf_dx
+use seth_vv_report, only : PATH_SPLIT, PATH_INTERP, PATH_ROE
 implicit none
 private
 public :: GAMMA, NG, PATH_SPLIT, PATH_INTERP, PATH_ROE, BC_PERIODIC, BC_TRANSMISSIVE, BC_REFLECTIVE, BC_INFLOW
@@ -66,7 +67,6 @@ public :: HYB_NONE, HYB_COST, HYB_KEP, HYB_LEFT_KEP, HYB_RANDOM, hybrid, hyb_buf
 
 real(R_P),    parameter :: GAMMA = 1.4_R_P
 integer(I4P), parameter :: NG = 6_I4P
-integer(I4P), parameter :: PATH_SPLIT = 1, PATH_INTERP = 2, PATH_ROE = 3
 integer(I4P), parameter :: BC_PERIODIC = 1, BC_TRANSMISSIVE = 2, BC_REFLECTIVE = 3, BC_INFLOW = 4
 ! f'' h^2 and f'''' h^4 at the face from the node fluxes of cells -2..3 (exact rationals)
 real(R_P), parameter :: C2(-2:3) = [-5._R_P/48._R_P, 13._R_P/16._R_P, -17._R_P/24._R_P, -17._R_P/24._R_P, &

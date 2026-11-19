@@ -18,7 +18,7 @@ use seth_test_rng, only : seed_rng
 use seth_weno_js_tables
 use seth_z_teno_tables, only : CEN4_C, CEN6_C, CEN8_C
 use seth_adam_reference, only : weno_reconstruct_centered, weno_reconstruct_centered_d1fix
-use seth_vv_cases, only : vv_report, vv_open
+use seth_vv_report, only : vv_report, vv_open
 implicit none
 integer(I4P), parameter :: N = 20000_I4P !< Random stencils per scheme.
 real(R8P),    parameter :: TOL = 64._R8P*epsilon(1._R8P)

@@ -24,7 +24,7 @@ program seth_test_convergence
 use seth
 use seth_test_parameters, only : CONV_FLOOR_OP, CONV_ORDER_LOSS, EPS_ZT, ORDERS_AT_FLOOR_OK
 use seth_test_schemes
-use seth_vv_cases, only : vv_report, vv_open
+use seth_vv_report, only : vv_report, vv_open
 implicit none
 real(R_P),    parameter :: PI = acos(-1._R_P)
 integer(I4P), parameter :: NLEV = 6_I4P

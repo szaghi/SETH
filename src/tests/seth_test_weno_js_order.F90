@@ -11,7 +11,7 @@ program seth_test_weno_js_order
 use seth
 use seth_test_parameters, only : ORDERS_AT_FLOOR_OK, POINT_FLOOR, POINT_ORDER_LOSS
 use seth_test_functions, only : gfun, gavg
-use seth_vv_cases, only : vv_report, vv_open
+use seth_vv_report, only : vv_report, vv_open
 implicit none
 integer(I4P), parameter :: NH = 6_I4P            !< Number of grid sizes.
 real(R_P),    parameter :: XF = 0.3_R_P          !< Face position.

@@ -87,7 +87,7 @@ use seth
 use seth_test_parameters, only : BIG_JUMP, NP_FLAGS_EPS, NP_TOL, NP_OFFSET_TOL, ORDERS_AT_FLOOR_OK, POINT_FLOOR, POINT_ORDER_LOSS
 use seth_test_rng, only : seed_rng
 use seth_test_teno_flags, only : teno5_flags
-use seth_vv_cases, only : vv_report, vv_open
+use seth_vv_report, only : vv_report, vv_open
 use seth_test_functions, only : gfun, gavg, GL_X, GL_W
 use seth_nonpoly_tables, only : NP_RBF_P, NP_RBF_C
 use seth_z_teno_tables, only : TENO5_P, LIN5_C

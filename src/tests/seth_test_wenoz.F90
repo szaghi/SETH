@@ -14,7 +14,7 @@ use seth
 use seth_test_parameters, only : EPS_ZT, ORDERS_AT_FLOOR_OK, POINT_FLOOR, POINT_ORDER_LOSS
 use seth_test_rng, only : seed_rng
 use seth_test_functions, only : gfun, gavg
-use seth_vv_cases, only : vv_report, vv_open
+use seth_vv_report, only : vv_report, vv_open
 implicit none
 real(R_P), parameter :: EPS = EPS_ZT !< WENO-Z regulariser of the tests.
 real(R_P), parameter :: XF = 0.3_R_P

@@ -44,7 +44,7 @@ use seth_test_schemes
 use seth_weno_js_tables
 use seth_z_teno_tables
 use seth_nonpoly_tables, only : NP_RBF_P, NP_RBF_C
-use seth_vv_cases, only : vv_report, vv_open, vv_schemes, vv_label
+use seth_vv_report, only : vv_report, vv_open, vv_schemes, vv_label
 use seth_vv_euler, only : PATH_SPLIT
 implicit none
 integer(I4P), parameter   :: N = 200_I4P

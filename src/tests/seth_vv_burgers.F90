@@ -25,7 +25,7 @@ use seth
 use seth_test_parameters, only : BURGERS_FLOOR_N, ORDERS_AT_FLOOR_OK, ORDER_FLOOR, TOL_BISECT, TOL_KINK, T_SLACK
 use seth_test_schemes
 use seth_vv_scalar
-use seth_vv_cases, only : vv_report, vv_open, vv_schemes, vv_label, l1_norm, vv_nonpoly_ids
+use seth_vv_report, only : vv_report, vv_open, vv_schemes, vv_label, l1_norm, vv_nonpoly_ids
 use seth_vv_euler, only : PATH_SPLIT
 implicit none
 real(R_P), parameter      :: PI = acos(-1._R_P), CFL = 0.4_R_P

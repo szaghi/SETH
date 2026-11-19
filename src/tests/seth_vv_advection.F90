@@ -19,7 +19,7 @@ use seth
 use seth_test_parameters, only : T_SLACK
 use seth_test_schemes
 use seth_vv_scalar
-use seth_vv_cases, only : vv_report, vv_open, vv_schemes, vv_label, l1_norm, vv_nonpoly_ids
+use seth_vv_report, only : vv_report, vv_open, vv_schemes, vv_label, l1_norm, vv_nonpoly_ids
 use seth_vv_euler, only : PATH_SPLIT
 implicit none
 integer(I4P), parameter   :: N = 200_I4P, NF = 80_I4P
