@@ -130,6 +130,16 @@ help      = Tests, nvfortran, OpenACC on the GPU of compute capability $GPU_CC
 template  = template-tests template-nvf template-release
 cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel
 lflags    = -acc -gpu=$GPU_CC
+# the programs that advance in time with SELAH's stepper, and the modules they share (16 programs, 4 modules): under
+# -acc SELAH's kernels need its device build (-DDEV_OAC, device registers), which these host fields cannot use; the
+# device tests (seth_test_device) are not among them
+exclude   = src/tests/seth_test_advection.F90 src/tests/seth_test_convergence.F90 src/tests/seth_vv_2d.F90
+            src/tests/seth_vv_adr.F90 src/tests/seth_vv_advection.F90 src/tests/seth_vv_blast.F90
+            src/tests/seth_vv_burgers.F90 src/tests/seth_vv_cases.F90 src/tests/seth_vv_euler.F90
+            src/tests/seth_vv_euler2d.F90 src/tests/seth_vv_euler_order.F90 src/tests/seth_vv_hybrid.F90
+            src/tests/seth_vv_lax.F90 src/tests/seth_vv_nonpoly.F90 src/tests/seth_vv_roe.F90
+            src/tests/seth_vv_scalar.F90 src/tests/seth_vv_sensors.F90 src/tests/seth_vv_shu_osher.F90
+            src/tests/seth_vv_sod.F90 src/tests/seth_vv_test123.F90
 
 [tests-intel]
 help      = Tests, ifx, optimised (fortran-toolchains matrix: family intel)
@@ -249,6 +259,16 @@ help      = Tests, nvfortran, OpenACC on the GPU of compute capability $GPU_CC, 
 template  = template-r4-tests template-tests template-nvf template-release
 cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel
 lflags    = -acc -gpu=$GPU_CC
+# the R4P exclusions (ADAM's code) and the SELAH users (as tests-nvf-oac)
+exclude   = src/tests/seth_adam_reference.F90 src/tests/seth_test_weno_js_adam.F90
+            src/tests/seth_test_central_adam.F90 src/tests/seth_test_weno_c_adam.F90
+            src/tests/seth_test_advection.F90 src/tests/seth_test_convergence.F90 src/tests/seth_vv_2d.F90
+            src/tests/seth_vv_adr.F90 src/tests/seth_vv_advection.F90 src/tests/seth_vv_blast.F90
+            src/tests/seth_vv_burgers.F90 src/tests/seth_vv_cases.F90 src/tests/seth_vv_euler.F90
+            src/tests/seth_vv_euler2d.F90 src/tests/seth_vv_euler_order.F90 src/tests/seth_vv_hybrid.F90
+            src/tests/seth_vv_lax.F90 src/tests/seth_vv_nonpoly.F90 src/tests/seth_vv_roe.F90
+            src/tests/seth_vv_scalar.F90 src/tests/seth_vv_sensors.F90 src/tests/seth_vv_shu_osher.F90
+            src/tests/seth_vv_sod.F90 src/tests/seth_vv_test123.F90
 
 [tests-intel-r4]
 help      = Tests, ifx, optimised, single precision (R_P = R4P)

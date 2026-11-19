@@ -11,6 +11,7 @@ module seth_vv_scalar
 !< the flux F_{i+1/2} = rp + rm. SSP-RK3 in time.
 use seth
 use seth_test_schemes, only : reconstruct, VLO, VHI
+use selah, only : stepper, box, box_interior, SCHEME_SSP_33, FORM_SHU_OSHER_2R ! the time integrator (SELAH #2)
 implicit none
 private
 public :: FLUX_ADVECTION, FLUX_BURGERS, scalar_step
@@ -45,14 +46,26 @@ contains
    endsubroutine residual
 
    subroutine scalar_step(id, kind, u, n, h, dt, par)
-   !< One SSP-RK3 step.
+   !< One SSP-RK3 step: SELAH's SSP(3,3) in its two-register Shu-Osher form (the stage state is u itself), on the
+   !< periodic rank-1 field u(0:n-1) with no ghost cells.
    integer(I4P), intent(in)           :: id, kind, n
    real(R_P),    intent(inout)        :: u(0:n-1)
    real(R_P),    intent(in)           :: h, dt
    real(R_P),    intent(in), optional :: par
-   real(R_P)                          :: u1(0:n-1), u2(0:n-1), r(0:n-1)
-   call residual(id, kind, u, n, h, r, par)  ; u1 = u + dt*r
-   call residual(id, kind, u1, n, h, r, par) ; u2 = 0.75_R_P*u + 0.25_R_P*(u1 + dt*r)
-   call residual(id, kind, u2, n, h, r, par) ; u = u/3._R_P + 2._R_P/3._R_P*(u2 + dt*r)
+   type(stepper)                      :: st
+   type(box)                          :: bx
+   real(R_P), pointer                 :: r(:)
+   integer(I4P)                       :: k
+   bx = box_interior(lb=[0_I4P], ub=[n-1], ngc=0_I4P, components=.false.)
+   call st%initialize(SCHEME_SSP_33, FORM_SHU_OSHER_2R, lb=[0_I4P], ub=[n-1], components=.false.)
+   call st%begin_step(bx, u)
+   do k=1, st%stages()
+      call st%begin_stage(k, bx, dt, u)
+      call st%rhs_register_view(r)
+      call residual(id, kind, u, n, h, r, par)
+      call st%end_stage(k, bx, dt, u)
+   enddo
+   call st%finish_step(bx, dt, u)
+   call st%destroy
    endsubroutine scalar_step
 endmodule seth_vv_scalar

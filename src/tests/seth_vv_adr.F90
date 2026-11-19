@@ -46,6 +46,7 @@ use seth_z_teno_tables
 use seth_nonpoly_tables, only : NP_RBF_P, NP_RBF_C
 use seth_vv_report, only : vv_report, vv_open, vv_schemes, vv_label
 use seth_vv_euler, only : PATH_SPLIT
+use selah, only : stepper, box, box_interior, SCHEME_SSP_33, FORM_SHU_OSHER_2R ! the time integrator (SELAH #2)
 implicit none
 integer(I4P), parameter   :: N = 200_I4P
 real(R_P),    parameter   :: PI = acos(-1._R_P)
@@ -170,19 +171,31 @@ contains
    function growth(id, nm) result(amax)
    !< Largest amplitude of mode nm advected by u_t + u_x = 0 for 4 periods (periodic, SSP-RK3, CFL 0.4, left state).
    integer(I4P), intent(in) :: id, nm
-   real(R_P)                :: amax, u0(0:N-1), u1(0:N-1), u2(0:N-1), h, dt
-   integer(I4P)             :: j, step
+   real(R_P)                :: amax, u0(0:N-1), h, dt
+   real(R_P), pointer       :: r(:)
+   integer(I4P)             :: j, step, k
+   type(stepper)            :: st
+   type(box)                :: bx
    h = 1._R_P/N ; dt = 0.4_R_P*h
    do j=0, N-1
       u0(j) = cos(2._R_P*PI*nm*j/N)
    enddo
    amax = maxval(abs(u0))
+   ! SELAH's SSP(3,3), two-register form (the stage state is u0 itself), on the periodic rank-1 field u0(0:N-1)
+   bx = box_interior(lb=[0_I4P], ub=[N-1], ngc=0_I4P, components=.false.)
+   call st%initialize(SCHEME_SSP_33, FORM_SHU_OSHER_2R, lb=[0_I4P], ub=[N-1], components=.false.)
    do step=1, nint(4._R_P/dt)
-      u1 = u0 + dt*rhs(id, u0)
-      u2 = 0.75_R_P*u0 + 0.25_R_P*(u1 + dt*rhs(id, u1))
-      u0 = u0/3._R_P + (2._R_P/3._R_P)*(u2 + dt*rhs(id, u2))
+      call st%begin_step(bx, u0)
+      do k=1, st%stages()
+         call st%begin_stage(k, bx, dt, u0)
+         call st%rhs_register_view(r)
+         r = rhs(id, u0)
+         call st%end_stage(k, bx, dt, u0)
+      enddo
+      call st%finish_step(bx, dt, u0)
       amax = max(amax, maxval(abs(u0)))
    enddo
+   call st%destroy
    endfunction growth
 
    function rhs(id, w) result(r)

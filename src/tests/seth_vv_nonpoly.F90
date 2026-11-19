@@ -77,6 +77,7 @@ use seth_vv_cases
 use seth_vv_riemann, only : riemann_sample
 use seth_test_parameters, only : NP_TOL, NP_NOISE_FLOOR
 use seth_test_schemes, only : SCHEMES, NALL, reconstruct, rbf_dx
+use selah, only : stepper, box, box_interior, SCHEME_SSP_33, FORM_SHU_OSHER_2R ! the time integrator (SELAH #2)
 implicit none
 integer(I4P), parameter :: NS = 3_I4P
 character(16), parameter :: NAMES(NS) = [character(16) :: 'teno5', 'teno5_dr', 'teno5_thinc']
@@ -294,8 +295,11 @@ contains
    character(16), parameter :: FN(4) = [character(16) :: 'teno5', 'teno5_dr', 'teno5_thinc', 'teno5_rbf_dr']
    real(R_P)                :: w0(3,NB), q(3,1-NG:NB+NG), fr(3,NB,NF), tf(NF), h, x, xc, rl, rr, lo, hi, w(3), us
    real(R_P)                :: prof(NC,4), wid(NF,3)
-   real(R_P)                :: u(NC), uw(NC), r(NC), u1(NC), u2(NC), ex(NC)
-   integer(I4P)             :: k, i, f, j, uf, step, nsteps, ib, flg(NB)
+   real(R_P)                :: u(NC), uw(NC), ex(NC)
+   real(R_P), pointer       :: rv(:)
+   integer(I4P)             :: k, i, f, j, uf, step, nsteps, ib, flg(NB), ks
+   type(stepper)            :: st
+   type(box)                :: bx
    logical                  :: pz
    ! (a) Sod and Lax, N = 100: the density profiles
    do j=1, 2
@@ -358,13 +362,18 @@ contains
                    'frames: line 1 x(1..N); then per frame: t u(1..N) u_exact(1..N) overridden-face-i+1/2(1..N)')
       write(uf, '(*(ES16.8))') ((i - 0.5_R_P)*h, i=1, NC)
       u = ex
+      bx = box_interior(lb=[1_I4P], ub=[NC], ngc=0_I4P, components=.false.)
+      call st%initialize(SCHEME_SSP_33, FORM_SHU_OSHER_2R, lb=[1_I4P], ub=[NC], components=.false.)
       do step=0, 10*nsteps
-         if (step > 0) then
-            call adv_rhs(scheme_id(FN(k)), ids(1), 1_I4P, 6_I4P, NC, h, u, r, ib) ; u1 = u + r/nsteps
-            call adv_rhs(scheme_id(FN(k)), ids(1), 1_I4P, 6_I4P, NC, h, u1, r, ib)
-            u2 = 0.75_R_P*u + 0.25_R_P*(u1 + r/nsteps)
-            call adv_rhs(scheme_id(FN(k)), ids(1), 1_I4P, 6_I4P, NC, h, u2, r, ib)
-            u = u/3._R_P + 2._R_P/3._R_P*(u2 + r/nsteps)
+         if (step > 0) then ! SELAH's SSP(3,3), two-register form (the stage state is u), dt = 1/nsteps
+            call st%begin_step(bx, u)
+            do ks=1, st%stages()
+               call st%begin_stage(ks, bx, 1._R_P/nsteps, u)
+               call st%rhs_register_view(rv)
+               call adv_rhs(scheme_id(FN(k)), ids(1), 1_I4P, 6_I4P, NC, h, u, rv, ib)
+               call st%end_stage(ks, bx, 1._R_P/nsteps, u)
+            enddo
+            call st%finish_step(bx, 1._R_P/nsteps, u)
          endif
          if (mod(step, nsteps/5) == 0) then
             do i=1, NC ! the exact solution at t (the square wave translated, periodic)
@@ -403,6 +412,7 @@ contains
       write(uf, '(ES14.6,*(1X,I0))') tf(f), flg
    enddo
    close(uf)
+   call st%destroy
    endsubroutine figures
 
    subroutine overridden(id, base, u, flg)
@@ -493,15 +503,27 @@ contains
    real(R_P),    intent(in)  :: u0(:), cfl
    real(R_P),    intent(out) :: u(size(u0))
    integer(I4P), intent(out) :: nact
-   real(R_P)                 :: u1(size(u0)), u2(size(u0)), r(size(u0)), h, dt
-   integer(I4P)              :: n, step, nsteps
+   real(R_P)                 :: h, dt
+   real(R_P), pointer        :: r(:)
+   integer(I4P)              :: n, step, nsteps, k
+   type(stepper)             :: st
+   type(box)                 :: bx
    n = size(u0) ; h = 1._R_P/n ; nsteps = nint(1._R_P/(cfl*h)) ; dt = 1._R_P/nsteps
    u = u0 ; nact = 0
+   ! SELAH's SSP(3,3), two-register form (the stage state is u itself), on the periodic rank-1 field u(1:n)
+   bx = box_interior(lb=[1_I4P], ub=[n], ngc=0_I4P, components=.false.)
+   call st%initialize(SCHEME_SSP_33, FORM_SHU_OSHER_2R, lb=[1_I4P], ub=[n], components=.false.)
    do step=1, nsteps
-      call adv_rhs(id, base, nb, g, n, h, u, r, nact) ; u1 = u + dt*r
-      call adv_rhs(id, base, nb, g, n, h, u1, r, nact) ; u2 = 0.75_R_P*u + 0.25_R_P*(u1 + dt*r)
-      call adv_rhs(id, base, nb, g, n, h, u2, r, nact) ; u = u/3._R_P + 2._R_P/3._R_P*(u2 + dt*r)
+      call st%begin_step(bx, u)
+      do k=1, st%stages()
+         call st%begin_stage(k, bx, dt, u)
+         call st%rhs_register_view(r)
+         call adv_rhs(id, base, nb, g, n, h, u, r, nact)
+         call st%end_stage(k, bx, dt, u)
+      enddo
+      call st%finish_step(bx, dt, u)
    enddo
+   call st%destroy
    endsubroutine advect
 
    function scheme_id(name) result(id)
@@ -638,16 +660,28 @@ contains
    integer(I4P), intent(in)  :: id
    real(R_P),    intent(in)  :: u0(:), cfl, dxr
    real(R_P),    intent(out) :: u(size(u0))
-   real(R_P)                 :: u1(size(u0)), u2(size(u0)), r(size(u0)), h, dt
-   integer(I4P)              :: n, step, nsteps, nact
+   real(R_P)                 :: h, dt
+   real(R_P), pointer        :: r(:)
+   integer(I4P)              :: n, step, nsteps, nact, k
+   type(stepper)             :: st
+   type(box)                 :: bx
    n = size(u0) ; h = 1._R_P/n ; nsteps = nint(100._R_P/(cfl*h)) ; dt = 100._R_P/nsteps
    u = u0 ; nact = 0
+   ! SELAH's SSP(3,3), two-register form (the stage state is u itself), on the periodic rank-1 field u(1:n)
+   bx = box_interior(lb=[1_I4P], ub=[n], ngc=0_I4P, components=.false.)
+   call st%initialize(SCHEME_SSP_33, FORM_SHU_OSHER_2R, lb=[1_I4P], ub=[n], components=.false.)
    do step=1, nsteps
       rbf_dx = dxr
-      call adv_rhs(id, ids(1), 1_I4P, 6_I4P, n, h, u, r, nact) ; u1 = u + dt*r
-      call adv_rhs(id, ids(1), 1_I4P, 6_I4P, n, h, u1, r, nact) ; u2 = 0.75_R_P*u + 0.25_R_P*(u1 + dt*r)
-      call adv_rhs(id, ids(1), 1_I4P, 6_I4P, n, h, u2, r, nact) ; u = u/3._R_P + 2._R_P/3._R_P*(u2 + dt*r)
+      call st%begin_step(bx, u)
+      do k=1, st%stages()
+         call st%begin_stage(k, bx, dt, u)
+         call st%rhs_register_view(r)
+         call adv_rhs(id, ids(1), 1_I4P, 6_I4P, n, h, u, r, nact)
+         call st%end_stage(k, bx, dt, u)
+      enddo
+      call st%finish_step(bx, dt, u)
    enddo
+   call st%destroy
    endsubroutine long_run
 
    subroutine units()

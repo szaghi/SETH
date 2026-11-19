@@ -20,6 +20,7 @@ use seth_test_parameters, only : TOL_TENO_LINEAR
 use seth_test_functions, only : gfun, gder
 use seth_test_schemes
 use seth_z_teno_tables
+use selah, only : stepper, box, box_interior, SCHEME_SSP_33, FORM_SHU_OSHER_2R ! the time integrator (SELAH #2)
 implicit none
 integer(I4P), parameter :: NH = 6_I4P
 real(R_P),    parameter :: PI = acos(-1._R_P)
@@ -128,16 +129,28 @@ contains
    logical,      intent(in)    :: linear
    real(R_P),    intent(in)    :: h, tend
    real(R_P),    intent(inout) :: u(0:n-1)
-   real(R_P)                   :: t, dt, u1(0:n-1), u2(0:n-1), l(0:n-1)
-   integer(I4P)                :: nsteps, s
+   real(R_P)                   :: t, dt
+   real(R_P), pointer          :: l(:)
+   integer(I4P)                :: nsteps, s, k
+   type(stepper)               :: st
+   type(box)                   :: bx
    nsteps = ceiling(tend/(0.4_R_P*h))
    dt = tend/nsteps
    t = 0._R_P
+   ! SELAH's SSP(3,3), two-register form (the stage state is u itself), on the periodic rank-1 field u(0:n-1)
+   bx = box_interior(lb=[0_I4P], ub=[n-1], ngc=0_I4P, components=.false.)
+   call st%initialize(SCHEME_SSP_33, FORM_SHU_OSHER_2R, lb=[0_I4P], ub=[n-1], components=.false.)
    do s=1, nsteps
-      call rhs(id, linear, n, h, u, l)  ; u1 = u + dt*l
-      call rhs(id, linear, n, h, u1, l) ; u2 = 0.75_R_P*u + 0.25_R_P*(u1 + dt*l)
-      call rhs(id, linear, n, h, u2, l) ; u = u/3._R_P + 2._R_P/3._R_P*(u2 + dt*l)
+      call st%begin_step(bx, u)
+      do k=1, st%stages()
+         call st%begin_stage(k, bx, dt, u)
+         call st%rhs_register_view(l)
+         call rhs(id, linear, n, h, u, l)
+         call st%end_stage(k, bx, dt, u)
+      enddo
+      call st%finish_step(bx, dt, u)
    enddo
+   call st%destroy
    endsubroutine advect
 
    function teno_vs_linear(id) result(d)

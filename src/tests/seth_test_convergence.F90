@@ -25,6 +25,7 @@ use seth
 use seth_test_parameters, only : CONV_FLOOR_OP, CONV_ORDER_LOSS, EPS_ZT, ORDERS_AT_FLOOR_OK
 use seth_test_schemes
 use seth_vv_report, only : vv_report, vv_open
+use selah, only : stepper, box, box_interior, SCHEME_SSP_33, FORM_SHU_OSHER_2R ! the time integrator (SELAH #2)
 implicit none
 real(R_P),    parameter :: PI = acos(-1._R_P)
 integer(I4P), parameter :: NLEV = 6_I4P
@@ -119,10 +120,14 @@ contains
    endfunction operator_error
 
    function advection_error(id, p, n) result(e)
-   !< Linf of u(t = 2) - u0 after SSP-RK3 with dt = 0.4 h (h/h0)^((o-3)/3).
+   !< Linf of u(t = 2) - u0 after SSP-RK3 with dt = 0.4 h (h/h0)^((o-3)/3): SELAH's SSP(3,3), two-register form (the
+   !< stage state is u itself), on the periodic rank-1 field u(0:n-1).
    integer(I4P), intent(in) :: id, p, n
-   real(R_P)                :: e, h, dt, u(0:n-1), u0(0:n-1), u1(0:n-1), u2(0:n-1), l(0:n-1), f(0:n-1)
-   integer(I4P)             :: i, s, nsteps
+   real(R_P)                :: e, h, dt, u(0:n-1), u0(0:n-1), f(0:n-1)
+   real(R_P), pointer       :: l(:)
+   integer(I4P)             :: i, s, nsteps, k
+   type(stepper)            :: st
+   type(box)                :: bx
    h = 2._R_P/n
    do i=0, n-1
       u0(i) = henrick(-1._R_P + i*h)
@@ -130,11 +135,19 @@ contains
    dt = 0.4_R_P*h*(h/0.1_R_P)**((SCHEMES(id)%order - 3._R_P)/3._R_P)
    nsteps = ceiling(2._R_P/dt) ; dt = 2._R_P/nsteps
    u = u0
+   bx = box_interior(lb=[0_I4P], ub=[n-1], ngc=0_I4P, components=.false.)
+   call st%initialize(SCHEME_SSP_33, FORM_SHU_OSHER_2R, lb=[0_I4P], ub=[n-1], components=.false.)
    do s=1, nsteps
-      call fluxes(id, p, n, u, f)  ; call dif(n, h, f, l) ; u1 = u + dt*l
-      call fluxes(id, p, n, u1, f) ; call dif(n, h, f, l) ; u2 = 0.75_R_P*u + 0.25_R_P*(u1 + dt*l)
-      call fluxes(id, p, n, u2, f) ; call dif(n, h, f, l) ; u = u/3._R_P + 2._R_P/3._R_P*(u2 + dt*l)
+      call st%begin_step(bx, u)
+      do k=1, st%stages()
+         call st%begin_stage(k, bx, dt, u)
+         call st%rhs_register_view(l)
+         call fluxes(id, p, n, u, f) ; call dif(n, h, f, l)
+         call st%end_stage(k, bx, dt, u)
+      enddo
+      call st%finish_step(bx, dt, u)
    enddo
+   call st%destroy
    e = maxval(abs(u - u0))
    endfunction advection_error
 

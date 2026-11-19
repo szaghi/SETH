@@ -57,6 +57,7 @@ module seth_vv_euler
 use seth
 use seth_test_schemes, only : reconstruct, VLO, VHI, SCHEMES, rbf_dx
 use seth_vv_report, only : PATH_SPLIT, PATH_INTERP, PATH_ROE
+use selah, only : stepper, box, box_interior, SCHEME_SSP_33, FORM_SHU_OSHER_2R ! the time integrator (SELAH #2)
 implicit none
 private
 public :: GAMMA, NG, PATH_SPLIT, PATH_INTERP, PATH_ROE, BC_PERIODIC, BC_TRANSMISSIVE, BC_REFLECTIVE, BC_INFLOW
@@ -420,23 +421,36 @@ contains
    endsubroutine limit
 
    subroutine euler_step(id, path, q, n, h, dt, bc, ok, par)
-   !< One SSP-RK3 step; `ok` false (and q left at the failed stage) when a stage has a cell with rho <= 0 or p <= 0:
+   !< One SSP-RK3 step (SELAH's SSP(3,3)); `ok` false (and q left at the failed stage) when a stage has a cell with
+   !< rho <= 0 or p <= 0:
    !< the next residual would take the square root of a negative pressure (a floating-point trap in the debug builds).
    integer(I4P), intent(in)           :: id, path, n, bc
    real(R_P),    intent(inout)        :: q(3,1-NG:n+NG)
    real(R_P),    intent(in)           :: h, dt
    logical,      intent(out)          :: ok
    real(R_P),    intent(in), optional :: par
-   real(R_P)                          :: q1(3,1-NG:n+NG), q2(3,1-NG:n+NG), res(3,n)
-   call residual(id, path, q, n, h, dt, bc, res, par)
-   q1 = q ; q1(:,1:n) = q(:,1:n) + dt*res
-   ok = positive_state(q1, n) ; if (.not.ok) then ; q = q1 ; return ; endif
-   call residual(id, path, q1, n, h, dt, bc, res, par)
-   q2 = q ; q2(:,1:n) = 0.75_R_P*q(:,1:n) + 0.25_R_P*(q1(:,1:n) + dt*res)
-   ok = positive_state(q2, n) ; if (.not.ok) then ; q = q2 ; return ; endif
-   call residual(id, path, q2, n, h, dt, bc, res, par)
-   q(:,1:n) = q(:,1:n)/3._R_P + 2._R_P/3._R_P*(q2(:,1:n) + dt*res)
-   ok = positive_state(q, n)
+   type(stepper)                      :: st
+   type(box)                          :: bx
+   real(R_P), pointer                 :: r(:,:)
+   integer(I4P)                       :: k
+   ! SELAH's SSP(3,3), two-register form: the stage state is q itself, so the residual fills q's ghost cells at each
+   ! stage (the boundary conditions) and the positivity of each stage is checked on q after end_stage
+   bx = box_interior(lb=[1_I4P, 1-NG], ub=[3_I4P, n+NG], ngc=NG, components=.true.)
+   call st%initialize(SCHEME_SSP_33, FORM_SHU_OSHER_2R, lb=[1_I4P, 1-NG], ub=[3_I4P, n+NG], components=.true.)
+   call st%begin_step(bx, q)
+   do k=1, st%stages()
+      call st%begin_stage(k, bx, dt, q)
+      call st%rhs_register_view(r)
+      call residual(id, path, q, n, h, dt, bc, r(:,1:n), par)
+      call st%end_stage(k, bx, dt, q)
+      ok = positive_state(q, n)
+      if (.not.ok) then ! q left at the failed stage
+         call st%destroy
+         return
+      endif
+   enddo
+   call st%finish_step(bx, dt, q)
+   call st%destroy
    endsubroutine euler_step
 
    pure function positive_state(q, n) result(ok)
