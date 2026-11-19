@@ -15,6 +15,7 @@ The build modes of `fobos` and the scripts of the repository, each with what it 
 | `static-gnu`, `static-nvf`, `static-intel` | the static library, `lib/<compiler>/static/libseth.a`, gfortran, nvfortran, ifx, optimised |
 | `shared-gnu`, `shared-nvf`, `shared-intel` | the shared library, `libseth.so` |
 | `static-gnu-r4`, `static-nvf-r4`, `static-intel-r4`, `shared-gnu-r4`, `shared-nvf-r4`, `shared-intel-r4` | the same in single precision, `R_P = R4P` ([Precision](./precision)) |
+| `static-selah-gnu` | [SELAH](https://szaghi.github.io/SELAH/)'s library from `src/third_party/SELAH`, gfortran: the time integrator of the docs examples, linked by `scripts/docs_examples.sh` after `libseth.a` |
 | `tests-gnu`, `tests-nvf`, `tests-intel` | the test programs, optimised, into `exe/` |
 | `tests-gnu-debug`, `tests-nvf-debug`, `tests-intel-debug` | the test programs with every runtime check |
 | `tests-gnu-coverage` | the test programs instrumented for coverage (`fobis rule --ex makecoverage-analysis`) |

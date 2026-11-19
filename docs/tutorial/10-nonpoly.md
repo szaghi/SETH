@@ -26,9 +26,11 @@ together read the twelve cells $-5..6$, so the solver needs **six ghost cells**.
 
 <<< @/examples/output/t10_nonpoly.txt{text}
 
-DR keeps each jump within 2 cells and THINC within 3, against TENO5's 6, with no new extrema, and the $L_1$ error
-falls by a factor of 2 to 2.7. The complete scheme of Liang & Fu (2024), the Gaussian-RBF rows with the DR override,
-has the smallest error.
+DR keeps each jump within 2 cells and THINC within 4, against TENO5's 6, with no new extrema, and the $L_1$ error
+falls by a factor of 2 to 2.8. The two schemes with the DR override, DR alone and the complete scheme of Liang & Fu
+(2024) with its Gaussian-RBF rows, have the smallest errors, 4% apart: their order on this problem is within the reach
+of round-off, which can flip a detector's decision at a cell or two (the step's arithmetic changed with SELAH's
+integrator, and so did these last digits).
 
 The price, measured in two dimensions ([NP9](/verification/nonpolynomial/two-d)): the overrides keep a contact
 sharp, but leave small ripples in the smooth flow behind a shock that TENO5 does not.

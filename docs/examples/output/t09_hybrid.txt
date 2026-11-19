@@ -1,6 +1,6 @@
 $ t09_hybrid
 one period of linear advection, 200 cells; the hybrid with Li, Chen & Ren's sensor
 scheme      L1 error  undershoot  overshoot   nonlinear faces
-TENO5      1.34E-02   2.43E-07   4.00E-11         100.0 %
+TENO5      1.34E-02   2.99E-07   3.96E-11         100.0 %
 linear5    1.62E-02   7.54E-02   7.54E-02           0.0 %
 hybrid     1.35E-02   2.96E-04   2.96E-04           6.8 %

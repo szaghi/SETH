@@ -8,6 +8,11 @@ Chapters that take you from the two states at one face to a solver of the Euler 
 complete program in `docs/examples/src/`. The code on these pages is that program, and the output is what it printed
 when the documentation was built (`bash scripts/docs_examples.sh` regenerates both, and CI fails when they drift).
 
+The time step: chapter 3 writes its SSP-RK3 by hand, three lines, to show what a step is. Chapters 6 to 10 and the
+cookbook take it from [SELAH](https://szaghi.github.io/SELAH/), its `SCHEME_SSP_33` driven stage by stage around
+SETH's residual, as a solver built on SETH does: SETH is a source of space operators, SELAH of the time operators.
+Chapter 11, on the GPU, keeps its own step until it is wired to SELAH's device build.
+
 ```mermaid
 flowchart LR
   A[1 one face] --> B[2 a line] --> C[3 a conservation law] --> D[4 the weights] --> E[5 TENO]

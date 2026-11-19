@@ -2,6 +2,7 @@
 program t07_euler
 !run t07_euler t07_euler
 use seth
+use selah, only : stepper, box, box_interior, SCHEME_SSP_33, FORM_SHU_OSHER_2R   ! the time integrator: SELAH's
 implicit none
 real(R_P), parameter :: GAMMA = 1.4_R_P
 integer,   parameter :: N = 200, NG = 3
@@ -126,8 +127,14 @@ contains
    real(R_P), intent(inout) :: q(3,N)
    real(R_P), intent(in)    :: tend
    logical,   intent(in)    :: characteristic
-   real(R_P)                :: q1(3,N), q2(3,N), res(3,N), t, dt, smax, wp(3)
+   real(R_P)                :: t, dt, smax, wp(3)
    integer                  :: i
+   type(stepper)            :: st
+   type(box)                :: bx
+   real(R_P), pointer       :: r(:,:)
+   integer                  :: k
+   bx = box_interior(lb=[1, 1], ub=[3, N], ngc=0, components=.true.)
+   call st%initialize(SCHEME_SSP_33, FORM_SHU_OSHER_2R, lb=[1, 1], ub=[3, N], components=.true.)
    t = 0
    do while (t < tend)
       smax = 0
@@ -135,11 +142,17 @@ contains
          wp = cons2prim(q(:,i)) ; smax = max(smax, abs(wp(2)) + sqrt(GAMMA*wp(3)/wp(1)))
       enddo
       dt = min(0.4_R_P*h/smax, tend - t)
-      call residual(q, res, characteristic)  ; q1 = q + dt*res
-      call residual(q1, res, characteristic) ; q2 = 0.75_R_P*q + 0.25_R_P*(q1 + dt*res)
-      call residual(q2, res, characteristic) ; q  = q/3 + 2._R_P/3*(q2 + dt*res)
+      call st%begin_step(bx, q)
+      do k=1, st%stages()                          ! SELAH's SSP(3,3): the stage state is q itself
+         call st%begin_stage(k, bx, dt, q)
+         call st%rhs_register_view(r)
+         call residual(q, r, characteristic)
+         call st%end_stage(k, bx, dt, q)
+      enddo
+      call st%finish_step(bx, dt, q)
       t = t + dt
    enddo
+   call st%destroy
    endsubroutine evolve
 
    subroutine star_state(wl, wr, pstar, ustar)

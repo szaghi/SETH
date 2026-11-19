@@ -1,6 +1,7 @@
 !< Cookbook: the central branch of a hybrid for the Euler equations, the recipe chosen on the command line.
 program cookbook_euler
 use seth
+use selah, only : stepper, box, box_interior, SCHEME_SSP_33, FORM_SHU_OSHER_2R   ! the time integrator: SELAH's
 implicit none
 real(R_P), parameter :: PI = acos(-1._R_P), GAMMA = 1.4_R_P
 character(16)        :: recipe
@@ -16,20 +17,31 @@ contains
    subroutine pressure_equilibrium
    !< A density wave in uniform velocity and pressure, advected one period by the sixth-order KEEP-PE flux.
    integer, parameter :: N = 64, NG = 3
-   real(R_P)          :: q(5,N), q1(5,N), q2(5,N), res(5,N), h, t, dt, w(5), du, dp
-   integer            :: i
+   real(R_P)          :: q(5,N), h, t, dt, w(5), du, dp
+   integer            :: i, k
+   type(stepper)      :: st
+   type(box)          :: bx
+   real(R_P), pointer :: r(:,:)
    h = 1._R_P/N
    do i=1, N                                    ! rho = 1 + 0.5 sin(2 pi x), u = 1, p = 1
       q(:,i) = cons([1 + 0.5_R_P*sin(2*PI*(i - 0.5_R_P)*h), 1._R_P, 0._R_P, 0._R_P, 1._R_P])
    enddo
+   bx = box_interior(lb=[1, 1], ub=[5, N], ngc=0, components=.true.)
+   call st%initialize(SCHEME_SSP_33, FORM_SHU_OSHER_2R, lb=[1, 1], ub=[5, N], components=.true.)
    t = 0
    do while (t < 1._R_P)
       dt = min(0.4_R_P*h/(1 + sqrt(GAMMA*2)), 1._R_P - t)        ! |u| + c, c largest where rho is smallest
-      call residual(q, res)  ; q1 = q + dt*res
-      call residual(q1, res) ; q2 = 0.75_R_P*q + 0.25_R_P*(q1 + dt*res)
-      call residual(q2, res) ; q  = q/3 + 2._R_P/3*(q2 + dt*res)
+      call st%begin_step(bx, q)
+      do k=1, st%stages()                          ! SELAH's SSP(3,3): the stage state is q itself
+         call st%begin_stage(k, bx, dt, q)
+         call st%rhs_register_view(r)
+         call residual(q, r)
+         call st%end_stage(k, bx, dt, q)
+      enddo
+      call st%finish_step(bx, dt, q)
       t = t + dt
    enddo
+   call st%destroy
    du = 0 ; dp = 0
    do i=1, N
       w = prim(q(:,i)) ; du = max(du, abs(w(2) - 1)) ; dp = max(dp, abs(w(5) - 1))

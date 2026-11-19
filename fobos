@@ -34,7 +34,7 @@ SELAH    = https://github.com/szaghi/SELAH :: branch=main
 
 [modes]
 # the first mode is the default (fobis build, scripts/install.sh): the library any gfortran can build
-modes = static-gnu shared-gnu
+modes = static-gnu shared-gnu static-selah-gnu
         static-nvf shared-nvf
         static-intel shared-intel
         tests-gnu tests-gnu-debug tests-gnu-coverage
@@ -74,6 +74,18 @@ $GPU_CC = cc90
 help      = Static library, gfortran, optimised
 template  = template-lib-static template-gnu template-release
 build_dir = lib/gnu/static/
+
+# SELAH's library, built from its fetched sources with SETH's toolchain: the time integrator of the docs examples,
+# which scripts/docs_examples.sh links after libseth.a (SELAH issue #2: SETH is a source of space operators only)
+[static-selah-gnu]
+help      = SELAH's static library from src/third_party/SELAH, gfortran, optimised (the docs examples' time integrator)
+template  = template-gnu template-release
+target    = src/third_party/SELAH/src/lib/selah.F90
+mklib     = static
+output    = libselah.a
+build_dir = lib/gnu/static-selah/
+include   = src/third_party/FUNDAL/src/lib/
+preproc   = -DFUNDAL_NO_MPI
 
 [shared-gnu]
 help      = Shared library, gfortran, optimised

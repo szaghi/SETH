@@ -1,6 +1,7 @@
 !< Tutorial 8: positivity. A double rarefaction that opens a vacuum, with and without the positivity limiter.
 program t08_positivity
 use seth
+use selah, only : stepper, box, box_interior, SCHEME_SSP_33, FORM_SHU_OSHER_2R   ! the time integrator: SELAH's
 implicit none
 real(R_P), parameter :: GAMMA = 1.4_R_P
 integer,   parameter :: N = 400, NG = 3
@@ -125,8 +126,14 @@ contains
    real(R_P), intent(out)   :: t
    logical,   intent(out)   :: ok
    integer,   intent(out)   :: nlim
-   real(R_P)                :: q1(3,N), q2(3,N), res(3,N), dt, smax, wp(3)
+   real(R_P)                :: q0(3,N), dt, smax, wp(3)
    integer                  :: i
+   type(stepper)            :: st
+   type(box)                :: bx
+   real(R_P), pointer       :: r(:,:)
+   integer                  :: k
+   bx = box_interior(lb=[1, 1], ub=[3, N], ngc=0, components=.true.)
+   call st%initialize(SCHEME_SSP_33, FORM_SHU_OSHER_2R, lb=[1, 1], ub=[3, N], components=.true.)
    t = 0 ; nlim = 0 ; ok = .true.
    do while (t < tend)
       smax = 0
@@ -134,14 +141,22 @@ contains
          wp = cons2prim(q(:,i)) ; smax = max(smax, abs(wp(2)) + sqrt(GAMMA*wp(3)/wp(1)))
       enddo
       dt = min(0.4_R_P*h/smax, tend - t)
-      call residual(q, dt, limit, res, nlim)  ; q1 = q + dt*res
-      ok = admissible(q1) ; if (.not.ok) return
-      call residual(q1, dt, limit, res, nlim) ; q2 = 0.75_R_P*q + 0.25_R_P*(q1 + dt*res)
-      ok = admissible(q2) ; if (.not.ok) return
-      call residual(q2, dt, limit, res, nlim) ; q  = q/3 + 2._R_P/3*(q2 + dt*res)
-      ok = admissible(q) ; if (.not.ok) return
+      q0 = q                                     ! the state to keep if a stage is not admissible
+      call st%begin_step(bx, q)
+      do k=1, st%stages()                        ! SELAH's SSP(3,3): the stage state is q itself
+         call st%begin_stage(k, bx, dt, q)
+         call st%rhs_register_view(r)
+         call residual(q, dt, limit, r, nlim)
+         call st%end_stage(k, bx, dt, q)
+         ok = admissible(q)
+         if (.not.ok) then
+            q = q0 ; call st%destroy ; return
+         endif
+      enddo
+      call st%finish_step(bx, dt, q)
       t = t + dt
    enddo
+   call st%destroy
    endsubroutine evolve
 
    pure logical function admissible(q)

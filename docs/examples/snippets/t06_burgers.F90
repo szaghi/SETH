@@ -1,6 +1,7 @@
 !< Tutorial 6: a nonlinear flux. Burgers' equation, a sine steepening into a shock.
 program t06_burgers
 use seth
+use selah, only : stepper, box, box_interior, SCHEME_SSP_33, FORM_SHU_OSHER_2R   ! the time integrator: SELAH's
 implicit none
 real(R_P), parameter :: PI = acos(-1._R_P)
 integer,   parameter :: N = 100, NG = 4          ! WENO-Z7 reads cells -3..4: four ghost cells
@@ -63,14 +64,26 @@ contains
    integer,   intent(in)    :: s
    real(R_P), intent(inout) :: u(N)
    real(R_P), intent(in)    :: tend
-   real(R_P)                :: u1(N), u2(N), res(N), t, dt
+   real(R_P)                :: t, dt
+   type(stepper)            :: st
+   type(box)                :: bx
+   real(R_P), pointer       :: r(:)
+   integer                  :: k
+   bx = box_interior(lb=[1], ub=[N], ngc=0, components=.false.)
+   call st%initialize(SCHEME_SSP_33, FORM_SHU_OSHER_2R, lb=[1], ub=[N], components=.false.)
    t = 0
    do while (t < tend)
       dt = min(0.4_R_P*h/maxval(abs(u)), tend - t)
-      call residual(s, u, res)  ; u1 = u + dt*res
-      call residual(s, u1, res) ; u2 = 0.75_R_P*u + 0.25_R_P*(u1 + dt*res)
-      call residual(s, u2, res) ; u  = u/3 + 2._R_P/3*(u2 + dt*res)
+      call st%begin_step(bx, u)
+      do k=1, st%stages()                          ! SELAH's SSP(3,3): the stage state is u itself
+         call st%begin_stage(k, bx, dt, u)
+         call st%rhs_register_view(r)
+         call residual(s, u, r)
+         call st%end_stage(k, bx, dt, u)
+      enddo
+      call st%finish_step(bx, dt, u)
       t = t + dt
    enddo
+   call st%destroy
    endsubroutine evolve
 endprogram t06_burgers

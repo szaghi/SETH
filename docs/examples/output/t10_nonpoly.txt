@@ -2,6 +2,6 @@ $ t10_nonpoly
 one period of linear advection of a square wave, 200 cells
 scheme          L1 error   in [0, 1]  cells per jump
 TENO5          1.33E-02         T             6
-TENO5-DR       5.50E-03         T             2
-TENO5-THINC    6.77E-03         T             3
-TENO5-RBF+DR   5.02E-03         T             3
+TENO5-DR       4.76E-03         T             2
+TENO5-THINC    6.69E-03         T             4
+TENO5-RBF+DR   4.93E-03         T             2

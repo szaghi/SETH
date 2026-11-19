@@ -10,7 +10,8 @@
 #                              (its command is in the file's first line)
 #
 # The library is built by FoBiS (mode static-gnu: gfortran, host, the archive carries PENF) and every example is
-# compiled against it exactly as a user program would be: `gfortran -I<mods> prog.F90 libseth.a` (with -fcheck=bounds:
+# compiled against it exactly as a user program would be: `gfortran -I<mods> prog.F90 libseth.a libselah.a` (SELAH's
+# library, mode static-selah-gnu: the time integrator of the examples that advance in time, SELAH issue #2) (with -fcheck=bounds:
 # an example that reads out of bounds fails the build). OpenACC and OpenMP
 # directives in an example are comments here: the programs run on the host. The examples must print only values that
 # do not depend on the machine (explicit formats, a few significant digits; no timings, no device names). Each run
@@ -24,12 +25,13 @@ root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 ex=$root/docs/examples
 build=$root/build/docs-examples # git-ignored
 lib=$root/lib/gnu/static        # fobis build --mode static-gnu
+slib=$root/lib/gnu/static-selah # fobis build --mode static-selah-gnu: the examples' time integrator (SELAH issue #2)
 run_dir=$build/run
 home=/home/user                 # how the run directory is shown
 fc=${FC:-gfortran}
 
-[ -d "$root/src/third_party/PENF/src" ] || (cd "$root" && fobis fetch) # a fresh clone: PENF
-(cd "$root" && fobis build --mode static-gnu) > "$root/build-docs-examples.log" 2>&1 || {
+[ -d "$root/src/third_party/SELAH/src" ] || (cd "$root" && fobis fetch) # a fresh clone: PENF, FUNDAL, SELAH
+(cd "$root" && fobis build --mode static-gnu && fobis build --mode static-selah-gnu) > "$root/build-docs-examples.log" 2>&1 || {
   cat "$root/build-docs-examples.log"; echo "docs_examples: library build failed" >&2; exit 1; }
 rm -f "$root/build-docs-examples.log"
 rm -rf -- "$build"
@@ -51,7 +53,8 @@ for src in "$ex"/src/*.F90; do
 done
 
 for src in "$ex"/src/*.F90; do
-  "$fc" -cpp -O2 -fcheck=bounds,do,mem,pointer -I"$lib/mod" -J"$build/mod" -o "$build/bin/$(basename "$src" .F90)" "$src" "$lib/libseth.a"
+  "$fc" -cpp -O2 -fcheck=bounds,do,mem,pointer -I"$lib/mod" -I"$slib/mod" -J"$build/mod" -o "$build/bin/$(basename "$src" .F90)" "$src" "$lib/libseth.a" \
+        "$slib/libselah.a"
 done
 
 run() { # run [-s] ID COMMAND
