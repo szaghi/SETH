@@ -13,6 +13,7 @@ module seth_vv_euler2d
 use penf, only : I4P, R_P
 use seth_vv_euler, only : GAMMA, NG
 use seth_test_schemes, only : reconstruct, VLO, VHI, rbf_dx
+use selah, only : stepper, box, box_interior, SCHEME_SSP_33, FORM_SHU_OSHER_2R ! the time integrator (SELAH #2)
 implicit none
 private
 public :: BC2_PERIODIC, BC2_TRANSMISSIVE, prim2cons2, cons2prim2, euler2_step, euler2_dt, eigen2, positive2
@@ -163,22 +164,34 @@ contains
    endfunction euler2_dt
 
    subroutine euler2_step(id, q, n, h, dt, bc, ok)
-   !< One SSP-RK3 step; ok false when a stage has a cell with rho <= 0 or p <= 0.
+   !< One SSP-RK3 step, SELAH's SSP(3,3) in its two-register form on the rank-3 field q(v, i, j) (the stage state is q
+   !< itself: the residual fills its ghost cells at each stage); ok false, q left at the failed stage, when a stage has
+   !< a cell with rho <= 0 or p <= 0.
    integer(I4P), intent(in)    :: id, n, bc
    real(R_P),    intent(inout) :: q(4,1-NG:n+NG,1-NG:n+NG)
    real(R_P),    intent(in)    :: h, dt
    logical,      intent(out)   :: ok
-   real(R_P), allocatable      :: q1(:,:,:), q2(:,:,:), res(:,:,:)
-   allocate(q1, q2, mold=q) ; allocate(res(4,n,n))
-   call residual2(id, q, n, h, bc, res)
-   q1 = q ; q1(:,1:n,1:n) = q(:,1:n,1:n) + dt*res
-   ok = positive2(q1, n) ; if (.not.ok) then ; q = q1 ; return ; endif
-   call residual2(id, q1, n, h, bc, res)
-   q2 = q ; q2(:,1:n,1:n) = 0.75_R_P*q(:,1:n,1:n) + 0.25_R_P*(q1(:,1:n,1:n) + dt*res)
-   ok = positive2(q2, n) ; if (.not.ok) then ; q = q2 ; return ; endif
-   call residual2(id, q2, n, h, bc, res)
-   q(:,1:n,1:n) = q(:,1:n,1:n)/3._R_P + 2._R_P/3._R_P*(q2(:,1:n,1:n) + dt*res)
-   ok = positive2(q, n)
+   type(stepper)               :: st
+   type(box)                   :: bx
+   real(R_P), pointer          :: r(:,:,:)
+   integer(I4P)                :: k
+   bx = box_interior(lb=[1_I4P, 1-NG, 1-NG], ub=[4_I4P, n+NG, n+NG], ngc=NG, components=.true.)
+   call st%initialize(SCHEME_SSP_33, FORM_SHU_OSHER_2R, lb=[1_I4P, 1-NG, 1-NG], ub=[4_I4P, n+NG, n+NG], &
+                      components=.true.)
+   call st%begin_step(bx, q)
+   do k=1, st%stages()
+      call st%begin_stage(k, bx, dt, q)
+      call st%rhs_register_view(r)
+      call residual2(id, q, n, h, bc, r(:,1:n,1:n))
+      call st%end_stage(k, bx, dt, q)
+      ok = positive2(q, n)
+      if (.not.ok) then
+         call st%destroy
+         return
+      endif
+   enddo
+   call st%finish_step(bx, dt, q)
+   call st%destroy
    endsubroutine euler2_step
 
    pure function positive2(q, n) result(ok)
