@@ -5,6 +5,9 @@
 # script runs locally, in `docker run <image>` and in CI.
 set -euo pipefail
 echo "toolchain: $TOOLCHAIN ($TOOLCHAIN_OS, $TOOLCHAIN_FAMILY), FC=$FC"
+# the separation of time (SELAH) and space (GIDEON, SETH) operators: no copy in the tests (SELAH issue #2)
+python3 scripts/check_separation.py --self-test
+python3 scripts/check_separation.py
 fobis fetch
 fobis build --mode "tests-$TOOLCHAIN_FAMILY"
 bash scripts/run_tests.sh
