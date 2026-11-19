@@ -34,7 +34,7 @@ SELAH    = https://github.com/szaghi/SELAH :: branch=main
 
 [modes]
 # the first mode is the default (fobis build, scripts/install.sh): the library any gfortran can build
-modes = static-gnu shared-gnu static-selah-gnu
+modes = static-gnu shared-gnu static-selah-gnu example-t11-nvf-oac
         static-nvf shared-nvf
         static-intel shared-intel
         tests-gnu tests-gnu-debug tests-gnu-coverage
@@ -86,6 +86,20 @@ output    = libselah.a
 build_dir = lib/gnu/static-selah/
 include   = src/third_party/FUNDAL/src/lib/
 preproc   = -DFUNDAL_NO_MPI
+
+# tutorial chapter 11 on the GPU: the program with SETH, PENF, FUNDAL and SELAH compiled by nvfortran with OpenACC,
+# SELAH and FUNDAL in their device build (the capture docs/examples/device/t11_gpu.txt)
+[example-t11-nvf-oac]
+help      = Tutorial 11 on the GPU: t11_gpu with OpenACC on compute capability $GPU_CC, SELAH's device build
+template  = template-nvf template-release
+src       = src/lib/ docs/examples/src/
+target    = docs/examples/src/t11_gpu.F90
+output    = t11_gpu
+build_dir = exe-gpu/
+include   = src/third_party/FUNDAL/src/lib/
+preproc   = -DFUNDAL_NO_MPI -DDEV_OAC -DCOMPILER_NVF
+cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel
+lflags    = -acc -gpu=$GPU_CC
 
 [shared-gnu]
 help      = Shared library, gfortran, optimised

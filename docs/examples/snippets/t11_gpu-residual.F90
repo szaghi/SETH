@@ -1,10 +1,11 @@
 subroutine residual(u, res)
-!< res = -(F_{i+1/2} - F_{i-1/2})/h, every loop on the device; the kernel called inside the face loop.
+!< res = -(F_{i+1/2} - F_{i-1/2})/h, every loop on the device; the kernel called inside the face loop. u and res are
+!< device memory (FUNDAL's and SELAH's: deviceptr), the work arrays live in the data region (present).
 real(R_P), intent(in)  :: u(N)
 real(R_P), intent(out) :: res(N)
 real(R_P)              :: vp(-2:3), vm(-2:3), rp, rm
 integer                :: i, m
-!$acc parallel loop present(u, ug)
+!$acc parallel loop deviceptr(u) present(ug)
 do i=1-NG, N+NG                              ! periodic ghost cells
    ug(i) = u(modulo(i - 1, N) + 1)
 enddo
@@ -21,7 +22,7 @@ do i=0, N
    call seth_teno5(vp, vm, SETH_TENO_EPS, SETH_TENO5_CT, rp, rm)   ! acc routine seq: one thread per face
    f(i) = rp + rm
 enddo
-!$acc parallel loop present(f, res)
+!$acc parallel loop present(f) deviceptr(res)
 do i=1, N
    res(i) = -(f(i) - f(i-1))/h
 enddo

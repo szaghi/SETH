@@ -1,4 +1,4 @@
-$ ./t11_gpu        # nvfortran 26.9 -O2 -acc -gpu=cc89, NVIDIA GeForce RTX 4070 (captured 2026-11-18)
+$ ./exe-gpu/t11_gpu  # fobis build --mode example-t11-nvf-oac: nvfortran 26.9 -acc -gpu=cc89, SELAH's device build, NVIDIA GeForce RTX 4070 (captured 2026-11-19)
 one period of linear advection, TENO5, 4096 cells, 10240 steps
   L1 error   1.103E-03
   in [-1e-6, 1 + 1e-6] T

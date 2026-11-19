@@ -10,8 +10,11 @@ there, and calling the kernel inside the face loop, one thread per face.
 
 ## The data on the device
 
-One data region for the whole run: the fields are copied in once and out once, and every loop of the time step works
-on the device copies.
+The field lives in device memory for the whole run, copied in once and out once. The time step is
+[SELAH](https://szaghi.github.io/SELAH/)'s, as in chapters 6 to 10, and on the GPU SELAH works on device memory: the
+field is a FUNDAL device array (`dev_alloc`: on the GPU with OpenACC, on the host without), and the stepper's
+registers are allocated there too. The work arrays of the residual live in a data region, so a loop names the device
+arrays it reads with `deviceptr` (the field, SELAH's register) and the others with `present`.
 
 <<< @/examples/snippets/t11_gpu-data.F90{fortran}
 
@@ -26,9 +29,11 @@ on the device copies.
 
 ## Building it for the GPU
 
-The device code of the kernels must be compiled by the same compiler, with OpenACC: declare SETH and PENF as FoBiS
-dependencies of your project ([Installation](/guide/installation#as-a-fobis-dependency)), so that their sources are
-compiled with your flags, `-acc -gpu=cc89` for nvfortran on an RTX 4070.
+The device code of the kernels must be compiled by the same compiler, with OpenACC: declare SETH, PENF, FUNDAL and
+SELAH as FoBiS dependencies of your project ([Installation](/guide/installation#as-a-fobis-dependency)), so that their
+sources are compiled with your flags: `-acc -gpu=cc89` for nvfortran on an RTX 4070, and SELAH's device build,
+`-DDEV_OAC -DCOMPILER_NVF -DFUNDAL_NO_MPI` with FUNDAL's `src/lib` among the include directories. SETH's
+`fobis build --mode example-t11-nvf-oac` builds this chapter that way.
 
 ## Running it
 
@@ -37,7 +42,7 @@ build checks:
 
 <<< @/examples/output/t11_gpu.txt{text}
 
-Built with nvfortran and OpenACC, on the GPU, captured once and kept in `docs/examples/device/`:
+Built with nvfortran and OpenACC (`example-t11-nvf-oac`), on the GPU, captured and kept in `docs/examples/device/`:
 
 <<< @/examples/device/t11_gpu.txt{text}
 
@@ -46,7 +51,8 @@ and additions into fused multiply-adds and gfortran does not; how far apart they
 [C5](/verification/contracts/device).
 
 ::: tip What you learned
-To run on the GPU, offload your loops and keep your fields on the device; the kernels need nothing. Reference:
+To run on the GPU, offload your loops and keep your fields on the device; the kernels need nothing, and SELAH's
+stepper takes the device field as it is. Reference:
 [Performance](/guide/performance).
 :::
 
