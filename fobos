@@ -40,6 +40,7 @@ modes = static-gnu shared-gnu static-selah-gnu static-selah-nvf static-selah-nvf
         tests-gnu tests-gnu-debug tests-gnu-coverage
         tests-nvf tests-nvf-debug tests-nvf-oac
         tests-intel tests-intel-debug
+        tests-amd tests-amd-omp
         bench-nvf-oac bench-nvf bench-gnu
         bench-arrays-nvf-oac bench-arrays-nvf bench-arrays-gnu
         bench-kinds-nvf-oac bench-kinds-gnu
@@ -55,6 +56,9 @@ $STD_GNU = -std=f2018
 $STD_INT = -standard-semantics -std18
 # NVIDIA compute capability of the OpenACC modes; override with --varset (e.g. --varset cc90)
 $GPU_CC = cc89
+# AMD GPU architecture of the OpenMP-offload mode (tests-amd-omp, amdflang); override with --varset (e.g. --varset
+# gfx90a): gfx90a MI200, gfx942 MI300A/MI300X, gfx950 MI350 (ADAM's $GPU_ARCH and gfx* varsets)
+$GPU_ARCH = gfx942
 
 [varset:cc80]
 $GPU_CC = cc80
@@ -68,6 +72,15 @@ $GPU_CC = cc89
 
 [varset:cc90]
 $GPU_CC = cc90
+
+[varset:gfx90a]
+$GPU_ARCH = gfx90a
+
+[varset:gfx942]
+$GPU_ARCH = gfx942
+
+[varset:gfx950]
+$GPU_ARCH = gfx950
 
 # ── library modes ────────────────────────────────────────────────────────────
 [static-gnu]
@@ -194,6 +207,22 @@ template  = template-tests template-intel-release template-intel
 [tests-intel-debug]
 help      = Tests, ifx, all checks on
 template  = template-tests template-intel template-debug
+
+# amdflang (ROCm), issue #7 E1: never compiled by the maintainers (no amdflang on their machines). tests-amd is the
+# host build, the compiler check before the offload one. tests-amd-omp offloads the OpenMP twins of the device tests'
+# loops (seth_test_device, seth_test_central) to the AMD GPU $GPU_ARCH; SELAH's and FUNDAL's sources are built with
+# them, without -DDEV_OMP: FUNDAL's host branch, whose OpenMP loops are host threads on host memory. -O3 explicit, not
+# the release profile (its -funroll-loops is untried with amdflang; ADAM's AMD modes pass -O2 explicitly too).
+# -Wl,-z,execstack: the internal-procedure trampolines, as ADAM's AMD modes (ADAM commit 660713a3)
+[tests-amd]
+help      = Tests, amdflang, optimised (-O3), host (no offload)
+template  = template-tests template-amd
+
+[tests-amd-omp]
+help      = Tests, amdflang, optimised (-O3), OpenMP offload to the AMD GPU $GPU_ARCH (--varset gfx90a, gfx942, gfx950)
+template  = template-tests template-amd
+cflags    = -c -O3 -fopenmp --offload-arch=$GPU_ARCH
+lflags    = -fopenmp --offload-arch=$GPU_ARCH -Wl,-z,execstack
 
 # ── benchmark modes: src/bench/seth_bench_weno.F90 into exe-bench/ (not a test: scripts/run_tests.sh ignores it) ──
 [bench-nvf-oac]
@@ -359,6 +388,12 @@ cflags   = -c
 template = template-base
 compiler = intel_nextgen
 cflags   = -c $STD_INT
+
+[template-amd]
+template = template-base
+compiler = amd
+cflags   = -c -O3
+lflags   = -Wl,-z,execstack
 
 [template-release]
 build_profile = release

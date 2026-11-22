@@ -2,14 +2,18 @@
 
 | ID | Group | Type | Backends | Figure | Program |
 |---|---|---|---|---|---|
-| C5 | Contracts | C | GPU (nvfortran OpenACC, `tests-nvf-oac`); host fallback elsewhere | no | `seth_test_device` |
+| C5 | Contracts | C | GPU (nvfortran OpenACC, `tests-nvf-oac`; amdflang OpenMP offload, `tests-amd-omp`, not yet run); host fallback elsewhere | no | `seth_test_device` |
 
 ## Case and scope
 
 Every kernel is `pure`, `!$acc routine seq` and `!$omp declare target`, meant to run inside a client's device loop.
 The test runs each one inside an `!$acc parallel loop` over 4096 deterministic stencils (smooth cubics, jumps, an
 integer LCG), then the same loop on the host, and compares. Built without OpenACC the directives are ignored and the
-comparison is trivial; built with `tests-nvf-oac` it is the device test.
+comparison is trivial; built with `tests-nvf-oac` it is the device test. Every loop has an OpenMP twin
+(`!$omp target teams distribute parallel do`, the same data clauses) for the OpenMP-offload build `tests-amd-omp`
+(amdflang, AMD GPUs; issue [#7](https://github.com/szaghi/SETH/issues/7), E1); that build first prints whether a
+target region ran on the device, since an OpenMP runtime with no usable device falls back to the host silently
+(`OMP_TARGET_OFFLOAD=MANDATORY` makes it an error). Not yet run: no amdflang on the maintainers' machines.
 
 ## Setup
 

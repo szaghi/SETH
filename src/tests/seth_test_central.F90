@@ -12,8 +12,8 @@ program seth_test_central
 !<    u R(rho) and R(E) = |u|^2/2 R(rho) to 1e-12 (velocity and pressure stay uniform).
 !< 5. Ducros: pure dilatation phi = psi = 1 (compression), expansion phi = 1, psi = 0, pure rotation 0, and
 !<    psi = sqrt(phi) in compression.
-!< 6. Device: seth_keep_pe6 in an OpenACC loop equals the host to 1e-13 (built with tests-nvf-oac; on the host
-!<    otherwise).
+!< 6. Device: seth_keep_pe6 in an OpenACC loop (or its OpenMP-offload twin) equals the host to 1e-13 (built with
+!<    tests-nvf-oac or tests-amd-omp; on the host otherwise).
 !< The comparison with ADAM's compute_kep_flux and compute_ducros is seth_test_central_adam (R8P only).
 use seth
 use seth_test_parameters, only : CENTRAL_FLOOR_N, COMPLEX_STEP, ORDERS_AT_FLOOR_OK, ORDER_FLOOR, &
@@ -75,6 +75,7 @@ do j=1, NS
    enddo
 enddo
 !$acc parallel loop gang vector copyin(ws) copyout(fdev) private(wl)
+!$omp target teams distribute parallel do map(to:ws) map(from:fdev) private(wl)
 do j=1, NS
    wl = ws(:,:,j)
    call seth_keep_pe6(1 + mod(j, 3), GAM, wl, fdev(:,j))

@@ -1,6 +1,6 @@
-!< SETH test: every kernel executed on the device (OpenACC) agrees with the same kernel on the host.
+!< SETH test: every kernel executed on the device (OpenACC or OpenMP offload) agrees with the same kernel on the host.
 program seth_test_device
-!< SETH test: every kernel executed on the device (OpenACC) agrees with the same kernel on the host.
+!< SETH test: every kernel executed on the device (OpenACC or OpenMP offload) agrees with the same kernel on the host.
 !<
 !< Each of the 64 cases runs one kernel inside `!$acc parallel loop` over N deterministic stencils (smooth cubics,
 !< jumps, an integer LCG), then the same loop on the host, and compares: states within 1e-13 of the stencil's
@@ -10,7 +10,15 @@ program seth_test_device
 !< (the comparison is then trivial); built with tests-nvf-oac it is the device test. Run it on an idle GPU
 !< (CUDA_VISIBLE_DEVICES). Generated case by case: one block per kernel, the same body. The positivity limiter
 !< (seth_positivity_euler, nv = 3 and 5) is checked after them on random cell pairs (limiter_case).
+!< Every device loop has an OpenMP twin, `!$omp target teams distribute parallel do` with the same data clauses (map
+!< to/from for copyin/copyout), for the OpenMP-offload builds (tests-amd-omp: amdflang, AMD GPUs; issue #7, E1); an
+!< OpenACC build ignores it, as an OpenMP build ignores the `!$acc` line. The OpenMP build first runs one target region
+!< and prints whether it ran on the device: without OMP_TARGET_OFFLOAD=MANDATORY a runtime with no usable device falls
+!< back to the host silently, and the comparison is then trivial.
 use seth
+#ifdef _OPENMP
+use omp_lib, only : omp_get_num_devices, omp_is_initial_device
+#endif
 use seth_test_parameters, only : EPS_ZT, POS_RANGE_EXP, POSITIVITY_FLOOR, TOL_DEVICE_FLUX, TOL_DEVICE_STATE, &
                                  TOL_DEVICE_WR
 implicit none
@@ -90,6 +98,15 @@ call stencils(v, w)
 passed = .true.
 #ifdef _OPENACC
 print '(A)', 'OpenACC build: kernels on the device'
+#elif defined _OPENMP
+block
+logical :: on_host
+on_host = .true.
+!$omp target map(from:on_host)
+on_host = omp_is_initial_device()
+!$omp end target
+print '(A,I0,A,L1)', 'OpenMP build: devices ', omp_get_num_devices(), ', target region on the device: ', .not.on_host
+endblock
 #else
 print '(A)', 'no OpenACC: both loops on the host'
 #endif
@@ -100,6 +117,7 @@ do k=1, NK
       real(R_P) :: a(0:1), b(0:1), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(0:1,i) ; b = w(0:1,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno1_js(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i))
@@ -116,6 +134,7 @@ do k=1, NK
       real(R_P) :: a(0:1), b(0:1), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(0:1,i) ; b = w(0:1,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno1_js_wr(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i), wrp(i), wrm(i))
@@ -132,6 +151,7 @@ do k=1, NK
       real(R_P) :: a(0:1), b(0:1), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(0:1,i) ; b = w(0:1,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno1_js_interp(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i))
@@ -148,6 +168,7 @@ do k=1, NK
       real(R_P) :: a(0:1), b(0:1), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(0:1,i) ; b = w(0:1,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno1_js_interp_wr(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i), wrp(i), wrm(i))
@@ -164,6 +185,7 @@ do k=1, NK
       real(R_P) :: a(-1:2), b(-1:2), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-1:2,i) ; b = w(-1:2,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno3_js(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i))
@@ -180,6 +202,7 @@ do k=1, NK
       real(R_P) :: a(-1:2), b(-1:2), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-1:2,i) ; b = w(-1:2,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno3_js_wr(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i), wrp(i), wrm(i))
@@ -196,6 +219,7 @@ do k=1, NK
       real(R_P) :: a(-1:2), b(-1:2), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-1:2,i) ; b = w(-1:2,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno3_js_interp(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i))
@@ -212,6 +236,7 @@ do k=1, NK
       real(R_P) :: a(-1:2), b(-1:2), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-1:2,i) ; b = w(-1:2,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno3_js_interp_wr(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i), wrp(i), wrm(i))
@@ -228,6 +253,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno5_js(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i))
@@ -244,6 +270,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno5_js_wr(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i), wrp(i), wrm(i))
@@ -260,6 +287,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno5_js_interp(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i))
@@ -276,6 +304,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno5_js_interp_wr(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i), wrp(i), wrm(i))
@@ -292,6 +321,7 @@ do k=1, NK
       real(R_P) :: a(-3:4), b(-3:4), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-3:4,i) ; b = w(-3:4,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno7_js(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i))
@@ -308,6 +338,7 @@ do k=1, NK
       real(R_P) :: a(-3:4), b(-3:4), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-3:4,i) ; b = w(-3:4,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno7_js_wr(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i), wrp(i), wrm(i))
@@ -324,6 +355,7 @@ do k=1, NK
       real(R_P) :: a(-3:4), b(-3:4), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-3:4,i) ; b = w(-3:4,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno7_js_interp(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i))
@@ -340,6 +372,7 @@ do k=1, NK
       real(R_P) :: a(-3:4), b(-3:4), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-3:4,i) ; b = w(-3:4,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno7_js_interp_wr(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i), wrp(i), wrm(i))
@@ -356,6 +389,7 @@ do k=1, NK
       real(R_P) :: a(-4:5), b(-4:5), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-4:5,i) ; b = w(-4:5,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno9_js(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i))
@@ -372,6 +406,7 @@ do k=1, NK
       real(R_P) :: a(-4:5), b(-4:5), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-4:5,i) ; b = w(-4:5,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno9_js_wr(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i), wrp(i), wrm(i))
@@ -388,6 +423,7 @@ do k=1, NK
       real(R_P) :: a(-4:5), b(-4:5), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-4:5,i) ; b = w(-4:5,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno9_js_interp(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i))
@@ -404,6 +440,7 @@ do k=1, NK
       real(R_P) :: a(-4:5), b(-4:5), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-4:5,i) ; b = w(-4:5,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno9_js_interp_wr(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i), wrp(i), wrm(i))
@@ -420,6 +457,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          rmu = seth_weno_descaling(3_I4P, 1._R_P, a, b)
@@ -438,6 +476,7 @@ do k=1, NK
       real(R_P) :: a(-1:2), b(-1:2), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-1:2,i) ; b = w(-1:2,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_wenoz3(a, b, EPS_ZT, 2_I4P, rp(i), rm(i))
@@ -454,6 +493,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_wenoz5(a, b, EPS_ZT, 2_I4P, rp(i), rm(i))
@@ -470,6 +510,7 @@ do k=1, NK
       real(R_P) :: a(-3:4), b(-3:4), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-3:4,i) ; b = w(-3:4,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_wenoz7(a, b, EPS_ZT, 2_I4P, rp(i), rm(i))
@@ -486,6 +527,7 @@ do k=1, NK
       real(R_P) :: a(-4:5), b(-4:5), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-4:5,i) ; b = w(-4:5,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_wenoz9(a, b, EPS_ZT, 2_I4P, rp(i), rm(i))
@@ -502,6 +544,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_teno5(a, b, SETH_TENO_EPS, SETH_TENO5_CT, rp(i), rm(i))
@@ -518,6 +561,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_teno6(a, b, SETH_TENO_EPS, SETH_TENO6_CT, rp(i), rm(i))
@@ -534,6 +578,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_teno6_opt(a, b, SETH_TENO_EPS, SETH_TENO6_OPT_CT, rp(i), rm(i))
@@ -550,6 +595,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_teno6_neno6(a, b, SETH_TENO_EPS, SETH_TENO6_NENO6_CT, rp(i), rm(i))
@@ -566,6 +612,7 @@ do k=1, NK
       real(R_P) :: a(-1:2), b(-1:2), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-1:2,i) ; b = w(-1:2,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_wenoz3_interp(a, b, EPS_ZT, 2_I4P, rp(i), rm(i))
@@ -582,6 +629,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_wenoz5_interp(a, b, EPS_ZT, 2_I4P, rp(i), rm(i))
@@ -598,6 +646,7 @@ do k=1, NK
       real(R_P) :: a(-3:4), b(-3:4), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-3:4,i) ; b = w(-3:4,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_wenoz7_interp(a, b, EPS_ZT, 2_I4P, rp(i), rm(i))
@@ -614,6 +663,7 @@ do k=1, NK
       real(R_P) :: a(-4:5), b(-4:5), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-4:5,i) ; b = w(-4:5,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_wenoz9_interp(a, b, EPS_ZT, 2_I4P, rp(i), rm(i))
@@ -630,6 +680,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_teno5_interp(a, b, SETH_TENO_EPS, SETH_TENO5_CT, rp(i), rm(i))
@@ -646,6 +697,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_teno6_interp(a, b, SETH_TENO_EPS, SETH_TENO6_CT, rp(i), rm(i))
@@ -662,6 +714,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_teno5_opt(a, b, SETH_TENO_EPS, SETH_TENO5_OPT_CT, rp(i), rm(i))
@@ -678,6 +731,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_teno5_az(a, b, SETH_TENO_EPS, SETH_TENO5_AZ_CT, seth_weno_descaling(3_I4P, 1._R_P, a, b), rp(i), rm(i))
@@ -694,6 +748,7 @@ do k=1, NK
       real(R_P) :: a(-3:4), b(-3:4), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-3:4,i) ; b = w(-3:4,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_teno8(a, b, SETH_TENO_EPS, SETH_TENO8_CT, rp(i), rm(i))
@@ -710,6 +765,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_teno5_a(a, b, SETH_TENO_EPS, SETH_TENO5_A_CR, SETH_TENO5_A_XI, SETH_TENO5_A_A1, SETH_TENO5_A_A2, &
@@ -728,6 +784,7 @@ do k=1, NK
       real(R_P) :: a(-3:4), b(-3:4), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-3:4,i) ; b = w(-3:4,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_teno8_a(a, b, SETH_TENO_EPS, SETH_TENO8_A_CR, SETH_TENO8_A_XI, SETH_TENO8_A_A1, SETH_TENO8_A_A2, &
@@ -746,6 +803,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          rmu = seth_weno_descaling_ai(3_I4P, a, b)
@@ -766,6 +824,7 @@ do k=1, NK
       ! rmu is private and so undefined on the device: the kernels take the literal 1 (passing rmu put the WENO9-JS
       ! states up to 0.51 off the host on the GPU)
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, c, e, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, c, e, rmu)
       do i=1, N
          a = v(-4:5,i) ; b = w(-4:5,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno9_js(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i))
@@ -786,6 +845,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_linear5(a, b, rp(i), rm(i))
@@ -802,6 +862,7 @@ do k=1, NK
       real(R_P) :: a(-3:4), b(-3:4), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-3:4,i) ; b = w(-3:4,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_linear8(a, b, rp(i), rm(i))
@@ -818,6 +879,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_sensor_teno(a, 1._R_P/max(maxval(abs(a)), 1._R_P), SETH_SENSOR_TENO_CT, rp(i))
@@ -836,6 +898,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_sensor_lcr(a, 1._R_P/max(maxval(abs(a)), 1._R_P), SETH_SENSOR_LCR_PSIC, rp(i))
@@ -854,6 +917,7 @@ do k=1, NK
       real(R_P) :: a(-1:2), b(-1:2), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-1:2,i) ; b = w(-1:2,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno4_c(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i))
@@ -870,6 +934,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno6_c(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i))
@@ -886,6 +951,7 @@ do k=1, NK
       real(R_P) :: a(-3:4), b(-3:4), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-3:4,i) ; b = w(-3:4,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_weno8_c(a, b, SETH_WENO_JS_EPS, 1._R_P, rp(i), rm(i))
@@ -902,6 +968,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), rmu
       rmu = 1._R_P
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, rmu)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, rmu)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_sensor_teno_eps(a, 1._R_P/max(maxval(abs(a)), 1._R_P), SETH_SENSOR_TENO_CT, SETH_SENSOR_TENO_EPS_MD, rp(i))
@@ -920,6 +987,7 @@ do k=1, NK
       real(R_P)    :: a(-2:2), b(-2:2)
       integer(I4P) :: mk, mk2, m
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, mk, mk2)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, mk, mk2)
       do i=1, N
          a = v(-2:2,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          do m=-2, 2
@@ -945,6 +1013,7 @@ do k=1, NK
       block
       real(R_P) :: a(-5:6), b(-5:6)
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b)
       do i=1, N
          a = v(:,i) ; b = w(:,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_teno5_dr(a, b, SETH_TENO_EPS, SETH_TENO5_CT, SETH_DR_T1, SETH_DR_T2, 1._R_P, rp(i), rm(i))
@@ -960,6 +1029,7 @@ do k=1, NK
       block
       real(R_P) :: a(-5:6), b(-5:6)
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b)
       do i=1, N
          a = v(:,i) ; b = w(:,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_teno5_thinc(a, b, SETH_TENO_EPS, SETH_TENO5_CT, SETH_THINC_BETA, 1._R_P, rp(i), rm(i))
@@ -976,6 +1046,7 @@ do k=1, NK
       real(R_P) :: a(-2:3), b(-2:3), sv
       sv = merge(0.09_R_P, 0._R_P, k == 55)
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          if (k == 54) then
@@ -999,6 +1070,7 @@ do k=1, NK
       block
       real(R_P) :: a(-5:6), b(-5:6)
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b)
       do i=1, N
          a = v(:,i) ; b = w(:,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_teno5_rbf_dr(a, b, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, 0.09_R_P, 0.09_R_P, SETH_DR_T1, &
@@ -1017,6 +1089,8 @@ do k=1, NK
       real(R_P)    :: a(-2:2), b(-2:2)
       integer(I4P) :: mp(-3:3), mm(-3:3), lp, lm, tp, tm, c, m
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, mp, mm, lp, lm, tp, tm, c, m)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) &
+      !$omp& private(a, b, mp, mm, lp, lm, tp, tm, c, m)
       do i=1, N
          wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          do c=-3, 3
@@ -1056,6 +1130,7 @@ do k=1, NK
       real(R_P)    :: a(-1:2), b(-1:2)
       integer(I4P) :: lv
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, lv)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, lv)
       do i=1, N
          a = v(-1:2,i) ; b = w(-1:2,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          rp(i) = 0.5_R_P*(a(0) + a(1)) ; rm(i) = 0.5_R_P*(b(0) + b(1))
@@ -1089,6 +1164,7 @@ do k=1, NK
       real(R_P)    :: a(-2:3), b(-2:3)
       integer(I4P) :: ml, mr
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, ml, mr)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, ml, mr)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          call seth_teno5_face_masks(a, b, SETH_TENO_EPS, SETH_TENO5_CT, ml, mr)
@@ -1107,6 +1183,8 @@ do k=1, NK
       real(R_P)    :: a(-2:3), b(-2:3)
       integer(I4P) :: msl(-3:3), msr(-2:4), mp(-3:3), mm(-3:3), c, m
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, msl, msr, mp, mm, c, m)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) &
+      !$omp& private(a, b, msl, msr, mp, mm, c, m)
       do i=1, N
          wrp(i) = -1._R_P ; wrm(i) = -1._R_P
          do c=-3, 3 ! pass 1 at the faces c+1/2 of the stencil
@@ -1162,6 +1240,7 @@ do k=1, NK
       logical      :: jmp(1:5)
       integer(I4P) :: m
       !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, jmp, m)
+      !$omp target teams distribute parallel do map(to:v, w) map(from:rp, rm, wrp, wrm) private(a, b, jmp, m)
       do i=1, N
          a = v(-2:3,i) ; b = w(-2:3,i) ; wrm(i) = -1._R_P
          rp(i) = seth_weno6_point(a, 3_I4P + mod(i, 23_I4P))
@@ -1230,6 +1309,7 @@ contains
       enddo
    enddo
    !$acc parallel loop gang vector copyin(ql, qr, fh, fl, lam) copyout(fd, td)
+   !$omp target teams distribute parallel do map(to:ql, qr, fh, fl, lam) map(from:fd, td)
    do i=1, NL
       call seth_positivity_euler(nv, GM, lam(i), EP, EP, ql(:,i), qr(:,i), fh(:,i), fl(:,i), fd(:,i), td(i))
    enddo
