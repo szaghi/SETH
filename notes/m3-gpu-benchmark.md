@@ -84,4 +84,52 @@ equal to ADAM's results, and removes the table mirroring. Before porting: one ru
 
 Outcome (2026-11-22): ADAM ported without that run (ADAM issue 139) and measured the kernels inside FLUME on an A30
 instead (ADAM commit 4210fc8f): the WENO-9 face kernel 13.6 % faster than ADAM's former per-width kernel, WENO-5
-1.7 % slower (ADAM issue 141). This benchmark on an A30 is item E0 of #7.
+1.7 % slower (ADAM issue 141). This benchmark on an A30 is item E0 of #7, below.
+
+## GPU: A30 (item E0 of #7)
+
+medooza `gnode23`, one A30 (driver 545.23, max SM clock 1440 MHz), nvfortran 26.9 `-O4 -fast -acc -gpu=cc80,cuda12.9`
+(`bench-nvf-oac --varset iac`), the default problem (2^24 faces, 20 timed passes, median), three runs of the whole
+program in each Slurm job. Job 1369294 ran this program as on main (raw: `bench-a30-run{1,2,3}.txt`); job 1369295 ran
+it with variants 47-58 added: every width, with the `_wr` and `_interp_wr` variants (raw:
+`bench-a30-widths-run{1,2,3}.txt`; GPU state `bench-a30-state.txt`). Every check passes in all six runs. SETH on the
+device equals SETH on the host bitwise for every WENO-JS variant and its weights ratios, and ADAM's kernels equal
+SETH's bitwise.
+
+ns per face, the median of runs 2 and 3 of job 1369294. Run 1 starts with SETH weno5_js at 0.226 ns (0.235 in job
+1369295), as in the RTX 4070's first run: it is the first kernel the program launches.
+
+| Variant | A30 | SETH speed-up | RTX 4070 (run 4) |
+|---|---|---|---|
+| **SETH weno5_js** | 0.184 | | 0.967 |
+| ADAM generic S=3 | 0.79 | **4.3x** | 1.376 |
+| ADAM width s3 | 0.496 | **2.70x** | 1.269 |
+| **SETH weno7_js** | 0.291 | | 1.762 |
+| ADAM generic S=4 | 1.13 | **3.9x** | 2.353 |
+| ADAM width s4 | 0.629 | **2.16x** | 2.215 |
+| SETH wenoz5 (p=1) | 0.472 | | 0.961 |
+| SETH teno5 / teno6 | 0.501 / 0.996 | | — / 2.330 |
+| SETH keep_pe6 / ADAM compute_kep_flux | 0.575 / 0.574 | 1.00x | |
+
+Every width, job 1369295, runs 2 and 3:
+
+| Width | `_js` | `_js_wr` | `_js_interp_wr` |
+|---|---|---|---|
+| WENO-1 | 0.102 | 0.135 | 0.135 |
+| WENO-3 | 0.136 | 0.167 | 0.167 |
+| WENO-5 | 0.180 | 0.22 | 0.22 |
+| WENO-7 | 0.291 | 0.29 | 0.29 |
+| WENO-9 | 0.408 | 0.47 | 0.47 |
+
+- **The A30 margin is larger than the RTX 4070's**: 2.2-2.7x against ADAM's per-width kernels, against 1.26-1.31x.
+  This is the direction the caveat above expected: with FP64 at half the FP32 rate, the table loads and index
+  arithmetic SETH avoids weigh more.
+- **Inside FLUME the margin does not carry over** (ADAM issue 141, closed): there the face kernel adds the
+  characteristic projection, the per-face local arrays and the flux assembly around the reconstruction. FLUME's
+  WENO-9 face kernel is 13.9 % faster and its WENO-5 kernel 1.6 % slower. ADAM measured that the WENO-5 cost is
+  register allocation of the whole kernel, at the same occupancy, not the reconstruction itself.
+- The weights ratio (`_wr`) costs 0.03-0.06 ns per face, except at WENO-7, where it costs nothing measurable. The
+  interpolation tables cost what the reconstruction ones do.
+- On the A30, WENO-Z5 costs 2.6x WENO-JS5 (0.472 vs 0.184 ns), whereas on the RTX 4070 the two cost the same. Its
+  global indicator and the power with an integer exponent are not hidden behind FP64 throughput here. Not
+  investigated.

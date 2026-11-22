@@ -37,6 +37,11 @@ program seth_bench_weno
 !<      and 36 (budget 0.10), 43 seth_dr_override at level 1 on every face (0.15) and 44 seth_thinc_override at level 1
 !<      on every face (0.30), the states preset to the mean of f_i and f_{i+1}; 45 seth_teno5_rbf_dr without the early
 !<      exit and 46 with stored masks (seth_teno5_face_masks, seth_teno5_rbf_dr_stored; step 4.1)
+!< 47.. issue #7 (E0, every width of seth_weno_js): 47 seth_weno1_js, 48 seth_weno9_js (seth_weno3_js is variant 29,
+!<      weno5 and weno7 variants 1 and 4); 49-53 seth_weno<N>_js_wr, N = 1, 3, 5, 7, 9, and 54-58
+!<      seth_weno<N>_js_interp_wr (point values: the same field read as such), each writing the states to rp, rm and
+!<      the weights ratios to wp, wm; the ratios are checked against the host as the states are (unscaled: they lie
+!<      in [0, 1])
 !<
 !< ADAM's variants pack ADAM's rows as FLUME did (v(2,m) = fp(i+m), v(1,m) = fm(i+m+1)). Built with -acc the loops run
 !< on the device (timed with !$acc wait + system_clock); without, on one CPU core. Each variant: 2 warm-up passes, then
@@ -55,7 +60,7 @@ use adam_fnl_weno_width_kernels, only : weno_reconstruct_upwind_s3_dev, weno_rec
 use seth_adam_reference,         only : weno_reconstruct_upwind, compute_kep_flux
 implicit none
 integer(I4P), parameter :: NG = 6_I4P         !< Ghost cells (the composites of issue #6 read i-5..i+6).
-integer(I4P), parameter :: NV = 46_I4P        !< Variants.
+integer(I4P), parameter :: NV = 58_I4P        !< Variants.
 integer(I4P), parameter :: SAMPLE = 65536_I4P !< Faces checked against the host.
 real(R8P),    parameter :: TOL = 64._R8P*epsilon(1._R8P)
 character(31), parameter :: NAMES(NV) = [character(31) :: 'SETH  weno5_js', 'ADAM  generic S=3', 'ADAM  width s3', &
@@ -77,8 +82,15 @@ character(31), parameter :: NAMES(NV) = [character(31) :: 'SETH  weno5_js', 'ADA
                                          'SETH  teno5_mask (one bias)', 'SETH  dr_detect (stored masks)', &
                                          'SETH  thinc_detect (stored masks)', 'SETH  dr_override (level 1)', &
                                          'SETH  thinc_override (level 1)', 'SETH  teno5_rbf_dr, no early exit', &
-                                         'SETH  teno5_rbf_dr, stored masks']
+                                         'SETH  teno5_rbf_dr, stored masks', &
+                                         'SETH  weno1_js', 'SETH  weno9_js', &
+                                         'SETH  weno1_js_wr', 'SETH  weno3_js_wr', 'SETH  weno5_js_wr', &
+                                         'SETH  weno7_js_wr', 'SETH  weno9_js_wr', &
+                                         'SETH  weno1_js_interp_wr', 'SETH  weno3_js_interp_wr', &
+                                         'SETH  weno5_js_interp_wr', 'SETH  weno7_js_interp_wr', &
+                                         'SETH  weno9_js_interp_wr']
 real(R8P), allocatable :: fp(:), fm(:), rp(:), rm(:), rp5(:), rm5(:), rp7(:), rm7(:)
+real(R8P), allocatable :: wp(:), wm(:) !< Weights ratios of the _wr variants (49-58).
 real(R8P), allocatable :: a3(:,:,:), p3(:,:,:,:), d3(:,:,:,:), a4(:,:,:), p4(:,:,:,:), d4(:,:,:,:)
 real(R8P), allocatable :: times(:)
 integer(I4P), allocatable :: ml(:), mr(:) !< Stored masks of the stored-mask variants (cells -3..n+4).
@@ -94,7 +106,7 @@ if (command_argument_count() >= 2) then ; call get_command_argument(2, arg) ; re
 js = 2048_I4P
 if (command_argument_count() >= 3) then ; call get_command_argument(3, arg) ; read(arg,*) js ; endif
 allocate(fp(1-NG:n+NG), fm(1-NG:n+NG), rp(n), rm(n), rp5(n), rm5(n), rp7(n), rm7(n), times(reps))
-allocate(ml(-3:n+4), mr(-3:n+4))
+allocate(ml(-3:n+4), mr(-3:n+4), wp(n), wm(n))
 do c=1-NG, n+NG
    fp(c) = 1._R8P + 0.5_R8P*sin(0.01_R8P*c)
    fm(c) = 0.5_R8P*cos(0.013_R8P*c)
@@ -108,7 +120,7 @@ allocate(a4(1:2,0:3,1:4), p4(1:2,0:3,0:3,1:4), d4(0:3,0:3,0:3,1:4))
 a3 = 0._R8P ; p3 = 0._R8P ; d3 = 0._R8P ; a4 = 0._R8P ; p4 = 0._R8P ; d4 = 0._R8P
 a3(:,:,3) = WENO5_JS_A ; p3(:,:,:,3) = WENO5_JS_P ; d3(:,:,:,3) = WENO5_JS_D
 a4(:,:,4) = WENO7_JS_A ; p4(:,:,:,4) = WENO7_JS_P ; d4(:,:,:,4) = WENO7_JS_D
-!$acc enter data copyin(fp, fm, a3, p3, d3, a4, p4, d4) create(rp, rm, ml, mr)
+!$acc enter data copyin(fp, fm, a3, p3, d3, a4, p4, d4) create(rp, rm, ml, mr, wp, wm)
 
 call system_clock(count_rate=rate)
 passed = .true.
@@ -131,9 +143,12 @@ do v=1, NV
    call sort(times)
    med(v) = times((reps+1)/2) ; tmin(v) = times(1)
    !$acc update self(rp, rm)
+   if (v >= 49) then
+      !$acc update self(wp, wm)
+   endif
    call check(v)
 enddo
-!$acc exit data delete(fp, fm, a3, p3, d3, a4, p4, d4, rp, rm, ml, mr)
+!$acc exit data delete(fp, fm, a3, p3, d3, a4, p4, d4, rp, rm, ml, mr, wp, wm)
 print '(A)', ''
 print '(A31,4A13)', 'variant', 'median ms', 'min ms', 'ns/face', 'vs ADAM gen.'
 do v=1, NV
@@ -150,6 +165,7 @@ contains
    integer(I4P), intent(in) :: v
    real(R8P)                :: vp5(-2:3), vm5(-2:3), vp7(-3:4), vm7(-3:4), w3(1:2,-2:2), w4(1:2,-3:3), vr(1:2)
    real(R8P)                :: ws(5,-2:3), fk(5), vp4(-1:2), vm4(-1:2), wa(-2:2), wb(-2:2), vpw(-5:6), vmw(-5:6)
+   real(R8P)                :: vp1(0:1), vm1(0:1), vp9(-4:5), vm9(-4:5)
    integer(I4P)             :: i, m, mka, mkb, mpw(-3:3), mmw(-3:3), lpw, lmw
    select case(v)
    case(31, 32)
@@ -517,6 +533,102 @@ contains
          call seth_teno5_mask(wb, SETH_TENO_EPS, SETH_TENO5_CT, mkb)
          rp(i) = real(mka, R8P) ; rm(i) = real(mkb, R8P)
       enddo
+   case(47)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm) private(vp1, vm1)
+      do i=1, n
+         do m=0, 1
+            vp1(m) = fp(i+m) ; vm1(m) = fm(i+m)
+         enddo
+         call seth_weno1_js(vp1, vm1, SETH_WENO_JS_EPS, 1._R8P, rp(i), rm(i))
+      enddo
+   case(48)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm) private(vp9, vm9)
+      do i=1, n
+         do m=-4, 5
+            vp9(m) = fp(i+m) ; vm9(m) = fm(i+m)
+         enddo
+         call seth_weno9_js(vp9, vm9, SETH_WENO_JS_EPS, 1._R8P, rp(i), rm(i))
+      enddo
+   case(49)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm, wp, wm) private(vp1, vm1)
+      do i=1, n
+         do m=0, 1
+            vp1(m) = fp(i+m) ; vm1(m) = fm(i+m)
+         enddo
+         call seth_weno1_js_wr(vp1, vm1, SETH_WENO_JS_EPS, 1._R8P, rp(i), rm(i), wp(i), wm(i))
+      enddo
+   case(50)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm, wp, wm) private(vp4, vm4)
+      do i=1, n
+         do m=-1, 2
+            vp4(m) = fp(i+m) ; vm4(m) = fm(i+m)
+         enddo
+         call seth_weno3_js_wr(vp4, vm4, SETH_WENO_JS_EPS, 1._R8P, rp(i), rm(i), wp(i), wm(i))
+      enddo
+   case(51)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm, wp, wm) private(vp5, vm5)
+      do i=1, n
+         do m=-2, 3
+            vp5(m) = fp(i+m) ; vm5(m) = fm(i+m)
+         enddo
+         call seth_weno5_js_wr(vp5, vm5, SETH_WENO_JS_EPS, 1._R8P, rp(i), rm(i), wp(i), wm(i))
+      enddo
+   case(52)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm, wp, wm) private(vp7, vm7)
+      do i=1, n
+         do m=-3, 4
+            vp7(m) = fp(i+m) ; vm7(m) = fm(i+m)
+         enddo
+         call seth_weno7_js_wr(vp7, vm7, SETH_WENO_JS_EPS, 1._R8P, rp(i), rm(i), wp(i), wm(i))
+      enddo
+   case(53)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm, wp, wm) private(vp9, vm9)
+      do i=1, n
+         do m=-4, 5
+            vp9(m) = fp(i+m) ; vm9(m) = fm(i+m)
+         enddo
+         call seth_weno9_js_wr(vp9, vm9, SETH_WENO_JS_EPS, 1._R8P, rp(i), rm(i), wp(i), wm(i))
+      enddo
+   case(54)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm, wp, wm) private(vp1, vm1)
+      do i=1, n
+         do m=0, 1
+            vp1(m) = fp(i+m) ; vm1(m) = fm(i+m)
+         enddo
+         call seth_weno1_js_interp_wr(vp1, vm1, SETH_WENO_JS_EPS, 1._R8P, rp(i), rm(i), wp(i), wm(i))
+      enddo
+   case(55)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm, wp, wm) private(vp4, vm4)
+      do i=1, n
+         do m=-1, 2
+            vp4(m) = fp(i+m) ; vm4(m) = fm(i+m)
+         enddo
+         call seth_weno3_js_interp_wr(vp4, vm4, SETH_WENO_JS_EPS, 1._R8P, rp(i), rm(i), wp(i), wm(i))
+      enddo
+   case(56)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm, wp, wm) private(vp5, vm5)
+      do i=1, n
+         do m=-2, 3
+            vp5(m) = fp(i+m) ; vm5(m) = fm(i+m)
+         enddo
+         call seth_weno5_js_interp_wr(vp5, vm5, SETH_WENO_JS_EPS, 1._R8P, rp(i), rm(i), wp(i), wm(i))
+      enddo
+   case(57)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm, wp, wm) private(vp7, vm7)
+      do i=1, n
+         do m=-3, 4
+            vp7(m) = fp(i+m) ; vm7(m) = fm(i+m)
+         enddo
+         call seth_weno7_js_interp_wr(vp7, vm7, SETH_WENO_JS_EPS, 1._R8P, rp(i), rm(i), wp(i), wm(i))
+      enddo
+   case(58)
+      !$acc parallel loop gang vector present(fp, fm, rp, rm, wp, wm) private(vp9, vm9)
+      do i=1, n
+         do m=-4, 5
+            vp9(m) = fp(i+m) ; vm9(m) = fm(i+m)
+         enddo
+         call seth_weno9_js_interp_wr(vp9, vm9, SETH_WENO_JS_EPS, 1._R8P, rp(i), rm(i), wp(i), wm(i))
+      enddo
    case(9)
       do i=1, n
          do m=-2, 2
@@ -541,8 +653,9 @@ contains
    integer(I4P), intent(in) :: v
    real(R8P)                :: vp5(-2:3), vm5(-2:3), vp7(-3:4), vm7(-3:4), hp, hm, ws(5,-2:3), fk(5)
    real(R8P)                :: vp4(-1:2), vm4(-1:2), wa(-2:2), wb(-2:2), vpw(-5:6), vmw(-5:6)
+   real(R8P)                :: vp1(0:1), vm1(0:1), vp9(-4:5), vm9(-4:5), hwp, hwm, dwr
    integer(I4P)             :: i, m, k, stride, mka, mkb
-   diff = 0._R8P
+   diff = 0._R8P ; dwr = 0._R8P
    select case(v)
    case(1, 4, 7, 8, 11:)
       stride = max(1_I4P, n/SAMPLE)
@@ -554,6 +667,10 @@ contains
          do m=-3, 4
             vp7(m) = fp(i+m) ; vm7(m) = fm(i+m)
          enddo
+         do m=-4, 5
+            vp9(m) = fp(i+m) ; vm9(m) = fm(i+m)
+         enddo
+         vp1 = vp5(0:1) ; vm1 = vm5(0:1) ; vp4 = vp5(-1:2) ; vm4 = vm5(-1:2)
          select case(v)
          case(1) ; call seth_weno5_js(vp5, vm5, SETH_WENO_JS_EPS, 1._R8P, hp, hm)
          case(4) ; call seth_weno7_js(vp7, vm7, SETH_WENO_JS_EPS, 1._R8P, hp, hm)
@@ -638,13 +755,30 @@ contains
             hp = real(mka, R8P) ; hm = real(mkb, R8P)
          case(16) ; call seth_teno8_a(vp7, vm7, SETH_TENO_EPS, SETH_TENO8_A_CR, SETH_TENO8_A_XI, SETH_TENO8_A_A1, &
                                       SETH_TENO8_A_A2, 1._R8P, hp, hm)
+         case(47) ; call seth_weno1_js(vp1, vm1, SETH_WENO_JS_EPS, 1._R8P, hp, hm)
+         case(48) ; call seth_weno9_js(vp9, vm9, SETH_WENO_JS_EPS, 1._R8P, hp, hm)
+         case(49) ; call seth_weno1_js_wr(vp1, vm1, SETH_WENO_JS_EPS, 1._R8P, hp, hm, hwp, hwm)
+         case(50) ; call seth_weno3_js_wr(vp4, vm4, SETH_WENO_JS_EPS, 1._R8P, hp, hm, hwp, hwm)
+         case(51) ; call seth_weno5_js_wr(vp5, vm5, SETH_WENO_JS_EPS, 1._R8P, hp, hm, hwp, hwm)
+         case(52) ; call seth_weno7_js_wr(vp7, vm7, SETH_WENO_JS_EPS, 1._R8P, hp, hm, hwp, hwm)
+         case(53) ; call seth_weno9_js_wr(vp9, vm9, SETH_WENO_JS_EPS, 1._R8P, hp, hm, hwp, hwm)
+         case(54) ; call seth_weno1_js_interp_wr(vp1, vm1, SETH_WENO_JS_EPS, 1._R8P, hp, hm, hwp, hwm)
+         case(55) ; call seth_weno3_js_interp_wr(vp4, vm4, SETH_WENO_JS_EPS, 1._R8P, hp, hm, hwp, hwm)
+         case(56) ; call seth_weno5_js_interp_wr(vp5, vm5, SETH_WENO_JS_EPS, 1._R8P, hp, hm, hwp, hwm)
+         case(57) ; call seth_weno7_js_interp_wr(vp7, vm7, SETH_WENO_JS_EPS, 1._R8P, hp, hm, hwp, hwm)
+         case(58) ; call seth_weno9_js_interp_wr(vp9, vm9, SETH_WENO_JS_EPS, 1._R8P, hp, hm, hwp, hwm)
          endselect
          vmax = max(maxval(abs(vp7)), maxval(abs(vm7)))
          diff = max(diff, abs(rp(i) - hp)/vmax, abs(rm(i) - hm)/vmax)
+         if (v >= 49) dwr = max(dwr, abs(wp(i) - hwp), abs(wm(i) - hwm))
       enddo
       if (v == 1) then ; rp5 = rp ; rm5 = rm ; endif
       if (v == 4) then ; rp7 = rp ; rm7 = rm ; endif
       print '(A31,A,ES9.2)', NAMES(v), ': device vs host SETH, max scaled difference ', diff
+      if (v >= 49) then
+         print '(A31,A,ES9.2)', NAMES(v), ': device vs host SETH, weights ratios, max difference ', dwr
+         diff = max(diff, dwr)
+      endif
    case(2, 3, 9)
       do i=1, n
          diff = max(diff, abs(rp(i) - rp5(i))/3._R8P, abs(rm(i) - rm5(i))/3._R8P)
