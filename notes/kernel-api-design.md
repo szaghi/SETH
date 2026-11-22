@@ -137,7 +137,7 @@ keep ADAM's run-time-table kernels during the migration.
 |---|---|---|
 | M1 | WENO-JS 1/3/5/7/9 reconstruction and interpolation, `_wr` variants, descaling helper | round-off agreement with ADAM on random stencils (all S, both table sets); order tests; gfortran, nvfortran (CPU and `-acc` build), ifx |
 | M2 | WENO-Z, TENO5, TENO6 | order tests; TENO cutoff behaviour on a step; coefficients checked against the papers |
-| M3 | ADAM migration: ADAM calls SETH's kernels, `weno_fnl_object` table mirroring removed for the schemes that no longer need it | ADAM's FLUME/PRISM regression goldens unchanged (to round-off) |
+| M3 | ADAM migration: ADAM calls SETH's kernels, `weno_fnl_object` table mirroring removed for the schemes that no longer need it | ADAM's FLUME/PRISM regression goldens unchanged (to round-off). **Done** (ADAM issue 139, 2026-11-22): FLUME (CPU and OpenACC), PRISM's CPU backend and RIPPLE call SETH's WENO-JS kernels (PRISM also `seth_weno_descaling`), FLUME's hybrid `seth_keep_pe6` and `seth_ducros`, every ADAM regression case bitwise on CPU and OpenACC (ADAM commits 88becae3, dede5114, 73ac233a, 0e085764, b4398d8c, b1683349); ADAM's WENO and `weno_fnl_object` deleted (ba37c4cb). Not migrated: the centred WENO (ADAM dropped it) and the seam WENO-6 transfer (still ADAM's, item E2 of #7) |
 | M4 | precision genericity (R4P), centered WENO (audit D1 fixed), TENO8 | per-feature tests |
 
 ## 8. Decisions (owner, 2026-11-14: 1 compile-time, 2 face-offset arrays, 3 R8P now, 4 fix and port in M4)

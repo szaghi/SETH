@@ -1,6 +1,6 @@
-!< SETH tests: ADAM's WENO kernels, verbatim, as the reference of the extraction.
+!< SETH tests: ADAM's former WENO kernels, verbatim, as the reference of the extraction (frozen history).
 module seth_adam_reference
-!< SETH tests: ADAM's WENO kernels, verbatim, as the reference of the extraction.
+!< SETH tests: ADAM's former WENO kernels, verbatim, as the reference of the extraction (frozen history).
 !<
 !< The non-TBP procedures of ADAM's adam_weno_object.F90 (commit 302f093e), copied by a script without any edit;
 !< only the module around them is new (S_MAX_M1 as ADAM defines it). weno_reconstruct_centered (copied at ADAM commit
@@ -8,6 +8,14 @@ module seth_adam_reference
 !< shifted cells (audit D1: the one line changed), the references of seth_weno4/6/8_c.
 !< compute_kep_flux and compute_ducros: ADAM's src/app/flume/common/adam_flume_hybrid_library.F90 (last changed in
 !< commit 5e4fe007), the reference of seth_keep_pe6 and seth_ducros, copied the same way.
+!<
+!< Frozen history: ADAM no longer holds this code. Since ADAM issue 139 ADAM's applications call SETH: FLUME (CPU and
+!< OpenACC), PRISM's CPU backend and RIPPLE take SETH's WENO-JS kernels (PRISM also seth_weno_descaling), FLUME's
+!< hybrid seth_keep_pe6 and seth_ducros (ADAM commits dede5114, 73ac233a, 0e085764, b4398d8c, b1683349), every ADAM
+!< regression case bitwise the same on CPU and OpenACC; ADAM commit ba37c4cb then deleted ADAM's WENO kernels and
+!< tables and adam_flume_hybrid_library.F90. The centred WENO was not migrated: ADAM refuses the weno-c-* names since
+!< commit b1683349 and deleted weno_reconstruct_centered in ba37c4cb, so seth_weno4/6/8_c have no counterpart in
+!< ADAM. The copies stay as they were copied, the fixed reference of SETH's equivalence tests.
 use penf, only : I4P, R8P
 implicit none
 private

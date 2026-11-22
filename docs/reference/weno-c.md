@@ -4,8 +4,9 @@ title: Centred WENO
 
 # Centred WENO
 
-ADAM's centred WENO (`WENO_C_4/6/8`), ported with its defect D1 fixed: WENO-JS of order $2S-1$ blended with the
-central reconstruction of order $2S$ on all $2S$ cells of the stencil. Module `seth_weno_c`; the blend:
+ADAM's centred WENO (`WENO_C_4/6/8`), ported with its defect D1 fixed (ADAM itself dropped it in its issue 139):
+WENO-JS of order $2S-1$ blended with the central reconstruction of order $2S$ on all $2S$ cells of the stencil.
+Module `seth_weno_c`; the blend:
 [Schemes](/guide/schemes#centred-weno-weno4-6-8-c).
 
 ## Calls

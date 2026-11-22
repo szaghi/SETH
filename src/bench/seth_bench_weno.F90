@@ -1,6 +1,6 @@
-!< SETH benchmark: SETH's compile-time-constant WENO kernels against ADAM's table-driven FNL kernels.
+!< SETH benchmark: SETH's compile-time-constant WENO kernels against ADAM's former table-driven FNL kernels.
 program seth_bench_weno
-!< SETH benchmark: SETH's compile-time-constant WENO kernels against ADAM's table-driven FNL kernels.
+!< SETH benchmark: SETH's compile-time-constant WENO kernels against ADAM's former table-driven FNL kernels.
 !<
 !< n faces of a 1-D field (cells 1-NG..n+NG; face i between cells i and i+1), two biased fields fp, fm (a smooth wave
 !< with a jump every 2048 cells). Every variant reads the same stencils and writes the two states of every face:
@@ -10,8 +10,8 @@ program seth_bench_weno
 !<  3 ADAM weno_reconstruct_upwind_s3_dev     (S a constant, tables still arrays)
 !<  4-6 the same at WENO-7 (S=4)
 !<  7 SETH seth_wenoz5 (p=1), 8 SETH seth_teno6 (C_T=1e-7): for reference
-!<  9, 10 ADAM's host weno_reconstruct_upwind (what FLUME's CPU backend calls), S=3 and S=4: CPU builds only (no
-!<        acc routine); in an OpenACC build they are skipped
+!<  9, 10 ADAM's host weno_reconstruct_upwind (what FLUME's CPU backend called until ADAM issue 139), S=3 and S=4:
+!<        CPU builds only (no acc routine); in an OpenACC build they are skipped
 !< 11.. SETH kernels added after v0.1.0, each against its cost budget (roadmap issue #4, gate PERF1): 11 seth_teno5,
 !<      12 seth_teno5_opt, 13 seth_teno5_az (rmu = 1), 14 seth_teno8, 15 seth_teno5_a, 16 seth_teno8_a,
 !<      17 seth_weno5_js with seth_weno_descaling, 18 with seth_weno_descaling_ai, 19 seth_weno5_js + seth_mp_bound,
@@ -38,10 +38,12 @@ program seth_bench_weno
 !<      on every face (0.30), the states preset to the mean of f_i and f_{i+1}; 45 seth_teno5_rbf_dr without the early
 !<      exit and 46 with stored masks (seth_teno5_face_masks, seth_teno5_rbf_dr_stored; step 4.1)
 !<
-!< ADAM's variants pack ADAM's rows as FLUME does (v(2,m) = fp(i+m), v(1,m) = fm(i+m+1)). Built with -acc the loops run
+!< ADAM's variants pack ADAM's rows as FLUME did (v(2,m) = fp(i+m), v(1,m) = fm(i+m+1)). Built with -acc the loops run
 !< on the device (timed with !$acc wait + system_clock); without, on one CPU core. Each variant: 2 warm-up passes, then
 !< `reps` timed passes; the median and the minimum are reported. Checks: the SETH results equal the host SETH results
 !< on a sample of faces, and every ADAM variant equals the SETH one of its order, to round-off (64 eps of the data).
+!< The ADAM variants are frozen copies (src/bench/adam_*, src/tests/seth_adam_reference.F90): ADAM calls SETH's kernels
+!< since ADAM issue 139 and deleted its own (ADAM commit ba37c4cb).
 !<
 !< Usage: seth_bench_weno [n_faces [reps [jump_spacing]]]   (defaults 16777216, 20 and 2048: the field jumps every
 !< jump_spacing cells; 0: no jump, a smooth field; the composites' cost against the fraction of faces near a jump, PERF7)

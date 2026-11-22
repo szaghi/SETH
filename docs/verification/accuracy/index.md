@@ -13,4 +13,4 @@ nonlinear weights.
 | [A2 Critical points](./critical-points) | P | the orders measured by Henrick, Borges, Fu and Zhang where $f' = 0$ and $f' = f'' = 0$ |
 | [A3 Whole-domain convergence](./convergence) | P | $L_\infty$ over every node of Henrick's field: the operator, SSP-RK3 advection, the interpolations |
 | [A4 Euler order of accuracy](./euler-order) | P | the design order through the complete 1-D Euler solver, splitting and interpolation paths |
-| [A5 Centred WENO](./centred-weno) | P, C | orders 4, 6, 8 of the centred WENO, its ENO behaviour against its upwind part, ADAM's routine with D1 fixed |
+| [A5 Centred WENO](./centred-weno) | P, C | orders 4, 6, 8 of the centred WENO, its ENO behaviour against its upwind part, ADAM's former routine with D1 fixed |

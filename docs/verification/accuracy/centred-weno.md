@@ -10,7 +10,10 @@ The centred WENO (`seth_weno4_c`, `seth_weno6_c`, `seth_weno8_c`, [Schemes](/gui
 ADAM's `weno_reconstruct_centered`, which blends the upwind WENO-JS of order $2S-1$ with the central reconstruction
 of order $2S$, ported with ADAM's defect D1 fixed. Three questions: does it reach its order, is it as ENO as its
 upwind part, and is it ADAM's scheme with exactly D1 corrected? The bounds were frozen before the kernel was
-written; the two changed after measuring are named below, with the reason.
+written; the two changed after measuring are named below, with the reason. ADAM had no caller of the centred WENO
+and did not migrate it: when it moved to SETH (ADAM issue 139) it began refusing the `weno-c-*` names (ADAM commit
+b1683349) and deleted `weno_reconstruct_centered` (ba37c4cb). The routine the comparison reads is a frozen copy of
+the deleted one.
 
 ## Models and numerics
 

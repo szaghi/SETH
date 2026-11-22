@@ -12,6 +12,10 @@ each table is checked in exact rational arithmetic:
 - the smoothness indicators vanish on constant data and equal 1 on data of unit slope (S >= 2).
 
 Usage: gen_weno_js_tables.py <path to adam_weno_object.F90> <output .F90> <adam commit>
+
+ADAM deleted these initialisers in its commit ba37c4cb (ADAM issue 139, ADAM calls SETH's kernels): take the file of
+an earlier ADAM commit, e.g. `git -C adam show 302f093e:src/lib/common/adam_weno_object.F90`, the one SETH's tables
+were generated from.
 """
 
 from __future__ import annotations

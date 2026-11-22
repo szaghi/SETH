@@ -6,9 +6,12 @@
 
 ## Case and scope
 
-SETH's WENO-JS kernels are extracted from ADAM, and ADAM will call them (milestone M3). They must give ADAM's results,
-so the test compares them with ADAM's own routines, copied verbatim into `src/tests/seth_adam_reference.F90`, on the
-same data.
+SETH's WENO-JS kernels are extracted from ADAM, and ADAM calls them (milestone M3, ADAM issue 139): FLUME on the CPU
+and with OpenACC, PRISM's CPU backend and RIPPLE (ADAM commits dede5114, 73ac233a, b1683349, b4398d8c), with every
+ADAM regression case bitwise the same on both backends. They had to give ADAM's results, so the test compares them
+with ADAM's own routines, copied verbatim into `src/tests/seth_adam_reference.F90`, on the same data. ADAM has since
+deleted those routines (ADAM commit ba37c4cb): the copy is frozen history, kept as the fixed reference of this
+contract.
 
 ## Setup
 

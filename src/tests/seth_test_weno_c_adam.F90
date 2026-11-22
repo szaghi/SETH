@@ -12,6 +12,10 @@ program seth_test_weno_c_adam
 !< - weno_reconstruct_centered, ADAM's routine as it is: the right state equal to TOL, the left one not (audit D1, its
 !<   weights read the right-biased cells): asserted to differ beyond TOL on some rough stencils, the count printed.
 !<
+!< ADAM did not migrate its centred WENO: it refuses the weno-c-* names since ADAM commit b1683349 and deleted
+!< weno_reconstruct_centered in ba37c4cb (ADAM issue 139). The reference is a frozen copy of the deleted routine, and
+!< seth_weno4/6/8_c have no caller in ADAM.
+!<
 !< R8P only (ADAM's code is R8P): left out of the R4P builds (fobos [template-r4-tests] exclude).
 use seth
 use seth_test_rng, only : seed_rng

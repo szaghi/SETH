@@ -4,9 +4,9 @@ title: WENO-JS
 
 # WENO-JS
 
-Jiang and Shu's weighted ENO of order $2S-1$, for $S = 1$ to 5, extracted from ADAM and bitwise equal to it
-([C1](/verification/contracts/adam-equivalence)). Module `seth_weno_js`; what the scheme is:
-[Schemes](/guide/schemes#weno-js-weno-1-3-5-7-9).
+Jiang and Shu's weighted ENO of order $2S-1$, for $S = 1$ to 5, extracted from ADAM and bitwise equal to ADAM's
+former kernels ([C1](/verification/contracts/adam-equivalence)), which ADAM replaced with these (ADAM issue 139).
+Module `seth_weno_js`; what the scheme is: [Schemes](/guide/schemes#weno-js-weno-1-3-5-7-9).
 
 ## Calls
 

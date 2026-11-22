@@ -23,7 +23,7 @@ The build modes of `fobos` and the scripts of the repository, each with what it 
 | `tests-nvf-oac` | the test programs with OpenACC, on the GPU of compute capability `$GPU_CC` (`--varset cc80`, `cc89`, `cc90`); the programs that step with SELAH, host programs, link SELAH built for the host (`static-selah-nvf`) |
 | `static-selah-nvf`, `static-selah-nvf-r4` | SELAH's library from `src/third_party/SELAH`, nvfortran, host (no `-acc`), into `lib/nvf/`: built by `tests-nvf-oac` and `tests-nvf-oac-r4` (FoBiS `dependon`); under `-acc` SELAH's directives need its device build, whose registers are device memory, and those programs' fields are host memory |
 | `tests-gnu-r4`, `tests-gnu-debug-r4`, `tests-nvf-r4`, `tests-nvf-oac-r4`, `tests-intel-r4` | the test programs in single precision, into `exe-r4/` |
-| `bench-nvf-oac`, `bench-nvf`, `bench-gnu` | the kernel benchmark against ADAM's kernels, on the GPU or one CPU core ([Performance](./performance)) |
+| `bench-nvf-oac`, `bench-nvf`, `bench-gnu` | the kernel benchmark against ADAM's former kernels, on the GPU or one CPU core ([Performance](./performance)) |
 | `bench-arrays-nvf-oac`, `bench-arrays-nvf`, `bench-arrays-gnu` | the benchmark of the device-kernel rules: automatic arrays and loop extents |
 | `bench-kinds-nvf-oac`, `bench-kinds-gnu` | the kernels' benchmark in `R_P` (double precision), the reference of the single-precision comparison |
 | `bench-nvf-oac-r4`, `bench-gnu-r4` | the same in single precision |
@@ -38,7 +38,7 @@ The build modes of `fobos` and the scripts of the repository, each with what it 
 | `scripts/check_docs.py` | checks that the documentation covers the code and names nothing the code does not have |
 | `scripts/check_papers.py` | checks SETH's tables and constants against the papers they come from, in exact arithmetic |
 | `scripts/check_literals.py` | finds the kind-sensitive real literals outside `seth_kind_parameters` |
-| `scripts/gen_weno_js_tables.py` | generates `seth_weno_js_tables` from ADAM's WENO initialisers |
+| `scripts/gen_weno_js_tables.py` | generates `seth_weno_js_tables` from ADAM's WENO initialisers (an ADAM commit before ba37c4cb, which deleted them) |
 | `scripts/gen_z_teno_tables.py` | generates `seth_z_teno_tables`, the descriptors of WENO-Z, TENO and the linear schemes |
 | `scripts/gen_nonpoly_tables.py` | generates `seth_nonpoly_tables`, the constants of the non-polynomial schemes |
 | `scripts/mutation_test.py` | mutation testing: does every planted defect make some test fail? ([C6](/verification/contracts/mutation)) |

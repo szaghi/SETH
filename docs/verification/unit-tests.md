@@ -34,14 +34,14 @@ its derivation next to it; the R8P set keeps every test as it was. What R4P chan
 |---|---|---|
 | `seth_test_kinds` | the working kinds of PENF | — |
 | `seth_test_registry` | the test registry: every kernel dispatched, names unique, `_wr` kernels equal the plain ones bitwise | [C2](./contracts/properties) |
-| `seth_test_weno_js_adam` | WENO-JS against ADAM's kernels copied verbatim, 1.4 M results (R8P only) | [C1](./contracts/adam-equivalence) |
-| `seth_test_central_adam` | `seth_keep_pe6` bitwise equal to ADAM's `compute_kep_flux`, `seth_ducros` to `compute_ducros` (R8P only) | [H2](./hybrids/central) |
+| `seth_test_weno_js_adam` | WENO-JS against ADAM's former kernels copied verbatim (frozen), 1.4 M results (R8P only) | [C1](./contracts/adam-equivalence) |
+| `seth_test_central_adam` | `seth_keep_pe6` bitwise equal to ADAM's former `compute_kep_flux`, `seth_ducros` to `compute_ducros` (R8P only) | [H2](./hybrids/central) |
 | `seth_test_weno_js_order` | WENO-JS design order, reconstruction and interpolation | [A1](./accuracy/order-of-accuracy) |
 | `seth_test_weno_js_eno` | WENO-JS across a unit step at every cell boundary | [C2](./contracts/properties) |
 | `seth_test_wenoz` | WENO-Z order, ENO, mirror; reconstruction and interpolation | [A1](./accuracy/order-of-accuracy), [C2](./contracts/properties) |
 | `seth_test_teno` | TENO order, linear scheme on smooth data, cutoff, large jump, mirror; reconstruction and interpolation | [A1](./accuracy/order-of-accuracy), [C2](./contracts/properties) |
 | `seth_test_weno_c` | centred WENO order 4, 6, 8, mirror, constants, large jump, a unit step against its upwind WENO-JS | [A5](./accuracy/centred-weno) |
-| `seth_test_weno_c_adam` | the centred WENO equal to ADAM's routine with D1 fixed, and ADAM's as it is different on the left state (R8P only) | [A5](./accuracy/centred-weno) |
+| `seth_test_weno_c_adam` | the centred WENO equal to ADAM's former routine with D1 fixed, and ADAM's as it was different on the left state (R8P only) | [A5](./accuracy/centred-weno) |
 | `seth_test_properties` | exactness, constants, translation, mirror, scaling, robustness, on every scheme | [C2](./contracts/properties) |
 | `seth_vv_hybrid` | hybrids in the 1-D Euler harness: the sensor quiet on a smooth wave, the central/TENO5 junction at fifth order, conservation with random switching, Sod/Lax/Shu–Osher against the pure schemes | [H3](./hybrids/harness) |
 | `seth_vv_roe` | the Roe flux path with entropy fix of the 1-D Euler harness: design order on a smooth wave (the fix silent), Sod and Lax, the transonic rarefaction with and without the fix, the 123 problem; the blast waves at Fu et al.'s cutoffs without the limiter ([issue #5](https://github.com/szaghi/SETH/issues/5)) | [S5](./shocks/blast#the-flux-issue-5) |

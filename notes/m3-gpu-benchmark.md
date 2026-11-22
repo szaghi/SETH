@@ -81,3 +81,7 @@ no index arithmetic), but the number to quote for production is the A30 one.
 Proceed. SETH is at least as fast as ADAM's best kernel on every platform measured except one CPU case (-8 %), bitwise
 equal to ADAM's results, and removes the table mirroring. Before porting: one run of this benchmark on a medooza A30
 (left to the owner: tonight's permission covered the WSL GPU only).
+
+Outcome (2026-11-22): ADAM ported without that run (ADAM issue 139) and measured the kernels inside FLUME on an A30
+instead (ADAM commit 4210fc8f): the WENO-9 face kernel 13.6 % faster than ADAM's former per-width kernel, WENO-5
+1.7 % slower (ADAM issue 141). This benchmark on an A30 is item E0 of #7.

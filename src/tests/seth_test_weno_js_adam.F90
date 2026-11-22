@@ -1,6 +1,6 @@
-!< SETH test: the WENO-JS kernels reproduce ADAM's (seth_adam_reference, ADAM's code verbatim) on random stencils.
+!< SETH test: the WENO-JS kernels reproduce ADAM's former ones (seth_adam_reference, verbatim) on random stencils.
 program seth_test_weno_js_adam
-!< SETH test: the WENO-JS kernels reproduce ADAM's (seth_adam_reference, ADAM's code verbatim) on random stencils.
+!< SETH test: the WENO-JS kernels reproduce ADAM's former ones (seth_adam_reference, verbatim) on random stencils.
 !<
 !< Every scheme (S = 1..5), reconstruction and interpolation tables, Jiang-Shu and scale-invariant weights, smooth and
 !< rough stencils at magnitudes 1e-6..1e6: states, weights ratios and descaler compared with ADAM's on the same values
@@ -9,6 +9,7 @@ program seth_test_weno_js_adam
 !< in [0,1]), the descaler's relatively. Passes when every difference is within TOL = 64 eps: round-off, including the
 !< different fused multiply-add contractions an optimising compiler picks for the constant-folded SETH kernels and
 !< ADAM's table-driven ones. Without contraction (the debug builds) the results are bitwise equal; the count is reported.
+!< The reference is frozen: ADAM calls these kernels since ADAM issue 139 and deleted its own (ADAM commit ba37c4cb).
 use seth
 use seth_test_rng, only : seed_rng
 use seth_weno_js_tables

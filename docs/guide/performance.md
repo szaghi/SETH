@@ -1,6 +1,7 @@
 # Performance
 
-`src/bench/seth_bench_weno.F90` compares SETH's kernels with ADAM's on the same stencils and memory traffic
+`src/bench/seth_bench_weno.F90` compares SETH's kernels with ADAM's former ones (frozen copies: ADAM calls SETH's
+since its issue 139) on the same stencils and memory traffic
 (2²⁴ faces, `!$acc wait` + `system_clock`, median of 20 passes): `fobis build --mode bench-nvf-oac`, then run with
 `CUDA_VISIBLE_DEVICES` set.
 
@@ -18,8 +19,8 @@ kernel the program launches, 6 % slower in run 1 only). WENO-Z5 and TENO6 have n
 the cost of their weights: WENO-Z5 costs what WENO5-JS costs, TENO6 (four candidates, a six-point global
 indicator) 1.3 times what WENO7-JS costs. CPU: one run per compiler.*
 
-Against ADAM's host routines (FLUME's CPU path) SETH is about 2x faster on one core. The results are bitwise equal to
-ADAM's on the device.
+Against ADAM's host routines (FLUME's CPU path before ADAM issue 139) SETH is about 2x faster on one core. The
+results are bitwise equal to ADAM's on the device.
 
 **Why.** The coefficients are compile-time constants: no table loads, no array descriptors, constant trip counts the
 compiler unrolls, nothing to keep on the device.

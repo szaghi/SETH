@@ -75,8 +75,9 @@ your own loops, on the host or on the device. Every kernel is `pure`, `!$acc rou
 
 ## From ADAM's rows
 
-ADAM's kernels take `v(1:2, 1-S:S-1)`: row 2 the left-biased stencil, row 1 the right-biased one shifted one cell to
-the left, and return the left state in `vr(2)`, the right one in `vr(1)`.
+ADAM's former kernels, which ADAM replaced with SETH's (ADAM issue 139), took `v(1:2, 1-S:S-1)`: row 2 the
+left-biased stencil, row 1 the right-biased one shifted one cell to the left, and returned the left state in `vr(2)`,
+the right one in `vr(1)`.
 
 ![SETH's vp and vm against ADAM's rows v(1:2, -2:2) for S = 3](/guide/conv-adam-rows.png)
 
@@ -84,7 +85,8 @@ The mapping is
 
 $$ v(2,m) = v_p(m),\qquad v(1,m) = v_m(m+1),\qquad m = 1-S,\dots,S-1, $$
 
-and SETH's WENO-JS kernels return ADAM's values bitwise (`seth_test_weno_js_adam`).
+and SETH's WENO-JS kernels return ADAM's values bitwise (`seth_test_weno_js_adam`, against a frozen copy of those
+kernels).
 
 ---
 

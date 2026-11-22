@@ -5,6 +5,8 @@ module adam_weno_object
 !< S_MAX and S_MAX_M1 as ADAM defines them; weno_weights_exponent copied verbatim from ADAM's adam_weno_object.F90
 !< (commit 302f093e). The kernel files next to it (adam_fnl_weno_kernels.F90, adam_fnl_weno_width_kernels.F90,
 !< adam_fnl_weno_width_body.INC) are ADAM's, byte for byte.
+!< Frozen history: ADAM deleted those files and weno_weights_exponent in ADAM commit ba37c4cb (ADAM issue 139), after
+!< its FLUME moved to SETH's kernels; the copies stay unchanged as the benchmark's baseline.
 use penf, only : I4P
 implicit none
 private

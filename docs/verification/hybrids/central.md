@@ -13,7 +13,9 @@ sum of two-point products of the full state, so these kernels take the primitive
 not a scalar stencil ([Schemes](/guide/schemes#hybrids)).
 
 What the case catches: a wrong coefficient (the order), a wrong two-point flux (the kinetic-energy identity or the
-pressure equilibrium), a difference from ADAM's flux, from which SETH's sixth-order one was extracted.
+pressure equilibrium), a difference from ADAM's flux, from which SETH's sixth-order one was extracted. ADAM's FLUME
+calls `seth_keep_pe6` and `seth_ducros` since ADAM commit 0e085764 (ADAM issue 139), and ADAM commit ba37c4cb deleted
+its own: the copy the comparison reads is frozen history.
 
 ## Models and numerics
 

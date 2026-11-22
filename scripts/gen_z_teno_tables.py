@@ -26,6 +26,9 @@ SETH's kernels. Cross-checks run before anything is written (the script exits no
    ADAM's initialize_centered_S*.
 
 Usage: gen_z_teno_tables.py <adam_weno_object.F90> <output .F90>
+
+The ADAM file of checks 3, 6 and 7 is one before ADAM commit ba37c4cb (ADAM issue 139), which deleted those
+initialisers: e.g. `git -C adam show 302f093e:src/lib/common/adam_weno_object.F90`.
 """
 
 from __future__ import annotations

@@ -12,7 +12,7 @@ module seth_shock_sensors
 !< theta = div u, omega = curl u, eps a floor in the units of a gradient squared (De Vanna: (u_inf/delta_0)^2; ADAM:
 !< a fraction of (c/dx)^2). phi is even in theta and flags expansions too; psi flags compressions only. In compression
 !< psi = sqrt(phi) when both use the same eps: a threshold of one is not a threshold of the other (0.1, 0.2, 0.4 of psi
-!< are 0.01, 0.04, 0.16 of phi). ADAM's compute_ducros is seth_ducros plus a density-jump override (its policy). Pure,
+!< are 0.01, 0.04, 0.16 of phi). ADAM's FLUME calls seth_ducros, then its density-jump override (its policy). Pure,
 !< `acc routine seq`, `omp declare target`.
 use penf, only : R_P
 implicit none

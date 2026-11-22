@@ -4,6 +4,8 @@ program seth_test_central_adam
 !<
 !< On 20000 random states: seth_keep_pe6 equals ADAM's compute_kep_flux bitwise (gfortran; other compilers within 2e-15
 !< of the flux scale, fused multiply-adds), and seth_ducros equals compute_ducros with its override off.
+!< compute_kep_flux and compute_ducros are frozen copies: FLUME calls seth_keep_pe6 and seth_ducros since ADAM commit
+!< 0e085764 (ADAM issue 139), and ADAM commit ba37c4cb deleted its own.
 !<
 !< ADAM's code (seth_adam_reference) is R8P: the comparison is R8P only, and the R4P test builds leave this program out
 !< (the `exclude` of fobos' [template-r4-tests]; scripts/check_literals.py skips it for the same reason). It was item 5

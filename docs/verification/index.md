@@ -2,8 +2,8 @@
 
 Every capability of SETH is backed by a verification case: a Fortran program in `src/tests/` that runs the kernels
 and asserts the result against something it shares no code with, such as an exact solution, a fine reference, a
-published number, a theorem or ADAM's own code. The same programs are the test suite (`bash scripts/run_tests.sh`
-runs all 40 (37 in single precision), on six compiler builds and on the GPU), and with `SETH_VV_DIR` set they run every scheme on the report
+published number, a theorem or a frozen copy of ADAM's former code. The same programs are the test suite
+(`bash scripts/run_tests.sh` runs all 40 (37 in single precision), on six compiler builds and on the GPU), and with `SETH_VV_DIR` set they run every scheme on the report
 grids and write the data from which these pages are drawn (`scripts/run_vv.sh`). The figures are real SETH results
 and can be regenerated after any change of the kernels.
 
@@ -196,7 +196,7 @@ baseline, the device, and the suite's own ability to catch defects. [Group page]
 
 <div class="seth-gallery seth-catalog">
 
-[<strong>Equivalence with ADAM</strong><span>WENO-JS bitwise equal to ADAM's kernels on 1.4 M results</span><em>contract</em>](./contracts/adam-equivalence)
+[<strong>Equivalence with ADAM</strong><span>WENO-JS bitwise equal to ADAM's former kernels on 1.4 M results; ADAM now calls SETH's</span><em>contract</em>](./contracts/adam-equivalence)
 
 [<strong>Properties and invariances</strong><span>exactness, constants, translation, mirror, power-of-2 scaling, robustness, ENO across jumps</span><em>contract</em>](./contracts/properties)
 
@@ -220,7 +220,7 @@ turbulence. The split:
 
 | Verified in SETH | Verified in ADAM (FLUME, ADAM issue 119) |
 |---|---|
-| the kernels' coefficients, orders, properties and equivalence with ADAM's code; host = device | the solver around them: Taylor–Green at $Re = 1600$, the channel, the boundary layer, shock/boundary-layer interaction |
+| the kernels' coefficients, orders, properties and equivalence with ADAM's former code; host = device | the solver around them: Taylor–Green at $Re = 1600$, the channel, the boundary layer, shock/boundary-layer interaction |
 | the identities and orders of the central fluxes (KEEP-PE); the sensors on analytic fields and on one-dimensional flows | the sensors and their thresholds in turbulence, against Ducros, with the flagged fraction and the flow statistics |
 | the junction of a central and an upwind flux (J1) and conservation under random switching (J3), [H3](./hybrids/harness) | the calibration of a hybrid's threshold |
 | the cost of each kernel and of a composite, at kernel level ([Performance](/guide/performance)) | the cost of a hybrid in the solver |

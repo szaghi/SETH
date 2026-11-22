@@ -29,7 +29,7 @@ call seth_keep_pe6(d, gamma, w, f)
 |---|---|---|
 | `seth_keep_pe2` | `(5, 0:1)` | 2 (the two-point flux itself) |
 | `seth_keep_pe4` | `(5, -1:2)` | 4 |
-| `seth_keep_pe6` | `(5, -2:3)` | 6; ADAM's `compute_kep_flux`, bitwise |
+| `seth_keep_pe6` | `(5, -2:3)` | 6; ADAM's former `compute_kep_flux`, bitwise (FLUME calls `seth_keep_pe6` since ADAM issue 139) |
 | `seth_keep_pe8` | `(5, -3:4)` | 8 |
 | `seth_keep_pe8_opt` | `(5, -3:4)` | 6, the dispersion-optimised coefficients of Liang & Fu (2024b), TENO-S's central branch |
 

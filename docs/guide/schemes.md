@@ -326,7 +326,8 @@ candidates (less dissipation, less robustness); the defaults are the papers'.
 
 ## Centred WENO: WENO4/6/8-C
 
-ADAM's centred WENO (`WENO_C_4/6/8`), ported with its defect D1 fixed. With $S$ candidates, on the big stencil of
+ADAM's centred WENO (`WENO_C_4/6/8`), ported with its defect D1 fixed; ADAM itself dropped it in its issue 139,
+without a replacement. With $S$ candidates, on the big stencil of
 cells $i+1-S..i+S$ around the face, it blends two reconstructions of the same face value:
 
 $$
@@ -357,10 +358,10 @@ divisions.
 
 What it is, and what it is not:
 
-- **D1 fixed.** ADAM computes the left state's weights on the unshifted cells, one cell off (the audit's D1). SETH's
+- **D1 fixed.** ADAM computed the left state's weights on the unshifted cells, one cell off (the audit's D1). SETH's
   upwind part is its WENO-JS kernel, which takes the face-offset stencil, so the fix is by construction;
-  `seth_test_weno_c_adam` shows SETH equal to ADAM's routine with that one line corrected (to $6\cdot10^{-16}$ of the
-  data), and ADAM's as it is different on the left state for most random stencils.
+  `seth_test_weno_c_adam` shows SETH equal to ADAM's routine (a frozen copy) with that one line corrected (to
+  $6\cdot10^{-16}$ of the data), and ADAM's as it is different on the left state for most random stencils.
 - **The detector reads cells $i-1..i+2$ for every $S$.** WENO8-C's outer cells $i-3$ and $i+4$ are outside it: a step
   there leaves $\phi = 0$, and the central row's edge coefficient $-\tfrac3{840}$ passes, an overshoot of $\tfrac1{280}$
   of the jump. WENO6-C's edge coefficient $\tfrac1{60}$ is positive: a precursor of the jump inside the data's
@@ -374,7 +375,7 @@ What it is, and what it is not:
   ([S5](/verification/shocks/blast)).
 - **No paper.** The blend is ADAM's own construction; its pair term is $\sqrt{1-\psi^2}$ of Ren et al.'s smoothness
   ratio $\psi = 2\lvert ab\rvert/(a^2+b^2)$ (for $\varepsilon = 0$, an identity): a continuous form of the switch of the
-  hybrid schemes ([Hybrids](#hybrids)). ADAM's $S = 1$ (`weno-c-2`) never reaches the blend and is WENO1: not ported.
+  hybrid schemes ([Hybrids](#hybrids)). ADAM's $S = 1$ (`weno-c-2`) never reached the blend and was WENO1: not ported.
 
 ## Non-polynomial TENO: TENO5-DR, TENO5-THINC, stencil targeting, Gaussian-RBF
 
@@ -557,8 +558,8 @@ the central–WENO and central–TENO hybrids of the turbulence literature.
   $\overline{\rho u_n}\,(\mathbf u_l\cdot\mathbf u_r)/2$, the internal energy flux $\bar p\,\bar u_n/(\gamma-1)$, the
   split pressure work) in Pirozzoli's conservative form of order $2L$. Because a kinetic-energy-preserving flux above
   second order is a sum of two-point products of the state, these take the primitive state of $2L$ cells and return
-  the flux vector: a second interface. The sixth-order one is ADAM's `compute_kep_flux`, bitwise
-  ([H2](/verification/hybrids/central));
+  the flux vector: a second interface. The sixth-order one is ADAM's former `compute_kep_flux`, bitwise
+  ([H2](/verification/hybrids/central)), and FLUME's hybrid calls it since ADAM issue 139;
 - **the shock sensors** of the central branch, `seth_ducros` (Ducros et al. 1999) and `seth_ducros_compression` (De
   Vanna et al. 2023a), from the velocity gradient the caller computes;
 - the linear weights and candidate coefficients of every scheme, as named constants (`seth_weno_js_tables`,
