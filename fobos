@@ -310,6 +310,8 @@ exclude   = src/tests/seth_adam_reference.F90
             src/tests/seth_test_weno_js_adam.F90
             src/tests/seth_test_central_adam.F90
             src/tests/seth_test_weno_c_adam.F90
+            src/tests/seth_adam_seam_reference.F90
+            src/tests/seth_test_weno6_point_adam.F90
 # the time integrator of the programs that use it: SELAH built for the host (their fields are host memory),
 # linked; under -acc without its device build SELAH's directives would not compile (FUNDAL's host branch)
 dependon  = fobos:static-selah-nvf-r4
@@ -394,7 +396,7 @@ template  = template-r4
 preproc   = -D_R_P_IS_R4P -DFUNDAL_NO_MPI
 build_dir = exe-r4/
 # ADAM's code and the comparisons with it are R8P only (scripts/check_literals.py reads this list too)
-exclude   = src/tests/seth_adam_reference.F90 src/tests/seth_test_weno_js_adam.F90 src/tests/seth_test_central_adam.F90 src/tests/seth_test_weno_c_adam.F90
+exclude   = src/tests/seth_adam_reference.F90 src/tests/seth_test_weno_js_adam.F90 src/tests/seth_test_central_adam.F90 src/tests/seth_test_weno_c_adam.F90 src/tests/seth_adam_seam_reference.F90 src/tests/seth_test_weno6_point_adam.F90
 
 [template-r4-bench]
 template  = template-r4

@@ -512,6 +512,21 @@ WENO-Z9 with $p = 1$ and TENO6 reconstruct end in $[0, 1]$ exactly; on $\sin^4(\
 (2000) report order loss for MPWENO, the bound never acts on WENO5-JS's states for $N = 20 \dots 1280$ (order 5.3).
 Cost on the RTX 4070: 0.42 ns per face, 0.43 times WENO5-JS (over the budget of 0.35 set before coding).
 
+## WENO-6 point interpolation
+
+`seth_weno6_point` interpolates six equispaced point values $u_1 \dots u_6$ (node $k$ at $x = k$) at an off-node
+target $x = t_4/4$, $t_4 = 3 \dots 25$: the quarter positions and the midpoints between the nodes, the targets of a
+2:1 refinement's fill and restriction (ADAM's AMR seam transfer, ADAM issue 68). Its candidates are the cubic
+interpolants $q_s$ of the 4-point sub-stencils $s = $ nodes $s \dots s+3$ that contain the target's interval and no
+jump of a ratio detector (`seth_weno6_jumps`); their linear weights $d_s$, all positive, make $\sum_s d_s q_s$ the
+Lagrange interpolant of their union, of order 6, 5 or 4 by the number of candidates. The nonlinear weights are
+WENO-Z's (Borges et al. 2008, $p = 2$), $\alpha_s = d_s(1 + (\tau/(\beta_s+\varepsilon))^2)$, on the Jiang–Shu
+indicator of each cubic over its central interval, $\beta_s = c^2 + \tfrac{13}{12}a^2 + \tfrac{781}{720}t^2$ ($c$,
+$a$, $t$ its central first, mean second and third undivided differences), with $\tau$ the square of the highest
+undivided difference of the union. A jump inside the target's interval leaves no candidate: the value is then the
+interval's mean (midpoints) or its clamped linear interpolation (quarters). Details, the R4P treatment and the
+equivalence with ADAM: [WENO-6 point interpolation](/reference/weno6-point).
+
 ## Hybrids
 
 A **hybrid** scheme uses a cheap linear reconstruction where a sensor judges the data smooth, and a nonlinear one
@@ -577,6 +592,7 @@ the central–WENO and central–TENO hybrids of the turbulence literature.
 | TENO | `seth_teno5`, `seth_teno6` (+ `_interp`), `seth_teno5_opt`, `seth_teno5_az`, `seth_teno6_opt`, `seth_teno6_neno6`, `seth_teno8`, `seth_teno5_a`, `seth_teno8_a` | 3 to 6, incremental | 5, 6, 8-point 6 (5-opt 4, 6-opt 5, NENO6 4) | `ct` (TENO5-AZ: `ct`, `rmu`; -A: `cr`, `xi`, `a1`, `a2`, `rmu`) |
 | non-polynomial TENO | `seth_teno5_dr`, `seth_teno5_thinc`, `seth_teno5_rbf_dr` (bounds $-5:6$), `seth_teno5_st`, `seth_teno5_rbf`; stored-mask pair `seth_teno5_face_masks` + `seth_teno5_{dr,thinc,rbf_dr}_stored` (bounds $-2:3$); pieces `seth_teno5_mask`, `seth_dr_detect`, `seth_thinc_detect`, `seth_dr_override`, `seth_thinc_override` | TENO5's | 5 (ST 4 beside a jump) | `ct`; DR `t1`, `t2`, `rmu`; THINC `beta`, `rmu`; RBF `cr`, `s1`, `s2` |
 | centred WENO | `seth_weno{4,6,8}_c` | WENO-JS ($S = 2..4$) blended with the central row on $2S$ cells | $2S$ | `eps`, `rmu` |
+| WENO-6 point interpolation | `seth_weno6_point`, `seth_weno6_jumps` | the jump-free 4-point sub-stencils containing the target's interval (1 to 3) | 6, 5, 4 by the target | none (`t4`, the target) |
 | positivity | `seth_positivity_euler`, `seth_euler_admissible` | | | |
 
 Arguments and constants: [Reference](/reference/). Stencil layout: [Conventions](/guide/conventions).

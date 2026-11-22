@@ -2,7 +2,7 @@
 program seth_test_device
 !< SETH test: every kernel executed on the device (OpenACC) agrees with the same kernel on the host.
 !<
-!< Each of the 63 cases runs one kernel inside `!$acc parallel loop` over N deterministic stencils (smooth cubics,
+!< Each of the 64 cases runs one kernel inside `!$acc parallel loop` over N deterministic stencils (smooth cubics,
 !< jumps, an integer LCG), then the same loop on the host, and compares: states within 1e-13 of the stencil's
 !< magnitude, weights ratios within 1e-9 (the device and the host compile the kernel separately and may contract
 !< multiply-adds differently; the tolerances are those of seth_test_golden, for the same reasons). One case calls
@@ -15,7 +15,7 @@ use seth_test_parameters, only : EPS_ZT, POS_RANGE_EXP, POSITIVITY_FLOOR, TOL_DE
                                  TOL_DEVICE_WR
 implicit none
 integer(I4P), parameter :: N = 4096_I4P
-integer(I4P), parameter :: NK = 63_I4P
+integer(I4P), parameter :: NK = 64_I4P
 character(26), parameter :: NAMES(NK) = [ &
    'seth_weno1_js             ', &
    'seth_weno1_js_wr          ', &
@@ -79,7 +79,8 @@ character(26), parameter :: NAMES(NK) = [ &
    'seth_teno5_face_masks     ', &
    'seth_teno5_dr_stored      ', &
    'seth_teno5_thinc_stored   ', &
-   'seth_teno5_rbf_dr_stored  ']
+   'seth_teno5_rbf_dr_stored  ', &
+   'seth_weno6_point+jumps    ']
 real(R_P)               :: v(-5:6,N), w(-5:6,N), rp(N), rm(N), wrp(N), wrm(N), hp(N), hm(N), hwp(N), hwm(N)
 real(R_P)               :: mag, ds, dw, worst_s, worst_w
 integer(I4P)            :: k, i, nbit, nfail
@@ -1153,6 +1154,35 @@ do k=1, NK
             call seth_teno5_rbf_dr_stored(a, b, mp, mm, SETH_TENO_EPS, SETH_TENO5_CT, SETH_RBF_CR, 0.09_R_P, 0.09_R_P, &
                                           SETH_DR_T1, SETH_DR_T2, 1._R_P, rp(i), rm(i))
          endif
+      enddo
+      endblock
+   case(64) ! seth_weno6_point at a target cycling through t4 = 3..25 (nodes included), on the cells -2..3 of both
+      block ! stencils; the jump flags of the first, as the integer sum of 2^(i-1), in wrp
+      real(R_P)    :: a(1:6), b(1:6)
+      logical      :: jmp(1:5)
+      integer(I4P) :: m
+      !$acc parallel loop gang vector copyin(v, w) copyout(rp, rm, wrp, wrm) private(a, b, jmp, m)
+      do i=1, N
+         a = v(-2:3,i) ; b = w(-2:3,i) ; wrm(i) = -1._R_P
+         rp(i) = seth_weno6_point(a, 3_I4P + mod(i, 23_I4P))
+         rm(i) = seth_weno6_point(b, 3_I4P + mod(7_I4P * i, 23_I4P))
+         call seth_weno6_jumps(a, jmp)
+         wrp(i) = 0._R_P
+         do m=1, 5
+            if (jmp(m)) wrp(i) = wrp(i) + real(2**(m-1), R_P)
+         enddo
+      enddo
+      hp = rp ; hm = rm ; hwp = wrp ; hwm = wrm
+
+      do i=1, N
+         a = v(-2:3,i) ; b = w(-2:3,i) ; wrm(i) = -1._R_P
+         rp(i) = seth_weno6_point(a, 3_I4P + mod(i, 23_I4P))
+         rm(i) = seth_weno6_point(b, 3_I4P + mod(7_I4P * i, 23_I4P))
+         call seth_weno6_jumps(a, jmp)
+         wrp(i) = 0._R_P
+         do m=1, 5
+            if (jmp(m)) wrp(i) = wrp(i) + real(2**(m-1), R_P)
+         enddo
       enddo
       endblock
    endselect

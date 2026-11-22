@@ -28,14 +28,16 @@ The literals whose meaning depends on the kind live in `seth_kind_parameters`, o
 |---|---|---|---|
 | `SETH_TENO_EPS` | $10^{-40}$ | $10^{-30}$ | the papers' $10^{-40}$ is below R4P's smallest normal number ($1.2\cdot10^{-38}$), and a GPU flushes it to zero; pass it as `eps` to WENO-Z and TENO in either kind |
 | `SETH_NONPOLY_GUARD` | $10^{-15}$ | $10^{-15}$ | the papers' first-order guard of the DR and THINC overrides: a product of two differences of the data, not a step against 1 |
+| `SETH_WENO6_EPS` | $10^{-40}$ | $10^{-30}$ | the guard of `seth_weno6_point`'s weights (ADAM's $10^{-40}$ in R8P); in R4P the kernel also scales its weights by the smallest indicator, where $(\tau/(\beta+\varepsilon))^2$ would overflow ([WENO-6 point interpolation](./weno6-point#constants)) |
 
-`seth` re-exports both. The positivity limiter's back-off step is the third kind-dependent literal, internal to the
+`seth` re-exports the three. The positivity limiter's back-off step is the third kind-dependent literal, internal to the
 limiter.
 
 ## Every other constant
 
 Each family's page lists its constants with their values: [WENO-JS](./weno-js#constants), [TENO](./teno#the-kernels),
-[Non-polynomial TENO](./nonpolynomial#the-composite-kernels), [Sensors](./sensors), [Limiters](./limiters).
+[Non-polynomial TENO](./nonpolynomial#the-composite-kernels), [Sensors](./sensors), [Limiters](./limiters),
+[WENO-6 point interpolation](./weno6-point#constants).
 
 ## Coefficient tables
 
@@ -46,6 +48,7 @@ Every coefficient of every scheme is a named constant, written by a generator sc
 | `seth_weno_js_tables` | `scripts/gen_weno_js_tables.py` | WENO-JS's (ADAM's) candidate, weight and indicator coefficients (`WENO5_JS_A`, `WENO5_JS_P`, `WENO5_JS_D`, ...) |
 | `seth_z_teno_tables` | `scripts/gen_z_teno_tables.py` | the descriptors of WENO-Z, TENO and the linear schemes: candidate cells (`*_CLO`, `*_CW`), face coefficients (`*_P`), indicator factors (`*_L`, `*_DQ`, `*_LG`, `*_DG`), linear weights (`*_D`), $\tau$ coefficients (`*_TC`, `*_TG`), linear rows (`LIN<N>_C`) |
 | `seth_nonpoly_tables` | `scripts/gen_nonpoly_tables.py` | the rows of stencil targeting and of the RBF correction, DR's steepnesses |
+| `seth_point_weno6_tables` | `scripts/gen_weno6_tables.py` | the linear and cubic weights of `seth_weno6_point` by target (`WENO6_POINT_D`, `WENO6_POINT_W`), derived from their definition and asserted equal to ADAM's seam tables |
 
 `seth` re-exports the `WENO<N>_JS_D_SCALE` constants of `seth_weno_js_tables`; the other tables are used through
 their own modules. What is asserted about them: [C3](/verification/contracts/tables).

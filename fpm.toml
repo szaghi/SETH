@@ -42,6 +42,16 @@ source-dir = "src/tests"
 main = "seth_test_weno_js_adam.F90"
 
 [[test]]
+name = "seth_test_weno6_point_adam"
+source-dir = "src/tests"
+main = "seth_test_weno6_point_adam.F90"
+
+[[test]]
+name = "seth_test_weno6_point"
+source-dir = "src/tests"
+main = "seth_test_weno6_point.F90"
+
+[[test]]
 name = "seth_test_central_adam"
 source-dir = "src/tests"
 main = "seth_test_central_adam.F90"

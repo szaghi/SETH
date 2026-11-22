@@ -26,7 +26,7 @@
 <div>
 <table>
 <tr>
-<td><b>🧮 Every scheme, one kernel each</b><br><sub>WENO-JS 1/3/5/7/9, WENO-Z 3/5/7/9, TENO5, TENO5-opt, TENO5-AZ, TENO5-A, TENO6, TENO6-opt, NENO6, TENO8 and TENO8-A, for reconstruction from cell averages and interpolation from point values; the centred WENO4/6/8-C; the non-polynomial TENO (DR and THINC overrides, stencil targeting, Gaussian RBF); and the pieces of a hybrid (linear schemes, sensors, central fluxes). <a href="https://szaghi.github.io/SETH/reference/">Feature map</a> · <a href="https://szaghi.github.io/SETH/guide/schemes">Schemes</a></sub></td>
+<td><b>🧮 Every scheme, one kernel each</b><br><sub>WENO-JS 1/3/5/7/9, WENO-Z 3/5/7/9, TENO5, TENO5-opt, TENO5-AZ, TENO5-A, TENO6, TENO6-opt, NENO6, TENO8 and TENO8-A, for reconstruction from cell averages and interpolation from point values; the centred WENO4/6/8-C; the WENO-6 interpolation at an off-node point (ADAM's AMR seam transfer); the non-polynomial TENO (DR and THINC overrides, stencil targeting, Gaussian RBF); and the pieces of a hybrid (linear schemes, sensors, central fluxes). <a href="https://szaghi.github.io/SETH/reference/">Feature map</a> · <a href="https://szaghi.github.io/SETH/guide/schemes">Schemes</a></sub></td>
 <td><b>⚡ Called from inside your loops</b><br><sub>Every kernel is <code>pure</code>, <code>!$acc routine seq</code> and <code>!$omp declare target</code>; the coefficients are compile-time constants, so nothing is set up or copied to the device. On an RTX 4070, WENO-5 reconstructs a face in 0.97 ns and WENO-7 in 1.76 ns, in double precision. <a href="https://szaghi.github.io/SETH/guide/performance">Performance</a></sub></td>
 </tr>
 <tr>
@@ -34,7 +34,7 @@
 <td><b>🛡️ Positivity near vacuum</b><br><sub><code>seth_positivity_euler</code>, the flux limiter of Hu, Adams &amp; Shu (2013) for the Euler equations in 1-D to 3-D: the blending factor in closed form, the largest that keeps density and pressure above their floors, on the host and on the GPU. <a href="https://szaghi.github.io/SETH/reference/limiters#positivity-limiter">Positivity limiter</a></sub></td>
 </tr>
 <tr>
-<td><b>🔬 Verification you can read</b><br><sub>Forty programs, also the test suite: orders at a point, at critical points and over whole domains, invariances, golden values, Sod, Lax, 123, Shu–Osher and the blast wave in a 1-D Euler harness, Burgers against its exact solution, spectral properties, the non-polynomial schemes in 1-D and 2-D; figures and animations on every case page. <a href="https://szaghi.github.io/SETH/verification/">Verification</a></sub></td>
+<td><b>🔬 Verification you can read</b><br><sub>Forty-two programs, also the test suite: orders at a point, at critical points and over whole domains, invariances, golden values, Sod, Lax, 123, Shu–Osher and the blast wave in a 1-D Euler harness, Burgers against its exact solution, spectral properties, the non-polynomial schemes in 1-D and 2-D; figures and animations on every case page. <a href="https://szaghi.github.io/SETH/verification/">Verification</a></sub></td>
 <td><b>🧰 Three compilers, CPU and GPU</b><br><sub>gfortran, nvfortran and ifx, debug and optimised, plus the OpenACC build on the GPU; built with FoBiS or fpm. Mutation runs catch every planted defect, 76 of 76 in five runs. <a href="https://szaghi.github.io/SETH/guide/installation">Installation</a> · <a href="https://szaghi.github.io/SETH/verification/contracts/mutation">Mutation testing</a></sub></td>
 </tr>
 </table>
@@ -52,7 +52,7 @@
 git clone https://github.com/szaghi/SETH && cd SETH
 fobis fetch                                                   # PENF, into src/third_party/
 fobis build --mode static-gnu                                 # lib/gnu/static/libseth.a
-fobis build --mode tests-gnu && bash scripts/run_tests.sh     # the 40 test programs
+fobis build --mode tests-gnu && bash scripts/run_tests.sh     # the 42 test programs
 ```
 
 as a FoBiS dependency, in the `fobos` of your project (then `fobis fetch && fobis build`):

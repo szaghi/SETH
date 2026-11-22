@@ -41,6 +41,7 @@ The build modes of `fobos` and the scripts of the repository, each with what it 
 | `scripts/gen_weno_js_tables.py` | generates `seth_weno_js_tables` from ADAM's WENO initialisers (an ADAM commit before ba37c4cb, which deleted them) |
 | `scripts/gen_z_teno_tables.py` | generates `seth_z_teno_tables`, the descriptors of WENO-Z, TENO and the linear schemes |
 | `scripts/gen_nonpoly_tables.py` | generates `seth_nonpoly_tables`, the constants of the non-polynomial schemes |
+| `scripts/gen_weno6_tables.py` | generates `seth_point_weno6_tables`, the weights of `seth_weno6_point`, from their definition, and checks them against ADAM's seam tables (`--check`: the module on disk is up to date) |
 | `scripts/mutation_test.py` | mutation testing: does every planted defect make some test fail? ([C6](/verification/contracts/mutation)) |
 | `scripts/bench_compare.py` | compares runs of the benchmark with a recorded baseline |
 | `scripts/compute-coverage.sh` | the coverage percentage of a coverage build |

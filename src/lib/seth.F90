@@ -4,7 +4,8 @@ module seth
 !<
 !< `use seth` gives the working kinds (R_P, the kernels' kind, chosen at build time: seth_kind_parameters) and every
 !< scheme family. Each kernel reconstructs (or interpolates) the two states at one face from two stencils, its
-!< coefficients compile-time constants; see seth_weno_js.
+!< coefficients compile-time constants; see seth_weno_js. One kernel interpolates instead a line of six point values
+!< at an off-node point: seth_weno6_point (seth_point_weno6).
 use penf, only : I4P, I8P, R4P, R8P, R_P
 use seth_kind_parameters
 use seth_descaling
@@ -20,6 +21,7 @@ use seth_linear
 use seth_sensors
 use seth_kep
 use seth_shock_sensors
+use seth_point_weno6
 implicit none
 private
 public :: I4P, I8P, R4P, R8P, R_P
@@ -54,5 +56,6 @@ public :: seth_ducros, seth_ducros_compression
 public :: seth_linear3, seth_linear5, seth_linear7, seth_linear9, seth_linear6, seth_linear8
 public :: seth_linear3_interp, seth_linear5_interp, seth_linear7_interp, seth_linear9_interp, seth_linear6_interp
 public :: SETH_POSITIVITY_EPS, SETH_POSITIVITY_NV_MAX, seth_positivity_euler, seth_euler_admissible
+public :: SETH_WENO6_EPS, SETH_WENO6_JUMP_RATIO, seth_weno6_point, seth_weno6_jumps
 public :: WENO1_JS_D_SCALE, WENO3_JS_D_SCALE, WENO5_JS_D_SCALE, WENO7_JS_D_SCALE, WENO9_JS_D_SCALE
 endmodule seth

@@ -19,9 +19,15 @@ candidate reconstructions, the maximum-order weights) and against what SETH comp
   and Eq. (17) (KEEP-PE), inside Pirozzoli's (2010) conservative sum, J. Comput. Phys. 229:7180, Eqs. (6), (11)-(13):
   SETH's KEEP-PE kernel body and coefficients, evaluated in exact arithmetic on random states, orders 2 to 8;
   Ducros et al. (1999), J. Comput. Phys. 152:517, Eq. (22): seth_ducros evaluated the same way.
+- Jiang & Shu (1996), J. Comput. Phys. 126:202, the smoothness indicator (the sum over l of h^(2l-1) times the integral
+  of the squared l-th derivative over the interval), and Borges, Carmona, Costa & Don (2008), J. Comput. Phys.
+  227:3191, the WENO-Z weights d (1 + (tau/(beta + eps))^p): seth_weno6_point's indicator statements, evaluated from
+  the Fortran source in exact arithmetic on random data, against the indicator of each 4-point cubic over its central
+  interval derived from the definition; its weights' form (p = 2, both kinds' branches) and tau, the square of the
+  highest undivided difference of the candidates' union.
 
 Usage (from the repository root): python3 scripts/check_papers.py [--tables FILE] [--teno FILE] [--sensors FILE]
-                                  [--kep FILE] [--kep-body FILE] [--shock-sensors FILE]
+                                  [--kep FILE] [--kep-body FILE] [--shock-sensors FILE] [--point-weno6 FILE]
 Exit status 0 when every check passes. No ADAM input.
 """
 
@@ -379,6 +385,48 @@ def check_ducros(shock: str) -> None:
     print('  Ducros et al. 1999: seth_ducros checked against Eq. (22)')
 
 
+def check_weno6_point(src: str) -> None:
+    import random
+    rng = random.Random(1996)
+    body = re.search(r'function seth_weno6_point\((.*?)endfunction seth_weno6_point\b', src, re.S)
+    if body is None:
+        fail('seth_weno6_point not found')
+        return
+    text = re.sub(r'&\s*\n\s*', ' ', body.group(1))
+    stmts = {v: re.findall(rf'^\s*{v} = ([^!\n]+)', text, re.M) for v in ('c', 'a', 't')}
+    beta_r4 = re.findall(r'^\s*b\(s\) = ([^!\n]+)', text, re.M)
+    beta_r8 = re.findall(r'\(tau / \(([^!\n]+?)\)\)\*\*2\)', text)
+    if any(len(x) != 2 or x[0] != x[1] for x in stmts.values()) or len(beta_r4) != 1 or len(beta_r8) != 1:
+        fail('seth_weno6_point: the indicator statements of the two branches not found, or not the same')
+        return
+    if ' '.join(beta_r4[0].split()) != ' '.join(beta_r8[0].split()):
+        fail('seth_weno6_point: the R4P and R8P branches compute different indicators')
+    code = '\n'.join(f'{v} = {fortran_expr(stmts[v][0], ("u",))}' for v in ('c', 'a', 't'))
+    code += f'\nbeta = {fortran_expr(beta_r4[0].replace("SETH_WENO6_EPS", "0"), ("u",))}'
+    for _ in range(40):
+        u = {k: Fr(rng.randint(-99, 99), rng.randint(1, 9)) for k in range(1, 7)}
+        for sub in (1, 2, 3):
+            env = {'Fr': Fr, 'u': u, 's': sub}
+            exec(code, env)  # noqa: S102 - SETH's own source, translated
+            nodes = list(range(sub, sub + 4))
+            cub = _zt.solve([[Fr(x) ** n for n in range(4)] for x in nodes], [u[x] for x in nodes])
+            js, der = Fr(0), cub
+            for _l in range(1, 4):  # h = 1: h^(2l-1) = 1
+                der = _zt.pder(der)
+                js += _zt.pint(_zt.pmul(der, der), Fr(sub + 1), Fr(sub + 2))
+            if env['beta'] != js:
+                fail(f'seth_weno6_point: beta of sub-stencil {sub} is not the Jiang-Shu indicator of its cubic')
+                return
+    if not re.search(r'^\s*tau = w\(1\) \* w\(1\)', text, re.M) or \
+       not re.search(r'w\(i\) = w\(i\+1\) - w\(i\)', text):
+        fail('seth_weno6_point: tau is not the square of the highest undivided difference')
+    if not re.search(r'alpha = WENO6_POINT_D\(s,t4\) \* \(1\._R_P \+ \(tau / \(', text) or \
+       not re.search(r'alpha = WENO6_POINT_D\(s,t4\) \* \(1\._R_P \+ \(tau / b\(s\)\)\*\*2\)', text) or \
+       not re.search(r'alpha = WENO6_POINT_D\(s,t4\) \* \(\(bmin / tau\)\*\*2 \+ \(bmin / b\(s\)\)\*\*2\)', text):
+        fail('seth_weno6_point: the weights are not Borges et al.\'s d (1 + (tau/(beta + eps))^2) (or its R4P scaling)')
+    print('  Jiang & Shu 1996 + Borges et al. 2008: seth_weno6_point\'s indicators (exact) and weights checked')
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument('--tables', type=Path, default=Path('src/lib/seth_weno_js_tables.F90'))
@@ -387,6 +435,7 @@ def main() -> int:
     ap.add_argument('--kep', type=Path, default=Path('src/lib/seth_kep.F90'))
     ap.add_argument('--kep-body', type=Path, default=Path('src/lib/seth_kep_body.INC'))
     ap.add_argument('--shock-sensors', type=Path, default=Path('src/lib/seth_shock_sensors.F90'))
+    ap.add_argument('--point-weno6', type=Path, default=Path('src/lib/seth_point_weno6.F90'))
     args = ap.parse_args()
     check_balsara_shu(args.tables.read_text())
     check_teno5_a(args.teno.read_text())
@@ -394,6 +443,7 @@ def main() -> int:
     check_sensor_teno_indicators(args.sensors.read_text())
     check_keep_pe(args.kep.read_text(), args.kep_body.read_text())
     check_ducros(args.shock_sensors.read_text())
+    check_weno6_point(args.point_weno6.read_text())
     if FAILED:
         print(f'check_papers: {len(FAILED)} check(s) failed')
         return 1

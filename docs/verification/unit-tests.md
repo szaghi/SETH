@@ -1,6 +1,6 @@
 # Test programs
 
-`fobis build --mode tests-gnu && bash scripts/run_tests.sh` runs 40 programs (`fpm test` the same set). Every one
+`fobis build --mode tests-gnu && bash scripts/run_tests.sh` runs 42 programs (`fpm test` the same set). Every one
 exits non-zero on a violated assertion. They pass with gfortran 16.2, nvfortran 26.9 and ifx 2026.2, debug (all
 checks and floating-point traps on) and optimised, and in the OpenACC build on the GPU. Random stencils come from a
 fixed, printed seed (`SETH_TEST_SEED` overrides it), so a failure reproduces.
@@ -10,10 +10,10 @@ fixed, printed seed (`SETH_TEST_SEED` overrides it), so a failure reproduces.
 The tests compute in the library's kind `R_P`. Their kind-sensitive literals (tolerances, regularisers, data
 magnitudes) live in `src/tests/seth_test_parameters.F90`, one set per kind, and `scripts/check_literals.py` fails on
 any left in a program. The R4P build (`fobis build --mode tests-gnu-r4 && bash scripts/run_tests.sh --exe-dir exe-r4`)
-leaves out the three comparisons with ADAM, which are R8P only, has its own golden file
-(`src/tests/golden/seth_golden_r4_v4.txt`), and passes its 37 programs on gfortran, nvfortran and ifx and in the
-OpenACC build on the GPU. Its expectations are measured in R4P, the worst of the three compilers plus 5 %, each with
-its derivation next to it; the R8P set keeps every test as it was. What R4P changes:
+leaves out the four comparisons with ADAM, which are R8P only, has its own golden file
+(`src/tests/golden/seth_golden_r4_v4.txt`), and passes its 38 programs on gfortran; the 37 that preceded
+`seth_test_weno6_point` (issue #7, E2) also on nvfortran and ifx and in the OpenACC build on the GPU. Its
+expectations are measured in R4P, the worst of the three compilers plus 5 %, each with its derivation next to it; the R8P set keeps every test as it was. What R4P changes:
 
 - **Orders.** An order is taken on a pair of grids whose finer error is above R4P's round-off, which for a derivative
   sits near $10^{-5}$ on these grids and, in a time-accurate run, grows with the number of steps. Schemes of order 6
@@ -35,6 +35,8 @@ its derivation next to it; the R8P set keeps every test as it was. What R4P chan
 | `seth_test_kinds` | the working kinds of PENF | — |
 | `seth_test_registry` | the test registry: every kernel dispatched, names unique, `_wr` kernels equal the plain ones bitwise | [C2](./contracts/properties) |
 | `seth_test_weno_js_adam` | WENO-JS against ADAM's former kernels copied verbatim (frozen), 1.4 M results (R8P only) | [C1](./contracts/adam-equivalence) |
+| `seth_test_weno6_point_adam` | `seth_weno6_point` and `seth_weno6_jumps` bitwise equal to ADAM's seam WENO-6 restriction and fill copied verbatim (frozen, `seth_adam_seam_reference`): the 169 table constants, 1.7 M results on seven kinds of data, the jump flags (R8P only) | [C1](./contracts/adam-equivalence#the-seam-weno-6-transfer) |
+| `seth_test_weno6_point` | the WENO-6 point interpolation against its definition: tables (partition of unity, polynomial reproduction), nodes, cubic exactness, design orders 6/5/4, the jump detector, steps and the troubled-cell fallback, mirror symmetry, the R4P guard on a flat sub-stencil next to a ramp, smooth data against the R8P Lagrange interpolant | [WENO-6 point interpolation](/reference/weno6-point) |
 | `seth_test_central_adam` | `seth_keep_pe6` bitwise equal to ADAM's former `compute_kep_flux`, `seth_ducros` to `compute_ducros` (R8P only) | [H2](./hybrids/central) |
 | `seth_test_weno_js_order` | WENO-JS design order, reconstruction and interpolation | [A1](./accuracy/order-of-accuracy) |
 | `seth_test_weno_js_eno` | WENO-JS across a unit step at every cell boundary | [C2](./contracts/properties) |

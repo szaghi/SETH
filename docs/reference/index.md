@@ -30,12 +30,13 @@ generates from the source comments.
 | WENO-Z, orders 3 to 9 | `seth_wenoz{3,5,7,9}`, `_interp` | [WENO-Z](./weno-z) |
 | TENO, 5 to 8 points | `seth_teno5`, `seth_teno5_opt`, `seth_teno5_az`, `seth_teno5_a`, `seth_teno6`, `seth_teno6_opt`, `seth_teno6_neno6`, `seth_teno8`, `seth_teno8_a`, `seth_teno{5,6}_interp`; `SETH_TENO_EPS`, `SETH_TENO*_CT`, `SETH_TENO{5,8}_A_*` | [TENO](./teno) |
 | Centred WENO, orders 4 to 8 | `seth_weno{4,6,8}_c` | [Centred WENO](./weno-c) |
+| WENO-6 interpolation of six point values at an off-node point (ADAM's AMR seam transfer) | `seth_weno6_point`, `seth_weno6_jumps`; `SETH_WENO6_JUMP_RATIO`, `SETH_WENO6_EPS` | [WENO-6 point interpolation](./weno6-point) |
 | Non-polynomial TENO: DR, THINC, stencil targeting, Gaussian RBF | `seth_teno5_dr`, `seth_teno5_thinc`, `seth_teno5_st`, `seth_teno5_rbf`, `seth_teno5_rbf_dr`; the pieces `seth_teno5_mask`, `seth_teno5_zeta`, `seth_dr_detect`, `seth_thinc_detect`, `seth_dr_override`, `seth_thinc_override`; `SETH_DR_T1`, `SETH_DR_T2`, `SETH_THINC_BETA`, `SETH_RBF_*`, `SETH_NONPOLY_GUARD` | [Non-polynomial TENO](./nonpolynomial) |
 | Linear schemes, the smooth branch of a hybrid | `seth_linear{3,5,7,9,6,8}`, `seth_linear{3,5,7,9,6}_interp` | [Linear](./linear) |
 | Smoothness sensors | `seth_sensor_teno`, `seth_sensor_teno_eps`, `seth_sensor_ren`, `seth_sensor_lcr`, `seth_sensor_tau`; `SETH_SENSOR_*` | [Sensors](./sensors) |
 | Central fluxes and shock sensors | `seth_keep_pe{2,4,6,8}`, `seth_keep_pe8_opt`; `seth_ducros`, `seth_ducros_compression` | [Central fluxes](./central) |
 | Limiters | `seth_mp_bound`, `SETH_MP_ALPHA`; `seth_positivity_euler`, `seth_euler_admissible`, `SETH_POSITIVITY_EPS`, `SETH_POSITIVITY_NV_MAX` | [Limiters](./limiters) |
-| Kinds and the build's precision | `I4P`, `I8P`, `R4P`, `R8P`, `R_P`; the modules `seth_kind_parameters`, `seth_weno_js_tables`, `seth_z_teno_tables`, `seth_nonpoly_tables` | [Kinds and constants](./kinds) |
+| Kinds and the build's precision | `I4P`, `I8P`, `R4P`, `R8P`, `R_P`; the modules `seth_kind_parameters`, `seth_weno_js_tables`, `seth_z_teno_tables`, `seth_nonpoly_tables`, `seth_point_weno6_tables` | [Kinds and constants](./kinds) |
 
 ## Every kernel at a glance
 
@@ -64,6 +65,10 @@ generates from the source comments.
 Every kernel above ends with `rp, rm`; the `_wr` kernels add `wrp, wrm`. The `_interp` kernels take the arguments of
 their reconstruction twin. Measured orders: [A1](/verification/accuracy/order-of-accuracy).
 
+The one kernel that is not a face kernel, `seth_weno6_point(u, t4)`, returns the value of six point values `u(1:6)`
+at $x = t_4/4$ (node $k$ at $x = k$), of order 6, 5 or 4 by the target
+([WENO-6 point interpolation](./weno6-point)).
+
 ## Modules
 
 `seth` re-exports the public names of its modules; a program needs only `use seth`.
@@ -72,7 +77,8 @@ their reconstruction twin. Measured orders: [A1](/verification/accuracy/order-of
 flowchart LR
   seth --> seth_weno_js & seth_wenoz & seth_teno & seth_weno_c & seth_nonpoly & seth_linear
   seth --> seth_descaling & seth_sensors & seth_kep & seth_shock_sensors & seth_mp & seth_positivity
-  seth --> seth_kind_parameters & seth_weno_js_tables
+  seth --> seth_kind_parameters & seth_weno_js_tables & seth_point_weno6
+  seth_point_weno6 --> seth_point_weno6_tables & seth_kind_parameters
   seth_weno_js --> seth_weno_js_tables
   seth_weno_c --> seth_weno_js
   seth_nonpoly --> seth_teno & seth_nonpoly_tables

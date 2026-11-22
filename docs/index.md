@@ -33,7 +33,7 @@ features:
       width: 44
       height: 44
     title: Every scheme, one kernel each
-    details: WENO-JS 1/3/5/7/9, WENO-Z 3/5/7/9, TENO5, TENO5-opt, TENO5-AZ, TENO5-A, TENO6, TENO6-opt, NENO6, TENO8 and TENO8-A, for reconstruction from cell averages and interpolation from point values; the centred WENO4/6/8-C; the non-polynomial TENO (DR and THINC overrides, stencil targeting, Gaussian RBF); and the pieces of a hybrid (linear schemes, sensors, central fluxes).
+    details: WENO-JS 1/3/5/7/9, WENO-Z 3/5/7/9, TENO5, TENO5-opt, TENO5-AZ, TENO5-A, TENO6, TENO6-opt, NENO6, TENO8 and TENO8-A, for reconstruction from cell averages and interpolation from point values; the centred WENO4/6/8-C; the WENO-6 interpolation at an off-node point (ADAM's AMR seam transfer); the non-polynomial TENO (DR and THINC overrides, stencil targeting, Gaussian RBF); and the pieces of a hybrid (linear schemes, sensors, central fluxes).
     link: /reference/
     linkText: Feature map
   - icon:
@@ -69,7 +69,7 @@ features:
       width: 44
       height: 44
     title: Verification you can read
-    details: Forty programs, also the test suite. Orders at a point, at critical points and over whole domains, invariances, golden values, Sod, Lax, 123, Shu–Osher and the blast wave, Burgers against its exact solution, spectral properties, the non-polynomial schemes in 1-D and 2-D; figures and animations on every case page.
+    details: Forty-two programs, also the test suite. Orders at a point, at critical points and over whole domains, invariances, golden values, Sod, Lax, 123, Shu–Osher and the blast wave, Burgers against its exact solution, spectral properties, the non-polynomial schemes in 1-D and 2-D; figures and animations on every case page.
     link: /verification/
     linkText: Verification
   - icon:
@@ -125,7 +125,7 @@ const authors = [
 git clone https://github.com/szaghi/SETH && cd SETH
 fobis fetch                                                   # PENF, into src/third_party/
 fobis build --mode static-gnu                                 # lib/gnu/static/libseth.a
-fobis build --mode tests-gnu && bash scripts/run_tests.sh     # the 40 test programs
+fobis build --mode tests-gnu && bash scripts/run_tests.sh     # the 42 test programs
 ```
 
 ```ini [FoBiS dependency]

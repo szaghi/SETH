@@ -96,6 +96,7 @@ export default withMermaid({
           { text: 'WENO-Z',              link: '/reference/weno-z' },
           { text: 'TENO',                link: '/reference/teno' },
           { text: 'Centred WENO',        link: '/reference/weno-c' },
+          { text: 'WENO-6 point interpolation', link: '/reference/weno6-point' },
           { text: 'Non-polynomial TENO', link: '/reference/nonpolynomial' },
           { text: 'Linear schemes',      link: '/reference/linear' },
           { text: 'Sensors',             link: '/reference/sensors' },

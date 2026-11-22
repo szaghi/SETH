@@ -39,8 +39,8 @@ per kind ([Kinds and constants](/reference/kinds)).
 
 ## What is verified
 
-The test suite runs in R4P (37 programs; the comparisons with ADAM are R8P only) on gfortran, nvfortran, ifx and the
-GPU, against expectations measured in R4P: the worst of the three compilers plus 5 %, each with its derivation in
+The test suite runs in R4P (38 programs; the comparisons with ADAM are R8P only) on gfortran, nvfortran, ifx and the
+GPU (`seth_test_weno6_point`, added by issue #7 E2, on gfortran so far), against expectations measured in R4P: the worst of the three compilers plus 5 %, each with its derivation in
 `src/tests/seth_test_parameters.F90` ([test programs](/verification/unit-tests#single-precision)). Every case is held
 to its bound. On Shu–Osher the R4P error is R8P's: TENO6 0.1142 against 0.1129 (400 cells, $L_1(\rho)$ against a
 4× reference), and the cost hybrids of TENO5 and TENO6, driven by each of the four
